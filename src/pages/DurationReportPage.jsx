@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
-import { NcalBadge, SectionCard, Spinner } from '../components/ui/index.jsx';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { NcalBadge, SectionCard, Spinner, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-const NCAL_COLORS = { BLACK: '#a78bfa', RED: '#f87171', ORANGE: '#fb923c', YELLOW: '#fbbf24', BLUE: '#60a5fa' };
-const PIE_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#ec4899','#14b8a6','#84cc16','#6b7280'];
+const chartConfig = {
+  BLACK: { label: 'BLACK', color: 'var(--ncal-black-text)' },
+  RED: { label: 'RED', color: 'var(--ncal-red-text)' },
+  ORANGE: { label: 'ORANGE', color: 'var(--ncal-orange-text)' },
+  YELLOW: { label: 'YELLOW', color: 'var(--ncal-yellow-text)' },
+  BLUE: { label: 'BLUE', color: 'var(--ncal-blue-text)' },
+};
+
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
@@ -39,7 +45,7 @@ export default function DurationReportPage() {
       <div className="page-header">
         <div className="page-title-group">
           <div className="page-title">Duration Report</div>
-          <div className="page-subtitle">Analisis durasi penanganan & performa SLA</div>
+          <div className="page-subtitle">Analysis of handling duration & SLA performance</div>
         </div>
       </div>
 
@@ -53,31 +59,31 @@ export default function DurationReportPage() {
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Line Chart */}
-          <SectionCard title="Tren Rata-rata Durasi Nett (Menit)" subtitle={`Per NCAL - Tahun ${year}`}>
-            <div className="chart-wrap" style={{ minWidth: 0 }}>
-              <ResponsiveContainer width="100%" height={320} minWidth={0}>
-                <LineChart data={duration} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} unit=" min" />
-                  <Tooltip contentStyle={{ background: '#0d1426', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+          <SectionCard title="Avg Nett Duration Trend (Minutes)" subtitle={`Per NCAL - Year ${year}`}>
+            <ChartContainer config={chartConfig} style={{ height: 400 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={12} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} unit=" min" axisLine={false} tickLine={false} tickMargin={12} />
+                  <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
+                  <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
                   {NCAL_ORDER.map(ncal => (
-                    <Line key={ncal} type="monotone" dataKey={ncal} stroke={NCAL_COLORS[ncal]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                    <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, stroke: 'var(--bg-surface)', strokeWidth: 2 }} connectNulls />
                   ))}
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </ChartContainer>
           </SectionCard>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {/* SLA Table */}
-            <SectionCard title="Rangkuman SLA per NCAL" subtitle={`Tahun ${year}`}>
+            <SectionCard title="SLA Summary per NCAL" subtitle={`Year ${year}`}>
               <div className="table-wrap">
                 <table>
                   <thead><tr><th>NCAL</th><th>Total</th><th>Avg Nett</th><th>SLA Met</th><th>SLA Target</th><th>%</th></tr></thead>
                   <tbody>
-                    {sla.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>Belum ada data</td></tr>}
+                    {sla.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                     {sla.map(row => {
                       const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                       return (
@@ -97,12 +103,12 @@ export default function DurationReportPage() {
             </SectionCard>
 
             {/* Technician Performance */}
-            <SectionCard title="Performa Teknisi" subtitle={`Tahun ${year}`}>
+            <SectionCard title="Technician Performance" subtitle={`Year ${year}`}>
               <div className="table-wrap">
                 <table>
-                  <thead><tr><th>Teknisi</th><th>Total</th><th>Avg Durasi</th><th>Min</th><th>Max</th></tr></thead>
+                  <thead><tr><th>Technician</th><th>Total</th><th>Avg Duration</th><th>Min</th><th>Max</th></tr></thead>
                   <tbody>
-                    {techPerf.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>Belum ada data</td></tr>}
+                    {techPerf.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                     {techPerf.map(row => (
                       <tr key={row.technician}>
                         <td style={{ fontWeight: 600, fontSize: '0.8rem' }}>{row.technician}</td>

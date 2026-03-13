@@ -145,4 +145,5 @@ export function LevelBadge({ level }) {
   );
 }
 
+export * from './chart.jsx';
 export { default as UnifiedTimeline } from './UnifiedTimeline.jsx';

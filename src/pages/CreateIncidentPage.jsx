@@ -332,10 +332,12 @@ export default function CreateIncidentPage() {
                     </div>
                   )}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Assigned Technician / PIC</label>
-                  <input type="text" className="form-control" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
-                </div>
+                {!isDistribsi && (
+                  <div className="form-group">
+                    <label className="form-label">Assigned Technician / PIC</label>
+                    <input type="text" className="form-control" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
+                  </div>
+                )}
               </div>
 
               {isDistribsi && (

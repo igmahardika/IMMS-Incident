@@ -142,7 +142,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                 <label className="form-label">Action Taken / Update Notes</label>
                 <textarea className="form-control" rows={4} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Explain the resolution steps or update technician notes..." />
               </div>
-              {user?.role && user.role !== 'technician' && (
+              {user?.role && user.role !== 'technician' && !['ORANGE', 'RED', 'BLACK'].includes(incident?.ncal) && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label">Power Before (dBm)</label>

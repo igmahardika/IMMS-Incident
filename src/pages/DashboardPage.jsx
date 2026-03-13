@@ -1,11 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
-import { NcalBadge, SectionCard, PageSpinner } from '../components/ui/index.jsx';
+import { NcalBadge, SectionCard, PageSpinner, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
 import { AlertTriangle, CheckCircle, Activity, TrendingUp, Plus, Clock } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
-const NCAL_COLORS = { BLACK: '#a78bfa', RED: '#f87171', ORANGE: '#fb923c', YELLOW: '#fbbf24', BLUE: '#60a5fa' };
+const chartConfig = {
+  BLACK: { label: 'BLACK', color: 'var(--ncal-black-text)' },
+  RED: { label: 'RED', color: 'var(--ncal-red-text)' },
+  ORANGE: { label: 'ORANGE', color: 'var(--ncal-orange-text)' },
+  YELLOW: { label: 'YELLOW', color: 'var(--ncal-yellow-text)' },
+  BLUE: { label: 'BLUE', color: 'var(--ncal-blue-text)' },
+};
+
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function DashboardPage() {
@@ -44,6 +51,8 @@ export default function DashboardPage() {
   const byNcal = {};
   (data?.activeByNcal || []).forEach(r => { byNcal[r.ncal] = r.count; });
 
+  const NCAL_COLORS_KPI = { BLACK: 'var(--ncal-black-text)', RED: 'var(--ncal-red-text)', ORANGE: 'var(--ncal-orange-text)', YELLOW: 'var(--ncal-yellow-text)', BLUE: 'var(--ncal-blue-text)' };
+
   return (
     <div className="page-stack">
       <div className="page-header">
@@ -73,7 +82,7 @@ export default function DashboardPage() {
         {NCAL_ORDER.map(ncal => (
           <div className="kpi-card" key={ncal}>
             <div className="kpi-label"><NcalBadge value={ncal} /></div>
-            <div className="kpi-value" style={{ color: NCAL_COLORS[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
+            <div className="kpi-value" style={{ color: NCAL_COLORS_KPI[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
             <div className="kpi-meta">Currently active</div>
           </div>
         ))}
@@ -82,23 +91,20 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Duration Trend Chart */}
         <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`} style={{ gridColumn: '1 / -1' }}>
-          <div className="chart-wrap" style={{ minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height={300} minWidth={0}>
-              <LineChart data={duration} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
-                  labelStyle={{ color: 'var(--text-secondary)', marginBottom: 4, fontWeight: 600 }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+          <ChartContainer config={chartConfig} style={{ height: 400 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={12} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={12} />
+                <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
+                <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
                 {NCAL_ORDER.map(ncal => (
-                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={NCAL_COLORS[ncal]} strokeWidth={2} dot={{ r: 3, fill: NCAL_COLORS[ncal] }} activeDot={{ r: 5 }} connectNulls />
+                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, stroke: 'var(--bg-surface)', strokeWidth: 2 }} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </ChartContainer>
         </SectionCard>
 
         <div className="layout-with-aside">

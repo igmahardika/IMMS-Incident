@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, MONTH_NAMES } from '../utils/api.js';
-import { NcalBadge, Spinner } from '../components/ui/index.jsx';
-import { SectionCard } from '../components/ui/index.jsx';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { NcalBadge, Spinner, SectionCard, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Filter } from 'lucide-react';
 
 const PIE_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#ec4899','#14b8a6','#84cc16','#64748b'];
@@ -36,6 +35,18 @@ export default function RootCausePage() {
 
   const total = data.reduce((s, d) => s + d.count, 0);
 
+  // Dynamic config for root causes
+  const rootCauseConfig = React.useMemo(() => {
+    const config = {};
+    data.forEach((item, idx) => {
+      config[item.classification] = {
+        label: item.classification,
+        color: PIE_COLORS[idx % PIE_COLORS.length]
+      };
+    });
+    return config;
+  }, [data]);
+
   return (
     <div className="page-stack">
       <div className="page-header">
@@ -66,33 +77,37 @@ export default function RootCausePage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           {/* Pie Chart */}
           <SectionCard title="Classification Distribution" subtitle={`Total: ${total} incidents`}>
-            <div style={{ height: 300, minWidth: 0 }}>
-              <ResponsiveContainer width="100%" height={300} minWidth={0}>
+            <ChartContainer config={rootCauseConfig} style={{ height: 320 }}>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={110} labelLine={false} label={CustomLabel}>
-                    {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={100} strokeWidth={2} stroke="var(--bg-elevated)" labelLine={false} label={CustomLabel}>
+                    {data.map((entry, i) => <Cell key={i} fill={rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ background: '#0d1426', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} formatter={(v, n) => [`${v} (${total ? ((v/total)*100).toFixed(1) : 0}%)`, n]} />
+                  <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
+                  <Legend content={<ChartLegend config={rootCauseConfig} />} />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </ChartContainer>
           </SectionCard>
 
           {/* Bar Chart */}
           <SectionCard title="Frequency per Classification" subtitle="Sorted by frequency">
-            <div style={{ height: 300, minWidth: 0 }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={data.slice(0, 8)} layout="vertical" margin={{ left: 8, right: 30, top: 5, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                  <YAxis type="category" dataKey="classification" width={160} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
-                  <Tooltip contentStyle={{ background: '#0d1426', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {data.slice(0, 8).map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+            <ChartContainer config={rootCauseConfig} style={{ height: 320 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.slice(0, 8)} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                  <CartesianGrid vertical={false} horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="classification" width={150} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
+                  <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={24}>
+                    {data.slice(0, 8).map((entry, i) => {
+                      const color = rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length];
+                      return <Cell key={i} fill={color} />;
+                    })}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ChartContainer>
           </SectionCard>
 
           {/* Top Table */}
