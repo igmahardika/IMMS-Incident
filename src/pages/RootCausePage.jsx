@@ -3,6 +3,7 @@ import { api, MONTH_NAMES } from '../utils/api.js';
 import { NcalBadge, Spinner } from '../components/ui/index.jsx';
 import { SectionCard } from '../components/ui/index.jsx';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Filter } from 'lucide-react';
 
 const PIE_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#ec4899','#14b8a6','#84cc16','#64748b'];
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
@@ -36,33 +37,37 @@ export default function RootCausePage() {
   const total = data.reduce((s, d) => s + d.count, 0);
 
   return (
-    <div>
+    <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
           <div className="page-title">Root Cause Analysis</div>
-          <div className="page-subtitle">Statistik klasifikasi gangguan</div>
+          <div className="page-subtitle">Historical statistics of incident classifications</div>
         </div>
-        <div className="page-actions">
-          <select className="form-control" value={filters.year} onChange={e => setF('year', e.target.value)} style={{ maxWidth: 100 }}>
-            {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-          <select className="form-control" value={filters.month} onChange={e => setF('month', e.target.value)} style={{ maxWidth: 120 }}>
-            <option value="">Semua Bulan</option>
-            {MONTH_NAMES.map((m, i) => <option key={i+1} value={String(i+1).padStart(2,'0')}>{m}</option>)}
-          </select>
-          <select className="form-control" value={filters.ncal} onChange={e => setF('ncal', e.target.value)} style={{ maxWidth: 120 }}>
-            <option value="">Semua NCAL</option>
-            {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
+      </div>
+
+      <div className="filter-bar mb-4" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Filter size={14} /> FILTER:
         </div>
+        <select className="form-control" value={filters.year} onChange={e => setF('year', e.target.value)} style={{ width: 100 }}>
+          {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select className="form-control" value={filters.month} onChange={e => setF('month', e.target.value)} style={{ width: 140 }}>
+          <option value="">All Months</option>
+          {MONTH_NAMES.map((m, i) => <option key={i+1} value={String(i+1).padStart(2,'0')}>{m}</option>)}
+        </select>
+        <select className="form-control" value={filters.ncal} onChange={e => setF('ncal', e.target.value)} style={{ width: 140 }}>
+          <option value="">All NCAL</option>
+          {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
       </div>
 
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div> : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           {/* Pie Chart */}
-          <SectionCard title="Distribusi Klasifikasi" subtitle={`Total: ${total} incident`}>
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer>
+          <SectionCard title="Classification Distribution" subtitle={`Total: ${total} incidents`}>
+            <div style={{ height: 300, minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height={300} minWidth={0}>
                 <PieChart>
                   <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={110} labelLine={false} label={CustomLabel}>
                     {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
@@ -74,9 +79,9 @@ export default function RootCausePage() {
           </SectionCard>
 
           {/* Bar Chart */}
-          <SectionCard title="Jumlah per Klasifikasi" subtitle="Diurutkan berdasarkan frekuensi">
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer>
+          <SectionCard title="Frequency per Classification" subtitle="Sorted by frequency">
+            <div style={{ height: 300, minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data.slice(0, 8)} layout="vertical" margin={{ left: 8, right: 30, top: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
                   <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
@@ -91,12 +96,12 @@ export default function RootCausePage() {
           </SectionCard>
 
           {/* Top Table */}
-          <SectionCard title="Detail Klasifikasi" style={{ gridColumn: '1 / -1' }}>
+          <SectionCard title="Classification Breakdown" style={{ gridColumn: '1 / -1' }}>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>#</th><th>Klasifikasi</th><th>Jumlah</th><th>Persentase</th><th>Bar</th></tr></thead>
+                <thead><tr><th>#</th><th>Classification</th><th>Count</th><th>Percentage</th><th>Chart</th></tr></thead>
                 <tbody>
-                  {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>Belum ada data</td></tr>}
+                  {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                   {data.map((row, i) => {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (

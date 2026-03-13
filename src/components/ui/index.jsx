@@ -15,19 +15,20 @@ export function StatusPill({ status }) {
   return <span className={`status-pill status-${status}`}>{labels[status] || status}</span>;
 }
 
-export function DurationBadge({ seconds }) {
+export function DurationBadge({ seconds, target }) {
   if (seconds == null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
+  const isExceeded = target && seconds > target;
   return (
-    <span className="timer-badge">
+    <span className={`timer-badge ${isExceeded ? 'timer-exceeded' : ''}`} style={isExceeded ? { color: 'var(--danger)', borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' } : {}}>
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
     </span>
   );
 }
 
-export function LiveTimer({ startIso, pausedSec = 0, paused = false }) {
+export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
   const [elapsed, setElapsed] = React.useState(0);
 
   React.useEffect(() => {
@@ -46,15 +47,15 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false }) {
   const m = Math.floor((elapsed % 3600) / 60);
   const s = elapsed % 60;
   const isUrgent = elapsed > 14400; // 4 hours
+  const isExceeded = target && elapsed > target;
+  const color = paused ? 'var(--warning)' : isExceeded ? 'var(--danger)' : isUrgent ? 'var(--danger)' : 'var(--success)';
+  const border = paused ? 'var(--warning-border)' : isExceeded ? 'var(--danger-border)' : isUrgent ? 'var(--danger-border)' : 'var(--success-border)';
+  const bg = paused ? 'var(--warning-bg)' : isExceeded ? 'var(--danger-bg)' : isUrgent ? 'var(--danger-bg)' : 'var(--success-bg)';
 
   return (
     <span
-      className="timer-badge"
-      style={{
-        color: paused ? 'var(--warning)' : isUrgent ? 'var(--danger)' : 'var(--success)',
-        borderColor: paused ? 'var(--warning-border)' : isUrgent ? 'var(--danger-border)' : 'var(--success-border)',
-        background: paused ? 'var(--warning-bg)' : isUrgent ? 'var(--danger-bg)' : 'var(--success-bg)',
-      }}
+      className={`timer-badge ${isExceeded ? 'timer-exceeded' : ''}`}
+      style={{ color, borderColor: border, background: bg }}
     >
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
       {paused && ' ⏸'}
@@ -131,3 +132,17 @@ export function PageSpinner() {
     </div>
   );
 }
+
+export function LevelBadge({ level }) {
+  return (
+    <span style={{ 
+      background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
+      padding: '0.2rem 0.5rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)',
+      display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: '0.05em'
+    }}>
+      LVL {level || 1}
+    </span>
+  );
+}
+
+export { default as UnifiedTimeline } from './UnifiedTimeline.jsx';

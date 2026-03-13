@@ -35,25 +35,27 @@ export default function DurationReportPage() {
   }, [year]);
 
   return (
-    <div>
+    <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
           <div className="page-title">Duration Report</div>
           <div className="page-subtitle">Analisis durasi penanganan & performa SLA</div>
         </div>
-        <div className="page-actions">
-          <select className="form-control" value={year} onChange={e => setYear(e.target.value)} style={{ maxWidth: 100 }}>
-            {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
+      </div>
+
+      <div className="filter-bar mb-4">
+        <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--text-muted)', marginRight: '0.5rem' }}>FILTER:</div>
+        <select className="form-control" value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
+          {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
       </div>
 
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Line Chart */}
           <SectionCard title="Tren Rata-rata Durasi Nett (Menit)" subtitle={`Per NCAL - Tahun ${year}`}>
-            <div className="chart-wrap">
-              <ResponsiveContainer>
+            <div className="chart-wrap" style={{ minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height={320} minWidth={0}>
                 <LineChart data={duration} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />

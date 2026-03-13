@@ -16,17 +16,17 @@ const menuGroups = [
     ]
   },
   {
-    label: 'Task & Incident',
+    label: 'Tasks & Incidents',
     items: [
-      { to: '/incidents', icon: AlertTriangle, label: 'Current Trouble', roles: ['admin', 'manager', 'noc', 'technician'] },
+      { to: '/incidents', icon: AlertTriangle, label: 'Active Troubles', roles: ['admin', 'manager', 'noc', 'technician'] },
       { to: '/incidents/create', icon: PlusCircle, label: 'Create Incident', roles: ['admin', 'noc'] },
     ]
   },
   {
-    label: 'History & Archive',
+    label: 'Archives & Reports',
     items: [
-      { to: '/history', icon: History, label: 'Done Incidents', roles: ['admin', 'manager', 'noc'] },
-      { to: '/history/monthly', icon: ListChecks, label: 'Monthly View', roles: ['admin', 'manager', 'noc'] },
+      { to: '/history', icon: History, label: 'Resolved Incidents', roles: ['admin', 'manager', 'noc'] },
+      { to: '/history/monthly', icon: ListChecks, label: 'Monthly Analysis', roles: ['admin', 'manager', 'noc'] },
     ]
   },
   {
@@ -39,11 +39,11 @@ const menuGroups = [
   {
     label: 'Master Data',
     items: [
-      { to: '/master/customers', icon: Database, label: 'Master Customer', roles: ['admin', 'manager'] },
-      { to: '/master/classifications', icon: Tag, label: 'Klasifikasi', roles: ['admin', 'manager'] },
-      { to: '/master/technical-support', icon: Users, label: 'Personel Data', roles: ['admin', 'manager'] },
-      { to: '/master/distribusi', icon: Network, label: 'Distribusi Tree', roles: ['admin', 'manager'] },
-      { to: '/master/users', icon: Users, label: 'User Management', roles: ['admin'] },
+      { to: '/master/customers', icon: Database, label: 'Customer Records', roles: ['admin', 'manager'] },
+      { to: '/master/classifications', icon: Tag, label: 'Classifications', roles: ['admin', 'manager'] },
+      { to: '/master/technical-support', icon: Users, label: 'Personnel Records', roles: ['admin', 'manager'] },
+      { to: '/master/distribusi', icon: Network, label: 'Distribution Topology', roles: ['admin', 'manager'] },
+      { to: '/master/users', icon: Users, label: 'User Accounts', roles: ['admin'] },
     ]
   },
   {

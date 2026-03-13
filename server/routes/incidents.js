@@ -15,6 +15,11 @@ async function sendEscalation(incident, type) {
   const s = String(durSec % 60).padStart(2, '0');
   const duration = `${h}:${m}:${s}`;
 
+  const startTime = incident.start_time;
+  const endTime = incident.end_time ? new Date(incident.end_time).getTime() : Date.now();
+  const grossSeconds = Math.max(0, Math.floor((endTime - new Date(startTime).getTime()) / 1000));
+  const level = Math.floor(grossSeconds / 3600) + 1;
+
   const dateObj = new Date();
   const now = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -43,6 +48,7 @@ async function sendEscalation(incident, type) {
 
     return (template || '')
       .replace('{ncal}', ncalLabel)
+      .replace('{level}', level)
       .replace('{case_no}', incident.case_no || '')
       .replace('{company}', incident.company_name || '')
       .replace('{brand}', incident.brand_site || '')
@@ -82,19 +88,19 @@ async function sendEscalation(incident, type) {
         };
 
         const defaultTemplates = {
-          template_open_internal_blue: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\npic: {pic}`,
-          template_open_internal_yellow: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {brand}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
+          template_open_internal_blue: `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\npic: {pic}`,
+          template_open_internal_yellow: `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
           template_open_vendor_yellow: `Maintenance Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nTanggal case : {date}\nAlamat Customer : {address}\nKoordinat customer : {koordinat}\nNama ODP : {odp}\nPower RX Onu : {power_rx}\nKabel : {kabel}\nTotal Panjang : {panjang_kabel}\nPIC : {pic}\nProblem : {problem}`,
-          template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
-          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_blue: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
           template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
         };
         // Segment-specific defaults matching user's customized templates
-        defaultTemplates['template_open_internal_orange'] = `N-CAL  : {ncal}\nNomor case : {case_no}\nDistribusi : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
-        defaultTemplates['template_open_internal_red'] = `N-CAL  : {ncal}\nNomor case : {case_no}\nDistribusi : {odc}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
-        defaultTemplates['template_open_internal_black'] = `N-CAL  : {ncal}\nNomor case : {case_no}\nDistribusi : {osc}/{pop}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_orange'] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nDistribusi : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_red'] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nDistribusi : {odc}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_black'] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nDistribusi : {osc}/{pop}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
         ['orange', 'red', 'black'].forEach(seg => {
-          defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
+          defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal} - Level {level}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
         });
 
         const seg = (incident.ncal || 'yellow').toLowerCase();
@@ -127,7 +133,7 @@ async function sendEscalation(incident, type) {
           template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
         };
         ['orange', 'red', 'black'].forEach(s => {
-          defaultTemplates[`template_close_internal_${s}`] = `[CLOSE] {case_no}\n{ncal}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
+          defaultTemplates[`template_close_internal_${s}`] = `[CLOSE] {case_no}\n{ncal} - Level {level}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
         });
 
         const tplCloseInternal = cfg[`template_close_internal_${seg}`] || defaultTemplates[`template_close_internal_${seg}`] || cfg.template_close;
@@ -325,7 +331,7 @@ router.put('/:id', authenticate, (req, res) => {
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
-    technician_id ?? null,
+    technician_id || null,
     root_cause ?? null,
     last_action ?? null,
     power_before ?? null,
