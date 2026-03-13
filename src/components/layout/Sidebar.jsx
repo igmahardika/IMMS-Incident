@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ThemeContext } from '../../App.jsx';
 import {
   LayoutDashboard, AlertTriangle, PlusCircle, History, BarChart2,
   TrendingUp, Database, Tag, Users, Settings, ChevronLeft, ChevronRight,
-  Power, ListChecks, Zap, Network
+  Power, ListChecks, Zap, Network, Sun, Moon, X
 } from 'lucide-react';
 
 const menuGroups = [
@@ -53,14 +54,14 @@ const menuGroups = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen, onClose }) {
   const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  // Filter menu based on roles
   const filteredGroups = menuGroups
     .map(group => ({
       ...group,
@@ -68,18 +69,29 @@ export default function Sidebar() {
     }))
     .filter(group => group.items.length > 0);
 
+  const isCollapsed = collapsed && !mobileOpen;
+
   return (
-    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
+    <aside className={`sidebar${isCollapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">
-          <Zap size={20} color="white" strokeWidth={2.5} />
+          <Zap size={18} color="white" strokeWidth={2.5} />
         </div>
-        {!collapsed && (
-          <div>
+        {!isCollapsed && (
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sidebar-logo-text">IMMS</div>
             <div className="sidebar-logo-sub">Incident Management</div>
           </div>
+        )}
+        {/* Mobile close button */}
+        {mobileOpen && (
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
+          >
+            <X size={16} />
+          </button>
         )}
       </div>
 
@@ -96,9 +108,10 @@ export default function Sidebar() {
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                title={collapsed ? item.label : ''}
+                title={isCollapsed ? item.label : ''}
+                onClick={mobileOpen ? onClose : undefined}
               >
-                <item.icon size={16} className="nav-icon" />
+                <item.icon size={15} className="nav-icon" />
                 <span className="nav-label">{item.label}</span>
               </NavLink>
             ))}
@@ -106,19 +119,32 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Collapse toggle */}
-      <div style={{ display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end', padding: '0 0.5rem 0.25rem' }}>
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="btn btn-ghost btn-icon btn-sm"
-          title={collapsed ? 'Expand' : 'Collapse'}
-        >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
-      </div>
+      {/* Desktop collapse toggle */}
+      {!mobileOpen && (
+        <div className="sidebar-toggle-row">
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="btn btn-ghost btn-icon btn-sm"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="sidebar-footer">
+        {/* Theme toggle + logout row */}
+        <div className="sidebar-footer-actions">
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-icon btn-sm"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            style={{ flex: isCollapsed ? 1 : 'none' }}
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        </div>
         <div className="user-badge" onClick={handleLogout} title="Logout">
           <div className="user-avatar">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -127,7 +153,7 @@ export default function Sidebar() {
             <div className="user-name">{user?.name}</div>
             <div className="user-role">{user?.role} · Logout</div>
           </div>
-          {!collapsed && <Power size={13} style={{ opacity: 0.4, flexShrink: 0 }} />}
+          {!isCollapsed && <Power size={12} style={{ opacity: 0.4, flexShrink: 0 }} />}
         </div>
       </div>
     </aside>

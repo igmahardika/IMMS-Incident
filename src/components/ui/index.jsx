@@ -11,8 +11,8 @@ export function NcalBadge({ value }) {
 }
 
 export function StatusPill({ status }) {
-  const label = { open: 'OPEN', progress: 'PROGRESS', pending: 'PENDING', done: 'DONE' }[status] || status;
-  return <span className={`status-pill status-${status}`}>{label}</span>;
+  const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
+  return <span className={`status-pill status-${status}`}>{labels[status] || status}</span>;
 }
 
 export function DurationBadge({ seconds }) {
@@ -20,8 +20,11 @@ export function DurationBadge({ seconds }) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  const str = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  return <span className="timer-badge">{str}</span>;
+  return (
+    <span className="timer-badge">
+      {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
+    </span>
+  );
 }
 
 export function LiveTimer({ startIso, pausedSec = 0, paused = false }) {
@@ -42,27 +45,46 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false }) {
   const h = Math.floor(elapsed / 3600);
   const m = Math.floor((elapsed % 3600) / 60);
   const s = elapsed % 60;
+  const isUrgent = elapsed > 14400; // 4 hours
+
   return (
-    <span className="timer-badge" style={{ color: paused ? 'var(--warning)' : elapsed > 14400 ? 'var(--danger)' : 'var(--success)', fontSize: '0.75rem' }}>
+    <span
+      className="timer-badge"
+      style={{
+        color: paused ? 'var(--warning)' : isUrgent ? 'var(--danger)' : 'var(--success)',
+        borderColor: paused ? 'var(--warning-border)' : isUrgent ? 'var(--danger-border)' : 'var(--success-border)',
+        background: paused ? 'var(--warning-bg)' : isUrgent ? 'var(--danger-bg)' : 'var(--success-bg)',
+      }}
+    >
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
       {paused && ' ⏸'}
     </span>
   );
 }
 
-export function Spinner() {
-  return <div style={{ width: 20, height: 20, border: '2px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />;
+export function Spinner({ size = 'md' }) {
+  return <div className={`spinner${size === 'sm' ? ' spinner-sm' : ''}`} />;
 }
 
 export function Modal({ open, onClose, title, children, footer, size = '' }) {
+  // Close on Escape key
+  React.useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal${size ? ' modal-' + size : ''}`}>
+      <div className={`modal${size ? ' modal-' + size : ''}`} role="dialog" aria-modal="true">
         <div className="modal-header">
           <div className="modal-title">{title}</div>
-          <button className="modal-close" onClick={onClose}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
           </button>
         </div>
         <div className="modal-body">{children}</div>
@@ -78,24 +100,34 @@ export function EmptyState({ icon, title, desc, action }) {
       <div className="empty-state-icon">{icon}</div>
       <div className="empty-state-title">{title}</div>
       {desc && <div className="empty-state-desc">{desc}</div>}
-      {action && <div style={{ marginTop: 8 }}>{action}</div>}
+      {action && <div style={{ marginTop: 12 }}>{action}</div>}
     </div>
   );
 }
 
-export function SectionCard({ title, subtitle, action, children, style }) {
+export function SectionCard({ title, subtitle, action, children, style, noPadding }) {
   return (
-    <div className="card" style={style}>
+    <div className="section-card" style={style}>
       {(title || action) && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <div className="section-card-header">
           <div>
-            {title && <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{title}</div>}
-            {subtitle && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>{subtitle}</div>}
+            {title && <div className="section-card-title">{title}</div>}
+            {subtitle && <div className="section-card-subtitle">{subtitle}</div>}
           </div>
           {action && <div>{action}</div>}
         </div>
       )}
-      {children}
+      <div className={noPadding ? '' : 'section-card-body'}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function PageSpinner() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '4rem' }}>
+      <Spinner />
     </div>
   );
 }

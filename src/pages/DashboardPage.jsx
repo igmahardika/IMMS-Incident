@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
-import { NcalBadge, SectionCard, Spinner } from '../components/ui/index.jsx';
+import { NcalBadge, SectionCard, PageSpinner } from '../components/ui/index.jsx';
 import { AlertTriangle, CheckCircle, Activity, TrendingUp, Plus, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -39,7 +39,7 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, [loadData]);
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div>;
+  if (loading) return <PageSpinner />;
 
   const byNcal = {};
   (data?.activeByNcal || []).forEach(r => { byNcal[r.ncal] = r.count; });
@@ -79,18 +79,18 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1rem' }}>
         {/* Duration Trend Chart */}
         <SectionCard title="Tren Durasi Penanganan (Menit)" subtitle={`Tahun ${CURRENT_YEAR}`} style={{ gridColumn: '1 / -1' }}>
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={duration} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: '#0d1426', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: 'var(--text-secondary)' }}
+                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-secondary)', marginBottom: 4 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 {NCAL_ORDER.map(ncal => (
@@ -146,7 +146,7 @@ export default function DashboardPage() {
               <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '1rem', textAlign: 'center' }}>Belum ada data</div>
             )}
             {(data?.recentClosed || []).map(inc => (
-              <div key={inc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem', borderRadius: 8, background: 'rgba(255,255,255,0.03)' }}>
+              <div key={inc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.625rem 0.75rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <NcalBadge value={inc.ncal} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
