@@ -246,7 +246,7 @@ export function UserManagementPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ username: '', password: '', role: 'technician', name: '', email: '' });
+  const [form, setForm] = useState({ employee_id: '', username: '', password: '', role: 'technician', name: '', email: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const ROLES = ['admin', 'manager', 'noc', 'technician'];
@@ -254,8 +254,8 @@ export function UserManagementPage() {
   const load = () => api.getUsers().then(setUsers).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
-  const openEdit = (u) => { setModal(u); setForm({ username: u.username, password: '', role: u.role, name: u.name, email: u.email || '' }); };
-  const openCreate = () => { setModal('create'); setForm({ username: '', password: '', role: 'technician', name: '', email: '' }); };
+  const openEdit = (u) => { setModal(u); setForm({ employee_id: u.employee_id || '', username: u.username, password: '', role: u.role, name: u.name, email: u.email || '' }); };
+  const openCreate = () => { setModal('create'); setForm({ employee_id: '', username: '', password: '', role: 'technician', name: '', email: '' }); };
 
   const handleSave = async () => {
     try {
@@ -281,10 +281,11 @@ export function UserManagementPage() {
         {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><Spinner /></div> : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Username</th><th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th>ID</th><th>Username</th><th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {users.map(u => (
                   <tr key={u.id}>
+                    <td style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)' }}>{u.employee_id || '—'}</td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 700 }}>{u.username}</td>
                     <td style={{ fontWeight: 500 }}>{u.name}</td>
                     <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email || '—'}</td>
@@ -307,7 +308,8 @@ export function UserManagementPage() {
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Tambah User Baru' : 'Edit User'}
         footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Batal</button><button className="btn btn-primary" onClick={handleSave}>Simpan</button></>}
       >
-        <div className="form-grid form-grid-2">
+        <div className="form-grid form-grid-3">
+          <div className="form-group"><label className="form-label">ID (4 Angka) *</label><input type="text" className="form-control" value={form.employee_id} onChange={e => setF('employee_id', e.target.value)} placeholder="1001" maxLength={4} /></div>
           <div className="form-group"><label className="form-label">Username *</label><input type="text" className="form-control" value={form.username} onChange={e => setF('username', e.target.value)} placeholder="username" disabled={modal !== 'create'} /></div>
           <div className="form-group"><label className="form-label">Password {modal !== 'create' ? '(kosong = tidak berubah)' : '*'}</label><input type="password" className="form-control" value={form.password} onChange={e => setF('password', e.target.value)} /></div>
         </div>
@@ -375,7 +377,7 @@ export function MasterTechnicalSupportPage() {
     const ws = XLSX.utils.json_to_sheet([{ No: '1', Name: 'John Doe', Unit: 'Maintenance' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'Template_Technical_Support.xlsx');
+    XLSX.writeFile(wb, 'Template_Personel_Data.xlsx');
   };
 
   const FormFields = () => (
@@ -389,7 +391,7 @@ export function MasterTechnicalSupportPage() {
   return (
     <div>
       <div className="page-header">
-        <div className="page-title-group"><div className="page-title">Master Technical Support</div><div className="page-subtitle">{data.length} personil terdaftar</div></div>
+        <div className="page-title-group"><div className="page-title">Personel Data</div><div className="page-subtitle">{data.length} personil terdaftar</div></div>
         <div className="page-actions" style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-ghost btn-sm" onClick={downloadTemplate}><Download size={13} /> Template</button>
           <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
@@ -423,7 +425,7 @@ export function MasterTechnicalSupportPage() {
           </div>
         )}
       </div>
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Tambah TS' : 'Edit TS'} footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Batal</button><button className="btn btn-primary" onClick={handleSave}>Simpan</button></>}>
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Tambah Personel' : 'Edit Personel'} footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Batal</button><button className="btn btn-primary" onClick={handleSave}>Simpan</button></>}>
         <FormFields />
       </Modal>
     </div>

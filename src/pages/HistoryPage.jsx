@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, formatDateTime, MONTH_NAMES } from '../utils/api.js';
 import { NcalBadge, StatusPill, DurationBadge, SectionCard, Spinner, EmptyState } from '../components/ui/index.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Search, Download, Eye } from 'lucide-react';
+import { Search, Download, Eye, Trash2 } from 'lucide-react';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
@@ -24,6 +24,8 @@ export default function HistoryPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ month: '', year: String(currentYear), ncal: '', search: '' });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [deleting, setDeleting] = useState(false);
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -38,11 +40,28 @@ export default function HistoryPage() {
       if (filters.ncal) params.ncal = filters.ncal;
       const res = await api.getHistory(params);
       setData(res);
+      setSelectedIds([]); // reset selection when data changes
     } catch (e) { addToast(e.message, 'error'); }
     finally { setLoading(false); }
   }, [filters.month, filters.year, filters.ncal]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Yakin ingin menghapus ${selectedIds.length} incident status Done secara permanen? Data log terkait audit & pause akan ikut terhapus.`)) return;
+    
+    setDeleting(true);
+    try {
+      await api.deleteIncidents({ ids: selectedIds });
+      addToast(`${selectedIds.length} incident berhasil dihapus`, 'success');
+      load();
+    } catch (e) {
+      addToast(e.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filtered = filters.search
     ? data.filter(r => [r.case_no, r.site_name_manual, r.initial_problem, r.technician_name].join(' ').toLowerCase().includes(filters.search.toLowerCase()))
@@ -56,6 +75,11 @@ export default function HistoryPage() {
           <div className="page-subtitle">{filtered.length} record ditemukan</div>
         </div>
         <div className="page-actions">
+          {selectedIds.length > 0 && (
+            <button className="btn btn-danger btn-sm" onClick={handleDeleteSelected} disabled={deleting}>
+              <Trash2 size={13} /> {deleting ? 'Menghapus...' : `Hapus Terpilih (${selectedIds.length})`}
+            </button>
+          )}
           <button className="btn btn-ghost btn-sm" onClick={() => exportCSV(filtered)}><Download size={13} /> Export CSV</button>
         </div>
       </div>
@@ -89,6 +113,14 @@ export default function HistoryPage() {
             <table>
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                      checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                      onChange={e => setSelectedIds(e.target.checked ? filtered.map(r => r.id) : [])}
+                    />
+                  </th>
                   <th>Case No</th><th>NCAL</th><th>Site</th><th>ODP/BTS</th>
                   <th>Problem</th><th>Teknisi</th><th>Klasifikasi</th>
                   <th>Mulai</th><th>Selesai</th><th>Gross</th><th>Nett</th><th>Detail</th>
@@ -96,7 +128,18 @@ export default function HistoryPage() {
               </thead>
               <tbody>
                 {filtered.map(row => (
-                  <tr key={row.id}>
+                  <tr key={row.id} style={{ background: selectedIds.includes(row.id) ? 'rgba(var(--accent-rgb), 0.05)' : '' }}>
+                    <td style={{ textAlign: 'center' }}>
+                      <input 
+                        type="checkbox"
+                        style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                        checked={selectedIds.includes(row.id)}
+                        onChange={e => {
+                          if (e.target.checked) setSelectedIds(p => [...p, row.id]);
+                          else setSelectedIds(p => p.filter(id => id !== row.id));
+                        }}
+                      />
+                    </td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700 }}>{row.case_no}</td>
                     <td><NcalBadge value={row.ncal} /></td>
                     <td style={{ maxWidth: 150 }}>

@@ -7,15 +7,17 @@ import { Save, Send, Settings } from 'lucide-react';
 export default function EscalationSettingsPage() {
   const segments_raw = ['blue', 'yellow', 'orange', 'red', 'black'];
   const defaultTemplates = {
-    template_open_internal_blue: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {company}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\npic: {pic}`,
-    template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {company}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
-    template_open_internal_yellow: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {company}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
+    template_open_internal_blue: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\npic: {pic}`,
+    template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+    template_open_internal_yellow: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {brand}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
     template_open_vendor_yellow: `Maintenance Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nTanggal case : {date}\nAlamat Customer : {address}\nKoordinat customer : {koordinat}\nNama ODP : {odp}\nPower RX Onu : {power_rx}\nKabel : {kabel}\nTotal Panjang : {panjang_kabel}\nPIC : {pic}\nProblem : {problem}`,
-    template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {company}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+    template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
     template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
   };
   ['orange', 'red', 'black'].forEach(seg => {
-    defaultTemplates[`template_open_internal_${seg}`] = `N-CAL  : {ncal}\nNomor case : {case_no}\nODP : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+    const infraVar = seg === 'orange' ? '{odp}' : seg === 'red' ? '{odc}' : '{osc}/{pop}';
+    const infraLabel = seg === 'orange' ? 'Distribusi' : 'Distribusi';
+    defaultTemplates[`template_open_internal_${seg}`] = `N-CAL  : {ncal}\nNomor case : {case_no}\n${infraLabel} : ${infraVar}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
     defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
   });
 
@@ -80,6 +82,8 @@ export default function EscalationSettingsPage() {
       else if (ncal === 'BLUE') label = `🔵 ${ncal}`;
     }
 
+    // Infra mock values vary by segment for alias variables
+    const infraMock = ncal === 'RED' ? 'ODC PELABUHAN' : ncal === 'BLACK' ? 'POP SEMARANG' : 'ODP-SMG-01';
     const mock = {
       ncal: label,
       case_no: 'C260313-1234',
@@ -93,7 +97,13 @@ export default function EscalationSettingsPage() {
       date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
       address: 'Jl. Pemuda No. 1, Semarang',
       koordinat: '-6.9823, 110.4231',
-      odp: 'ODP-SMG-01',
+      odp: infraMock,
+      // Alias variables - same value as odp, named per segment convention
+      odc: infraMock,   // RED segment (ODC)
+      bts: infraMock,   // RED wireless (BTS)
+      pop: infraMock,   // BLACK segment (POP)
+      osc: infraMock,   // BLACK segment (OSC)
+      radio: infraMock, // ORANGE wireless (Radio)
       power_rx: '-28.5 dBm',
       support_level: 'Level 2',
       indikasi: 'Patchcord Rusak',
@@ -308,11 +318,17 @@ export default function EscalationSettingsPage() {
                 <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#facc15', marginBottom: 4 }}>💡 Variable Glossary</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 10px', fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
                   <div><b>{'{ncal}'}</b>: Segment + Emoji</div>
-                  <div><b>{'{odp}'}</b>: ODP / Radio / BTS</div>
+                  <div><b>{'{odp}'}</b>: Nama Distribusi (ODP/Radio)</div>
+                  <div><b>{'{odc}'}</b>: Alias {'{odp}'} untuk RED (ODC)</div>
+                  <div><b>{'{pop}'}</b>: Alias {'{odp}'} untuk BLACK (POP)</div>
+                  <div><b>{'{osc}'}</b>: Alias {'{odp}'} untuk BLACK (OSC)</div>
+                  <div><b>{'{bts}'}</b>: Alias {'{odp}'} untuk RED (BTS)</div>
                   <div><b>{'{brand}'}</b>: Brand / Site Name</div>
                   <div><b>{'{duration}'}</b>: Downtime duration</div>
                   <div><b>{'{time}'}</b>: Local time (HH:mm)</div>
                   <div><b>{'{date}'}</b>: Date (DD Month YYYY)</div>
+                  <div><b>{'{address}'}</b>: Alamat customer (master)</div>
+                  <div><b>{'{koordinat}'}</b>: Koordinat customer</div>
                 </div>
               </div>
             </div>

@@ -19,6 +19,13 @@ async function sendEscalation(incident, type) {
   const now = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
+  // Strip type prefix (e.g. "ODC: ", "ODP: ", "BTS: ") from infra entity names
+  // These prefixes are added in the UI for categorization but should not appear in notification
+  const stripInfraPrefix = (val) => {
+    if (!val) return val;
+    return val.replace(/^(ODP|ODC|BTS|POP|RADIO|OSC):\s*/i, '').trim();
+  };
+
   const replaceVars = (template, isClose=false, customOdp = null) => {
     let ncalLabel = incident.ncal || '';
     if (isClose) {
@@ -30,6 +37,9 @@ async function sendEscalation(incident, type) {
       else if (ncalLabel === 'YELLOW') ncalLabel = `🟡 ${ncalLabel}`;
       else if (ncalLabel === 'BLUE') ncalLabel = `🔵 ${ncalLabel}`;
     }
+
+    const rawOdp = customOdp || incident.odp_bts || '-';
+    const cleanOdp = stripInfraPrefix(rawOdp);
 
     return (template || '')
       .replace('{ncal}', ncalLabel)
@@ -43,8 +53,16 @@ async function sendEscalation(incident, type) {
       .replace('{time}', now)
       .replace('{date}', dateStr)
       .replace('{address}', incident.address || '-')
-      .replace('{koordinat}', incident.link_coverage || '-')
-      .replace('{odp}', customOdp || incident.odp_bts || '-')
+      .replace('{koordinat}', incident.koordinat || incident.link_coverage || '-')
+      .replace('{odp}', cleanOdp)
+      // Alias variables for segment-specific infra naming
+      // RED segment uses {odc}, BLACK segment uses {pop}/{ose}
+      .replace('{odc}', cleanOdp)
+      .replace('{bts}', cleanOdp)
+      .replace('{pop}', cleanOdp)
+      .replace('{ose}', cleanOdp)
+      .replace('{radio}', cleanOdp)
+      .replace('{osc}', cleanOdp)
       .replace('{power_rx}', incident.power_before || '-')
       .replace('{support_level}', incident.level_support || '-')
       .replace('{indikasi}', incident.indikasi || '-')
@@ -64,15 +82,18 @@ async function sendEscalation(incident, type) {
         };
 
         const defaultTemplates = {
-          template_open_internal_blue: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {company}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\npic: {pic}`,
-          template_open_internal_yellow: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {company}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
+          template_open_internal_blue: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\npic: {pic}`,
+          template_open_internal_yellow: `N-CAL  : {ncal}\nNomor case : {case_no}\nSite  : {brand}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
           template_open_vendor_yellow: `Maintenance Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nTanggal case : {date}\nAlamat Customer : {address}\nKoordinat customer : {koordinat}\nNama ODP : {odp}\nPower RX Onu : {power_rx}\nKabel : {kabel}\nTotal Panjang : {panjang_kabel}\nPIC : {pic}\nProblem : {problem}`,
-          template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {company}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
-          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {company}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
           template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
         };
+        // Segment-specific defaults matching user's customized templates
+        defaultTemplates['template_open_internal_orange'] = `N-CAL  : {ncal}\nNomor case : {case_no}\nDistribusi : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_red'] = `N-CAL  : {ncal}\nNomor case : {case_no}\nDistribusi : {odc}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_black'] = `N-CAL  : {ncal}\nNomor case : {case_no}\nDistribusi : {osc}/{pop}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
         ['orange', 'red', 'black'].forEach(seg => {
-          defaultTemplates[`template_open_internal_${seg}`] = `N-CAL  : {ncal}\nNomor case : {case_no}\nODP : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndikasi : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
           defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
         });
 
@@ -84,6 +105,8 @@ async function sendEscalation(incident, type) {
 
         let entities = [null];
         if (['ORANGE', 'RED', 'BLACK'].includes(incident.ncal) && incident.odp_bts) {
+           // Split multiple entities, each may have prefix like "ODC: ODC PELABUHAN"
+           // stripInfraPrefix is applied inside replaceVars so we pass raw values here
            entities = incident.odp_bts.split(', ').map(e => e.trim()).filter(Boolean);
         }
 
@@ -99,8 +122,8 @@ async function sendEscalation(incident, type) {
         const seg = (incident.ncal || 'yellow').toLowerCase();
         
         const defaultTemplates = {
-          template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {company}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
-          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {company}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_blue: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal}\nSite: {brand}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
           template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
         };
         ['orange', 'red', 'black'].forEach(s => {
@@ -136,7 +159,7 @@ function generateCaseNo() {
 
 // ─── GET /api/incidents — active ────────────────────────────────────────────
 router.get('/', authenticate, (req, res) => {
-  const rows = db.prepare(`
+  let query = `
     SELECT i.*, u.name AS technician_name,
            s.company_name, s.brand_site, s.grade, s.support_level as cust_support_level, s.customer_id as cust_id,
            c.klasifikasi, c.sub_klasifikasi
@@ -145,8 +168,17 @@ router.get('/', authenticate, (req, res) => {
     LEFT JOIN master_customer s ON i.customer_id = s.id
     LEFT JOIN master_classifications c ON i.classification_id = c.id
     WHERE i.status != 'done'
-    ORDER BY i.created_at DESC
-  `).all();
+  `;
+  const params = [];
+
+  if (req.user.role === 'technician') {
+    query += ' AND i.technician_id = ?';
+    params.push(req.user.id);
+  }
+
+  query += ' ORDER BY i.created_at DESC';
+
+  const rows = db.prepare(query).all(...params);
   res.json(rows);
 });
 
@@ -175,6 +207,32 @@ router.get('/history', authenticate, (req, res) => {
   res.json(rows);
 });
 
+// ─── Notifications API ──────────────────────────────────────────────────────
+router.get('/notifications', authenticate, (req, res) => {
+  let rows;
+  if (req.user.role === 'technician') {
+    rows = db.prepare(`
+      SELECT * FROM notifications 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC LIMIT 50
+    `).all(req.user.id);
+  } else {
+    // Admin/NOC/Manager see all staff-related updates
+    rows = db.prepare(`
+      SELECT * FROM notifications 
+      WHERE target_role IN ('noc', 'admin', 'manager', 'staff') 
+         OR user_id = ?
+      ORDER BY created_at DESC LIMIT 50
+    `).all(req.user.id);
+  }
+  res.json(rows);
+});
+
+router.put('/notifications/:id/read', authenticate, (req, res) => {
+  db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 // ─── GET /api/incidents/:id ─────────────────────────────────────────────────
 router.get('/:id', authenticate, (req, res) => {
   const row = db.prepare(`
@@ -197,14 +255,14 @@ router.get('/:id', authenticate, (req, res) => {
 // ─── POST /api/incidents — create ───────────────────────────────────────────
 router.post('/', authenticate, (req, res) => {
   try {
-    const { customer_id, ncal, odp_bts, level_support, initial_problem, power_before, indikasi, kabel, panjang_kabel, pic, case_no, start_time, sla, customer_terdampak } = req.body;
+    const { customer_id, ncal, odp_bts, level_support, initial_problem, power_before, indikasi, kabel, panjang_kabel, pic, case_no, start_time, sla, customer_terdampak, koordinat, technician_id } = req.body;
     if (!case_no || !case_no.trim()) return res.status(400).json({ error: 'Nomor Case wajib diisi!' });
     const new_start_time = start_time || new Date().toISOString();
 
     const result = db.prepare(`
-      INSERT INTO incidents (case_no, customer_id, ncal, odp_bts, level_support, initial_problem, power_before, indikasi, kabel, panjang_kabel, pic, customer_terdampak, status, start_time, created_by, updated_at, sla)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, datetime('now'), ?)
-    `).run(case_no.trim(), customer_id || null, ncal || 'YELLOW', odp_bts || null, level_support || null, initial_problem || null, power_before || null, indikasi || null, kabel || null, panjang_kabel || null, pic || null, customer_terdampak || null, new_start_time, req.user.id, sla || null);
+      INSERT INTO incidents (case_no, customer_id, ncal, odp_bts, level_support, initial_problem, power_before, indikasi, kabel, panjang_kabel, pic, customer_terdampak, koordinat, status, start_time, created_by, updated_at, sla, technician_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, datetime('now'), ?, ?)
+    `).run(case_no.trim(), customer_id || null, ncal || 'YELLOW', odp_bts || null, level_support || null, initial_problem || null, power_before || null, indikasi || null, kabel || null, panjang_kabel || null, pic || null, customer_terdampak || null, koordinat || null, new_start_time, req.user.id, sla || null, technician_id || null);
 
     const incident = db.prepare(`SELECT i.*, s.company_name, s.brand_site, s.address, s.link_coverage FROM incidents i LEFT JOIN master_customer s ON i.customer_id = s.id WHERE i.id = ?`).get(result.lastInsertRowid);
 
@@ -219,6 +277,14 @@ router.post('/', authenticate, (req, res) => {
       console.error('Non-blocking escalation error:', err);
     });
 
+    // ─── Internal Notifications ───
+    if (technician_id) {
+      db.prepare(`
+        INSERT INTO notifications (user_id, incident_id, type, message)
+        VALUES (?, ?, 'ASSIGNMENT', ?)
+      `).run(technician_id, incident.id, `Anda ditugaskan ke Case #${incident.case_no}`);
+    }
+
     res.status(201).json(incident);
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -231,7 +297,7 @@ router.post('/', authenticate, (req, res) => {
 
 // ─── PUT /api/incidents/:id — update fields ─────────────────────────────────
 router.put('/:id', authenticate, (req, res) => {
-  const { technician_id, root_cause, last_action, power_before, power_after, classification_id, status, initial_problem, ncal, odp_bts, level_support, customer_id, indikasi, kabel, panjang_kabel, pic, customer_terdampak, sla } = req.body;
+  const { technician_id, root_cause, last_action, power_before, power_after, classification_id, status, initial_problem, ncal, odp_bts, level_support, customer_id, indikasi, kabel, panjang_kabel, pic, customer_terdampak, sla, koordinat } = req.body;
   const old = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
   if (!old) return res.status(404).json({ error: 'Not found' });
 
@@ -255,6 +321,7 @@ router.put('/:id', authenticate, (req, res) => {
       level_support = COALESCE(?, level_support),
       customer_id = COALESCE(?, customer_id),
       sla = COALESCE(?, sla),
+      koordinat = COALESCE(?, koordinat),
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
@@ -276,12 +343,40 @@ router.put('/:id', authenticate, (req, res) => {
     level_support ?? null,
     customer_id ?? null,
     sla ?? null,
+    koordinat ?? null,
     req.params.id
   );
 
+  const changes = [];
+  if (technician_id && technician_id !== old.technician_id) changes.push(`Teknisi diubah`);
+  if (root_cause) changes.push(`Penyebab: ${root_cause}`);
+  if (last_action) changes.push(`Action Terakhir: ${last_action}`);
+  if (power_before && power_before !== old.power_before) changes.push(`Power Before: ${power_before}`);
+  if (power_after && power_after !== old.power_after) changes.push(`Power After: ${power_after}`);
+  if (classification_id && classification_id !== old.classification_id) changes.push(`Klasifikasi diubah`);
+  
+  const detailStr = changes.length > 0 ? changes.join(' | ') : 'Update data (tidak ada perubahan signifikan)';
+
   db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'UPDATE', ?)").run(
-    req.params.id, req.user.id, JSON.stringify(req.body)
+    req.params.id, req.user.id, detailStr
   );
+
+  // ─── Internal Notifications ───
+  // 1. Assignment Notification (to Technician)
+  if (technician_id && technician_id != old.technician_id) {
+    db.prepare(`
+      INSERT INTO notifications (user_id, incident_id, type, message)
+      VALUES (?, ?, 'ASSIGNMENT', ?)
+    `).run(technician_id, req.params.id, `Anda ditugaskan ke Case #${old.case_no}`);
+  }
+
+  // 2. Update Notification (to Staff: NOC/Admin/Manager)
+  if (req.user.role === 'technician' && changes.length > 0) {
+    db.prepare(`
+      INSERT INTO notifications (target_role, incident_id, type, message)
+      VALUES ('staff', ?, 'TECH_UPDATE', ?)
+    `).run(req.params.id, `Teknisi ${req.user.name} memperbarui Case #${old.case_no}: ${detailStr}`);
+  }
 
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
 });
@@ -366,5 +461,32 @@ router.post('/:id/close', authenticate, (req, res) => {
   sendEscalation(updated, 'close');
   res.json(updated);
 });
+
+// ─── DELETE /api/incidents/batch ──────────────────────────────────────────
+router.delete('/batch', authenticate, (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'No IDs provided' });
+  }
+
+  try {
+    const runBatch = db.transaction((incidentIds) => {
+      // Delete pause_logs and audit_logs first to avoid foreign key errors if ON DELETE CASCADE is not perfectly configured
+      const placeholders = incidentIds.map(() => '?').join(',');
+      db.prepare(`DELETE FROM pause_logs WHERE incident_id IN (${placeholders})`).run(...incidentIds);
+      db.prepare(`DELETE FROM audit_logs WHERE incident_id IN (${placeholders})`).run(...incidentIds);
+      // Delete incidents
+      const result = db.prepare(`DELETE FROM incidents WHERE id IN (${placeholders})`).run(...incidentIds);
+      return result;
+    });
+    
+    const result = runBatch(ids);
+    res.json({ success: true, deleted: result.changes });
+  } catch (err) {
+    console.error('Batch delete error:', err);
+    res.status(500).json({ error: 'Failed to delete incidents' });
+  }
+});
+
 
 export default router;

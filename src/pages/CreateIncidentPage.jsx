@@ -13,7 +13,7 @@ export default function CreateIncidentPage() {
     case_no: '', start_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
     customer_id: '', site_name_manual: '', ncal: 'YELLOW',
     odp_bts: '', level_support: '2', sla: '',
-    initial_problem: '', indikasi: '', power_before: '', kabel: '', panjang_kabel: '', pic: '', customer_terdampak: '',
+    initial_problem: '', indikasi: '', power_before: '', kabel: '', panjang_kabel: '', pic: '', customer_terdampak: '', koordinat: '', address_preview: '',
     distribusi_manual: ''
   });
   const [customers, setCustomers] = useState([]);
@@ -160,6 +160,7 @@ export default function CreateIncidentPage() {
                              set('site_name_manual', c.brand_site || c.company_name);
                              set('sla', c.sla || '');
                              set('level_support', c.support_level || '');
+                             set('address_preview', c.address || '');
                              setShowDropdown(false);
                            }}
                          >
@@ -345,6 +346,16 @@ export default function CreateIncidentPage() {
             {form.ncal === 'YELLOW' && (
               <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--warning)', borderRadius: 8, padding: '1rem', marginTop: '0.5rem' }}>
                 <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--warning)', marginBottom: '0.75rem' }}>⚠️ Data Khusus Maintenance Order (Vendor)</div>
+                <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Alamat Customer</label>
+                    <textarea className="form-control" rows={2} placeholder="Otomatis terisi dari data master..." value={form.address_preview} disabled />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Koordinat Customer (Manual)</label>
+                    <input type="text" className="form-control" placeholder="Isi - jika tidak ada koordinat..." value={form.koordinat} onChange={e => set('koordinat', e.target.value)} />
+                  </div>
+                </div>
                 <div className="form-grid form-grid-3">
                   <div className="form-group">
                     <label className="form-label">Power RX Onu</label>

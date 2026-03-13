@@ -88,23 +88,23 @@ router.delete('/classifications/:id', authenticate, authorize('admin'), (req, re
 
 // ── USERS ─────────────────────────────────────────────────────────────────────
 router.get('/users', authenticate, authorize('admin', 'manager', 'noc'), (req, res) => {
-  res.json(db.prepare('SELECT id, username, role, name, email, is_active, created_at FROM users ORDER BY name').all());
+  res.json(db.prepare('SELECT id, username, role, name, email, employee_id, is_active, created_at FROM users ORDER BY name').all());
 });
 router.post('/users', authenticate, authorize('admin'), (req, res) => {
-  const { username, password, role, name, email } = req.body;
+  const { username, password, role, name, email, employee_id } = req.body;
   const hash = bcrypt.hashSync(password, 10);
-  const r = db.prepare('INSERT INTO users (username, password_hash, role, name, email) VALUES (?, ?, ?, ?, ?)').run(username, hash, role || 'technician', name, email || null);
-  const user = db.prepare('SELECT id, username, role, name, email, is_active FROM users WHERE id = ?').get(r.lastInsertRowid);
+  const r = db.prepare('INSERT INTO users (username, password_hash, role, name, email, employee_id) VALUES (?, ?, ?, ?, ?, ?)').run(username, hash, role || 'technician', name, email || null, employee_id || null);
+  const user = db.prepare('SELECT id, username, role, name, email, employee_id, is_active FROM users WHERE id = ?').get(r.lastInsertRowid);
   res.status(201).json(user);
 });
 router.put('/users/:id', authenticate, authorize('admin'), (req, res) => {
-  const { role, name, email, is_active, password } = req.body;
+  const { role, name, email, is_active, password, employee_id } = req.body;
   if (password) {
     const hash = bcrypt.hashSync(password, 10);
     db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, req.params.id);
   }
-  db.prepare('UPDATE users SET role = COALESCE(?, role), name = COALESCE(?, name), email = COALESCE(?, email), is_active = COALESCE(?, is_active) WHERE id = ?').run(role ?? null, name ?? null, email ?? null, is_active ?? null, req.params.id);
-  res.json(db.prepare('SELECT id, username, role, name, email, is_active FROM users WHERE id = ?').get(req.params.id));
+  db.prepare('UPDATE users SET role = COALESCE(?, role), name = COALESCE(?, name), email = COALESCE(?, email), employee_id = COALESCE(?, employee_id), is_active = COALESCE(?, is_active) WHERE id = ?').run(role ?? null, name ?? null, email ?? null, employee_id ?? null, is_active ?? null, req.params.id);
+  res.json(db.prepare('SELECT id, username, role, name, email, employee_id, is_active FROM users WHERE id = ?').get(req.params.id));
 });
 router.delete('/users/:id', authenticate, authorize('admin'), (req, res) => {
   db.prepare('UPDATE users SET is_active = 0 WHERE id = ?').run(req.params.id);

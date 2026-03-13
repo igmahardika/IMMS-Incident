@@ -15,7 +15,7 @@ import RootCausePage from './pages/RootCausePage.jsx';
 import { MasterCustomerPage, MasterClassificationPage, UserManagementPage, MasterTechnicalSupportPage, MasterDistribusiPage } from './pages/MasterDataPages.jsx';
 import EscalationSettingsPage from './pages/EscalationSettingsPage.jsx';
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
   if (loading) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
@@ -23,6 +23,11 @@ function ProtectedRoute({ children }) {
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
+  
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
   return <AppLayout>{children}</AppLayout>;
 }
 
@@ -35,18 +40,18 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/incidents" element={<ProtectedRoute><CurrentTroublePage /></ProtectedRoute>} />
-            <Route path="/incidents/create" element={<ProtectedRoute><CreateIncidentPage /></ProtectedRoute>} />
+            <Route path="/incidents/create" element={<ProtectedRoute allowedRoles={['admin', 'noc']}><CreateIncidentPage /></ProtectedRoute>} />
             <Route path="/incidents/:id" element={<ProtectedRoute><IncidentDetailPage /></ProtectedRoute>} />
-            <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-            <Route path="/history/monthly" element={<ProtectedRoute><MonthlyViewPage /></ProtectedRoute>} />
-            <Route path="/analytics/duration" element={<ProtectedRoute><DurationReportPage /></ProtectedRoute>} />
-            <Route path="/analytics/root-cause" element={<ProtectedRoute><RootCausePage /></ProtectedRoute>} />
-            <Route path="/master/customers" element={<ProtectedRoute><MasterCustomerPage /></ProtectedRoute>} />
-            <Route path="/master/classifications" element={<ProtectedRoute><MasterClassificationPage /></ProtectedRoute>} />
-            <Route path="/master/technical-support" element={<ProtectedRoute><MasterTechnicalSupportPage /></ProtectedRoute>} />
-            <Route path="/master/distribusi" element={<ProtectedRoute><MasterDistribusiPage /></ProtectedRoute>} />
-            <Route path="/master/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />
-            <Route path="/settings/escalation" element={<ProtectedRoute><EscalationSettingsPage /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><HistoryPage /></ProtectedRoute>} />
+            <Route path="/history/monthly" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><MonthlyViewPage /></ProtectedRoute>} />
+            <Route path="/analytics/duration" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><DurationReportPage /></ProtectedRoute>} />
+            <Route path="/analytics/root-cause" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><RootCausePage /></ProtectedRoute>} />
+            <Route path="/master/customers" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterCustomerPage /></ProtectedRoute>} />
+            <Route path="/master/classifications" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterClassificationPage /></ProtectedRoute>} />
+            <Route path="/master/technical-support" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterTechnicalSupportPage /></ProtectedRoute>} />
+            <Route path="/master/distribusi" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterDistribusiPage /></ProtectedRoute>} />
+            <Route path="/master/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
+            <Route path="/settings/escalation" element={<ProtectedRoute allowedRoles={['admin']}><EscalationSettingsPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ToastProvider>

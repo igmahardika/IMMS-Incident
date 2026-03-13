@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
 import { NcalBadge, SectionCard, Spinner } from '../components/ui/index.jsx';
@@ -6,6 +6,7 @@ import { AlertTriangle, CheckCircle, Activity, TrendingUp, Plus, Clock } from 'l
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const NCAL_COLORS = { BLACK: '#a78bfa', RED: '#f87171', ORANGE: '#fb923c', YELLOW: '#fbbf24', BLUE: '#60a5fa' };
+const CURRENT_YEAR = new Date().getFullYear();
 
 export default function DashboardPage() {
   const [data, setData] = useState(null);
@@ -13,17 +14,15 @@ export default function DashboardPage() {
   const [duration, setDuration] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const year = new Date().getFullYear();
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     Promise.all([
       api.getDashboard(),
-      api.getSla({ year }),
-      api.getDuration({ year }),
+      api.getSla({ year: CURRENT_YEAR }),
+      api.getDuration({ year: CURRENT_YEAR }),
     ]).then(([d, s, dur]) => {
       setData(d);
       setSla(s);
-      // Transform duration data for chart
       const months = {};
       dur.forEach(r => {
         const mo = parseInt(r.month, 10);
@@ -32,7 +31,13 @@ export default function DashboardPage() {
       });
       setDuration(Object.values(months).sort((a, b) => MONTH_NAMES.indexOf(a.month) - MONTH_NAMES.indexOf(b.month)));
     }).catch(console.error).finally(() => setLoading(false));
-  }, [year]);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    const t = setInterval(loadData, 30000); // 30s for faster debug
+    return () => clearInterval(t);
+  }, [loadData]);
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div>;
 
@@ -76,7 +81,7 @@ export default function DashboardPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         {/* Duration Trend Chart */}
-        <SectionCard title="Tren Durasi Penanganan (Menit)" subtitle={`Tahun ${year}`} style={{ gridColumn: '1 / -1' }}>
+        <SectionCard title="Tren Durasi Penanganan (Menit)" subtitle={`Tahun ${CURRENT_YEAR}`} style={{ gridColumn: '1 / -1' }}>
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={duration} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>

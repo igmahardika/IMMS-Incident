@@ -34,6 +34,9 @@ export const api = {
   pauseIncident: (id, body) => request(`/incidents/${id}/pause`, { method: 'POST', body: JSON.stringify(body) }),
   resumeIncident: (id) => request(`/incidents/${id}/resume`, { method: 'POST' }),
   closeIncident: (id, body) => request(`/incidents/${id}/close`, { method: 'POST', body: JSON.stringify(body || {}) }),
+  deleteIncidents: (body) => request('/incidents/batch', { method: 'DELETE', body: JSON.stringify(body) }),
+  getNotifications: () => request('/incidents/notifications'),
+  markNotificationRead: (id) => request(`/incidents/notifications/${id}/read`, { method: 'PUT' }),
 
   // Analytics
   getDashboard: () => request('/analytics/dashboard'),

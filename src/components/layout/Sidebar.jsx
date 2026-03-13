@@ -11,44 +11,44 @@ const menuGroups = [
   {
     label: 'Monitoring',
     items: [
-      { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'noc', 'technician'] },
     ]
   },
   {
     label: 'Task & Incident',
     items: [
-      { to: '/incidents', icon: AlertTriangle, label: 'Current Trouble' },
-      { to: '/incidents/create', icon: PlusCircle, label: 'Create Incident' },
+      { to: '/incidents', icon: AlertTriangle, label: 'Current Trouble', roles: ['admin', 'manager', 'noc', 'technician'] },
+      { to: '/incidents/create', icon: PlusCircle, label: 'Create Incident', roles: ['admin', 'noc'] },
     ]
   },
   {
     label: 'History & Archive',
     items: [
-      { to: '/history', icon: History, label: 'Done Incidents' },
-      { to: '/history/monthly', icon: ListChecks, label: 'Monthly View' },
+      { to: '/history', icon: History, label: 'Done Incidents', roles: ['admin', 'manager', 'noc'] },
+      { to: '/history/monthly', icon: ListChecks, label: 'Monthly View', roles: ['admin', 'manager', 'noc'] },
     ]
   },
   {
     label: 'Analytics',
     items: [
-      { to: '/analytics/duration', icon: BarChart2, label: 'Duration Report' },
-      { to: '/analytics/root-cause', icon: TrendingUp, label: 'Root Cause' },
+      { to: '/analytics/duration', icon: BarChart2, label: 'Duration Report', roles: ['admin', 'manager', 'noc'] },
+      { to: '/analytics/root-cause', icon: TrendingUp, label: 'Root Cause', roles: ['admin', 'manager', 'noc'] },
     ]
   },
   {
     label: 'Master Data',
     items: [
-      { to: '/master/customers', icon: Database, label: 'Master Customer' },
-      { to: '/master/classifications', icon: Tag, label: 'Klasifikasi' },
-      { to: '/master/technical-support', icon: Users, label: 'Technical Support' },
-      { to: '/master/distribusi', icon: Network, label: 'Distribusi Tree' },
-      { to: '/master/users', icon: Users, label: 'User Management' },
+      { to: '/master/customers', icon: Database, label: 'Master Customer', roles: ['admin', 'manager'] },
+      { to: '/master/classifications', icon: Tag, label: 'Klasifikasi', roles: ['admin', 'manager'] },
+      { to: '/master/technical-support', icon: Users, label: 'Personel Data', roles: ['admin', 'manager'] },
+      { to: '/master/distribusi', icon: Network, label: 'Distribusi Tree', roles: ['admin', 'manager'] },
+      { to: '/master/users', icon: Users, label: 'User Management', roles: ['admin'] },
     ]
   },
   {
     label: 'Settings',
     items: [
-      { to: '/settings/escalation', icon: Settings, label: 'Escalation' },
+      { to: '/settings/escalation', icon: Settings, label: 'Escalation', roles: ['admin'] },
     ]
   },
 ];
@@ -59,6 +59,14 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   const handleLogout = () => { logout(); navigate('/login'); };
+
+  // Filter menu based on roles
+  const filteredGroups = menuGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.roles || item.roles.includes(user?.role))
+    }))
+    .filter(group => group.items.length > 0);
 
   return (
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
@@ -77,7 +85,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="sidebar-nav">
-        {menuGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <div key={group.label}>
             <div className="sidebar-section">
               <span className="sidebar-section-label">{group.label}</span>

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, formatDateTime, formatDuration } from '../utils/api.js';
 import { NcalBadge, StatusPill, DurationBadge, Spinner } from '../components/ui/index.jsx';
-import { ArrowLeft, Clock, Pause, Activity } from 'lucide-react';
+import { ArrowLeft, Clock, Pause, Activity, Edit2 } from 'lucide-react';
 
 export default function IncidentDetailPage() {
   const { id } = useParams();
@@ -152,6 +152,47 @@ export default function IncidentDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Update Logs (Action Terakhir) */}
+        {(() => {
+          const actionLogs = audit_logs
+            .filter(log => log.action === 'UPDATE' && log.details.includes('Action Terakhir:'))
+            .map(log => {
+              const match = log.details.match(/Action Terakhir:\s*([^|]+)/);
+              return {
+                id: log.id,
+                time: log.timestamp,
+                user: log.user_name,
+                text: match ? match[1].trim() : ''
+              };
+            })
+            .filter(log => log.text)
+            .sort((a, b) => new Date(a.time) - new Date(b.time)); // Chronological order 1, 2, 3
+
+          if (actionLogs.length === 0) return null;
+
+          return (
+            <div className="card" style={{ gridColumn: '1 / -1', marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                <Edit2 size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: 'var(--accent)' }} />
+                Update Resolusi (Action Terakhir)
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {actionLogs.map((log, index) => (
+                  <div key={log.id} style={{ display: 'flex', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '0.75rem 1rem', borderRadius: 8, borderLeft: '3px solid var(--accent)' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '1.2rem', minWidth: '1.5rem' }}>{index + 1}.</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>{log.text}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                        Oleh <strong>{log.user || '—'}</strong> pada {formatDateTime(log.time)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Audit Log */}
         <div className="card" style={{ gridColumn: '1 / -1' }}>

@@ -24,8 +24,12 @@ db.exec(`
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+`);
 
-  CREATE TABLE IF NOT EXISTS master_customer (
+try { db.exec("ALTER TABLE users ADD COLUMN employee_id TEXT;"); } catch(e) {}
+
+const tables = [
+  `CREATE TABLE IF NOT EXISTS master_customer (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id TEXT UNIQUE NOT NULL,
     service_id TEXT UNIQUE NOT NULL,
@@ -39,25 +43,22 @@ db.exec(`
     sla TEXT,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS master_classifications (
+  )`,
+  `CREATE TABLE IF NOT EXISTS master_classifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     klasifikasi TEXT NOT NULL,
     sub_klasifikasi TEXT NOT NULL,
     is_active INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS master_technical_support (
+  )`,
+  `CREATE TABLE IF NOT EXISTS master_technical_support (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     no TEXT,
     name TEXT NOT NULL,
     unit TEXT NOT NULL,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS master_distribusi (
+  )`,
+  `CREATE TABLE IF NOT EXISTS master_distribusi (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
     level_1 TEXT NOT NULL,
@@ -66,9 +67,8 @@ db.exec(`
     level_4 TEXT,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS incidents (
+  )`,
+  `CREATE TABLE IF NOT EXISTS incidents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     case_no TEXT UNIQUE NOT NULL,
     customer_id INTEGER REFERENCES master_customer(id),
@@ -97,9 +97,8 @@ db.exec(`
     created_by INTEGER REFERENCES users(id),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS pause_logs (
+  )`,
+  `CREATE TABLE IF NOT EXISTS pause_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     incident_id INTEGER NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
     pause_start TEXT NOT NULL,
@@ -107,18 +106,26 @@ db.exec(`
     reason TEXT,
     duration_seconds INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS audit_logs (
+  )`,
+  `CREATE TABLE IF NOT EXISTS audit_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     incident_id INTEGER REFERENCES incidents(id),
     user_id INTEGER REFERENCES users(id),
     action TEXT NOT NULL,
     details TEXT,
     timestamp TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS escalation_config (
+  )`,
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    target_role TEXT,
+    incident_id INTEGER REFERENCES incidents(id),
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS escalation_config (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL DEFAULT 'telegram',
     webhook_url TEXT,
@@ -129,8 +136,16 @@ db.exec(`
     template_close TEXT,
     template_close_vendor TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-`);
+  )`
+];
+
+tables.forEach(sql => {
+  try {
+    db.exec(sql);
+  } catch (err) {
+    console.error(`Error creating table: ${err.message}`);
+  }
+});
 
 try { db.exec("ALTER TABLE escalation_config ADD COLUMN webhook_url_vendor TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE escalation_config ADD COLUMN template_open_vendor TEXT;"); } catch(e) {}
@@ -143,6 +158,7 @@ try { db.exec("ALTER TABLE incidents ADD COLUMN indikasi TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE master_customer ADD COLUMN sla TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN sla TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN customer_terdampak TEXT;"); } catch(e) {}
+try { db.exec("ALTER TABLE incidents ADD COLUMN koordinat TEXT;"); } catch(e) {}
 
 // Segment-specific templates migration
 const segments = ['blue', 'yellow', 'orange', 'red', 'black'];
