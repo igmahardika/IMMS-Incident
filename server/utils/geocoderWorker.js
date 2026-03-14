@@ -20,7 +20,7 @@ export async function startGeocoderWorker() {
         FROM master_customer 
         WHERE (latitude IS NULL OR latitude = 0 OR city IS NULL OR city = '' OR city = 'Unknown') 
         AND address IS NOT NULL AND address != ''
-        LIMIT 20
+        LIMIT 50
       `).all();
 
       if (targets.length > 0) {
@@ -32,19 +32,21 @@ export async function startGeocoderWorker() {
               .run(coords.lat, coords.lon, coords.city, target.id);
             console.log(`   ✅ Synced: ${target.brand_site || target.company_name} (${coords.city})`);
           } else {
-            // Mark as failed to avoid retrying indefinitely (optional: can use a specific 'failed' value or retry later)
-            // For now, we just skip it in the next loop by not updating it.
+            // Mark as failed to avoid retrying indefinitely
+            // We'll set coordinates to 0.00001 to mark as "attempted but failed" 
+            // so the query doesn't pick it up again immediately
+            db.prepare('UPDATE master_customer SET latitude = 0.00001, longitude = 0.00001 WHERE id = ?').run(target.id);
           }
-          // Small delay to be polite to the API
-          await new Promise(r => setTimeout(r, 200));
+          // Small delay to be polite
+          await new Promise(r => setTimeout(r, 100));
         }
       }
     } catch (error) {
       console.error('📡 Geocoder Worker Error:', error.message);
     }
 
-    // Run again in 30 seconds
-    setTimeout(processQueue, 30000);
+    // Run again in 5 seconds
+    setTimeout(processQueue, 5000);
   };
 
   processQueue();
