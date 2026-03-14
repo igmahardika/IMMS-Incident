@@ -36,8 +36,18 @@ router.get('/sla', authenticate, (req, res) => {
       i.ncal,
       COUNT(*) AS total_cases,
       AVG(i.duration_nett_seconds) AS avg_nett_seconds,
-      SUM(CASE WHEN i.duration_nett_seconds <= 240 * 60 THEN 1 ELSE 0 END) AS sla_met,
-      240 AS sla_target_minutes
+      SUM(CASE 
+        WHEN i.ncal = 'BLACK' AND i.duration_nett_seconds <= 120 * 60 THEN 1
+        WHEN i.ncal = 'BLUE' AND i.duration_nett_seconds <= 360 * 60 THEN 1
+        WHEN i.ncal IN ('RED', 'ORANGE', 'YELLOW') AND i.duration_nett_seconds <= 240 * 60 THEN 1
+        WHEN i.ncal NOT IN ('BLACK', 'BLUE', 'RED', 'ORANGE', 'YELLOW') AND i.duration_nett_seconds <= 240 * 60 THEN 1
+        ELSE 0 
+      END) AS sla_met,
+      CASE 
+        WHEN i.ncal = 'BLACK' THEN 120
+        WHEN i.ncal = 'BLUE' THEN 360
+        ELSE 240
+      END AS sla_target_minutes
     FROM incidents i
     WHERE ${where}
     GROUP BY i.ncal

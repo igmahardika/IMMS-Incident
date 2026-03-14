@@ -209,4 +209,26 @@ router.delete('/distribusi/:id', authenticate, authorize('admin'), (req, res) =>
   res.json({ success: true });
 });
 
+// ── MASTER ACTIONS (HANDLING) ────────────────────────────────────────────────
+router.get('/actions', authenticate, (req, res) => {
+  res.json(db.prepare('SELECT * FROM master_actions WHERE is_active = 1 ORDER BY name').all());
+});
+
+router.post('/actions', authenticate, authorize('admin', 'manager'), (req, res) => {
+  const { name } = req.body;
+  const r = db.prepare('INSERT INTO master_actions (name) VALUES (?)').run(name);
+  res.status(201).json(db.prepare('SELECT * FROM master_actions WHERE id = ?').get(r.lastInsertRowid));
+});
+
+router.put('/actions/:id', authenticate, authorize('admin', 'manager'), (req, res) => {
+  const { name, is_active } = req.body;
+  db.prepare('UPDATE master_actions SET name = COALESCE(?, name), is_active = COALESCE(?, is_active) WHERE id = ?').run(name ?? null, is_active ?? null, req.params.id);
+  res.json(db.prepare('SELECT * FROM master_actions WHERE id = ?').get(req.params.id));
+});
+
+router.delete('/actions/:id', authenticate, authorize('admin'), (req, res) => {
+  db.prepare('UPDATE master_actions SET is_active = 0 WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 export default router;

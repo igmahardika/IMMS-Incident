@@ -48,7 +48,7 @@ async function sendEscalation(incident, type) {
 
     return (template || '')
       .replace('{ncal}', ncalLabel)
-      .replace('{level}', level)
+      .replace('{level}', String(level))
       .replace('{case_no}', incident.case_no || '')
       .replace('{company}', incident.company_name || '')
       .replace('{brand}', incident.brand_site || '')
@@ -88,19 +88,19 @@ async function sendEscalation(incident, type) {
         };
 
         const defaultTemplates = {
-          template_open_internal_blue: `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\npic: {pic}`,
-          template_open_internal_yellow: `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\npic: {pic}`,
+          template_open_internal_blue: `N-CAL : {ncal} - Level {level}\nNomor Case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nPIC: {pic}`,
+          template_open_internal_yellow: `N-CAL : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nStatus Link  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nPIC: {pic}`,
           template_open_vendor_yellow: `Maintenance Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nTanggal case : {date}\nAlamat Customer : {address}\nKoordinat customer : {koordinat}\nNama ODP : {odp}\nPower RX Onu : {power_rx}\nKabel : {kabel}\nTotal Panjang : {panjang_kabel}\nPIC : {pic}\nProblem : {problem}`,
           template_close_internal_blue: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
-          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nStatus Link  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
+          template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nStatus Link : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`,
           template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nNomor case : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
         };
         // Segment-specific defaults matching user's customized templates
-        defaultTemplates['template_open_internal_orange'] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nDistribusi : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
-        defaultTemplates['template_open_internal_red'] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nDistribusi : {odc}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
-        defaultTemplates['template_open_internal_black'] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nDistribusi : {osc}/{pop}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_orange'] = `N-CAL : {ncal} - Level {level}\nNomor case : {case_no}\nODP : {odp}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_red'] = `N-CAL : {ncal} - Level {level}\nNomor case : {case_no}\nODC : {odc}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
+        defaultTemplates['template_open_internal_black'] = `N-CAL : {ncal} - Level {level}\nNomor case : {case_no}\nPOP/OSC : {pop}\nStatus Link  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nWaktu Down : {time}\nCustomer Terdampak :\n{customer_terdampak}`;
         ['orange', 'red', 'black'].forEach(seg => {
-          defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal} - Level {level}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
+          defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal} - Level {level}\nInfra : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nSelesai: {time}`;
         });
 
         const seg = (incident.ncal || 'yellow').toLowerCase();
@@ -168,7 +168,16 @@ router.get('/', authenticate, (req, res) => {
   let query = `
     SELECT i.*, u.name AS technician_name,
            s.company_name, s.brand_site, s.grade, s.support_level as cust_support_level, s.customer_id as cust_id,
-           c.klasifikasi, c.sub_klasifikasi
+           c.klasifikasi, c.sub_klasifikasi,
+           (
+             SELECT COUNT(*) FROM incidents 
+             WHERE id != i.id 
+             AND created_at >= datetime('now', '-24 hours')
+             AND (
+               (customer_id IS NOT NULL AND customer_id = i.customer_id)
+               OR (customer_id IS NULL AND odp_bts IS NOT NULL AND odp_bts = i.odp_bts)
+             )
+           ) as recurring_count
     FROM incidents i
     LEFT JOIN users u ON i.technician_id = u.id
     LEFT JOIN master_customer s ON i.customer_id = s.id
@@ -332,12 +341,12 @@ router.put('/:id', authenticate, (req, res) => {
     WHERE id = ?
   `).run(
     technician_id || null,
-    root_cause ?? null,
-    last_action ?? null,
+    root_cause || null,
+    last_action || null,
     power_before ?? null,
     power_after ?? null,
     indikasi ?? null,
-    kabel ?? null,
+    kabel || null,
     panjang_kabel ?? null,
     pic ?? null,
     customer_terdampak ?? null,
@@ -442,7 +451,7 @@ router.post('/:id/resume', authenticate, (req, res) => {
 
 // ─── POST /api/incidents/:id/close ──────────────────────────────────────────
 router.post('/:id/close', authenticate, (req, res) => {
-  const { waktu_online } = req.body || {};
+  const { waktu_online, root_cause, last_action, classification_id } = req.body || {};
   const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
   if (!incident) return res.status(404).json({ error: 'Not found' });
 
@@ -455,17 +464,71 @@ router.post('/:id/close', authenticate, (req, res) => {
 
   db.prepare(`
     UPDATE incidents SET
-      status = 'done', end_time = ?,
-      duration_gross_seconds = ?, duration_nett_seconds = ?,
+      status = 'done', 
+      end_time = ?,
+      duration_gross_seconds = ?, 
+      duration_nett_seconds = ?,
+      root_cause = COALESCE(?, root_cause),
+      last_action = COALESCE(?, last_action),
+      classification_id = COALESCE(?, classification_id),
       updated_at = datetime('now')
     WHERE id = ?
-  `).run(endT.toISOString(), grossSec, nettSec, req.params.id);
+  `).run(
+    endT.toISOString(), 
+    grossSec, 
+    nettSec, 
+    root_cause || null, 
+    last_action || null, 
+    classification_id || null, 
+    req.params.id
+  );
 
-  const updated = db.prepare(`SELECT i.*, s.company_name, s.brand_site FROM incidents i LEFT JOIN master_customer s ON i.customer_id = s.id WHERE i.id = ?`).get(req.params.id);
-  db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'CLOSE', ?)").run(req.params.id, req.user.id, `Closed. Gross: ${grossSec}s, Nett: ${nettSec}s`);
+  const updated = db.prepare(`
+    SELECT i.*, s.company_name, s.brand_site 
+    FROM incidents i 
+    LEFT JOIN master_customer s ON i.customer_id = s.id 
+    WHERE i.id = ?
+  `).get(req.params.id);
+  
+  db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'CLOSE', ?)").run(
+    req.params.id, 
+    req.user.id, 
+    `Closed. Gross: ${grossSec}s, Nett: ${nettSec}s`
+  );
 
   sendEscalation(updated, 'close');
   res.json(updated);
+});
+
+// ─── GET /api/incidents/:id/recurring ───────────────────────────────────────
+router.get('/:id/recurring', authenticate, (req, res) => {
+  const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+  if (!incident) return res.status(404).json({ error: 'Not found' });
+
+  // Look for other incidents for the same site (customer_id or odp_bts) in last 24h
+  // We exclude the current one
+  const params = [];
+  let where = "id != ? AND created_at >= datetime('now', '-24 hours')";
+  params.push(incident.id);
+
+  if (incident.customer_id) {
+    where += " AND customer_id = ?";
+    params.push(incident.customer_id);
+  } else if (incident.odp_bts) {
+    where += " AND odp_bts = ?";
+    params.push(incident.odp_bts);
+  } else {
+    // If no unique site ID, we can't reliably detect recurring
+    return res.json({ is_recurring: false, count: 1 });
+  }
+
+  const list = db.prepare(`SELECT * FROM incidents WHERE ${where} ORDER BY created_at DESC`).all(...params);
+
+  res.json({
+    is_recurring: list.length >= 2, // 3rd event or more (including current)
+    count: list.length + 1,
+    history: list.map(l => ({ id: l.id, case_no: l.case_no, start_time: l.start_time, status: l.status }))
+  });
 });
 
 // ─── DELETE /api/incidents/batch ──────────────────────────────────────────

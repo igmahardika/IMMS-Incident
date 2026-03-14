@@ -28,7 +28,7 @@ export default function IncidentDetailPage() {
           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => navigate(-1)}><ArrowLeft size={16} /></button>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.waktu_online)} />
+              <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} />
               <h1 className="page-title" style={{ fontFamily: 'monospace', letterSpacing: '1px' }}>{incident.case_no}</h1>
               <StatusPill status={incident.status} />
             </div>
@@ -51,16 +51,30 @@ export default function IncidentDetailPage() {
             <div className="section-card-body" style={{ padding: '1rem' }}>
               <dl style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem 1rem' }}>
                 {[
-                  [isDistribsi ? 'DISTRIBUTION / SEGMENT' : 'SITE / CUSTOMER', (isDistribsi ? (incident.odp_bts || incident.site_name_manual) : (incident.site_name_manual || incident.company_name)) || '—'],
-                  ['ODP / BTS / INFRA', incident.odp_bts || '—'],
+                  [isDistribsi ? 'DISTRIBUTION' : 'SITE', (isDistribsi ? (incident.odp_bts || incident.site_name_manual) : (incident.site_name_manual || incident.company_name)) || '—'],
+                  [incident.ncal === 'BLUE' ? 'DEVICE' : 'ODP / BTS / INFRA', incident.odp_bts || '—'],
                   ['PRIORITY', incident.level_support || '—'],
-                  ['TECHNICIAN', incident.technician_name || incident.technician_name_manual || '—'],
+                  ['PIC / TECHNICIAN', incident.pic || incident.technician_name || incident.technician_name_manual || '—'],
                 ].map(([k, v]) => (
                   <div key={k}>
                     <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>{k}</dt>
                     <dd style={{ fontSize: '0.85rem', fontWeight: 500, marginTop: 4 }}>{v}</dd>
                   </div>
                 ))}
+
+                {incident.address && (
+                  <div style={{ gridColumn: '1 / -1', marginTop: '0.25rem' }}>
+                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>SITE ADDRESS</dt>
+                    <dd style={{ fontSize: '0.8rem', marginTop: 4, color: 'var(--text-secondary)' }}>{incident.address}</dd>
+                  </div>
+                )}
+
+                {incident.koordinat && (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>COORDINATES</dt>
+                    <dd style={{ fontSize: '0.85rem', fontFamily: 'monospace', marginTop: 4 }}>{incident.koordinat}</dd>
+                  </div>
+                )}
                 
                 <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
                   <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>INITIAL PROBLEM</dt>
@@ -69,25 +83,40 @@ export default function IncidentDetailPage() {
 
                 {incident.indikasi && (
                   <div style={{ gridColumn: '1 / -1', marginTop: '0.25rem' }}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>INDICATION</dt>
+                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>INDICATION / SYMPTOMS</dt>
                     <dd className="preview-block" style={{ marginTop: 6, padding: '0.75rem', fontSize: '0.8rem', minHeight: 'auto' }}>{incident.indikasi}</dd>
                   </div>
                 )}
 
-                {incident.pic && (
-                  <div style={{ marginTop: '0.25rem' }}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>PIC</dt>
-                    <dd style={{ fontSize: '0.85rem', fontWeight: 500, marginTop: 4 }}>{incident.pic}</dd>
-                  </div>
-                )}
-
-                {incident.customer_terdampak && (
+                {incident.customer_terdampak && isDistribsi && (
                   <div style={{ gridColumn: '1 / -1', marginTop: '0.25rem' }}>
                     <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>IMPACTED CUSTOMERS</dt>
                     <dd className="preview-block" style={{ marginTop: 6, padding: '0.75rem', fontSize: '0.8rem', minHeight: 'auto' }}>{incident.customer_terdampak}</dd>
                   </div>
                 )}
               </dl>
+
+              {incident.ncal === 'YELLOW' && (
+                <div style={{ marginTop: '1.25rem', border: '1px solid var(--warning)', borderRadius: 8, padding: '0.875rem' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--warning)', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    Maintenance Order Data
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>CABLE TYPE</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>{incident.kabel || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>CABLE LENGTH</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>{incident.panjang_kabel ? `${incident.panjang_kabel}` : '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>POWER (INI)</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4, fontFamily: 'monospace' }}>{incident.power_before || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </SectionCard>
 

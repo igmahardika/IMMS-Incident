@@ -43,6 +43,7 @@ const menuGroups = [
       { to: '/master/classifications', icon: Tag, label: 'Classifications', roles: ['admin', 'manager'] },
       { to: '/master/technical-support', icon: Users, label: 'Personnel Records', roles: ['admin', 'manager'] },
       { to: '/master/distribusi', icon: Network, label: 'Distribution Topology', roles: ['admin', 'manager'] },
+      { to: '/master/actions', icon: ListChecks, label: 'Master Actions (Handling)', roles: ['admin', 'manager'] },
       { to: '/master/users', icon: Users, label: 'User Accounts', roles: ['admin'] },
     ]
   },

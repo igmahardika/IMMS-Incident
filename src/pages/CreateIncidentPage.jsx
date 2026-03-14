@@ -209,7 +209,9 @@ export default function CreateIncidentPage() {
               {!isDistribsi ? (
                 <div className="form-grid" style={{ gridTemplateColumns: form.ncal === 'BLUE' ? '1fr' : '1fr 1fr' }}>
                   <div className="form-group custom-dropdown-container" style={{ position: 'relative', zIndex: showDropdown ? 100 : 1 }}>
-                    <label className="form-label">Select Site/Customer *</label>
+                    <label className="form-label">
+                      {form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}
+                    </label>
                     <input type="text" className="form-control" placeholder="Search site or company name..." value={search} onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
                     {showDropdown && (
                       <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', marginTop: 4, maxHeight: 300, overflowY: 'auto', boxShadow: 'var(--shadow-xl)' }}>
@@ -224,10 +226,10 @@ export default function CreateIncidentPage() {
                   </div>
                   {form.ncal !== 'BLUE' && (
                     <div className="form-group custom-dropdown-container" style={{ zIndex: showOdpDropdown ? 90 : 1 }}>
-                      <label className="form-label">Link/Distribution (ODP/BTS)</label>
+                      <label className="form-label">{form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}</label>
                       <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
                         <div className="form-control" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setShowOdpDropdown(!showOdpDropdown)}>
-                          <span style={{ fontSize: '0.85rem' }}>{form.odp_bts || '— Select Distribution —'}</span>
+                          <span style={{ fontSize: '0.85rem' }}>{form.odp_bts || '— Select Item —'}</span>
                           <span style={{ fontSize: '0.7rem' }}>▼</span>
                         </div>
                         

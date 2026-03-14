@@ -58,6 +58,12 @@ const tables = [
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
+  `CREATE TABLE IF NOT EXISTS master_actions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
   `CREATE TABLE IF NOT EXISTS master_distribusi (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
@@ -212,6 +218,15 @@ if (classCount === 0) {
   insertClass.run('Link Quality', 'Redaman Tinggi (Bending)');
   insertClass.run('Link Quality', 'Konektor Kotor/Kendor');
   console.log('✅ Seeded master_classifications');
+}
+
+const actionCount = db.prepare('SELECT COUNT(*) as c FROM master_actions').get().c;
+if (actionCount === 0) {
+  const insertAction = db.prepare('INSERT INTO master_actions (name) VALUES (?)');
+  ['Penyambungan Kabel FO', 'Pembersihan Patchcord/Konektor', 'Penggantian Patchcord', 'Penggantian ONT/Modem', 'Reset Port OLY', 'Pencabutan Bending', 'Pemasangan Protektor'].forEach(a => {
+    insertAction.run(a);
+  });
+  console.log('✅ Seeded master_actions');
 }
 
 const escCount = db.prepare('SELECT COUNT(*) as c FROM escalation_config').get().c;

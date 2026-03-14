@@ -224,6 +224,7 @@ export function MasterCustomerPage() {
 export function MasterClassificationPage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState({});
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ klasifikasi: '', sub_klasifikasi: '' });
   const { addToast } = useToast();
@@ -231,8 +232,12 @@ export function MasterClassificationPage() {
 
   const load = () => api.getClassifications().then(setClasses).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
+
+  const toggle = (k) => setExpanded(p => ({ ...p, [k]: !p[k] }));
+
   const openEdit = (c) => { setModal(c); setForm({ klasifikasi: c.klasifikasi, sub_klasifikasi: c.sub_klasifikasi || '' }); };
   const openCreate = () => { setModal('create'); setForm({ klasifikasi: '', sub_klasifikasi: '' }); };
+  
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createClassification(form); addToast('Klasifikasi ditambahkan', 'success'); }
@@ -240,61 +245,93 @@ export function MasterClassificationPage() {
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
+
   const handleDelete = async (id) => {
     if (!confirm('Hapus klasifikasi ini?')) return;
     try { await api.deleteClassification(id); addToast('Dihapus', 'warning'); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
 
+  // Group classes by primary classification
+  const grouped = classes.reduce((acc, c) => {
+    if (!acc[c.klasifikasi]) acc[c.klasifikasi] = [];
+    acc[c.klasifikasi].push(c);
+    return acc;
+  }, {});
+
   return (
     <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
           <div className="page-title">Classification Master</div>
-          <div className="page-subtitle">Root causes / incident categories (Parent-Child)</div>
+          <div className="page-subtitle">Root causes / incident categories grouped by parent</div>
         </div>
         <div className="page-actions">
           <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Classification</button>
         </div>
       </div>
 
-      <TableCard>
-        {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div> :
-         classes.length === 0 ? <EmptyState icon="🏷️" title="No classifications found" /> : (
-          <table className="data-table">
-            <colgroup>
-              <col className="col-no" /><col className="col-lg" /><col className="col-auto" /><col className="col-actions" />
-            </colgroup>
-            <thead><tr>
-              <th className="text-center">#</th>
-              <th>Classification (Parent)</th>
-              <th>Sub-Classification (Child)</th>
-              <th className="text-right">Actions</th>
-            </tr></thead>
-            <tbody>
-              {classes.map((c, i) => (
-                <tr key={c.id}>
-                  <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{i + 1}</td>
-                  <td><AccentBadge text={c.klasifikasi} /></td>
-                  <td style={{ fontWeight: 500 }}>{c.sub_klasifikasi}</td>
-                  <td>
-                    <div className="cell-actions">
-                      <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(c)}><Edit2 size={12} /></button>
-                      <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(c.id)}><Trash2 size={12} /></button>
+      {loading ? <PageSpinner /> : classes.length === 0 ? <EmptyState icon="🏷️" title="No classifications found" /> : (
+        <div className="section-card" style={{ padding: '0.5rem' }}>
+          {Object.entries(grouped).map(([parent, children]) => (
+            <div key={parent} style={{ borderBottom: '1px solid var(--border)', lastChild: { borderBottom: 'none' } }}>
+              <div 
+                onClick={() => toggle(parent)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '1rem', cursor: 'pointer',
+                  background: expanded[parent] ? 'var(--bg-elevated)' : 'transparent',
+                  transition: 'background 0.2s'
+                }}
+              >
+                <div style={{ color: 'var(--text-muted)' }}>
+                  {expanded[parent] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.925rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AccentBadge text={parent} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)' }}>({children.length} items)</span>
+                </div>
+              </div>
+              
+              {expanded[parent] && (
+                <div style={{ 
+                  padding: '0.5rem 1rem 1rem 3rem',
+                  display: 'flex', flexDirection: 'column', gap: '4px'
+                }}>
+                  {children.map(c => (
+                    <div key={c.id} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '0.5rem 0.75rem', borderRadius: 6,
+                      background: 'var(--bg-card)', border: '1px solid var(--border)'
+                    }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{c.sub_klasifikasi}</div>
+                      <div className="cell-actions">
+                        <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(c)}><Edit2 size={12} /></button>
+                        <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(c.id)}><Trash2 size={12} /></button>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </TableCard>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Classification' : 'Edit Classification'}
         footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={handleSave}>Save Changes</button></>}
       >
-        <div className="form-group"><label className="form-label">Classification (Parent) *</label><input type="text" className="form-control" value={form.klasifikasi} onChange={e => setF('klasifikasi', e.target.value)} placeholder="e.g., Cable Cut" /></div>
-        <div className="form-group"><label className="form-label">Sub-Classification (Child) *</label><input type="text" className="form-control" value={form.sub_klasifikasi} onChange={e => setF('sub_klasifikasi', e.target.value)} placeholder="e.g., Tree Trimming" /></div>
+        <div className="form-group">
+          <label className="form-label">Classification (Parent) *</label>
+          <input type="text" className="form-control" value={form.klasifikasi} onChange={e => setF('klasifikasi', e.target.value)} placeholder="e.g., Cable Cut" list="parent-list" />
+          <datalist id="parent-list">
+            {Object.keys(grouped).map(k => <option key={k} value={k} />)}
+          </datalist>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Sub-Classification (Child) *</label>
+          <input type="text" className="form-control" value={form.sub_klasifikasi} onChange={e => setF('sub_klasifikasi', e.target.value)} placeholder="e.g., Tree Trimming" />
+        </div>
       </Modal>
     </div>
   );
@@ -673,6 +710,74 @@ export function MasterDistribusiPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+// ─── Master Action (Handling) Page ────────────────────────────────────────────
+export function MasterActionPage() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ name: '' });
+  const { addToast } = useToast();
+  const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const load = () => api.getActions().then(setData).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
+  useEffect(() => { load(); }, []);
+  const openEdit = (item) => { setModal(item); setForm({ name: item.name }); };
+  const openCreate = () => { setModal('create'); setForm({ name: '' }); };
+  const handleSave = async () => {
+    try {
+      if (modal === 'create') { await api.createAction(form); addToast('Action added successfully', 'success'); }
+      else { await api.updateAction(modal.id, form); addToast('Updated', 'success'); }
+      setModal(null); load();
+    } catch (e) { addToast(e.message, 'error'); }
+  };
+
+  return (
+    <div className="page-stack">
+      <div className="page-header">
+        <div className="page-title-group">
+          <div className="page-title">Master Handling (Actions)</div>
+          <div className="page-subtitle">{data.length} predefined handling options</div>
+        </div>
+        <div className="page-actions">
+          <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Action</button>
+        </div>
+      </div>
+
+      <TableCard>
+        {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div> : (
+          <table className="data-table">
+            <colgroup>
+              <col className="col-no" /><col className="col-auto" /><col className="col-actions" />
+            </colgroup>
+            <thead><tr>
+              <th className="text-center">#</th><th>Handling Action Name</th><th className="text-right">Actions</th>
+            </tr></thead>
+            <tbody>
+              {data.map((item, i) => (
+                <tr key={item.id}>
+                  <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{i + 1}</td>
+                  <td style={{ fontWeight: 600 }}>{item.name}</td>
+                  <td>
+                    <div className="cell-actions">
+                      <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(item)}><Edit2 size={12} /></button>
+                      <button className="btn btn-danger btn-icon btn-sm" onClick={() => { if(confirm('Hapus action ini?')) api.deleteAction(item.id).then(load); }}><Trash2 size={12} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </TableCard>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Action' : 'Edit Action'}
+        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={handleSave}>Save Changes</button></>}
+      >
+        <div className="form-group"><label className="form-label">Action Name *</label><input type="text" className="form-control" value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g., Splicing FO" required /></div>
+      </Modal>
     </div>
   );
 }

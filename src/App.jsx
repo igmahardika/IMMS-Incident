@@ -12,7 +12,7 @@ import HistoryPage from './pages/HistoryPage.jsx';
 import MonthlyViewPage from './pages/MonthlyViewPage.jsx';
 import DurationReportPage from './pages/DurationReportPage.jsx';
 import RootCausePage from './pages/RootCausePage.jsx';
-import { MasterCustomerPage, MasterClassificationPage, UserManagementPage, MasterTechnicalSupportPage, MasterDistribusiPage } from './pages/MasterDataPages.jsx';
+import { MasterCustomerPage, MasterClassificationPage, UserManagementPage, MasterTechnicalSupportPage, MasterDistribusiPage, MasterActionPage } from './pages/MasterDataPages.jsx';
 import EscalationSettingsPage from './pages/EscalationSettingsPage.jsx';
 
 // ─── Theme Context ────────────────────────────────────────────────────────────
@@ -70,6 +70,7 @@ export default function App() {
               <Route path="/master/classifications" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterClassificationPage /></ProtectedRoute>} />
               <Route path="/master/technical-support" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterTechnicalSupportPage /></ProtectedRoute>} />
               <Route path="/master/distribusi" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterDistribusiPage /></ProtectedRoute>} />
+              <Route path="/master/actions" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterActionPage /></ProtectedRoute>} />
               <Route path="/master/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
               <Route path="/settings/escalation" element={<ProtectedRoute allowedRoles={['admin']}><EscalationSettingsPage /></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />

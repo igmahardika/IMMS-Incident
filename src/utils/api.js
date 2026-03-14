@@ -34,6 +34,7 @@ export const api = {
   pauseIncident: (id, body) => request(`/incidents/${id}/pause`, { method: 'POST', body: JSON.stringify(body) }),
   resumeIncident: (id) => request(`/incidents/${id}/resume`, { method: 'POST' }),
   closeIncident: (id, body) => request(`/incidents/${id}/close`, { method: 'POST', body: JSON.stringify(body || {}) }),
+  getRecurringInfo: (id) => request(`/incidents/${id}/recurring`),
   deleteIncidents: (body) => request('/incidents/batch', { method: 'DELETE', body: JSON.stringify(body) }),
   getNotifications: () => request('/incidents/notifications'),
   markNotificationRead: (id) => request(`/incidents/notifications/${id}/read`, { method: 'PUT' }),
@@ -73,6 +74,11 @@ export const api = {
   updateDistribusi: (id, body) => request(`/master/distribusi/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteDistribusi: (id) => request(`/master/distribusi/${id}`, { method: 'DELETE' }),
   uploadDistribusi: (type, data) => request('/master/distribusi/batch', { method: 'POST', body: JSON.stringify({ type, data }) }),
+
+  getActions: () => request('/master/actions'),
+  createAction: (body) => request('/master/actions', { method: 'POST', body: JSON.stringify(body) }),
+  updateAction: (id, body) => request(`/master/actions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteAction: (id) => request(`/master/actions/${id}`, { method: 'DELETE' }),
 
   // Settings
   getEscalation: () => request('/settings/escalation'),

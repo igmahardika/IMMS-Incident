@@ -32,13 +32,9 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
     last_action: '',
     power_before: '',
     power_after: '',
-    classification_id: '',
     level_support: '',
   });
-  const [sites, setSites] = useState([]);
   const [users, setUsers] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [selectedParent, setSelectedParent] = useState('');
   const { addToast } = useToast();
   const { user } = useAuth();
 
@@ -50,18 +46,15 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
       last_action: '',
       power_before: incident.power_before || '',
       power_after: incident.power_after || '',
-      classification_id: incident.classification_id || '',
       level_support: incident.level_support || '2',
     });
     api.getIncident(incident.id).then(fullData => {
       incident._fullData = fullData;
-    });
-    api.getClassifications().then(c => {
-      setClasses(c);
-      if (incident.classification_id) {
-        const cl = c.find(x => x.id === incident.classification_id);
-        if (cl) setSelectedParent(cl.klasifikasi);
-      }
+      setForm(prev => ({
+        ...prev,
+        power_before: prev.power_before || fullData.power_before || '',
+        power_after: prev.power_after || fullData.power_after || '',
+      }));
     });
 
     if (user?.role !== 'technician') {
@@ -70,8 +63,6 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
       });
     }
   }, [open, incident]);
-
-  const uniqueParents = [...new Set(classes.map(c => c.klasifikasi))];
 
   const handleSave = async () => {
     try {
@@ -99,7 +90,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
         <div className="page-stack">
           <div className="section-card">
             <div className="section-card-header">
-              <div className="section-card-title">Update Resolution & Classification</div>
+              <div className="section-card-title">Update Resolution & Notes</div>
             </div>
             <div className="section-card-body" style={{ padding: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
@@ -119,37 +110,22 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                   </div>
                 )}
               </div>
-              {user?.role && user.role !== 'technician' && (
-                <div className="form-group mb-3">
-                  <label className="form-label">Root Cause Classification</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <select className="form-control" style={{ flex: 1 }} value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setForm(p => ({ ...p, classification_id: '' })); }}>
-                      <option value="">— Select Category —</option>
-                      {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                    <select className="form-control" style={{ flex: 1.5 }} value={form.classification_id} onChange={e => setForm(p => ({ ...p, classification_id: e.target.value }))} disabled={!selectedParent}>
-                      <option value="">— Select Detailed Cause —</option>
-                      {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
               <div className="form-group mb-4">
-                <label className="form-label">Update Root Cause (Permanent)</label>
+                <label className="form-label">Update Root Cause</label>
                 <textarea className="form-control" rows={3} value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Explain the root cause..." />
               </div>
               <div className="form-group mb-4">
                 <label className="form-label">Action Taken / Update Notes</label>
                 <textarea className="form-control" rows={4} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Explain the resolution steps or update technician notes..." />
               </div>
-              {user?.role && user.role !== 'technician' && !['ORANGE', 'RED', 'BLACK'].includes(incident?.ncal) && (
+              {user?.role && user.role !== 'technician' && incident?.ncal === 'YELLOW' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Power Before (dBm)</label>
+                    <label className="form-label">RX Power BEFORE (dBm)</label>
                     <input type="text" className="form-control" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-20.5 dBm" />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Power After (dBm)</label>
+                    <label className="form-label">RX Power AFTER (dBm)</label>
                     <input type="text" className="form-control" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-18.2 dBm" />
                   </div>
                 </div>
@@ -230,17 +206,92 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
 function CloseModal({ open, onClose, incident, onClosed }) {
   const { addToast } = useToast();
   const [waktu_online, setWaktuOnline] = useState(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+  const [rootCause, setRootCause] = useState('');
+  const [actionTaken, setActionTaken] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [selectedParent, setSelectedParent] = useState('');
+  const [classificationId, setClassificationId] = useState('');
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    if (!open || !incident) return;
+    
+    // Reset states
+    setRootCause('');
+    setActionTaken('');
+    setHistory([]);
+    setClassificationId('');
+    setSelectedParent('');
+    setLoadingHistory(true);
+
+    // Fetch classifications
+    api.getClassifications().then(c => {
+      setClasses(c);
+      // If incident has classification already, set parents
+      if (incident.classification_id) {
+        const cl = c.find(x => x.id === incident.classification_id);
+        if (cl) setSelectedParent(cl.klasifikasi);
+      }
+    }).catch(e => console.error('Error fetching classifications:', e));
+
+    // Fetch incident details & history
+    api.getIncident(incident.id).then(full => {
+      // Set initial values from latest data
+      setRootCause(full.root_cause || '');
+      setActionTaken(full.last_action || '');
+      if (full.classification_id) {
+        setClassificationId(full.classification_id);
+      }
+      
+      // Process history logs
+      const logs = full.audit_logs || [];
+      const updates = logs.filter(l => l.action === 'UPDATE' && l.details);
+      setHistory(updates);
+    }).catch(e => console.error('Error fetching incident history:', e)).finally(() => setLoadingHistory(false));
+
+  }, [open, incident?.id]); // Depend on open and incident.id
+
+  const selectFromHistory = (item) => {
+    // Details pattern: "Penyebab: ... | Action Terakhir: ..."
+    const parts = (item.details || '').split(' | ');
+    let cause = '';
+    let action = '';
+    parts.forEach(p => {
+      if (p.startsWith('Penyebab:')) cause = p.replace('Penyebab:', '').trim();
+      if (p.startsWith('Action Terakhir:')) action = p.replace('Action Terakhir:', '').trim();
+    });
+    if (cause) setRootCause(cause);
+    if (action) setActionTaken(action);
+    addToast('Data terpilih dari riwayat', 'success');
+  };
+
+  const uniqueParents = [...new Set(classes.map(c => c.klasifikasi))];
 
   const handleClose = async () => {
     try {
-      await api.closeIncident(incident.id, { waktu_online });
+      if (!classificationId) {
+        addToast('Pilih klasifikasi terlebih dahulu', 'warning');
+        return;
+      }
+      if (!actionTaken) {
+        addToast('Pilih penanganan terlebih dahulu', 'warning');
+        return;
+      }
+      await api.closeIncident(incident.id, { 
+        waktu_online, 
+        root_cause: rootCause, 
+        last_action: actionTaken,
+        classification_id: classificationId
+      });
       addToast('Incident successfully closed', 'success');
       onClosed(); onClose();
     } catch (e) { addToast(e.message, 'error'); }
   };
+  
   if (!incident) return null;
   return (
-    <Modal open={open} onClose={onClose} title="Close Incident"
+    <Modal open={open} onClose={onClose} title="Close Incident" size="lg"
       footer={
         <>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
@@ -253,14 +304,83 @@ function CloseModal({ open, onClose, incident, onClosed }) {
         <div className="preview-block" style={{ marginTop: 12, padding: '0.875rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ fontWeight: 600 }}><NcalBadge value={incident.ncal} /> &nbsp; {incident.site_name_manual || incident.company_name || '—'}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Problem: <span style={{ color: 'var(--text-primary)' }}>{incident.initial_problem || '—'}</span></div>
-          {incident.odp_bts && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>ODP/BTS: <span style={{ color: 'var(--text-primary)' }}>{incident.odp_bts}</span></div>}
+          {incident.odp_bts && (
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              {incident.ncal === 'BLUE' ? 'Device:' : 'ODP / BTS / Infra:'} <span style={{ color: 'var(--text-primary)' }}>{incident.odp_bts}</span>
+            </div>
+          )}
+          {incident.recurring_count > 0 && (
+            <div className="info-banner info-banner-danger" style={{ marginTop: 8, padding: '6px 10px', fontSize: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AlertTriangle size={14} /> 
+                <span><strong>Isu Berulang:</strong> Site ini telah mengalami {incident.recurring_count} insiden lain dalam 24 jam terakhir.</span>
+              </div>
+            </div>
+          )}
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: 16 }}>
+          <div className="form-group">
+            <label className="form-label" style={{ color: 'var(--text-primary)' }}>Klasifikasi Utama *</label>
+            <select className="form-control" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
+              <option value="">— Pilih Kategori —</option>
+              {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ color: 'var(--text-primary)' }}>Sub Klasifikasi *</label>
+            <select className="form-control" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
+              <option value="">— Pilih Detail —</option>
+              {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="section-card" style={{ marginTop: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+          <div className="section-card-header" style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Handling History (Riwayat Update)</div>
+          </div>
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {loadingHistory ? <div style={{ padding: '1rem', textAlign: 'center' }}><div className="spinner-sm" /></div> : (
+              <table className="data-table no-border" style={{ fontSize: '0.78rem' }}>
+                <thead><tr><th>No</th><th>Waktu</th><th>Penyebab</th><th>Penanganan</th><th className="text-right">Pilih</th></tr></thead>
+                <tbody>
+                  {history.length === 0 ? (
+                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Belum ada riwayat update</td></tr>
+                  ) : [...history].reverse().map((item, idx) => {
+                    const parts = (item.details || '').split(' | ');
+                    let cause = '-';
+                    let action = '-';
+                    parts.forEach(p => {
+                      if (p.startsWith('Penyebab:')) cause = p.replace('Penyebab:', '').trim();
+                      if (p.startsWith('Action Terakhir:')) action = p.replace('Action Terakhir:', '').trim();
+                    });
+                    const isSelected = rootCause === cause && actionTaken === action;
+                    return (
+                      <tr key={item.id} style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-subtle)' : 'transparent' }} onClick={() => selectFromHistory(item)}>
+                        <td style={{ fontWeight: 600 }}>HANDLING {idx + 1} {isSelected && '✓'}</td>
+                        <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(item.timestamp)}</td>
+                        <td>{cause}</td>
+                        <td>{action}</td>
+                        <td className="text-right">
+                          <button className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-ghost text-accent'}`}><Plus size={12} /> {isSelected ? 'Terpilih' : 'Pilih'}</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+
         <div className="form-group" style={{ marginTop: 16 }}>
-          <label className="form-label" style={{ color: 'var(--text-primary)' }}>Restore Time (End Time) *</label>
+          <label className="form-label" style={{ color: 'var(--text-primary)' }}>Waktu Up (Restore Time) *</label>
           <input type="datetime-local" className="form-control" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
         </div>
         <div className="info-banner info-banner-warning mt-4">
-          ⚠ The system will automatically calculate downtime based on the Start Time and this Restore Time.
+          ⚠ Sistem akan menghitung durasi downtime secara otomatis berdasarkan waktu Start dan Waktu Up ini.
         </div>
       </div>
     </Modal>
@@ -393,6 +513,12 @@ export default function CurrentTroublePage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                             <LevelBadge level={calculateIncidentLevel(inc.start_time)} />
                             <NcalBadge value={inc.ncal} />
+                            {inc.recurring_count > 0 && (
+                              <div title={`Terdeteksi ${inc.recurring_count} insiden lain dalam 24 jam terakhir`} style={{ display: 'flex', alignItems: 'center', color: 'var(--danger)' }}>
+                                <AlertTriangle size={14} />
+                                {inc.recurring_count >= 2 && <span style={{ fontSize: '0.65rem', fontWeight: 900, marginLeft: 2 }}>{inc.recurring_count + 1}X</span>}
+                              </div>
+                            )}
                             {inc.level_support && (
                               <span style={{ 
                                 fontSize: '0.65rem', 

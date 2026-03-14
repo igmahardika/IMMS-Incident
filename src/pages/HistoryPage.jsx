@@ -34,7 +34,7 @@ export default function HistoryPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { limit: 1000 };
       if (filters.month) params.month = filters.month;
       if (filters.year) params.year = filters.year;
       if (filters.ncal) params.ncal = filters.ncal;
@@ -160,7 +160,7 @@ export default function HistoryPage() {
                       />
                     </td>
                     <td className="text-mono">{row.case_no}</td>
-                    <td><LevelBadge level={calculateIncidentLevel(row.start_time, row.waktu_online)} /></td>
+                    <td><LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} /></td>
                     <td><NcalBadge value={row.ncal} /></td>
                     <td className="text-truncate" style={{ fontSize: '0.845rem' }}>
                       {['ORANGE', 'RED', 'BLACK'].includes(row.ncal) ? (row.odp_bts || row.site_name_manual || '—') : (row.site_name_manual || row.company_name || '—')}
