@@ -3,8 +3,7 @@ import { api } from '../utils/api.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Modal, PageSpinner, EmptyState } from '../components/ui/index.jsx';
-import { CustomerMap } from '../components/ui/CustomerMap.jsx';
-import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Map as MapIcon, Table as TableIcon, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown } from 'lucide-react';
 
 // ─── Shared role/badge helpers ─────────────────────────────────────────────────
 const ROLE_COLORS = { admin: '#6366f1', manager: '#10b981', noc: '#3b82f6', technician: '#f59e0b' };
@@ -73,29 +72,15 @@ export function MasterCustomerPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [syncProgress, setSyncProgress] = useState(null); // { current, total, label }
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'map'
-  const [form, setForm] = useState({ 
-    customer_id: '', service_id: '', company_name: '', brand_site: '', 
-    address: '', service_type: 'Internet Dedicated', grade: 'Bronze', 
-    support_level: 'L1', link_coverage: '', latitude: null, longitude: null, city: '' 
-  });
+  const [form, setForm] = useState({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const load = () => api.getCustomers().then(setCustomers).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
-  // Auto-polling for coordinates while sync is active
-  useEffect(() => {
-    const missingCoords = customers.some(c => c.address && (!c.latitude || c.latitude === 0));
-    if (missingCoords) {
-      const interval = setInterval(load, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [customers]);
   const openEdit = (c) => { setModal(c); setForm({ ...c }); };
-  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: null, longitude: null, city: '' }); };
+  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '' }); };
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createCustomer(form); addToast('Customer added successfully', 'success'); }
@@ -155,110 +140,11 @@ export function MasterCustomerPage() {
             <input type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} />
             <Database size={13} /> Bulk Upload
           </label>
-          <div className="btn btn-ghost btn-sm" style={{ cursor: 'default', opacity: 0.8 }}>
-             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', marginRight: 6, boxShadow: '0 0 8px rgba(16,185,129,0.5)' }} />
-             Auto-sync Active
-          </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => setViewMode(viewMode === 'table' ? 'map' : 'table')}>
-            {viewMode === 'table' ? <><MapIcon size={13} /> Map View</> : <><TableIcon size={13} /> Table View</>}
-          </button>
           <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Customer</button>
         </div>
       </div>
 
-      {syncProgress && (
-        <div style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-            <span style={{ fontWeight: 600 }}>Syncing Locations...</span>
-            <span style={{ color: 'var(--text-muted)' }}>{syncProgress.current} / {syncProgress.total}</span>
-          </div>
-          <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', background: 'var(--accent)', width: `${(syncProgress.current / syncProgress.total) * 100}%`, transition: 'width 0.3s' }} />
-          </div>
-          <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            Processing: <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{syncProgress.label}</span>
-          </div>
-        </div>
-      )}
-
-      {viewMode === 'map' && (
-        <>
-          <div style={{ height: '500px', marginBottom: '1.5rem' }}>
-            <CustomerMap 
-              customers={customers.filter(c => c.latitude && c.longitude)} 
-              onMarkerClick={(c) => openEdit(c)}
-              center={customers.find(c => c.latitude)?.[0] ? [customers.find(c => c.latitude).latitude, customers.find(c => c.latitude).longitude] : [-6.9667, 110.4167]}
-            />
-          </div>
-          
-          <div className="card" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-              <MapPin size={18} className="text-accent" />
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Sebaran Lokasi Per Kota/Kabupaten</h3>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
-              {Object.entries(
-                customers.reduce((acc, c) => {
-                  if (c.latitude && c.longitude) {
-                    const city = c.city && c.city !== 'Unknown' ? c.city : 'Belum Terdeteksi Kota';
-                    acc[city] = (acc[city] || 0) + 1;
-                  }
-                  return acc;
-                }, {})
-              ).sort((a, b) => b[1] - a[1]).map(([city, count]) => (
-                <div key={city} style={{ 
-                  background: 'var(--bg-card)', 
-                  border: '1px solid var(--border)', 
-                  borderRadius: 'var(--radius-sm)', 
-                  padding: '0.85rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{city}</span>
-                  <span style={{ 
-                    background: 'var(--accent)', 
-                    color: 'white', 
-                    padding: '2px 10px', 
-                    borderRadius: '12px', 
-                    fontSize: '0.75rem',
-                    fontWeight: 700
-                  }}>{count} Unit</span>
-                </div>
-              ))}
-              {customers.filter(c => !c.latitude || c.latitude === 0).length > 0 && (
-                <div style={{ 
-                  background: 'rgba(239, 68, 68, 0.08)', 
-                  border: '1px solid rgba(239, 68, 68, 0.2)', 
-                  borderRadius: 'var(--radius-sm)', 
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.2rem'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--error)', fontSize: '0.85rem' }}>Antrean Sinkronisasi</span>
-                    <span style={{ 
-                      background: 'var(--error)', 
-                      color: 'white', 
-                      padding: '2px 10px', 
-                      borderRadius: '12px', 
-                      fontSize: '0.75rem',
-                      fontWeight: 700
-                    }}>{customers.filter(c => !c.latitude || c.latitude === 0).length} Unit</span>
-                  </div>
-                  <span style={{ fontSize: '0.7rem', color: 'rgba(239, 68, 68, 0.7)' }}>Sedang diproses di background...</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {viewMode === 'table' && (
-        <TableCard>
+      <TableCard>
         {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div> :
          customers.length === 0 ? <EmptyState icon={<Database size={40} />} title="No customers found" desc="Add customer data or upload from Excel" /> : (
           <table className="data-table">
@@ -298,7 +184,6 @@ export function MasterCustomerPage() {
           </table>
         )}
       </TableCard>
-      )}
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add New Customer' : 'Edit Customer'}
         footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={handleSave}>Save Changes</button></>}
@@ -330,60 +215,6 @@ export function MasterCustomerPage() {
           </div>
         </div>
         <div className="form-group"><label className="form-label">Link Coverage (Maps/NMS URL)</label><input type="url" className="form-control" value={form.link_coverage} onChange={e => setF('link_coverage', e.target.value)} /></div>
-
-        <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <MapPin size={14} /> Geographic Location 
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>(Click map to pick coordinates)</span>
-          </label>
-          <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '0.65rem' }}>Latitude</label>
-              <input type="number" step="any" className="form-control" value={form.latitude || ''} onChange={e => setF('latitude', parseFloat(e.target.value))} placeholder="-6.123" />
-            </div>
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '0.65rem' }}>Longitude</label>
-              <input type="number" step="any" className="form-control" value={form.longitude || ''} onChange={e => setF('longitude', parseFloat(e.target.value))} placeholder="106.123" />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button 
-                className="btn btn-ghost btn-sm" 
-                style={{ width: '100%', height: '38px' }}
-                onClick={async () => {
-                  if (!form.address) return addToast('Please enter address first', 'warning');
-                  try {
-                    const searchQuery = `${form.brand_site || ''} ${form.address}`.trim();
-                    const query = searchQuery.toLowerCase().includes('semarang') ? searchQuery : `${searchQuery}, Semarang`;
-                    const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1`);
-                    const data = await res.json();
-                    if (data.features && data.features.length > 0) {
-                      const [lon, lat] = data.features[0].geometry.coordinates;
-                      setF('latitude', lat);
-                      setF('longitude', lon);
-                      addToast('Location found!', 'success');
-                    } else {
-                      addToast('Location not found.', 'error');
-                    }
-                  } catch(e) { addToast(e.message, 'error'); }
-                }}
-              >
-                🔍 Geocode Address
-              </button>
-            </div>
-          </div>
-          <div style={{ height: '200px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-            <CustomerMap 
-              pickerMode 
-              pickPosition={form.latitude && form.longitude ? [form.latitude, form.longitude] : null}
-              onLocationSelect={(latlng) => {
-                setF('latitude', latlng.lat);
-                setF('longitude', latlng.lng);
-              }}
-              center={form.latitude && form.longitude ? [form.latitude, form.longitude] : [-6.9147, 107.6098]}
-              zoom={15}
-            />
-          </div>
-        </div>
       </Modal>
     </div>
   );

@@ -14,6 +14,7 @@ import DurationReportPage from './pages/DurationReportPage.jsx';
 import RootCausePage from './pages/RootCausePage.jsx';
 import { MasterCustomerPage, MasterClassificationPage, UserManagementPage, MasterTechnicalSupportPage, MasterDistribusiPage, MasterActionPage } from './pages/MasterDataPages.jsx';
 import EscalationSettingsPage from './pages/EscalationSettingsPage.jsx';
+import MapPage from './pages/MapPage.jsx';
 
 // ─── Theme Context ────────────────────────────────────────────────────────────
 export const ThemeContext = React.createContext({ theme: 'dark', toggle: () => {} });
@@ -73,6 +74,7 @@ export default function App() {
               <Route path="/master/actions" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterActionPage /></ProtectedRoute>} />
               <Route path="/master/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
               <Route path="/settings/escalation" element={<ProtectedRoute allowedRoles={['admin']}><EscalationSettingsPage /></ProtectedRoute>} />
+              <Route path="/map" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </ToastProvider>

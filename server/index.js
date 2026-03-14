@@ -6,7 +6,6 @@ import incidentRoutes from './routes/incidents.js';
 import analyticsRoutes from './routes/analytics.js';
 import masterRoutes from './routes/master.js';
 import settingsRoutes from './routes/settings.js';
-import { startGeocoderWorker } from './utils/geocoderWorker.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,5 +24,4 @@ app.get('/api/health', (_, res) => res.json({ status: 'ok', time: new Date().toI
 
 app.listen(PORT, () => {
   console.log(`🚀 IMMS API running on http://localhost:${PORT}`);
-  startGeocoderWorker();
 });

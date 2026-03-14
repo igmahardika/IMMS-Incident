@@ -3,9 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ThemeContext } from '../../App.jsx';
 import {
-  LayoutDashboard, AlertTriangle, PlusCircle, History, BarChart2,
-  TrendingUp, Database, Tag, Users, Settings, ChevronLeft, ChevronRight,
-  Power, ListChecks, Zap, Network, Sun, Moon, X
+  Power, ListChecks, Zap, Network, Sun, Moon, X, Map
 } from 'lucide-react';
 
 const menuGroups = [
@@ -13,6 +11,7 @@ const menuGroups = [
     label: 'Monitoring',
     items: [
       { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'noc', 'technician'] },
+      { to: '/map', icon: Map, label: 'Customer Map', roles: ['admin', 'manager', 'noc', 'technician'] },
     ]
   },
   {
