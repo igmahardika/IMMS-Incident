@@ -73,6 +73,7 @@ export function MasterCustomerPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [syncProgress, setSyncProgress] = useState(null); // { current, total, label }
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'map'
   const [form, setForm] = useState({ 
     customer_id: '', service_id: '', company_name: '', brand_site: '', 
@@ -147,25 +148,34 @@ export function MasterCustomerPage() {
             <Database size={13} /> Bulk Upload
           </label>
           <button className="btn btn-ghost btn-sm" onClick={async () => {
-            if(!confirm('Synchronize missing coordinates for all customers? (Max 1 req/sec)')) return;
+            const targets = customers.filter(c => c.address && (!c.latitude || c.latitude === 0));
+            if (targets.length === 0) return addToast('All customers already have coordinates', 'info');
+            if(!confirm(`Synchronize coordinates for ${targets.length} customers? (Approx. ${targets.length}s)`)) return;
+            
             setLoading(true);
             try {
               let count = 0;
-              for (const c of customers) {
-                if (c.address && (!c.latitude || c.latitude === 0)) {
-                  const query = c.address.toLowerCase().includes('semarang') ? c.address : `${c.address}, Semarang, Jawa Tengah`;
-                  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
-                  const data = await res.json();
-                  if (data && data[0]) {
-                    await api.updateCustomer(c.id, { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) });
-                    count++;
-                  }
-                  await new Promise(r => setTimeout(r, 1000));
+              for (let i = 0; i < targets.length; i++) {
+                const c = targets[i];
+                setSyncProgress({ current: i + 1, total: targets.length, label: c.brand_site || c.company_name });
+                
+                // Use Brand/Site + Address for better accuracy
+                const searchQuery = `${c.brand_site || ''} ${c.address}`.trim();
+                const query = searchQuery.toLowerCase().includes('semarang') ? searchQuery : `${searchQuery}, Semarang, Jawa Tengah`;
+                
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
+                const data = await res.json();
+                
+                if (data && data[0]) {
+                  await api.updateCustomer(c.id, { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) });
+                  count++;
                 }
+                await new Promise(r => setTimeout(r, 1000));
               }
               addToast(`Synchronized ${count} locations`, 'success');
               load();
-            } catch(e) { addToast(e.message, 'error'); setLoading(false); }
+            } catch(e) { addToast(e.message, 'error'); }
+            finally { setLoading(false); setSyncProgress(null); }
           }}>
             <MapPin size={13} /> Sync Locations
           </button>
@@ -175,6 +185,21 @@ export function MasterCustomerPage() {
           <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Customer</button>
         </div>
       </div>
+
+      {syncProgress && (
+        <div style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+            <span style={{ fontWeight: 600 }}>Syncing Locations...</span>
+            <span style={{ color: 'var(--text-muted)' }}>{syncProgress.current} / {syncProgress.total}</span>
+          </div>
+          <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: '100%', background: 'var(--accent)', width: `${(syncProgress.current / syncProgress.total) * 100}%`, transition: 'width 0.3s' }} />
+          </div>
+          <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            Processing: <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{syncProgress.label}</span>
+          </div>
+        </div>
+      )}
 
       {viewMode === 'map' && (
         <div style={{ height: '500px', marginBottom: '1.5rem' }}>
@@ -280,7 +305,8 @@ export function MasterCustomerPage() {
                 onClick={async () => {
                   if (!form.address) return addToast('Please enter address first', 'warning');
                   try {
-                    const query = form.address.toLowerCase().includes('semarang') ? form.address : `${form.address}, Semarang, Jawa Tengah`;
+                    const searchQuery = `${form.brand_site || ''} ${form.address}`.trim();
+                    const query = searchQuery.toLowerCase().includes('semarang') ? searchQuery : `${searchQuery}, Semarang, Jawa Tengah`;
                     const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
                     const data = await res.json();
                     if (data && data[0]) {
