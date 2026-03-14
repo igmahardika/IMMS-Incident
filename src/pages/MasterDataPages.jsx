@@ -86,6 +86,14 @@ export function MasterCustomerPage() {
   const load = () => api.getCustomers().then(setCustomers).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
+  // Auto-polling for coordinates while sync is active
+  useEffect(() => {
+    const missingCoords = customers.some(c => c.address && (!c.latitude || c.latitude === 0));
+    if (missingCoords) {
+      const interval = setInterval(load, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [customers]);
   const openEdit = (c) => { setModal(c); setForm({ ...c }); };
   const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: null, longitude: null }); };
   const handleSave = async () => {

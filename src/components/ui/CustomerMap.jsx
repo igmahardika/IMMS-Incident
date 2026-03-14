@@ -1,19 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix Leaflet default icon issues in React
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
 
 // Helper to center map
 function AutoCenter({ center }) {
@@ -35,9 +22,13 @@ function LocationMarker({ onLocationSelect, position }) {
   });
 
   return position ? (
-    <Marker position={position}>
+    <CircleMarker 
+      center={position} 
+      radius={10}
+      pathOptions={{ fillColor: '#3b82f6', color: '#fff', weight: 2, fillOpacity: 0.8 }}
+    >
       <Popup>Selected Location</Popup>
-    </Marker>
+    </CircleMarker>
   ) : null;
 }
 
@@ -55,17 +46,29 @@ export function CustomerMap({ customers = [], onMarkerClick, onLocationSelect, p
             <AutoCenter center={center} />
             {customers.map(c => (
               c.latitude && c.longitude && (
-                <Marker key={c.id} position={[c.latitude, c.longitude]} eventHandlers={{ click: () => onMarkerClick && onMarkerClick(c) }}>
+                <CircleMarker 
+                  key={c.id} 
+                  center={[c.latitude, c.longitude]} 
+                  radius={8}
+                  pathOptions={{ 
+                    fillColor: c.grade === 'VIP' ? '#a78bfa' : c.grade === 'Gold' ? '#f59e0b' : '#3b82f6', 
+                    color: '#fff', 
+                    weight: 2, 
+                    fillOpacity: 0.9 
+                  }}
+                  eventHandlers={{ click: () => onMarkerClick && onMarkerClick(c) }}
+                >
                   <Popup>
-                    <div style={{ padding: '4px' }}>
-                      <strong style={{ display: 'block', fontSize: '1rem', marginBottom: '4px' }}>{c.brand_site}</strong>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{c.company_name}</span>
-                      <div style={{ marginTop: '8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)' }}>
-                         {c.grade} • {c.service_type}
+                    <div style={{ padding: '4px', minWidth: '150px' }}>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', marginBottom: '4px', color: 'var(--text-primary)' }}>{c.brand_site}</strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.company_name}</span>
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '4px' }}>
+                        <span style={{ fontSize: '0.65rem', background: 'var(--accent-light)', color: 'white', padding: '1px 4px', borderRadius: '3px' }}>{c.grade}</span>
+                        <span style={{ fontSize: '0.65rem', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '3px' }}>{c.service_type}</span>
                       </div>
                     </div>
                   </Popup>
-                </Marker>
+                </CircleMarker>
               )
             ))}
           </>
