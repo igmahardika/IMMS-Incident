@@ -52,6 +52,8 @@ export const api = {
   updateCustomer: (id, body) => request(`/master/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCustomer: (id) => request(`/master/customers/${id}`, { method: 'DELETE' }),
   uploadCustomers: (customers) => request('/master/customers/batch', { method: 'POST', body: JSON.stringify({ customers }) }),
+  getCustomersWithMissingCoords: () => request('/master/customers/missing-coords'),
+  autoGeocodeCustomers: (ids) => request('/master/customers/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
 
   getClassifications: () => request('/master/classifications'),
   createClassification: (body) => request('/master/classifications', { method: 'POST', body: JSON.stringify(body) }),

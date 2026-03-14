@@ -3,7 +3,9 @@ import { api } from '../utils/api.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Modal, PageSpinner, EmptyState } from '../components/ui/index.jsx';
-import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Map as MapIcon, LayoutList, MapPinOff, Search } from 'lucide-react';
+import CustomerMap from '../components/ui/CustomerMap.jsx';
+import GeoSummary from '../components/ui/GeoSummary.jsx';
 
 // ─── Shared role/badge helpers ─────────────────────────────────────────────────
 const ROLE_COLORS = { admin: '#6366f1', manager: '#10b981', noc: '#3b82f6', technician: '#f59e0b' };
@@ -71,8 +73,12 @@ function TableCard({ children }) {
 export function MasterCustomerPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [form, setForm] = useState({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: '', longitude: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -80,7 +86,7 @@ export function MasterCustomerPage() {
   useEffect(() => { load(); }, []);
 
   const openEdit = (c) => { setModal(c); setForm({ ...c }); };
-  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '' }); };
+  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: '', longitude: '' }); };
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createCustomer(form); addToast('Customer added successfully', 'success'); }
@@ -134,7 +140,34 @@ export function MasterCustomerPage() {
           <div className="page-title">Customer Master</div>
           <div className="page-subtitle">{customers.length} registered customers</div>
         </div>
+        <div style={{ flex: 1, maxWidth: '400px', margin: '0 2rem', position: 'relative' }}>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Cari Customer, Service ID, atau Alamat..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ paddingLeft: '2.5rem', borderRadius: '99px' }}
+          />
+          <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        </div>
         <div className="page-actions">
+          <div className="btn-group" style={{ marginRight: '0.5rem' }}>
+            <button 
+              className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`} 
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <LayoutList size={14} />
+            </button>
+            <button 
+              className={`btn btn-sm ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`} 
+              onClick={() => setViewMode('map')}
+              title="Map View"
+            >
+              <MapIcon size={14} />
+            </button>
+          </div>
           <button className="btn btn-ghost btn-sm" onClick={downloadTemplate}><Download size={13} /> Template</button>
           <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
             <input type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} />
@@ -144,46 +177,101 @@ export function MasterCustomerPage() {
         </div>
       </div>
 
-      <TableCard>
+
+      {viewMode === 'map' ? (
+        <div className="page-stack">
+          <CustomerMap customers={customers} onRefresh={load} />
+          <GeoSummary customers={customers} />
+        </div>
+      ) : (
+        <TableCard>
         {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div> :
-         customers.length === 0 ? <EmptyState icon={<Database size={40} />} title="No customers found" desc="Add customer data or upload from Excel" /> : (
-          <table className="data-table">
-            <colgroup>
-              <col className="col-no" /><col className="col-md" /><col className="col-md" />
-              <col className="col-auto" /><col className="col-lg" />
-              <col className="col-sm" /><col className="col-sm" /><col className="col-sm" />
-              <col className="col-md" /><col className="col-actions" />
-            </colgroup>
-            <thead><tr>
-              <th className="text-center">#</th><th>Cust ID</th><th>Service ID</th>
-              <th>Company Name</th><th>Brand / Site</th>
-              <th>Grade</th><th>Level</th><th>Status</th>
-              <th>Service Type</th><th className="text-right">Actions</th>
-            </tr></thead>
-            <tbody>
-              {customers.map((c, i) => (
-                <tr key={c.id}>
-                  <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{i + 1}</td>
-                  <td className="text-mono">{c.customer_id}</td>
-                  <td className="text-mono">{c.service_id}</td>
-                  <td style={{ fontWeight: 600 }} className="text-truncate">{c.company_name}</td>
-                  <td className="text-truncate" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{c.brand_site}</td>
-                  <td><GradeBadge grade={c.grade} /></td>
-                  <td><AccentBadge text={c.support_level} /></td>
-                  <td><StatusBadge active={c.is_active} /></td>
-                  <td style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }} className="text-truncate">{c.service_type}</td>
-                  <td>
-                    <div className="cell-actions">
-                      <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(c)} title="Edit"><Edit2 size={12} /></button>
-                      <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(c.id)} title="Hapus"><Trash2 size={12} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+         (() => {
+           const filtered = customers.filter(c => 
+             (c.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+             (c.brand_site || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+             (c.service_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+             (c.customer_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+             (c.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+           );
+           
+           if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Tidak ditemukan" desc="Tidak ada data yang cocok dengan pencarian Anda" />;
+           
+           const totalPages = Math.ceil(filtered.length / rowsPerPage);
+           const startIdx = (currentPage - 1) * rowsPerPage;
+           const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
+           
+           return (
+            <div className="pagination-container">
+              <table className="data-table compact-table">
+                <colgroup>
+                  <col className="col-no" /><col className="col-md" /><col className="col-md" />
+                  <col className="col-auto" /><col className="col-lg" />
+                  <col className="col-sm" /><col className="col-sm" /><col className="col-sm" />
+                  <col className="col-md" /><col className="col-actions" />
+                </colgroup>
+                <thead><tr>
+                  <th className="text-center">#</th><th>Cust ID</th><th>Service ID</th>
+                  <th>Company Name</th><th>Brand / Site</th>
+                  <th>Grade</th><th>Level</th><th>Status</th>
+                  <th>Service Type</th><th className="text-right">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {paginated.map((c, i) => (
+                    <tr key={c.id}>
+                      <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{startIdx + i + 1}</td>
+                      <td className="text-mono">{c.customer_id}</td>
+                      <td className="text-mono">{c.service_id}</td>
+                      <td style={{ fontWeight: 600 }} className="text-truncate">{c.company_name}</td>
+                      <td className="text-truncate" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {c.brand_site}
+                        {(!c.latitude || !c.longitude) && (
+                          <span title="No coordinates found" style={{ color: '#ef4444', display: 'inline-flex' }}>
+                            <MapPinOff size={10} strokeWidth={3} />
+                          </span>
+                        )}
+                      </td>
+                      <td><GradeBadge grade={c.grade} /></td>
+                      <td><AccentBadge text={c.support_level} /></td>
+                      <td><StatusBadge active={c.is_active} /></td>
+                      <td style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }} className="text-truncate">{c.service_type}</td>
+                      <td>
+                        <div className="cell-actions">
+                          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(c)} title="Edit"><Edit2 size={12} /></button>
+                          <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(c.id)} title="Hapus"><Trash2 size={12} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="table-pagination">
+                <div className="pagination-info">
+                  Showing <b>{startIdx + 1}</b> to <b>{Math.min(startIdx + rowsPerPage, filtered.length)}</b> of <b>{filtered.length}</b> entries
+                </div>
+                <div className="pagination-controls">
+                  <div className="rows-selector">
+                    <span>Rows per page:</span>
+                    <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                      {[20, 50, 100, 200].map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div className="btn-group">
+                    <button className="btn btn-ghost btn-sm" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>First</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Prev</button>
+                    <span className="page-indicator">Page {currentPage} of {totalPages}</span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>Last</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+           );
+         })()
+        }
       </TableCard>
+      )}
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add New Customer' : 'Edit Customer'}
         footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={handleSave}>Save Changes</button></>}
@@ -215,7 +303,70 @@ export function MasterCustomerPage() {
           </div>
         </div>
         <div className="form-group"><label className="form-label">Link Coverage (Maps/NMS URL)</label><input type="url" className="form-control" value={form.link_coverage} onChange={e => setF('link_coverage', e.target.value)} /></div>
+        <div className="form-grid form-grid-2">
+          <div className="form-group"><label className="form-label">Latitude</label><input type="number" step="any" className="form-control" placeholder="-6.1234..." value={form.latitude} onChange={e => setF('latitude', e.target.value)} /></div>
+          <div className="form-group"><label className="form-label">Longitude</label><input type="number" step="any" className="form-control" placeholder="110.1234..." value={form.longitude} onChange={e => setF('longitude', e.target.value)} /></div>
+        </div>
       </Modal>
+
+      <style>{`
+        .compact-table th {
+          padding: 0.5rem 0.75rem !important;
+          font-size: 0.75rem !important;
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
+        }
+        .compact-table td {
+          padding: 0.4rem 0.75rem !important;
+          font-size: 0.8125rem;
+          vertical-align: middle;
+        }
+        .compact-table tr:hover {
+          background-color: var(--bg-elevated) !important;
+        }
+        .text-mono {
+          font-family: var(--font-mono);
+          font-size: 0.75rem !important;
+          letter-spacing: -0.01em;
+        }
+        .table-pagination {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem;
+          background: var(--bg-card);
+          border-top: 1px solid var(--border);
+          font-size: 0.8125rem;
+          color: var(--text-secondary);
+        }
+        .pagination-controls {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+        }
+        .rows-selector {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .rows-selector select {
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          border: 1px solid var(--border);
+          background: var(--bg-input);
+          color: var(--text-main);
+          outline: none;
+        }
+        .page-indicator {
+          padding: 0 1rem;
+          font-weight: 500;
+          color: var(--text-main);
+        }
+        .pagination-container {
+          display: flex;
+          flex-direction: column;
+        }
+      `}</style>
     </div>
   );
 }

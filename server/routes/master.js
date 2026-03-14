@@ -2,6 +2,7 @@ import express from 'express';
 import db from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import bcrypt from 'bcryptjs';
+import { geocode } from '../utils/geocoder.js';
 
 const router = express.Router();
 
@@ -226,9 +227,46 @@ router.put('/actions/:id', authenticate, authorize('admin', 'manager'), (req, re
   res.json(db.prepare('SELECT * FROM master_actions WHERE id = ?').get(req.params.id));
 });
 
-router.delete('/actions/:id', authenticate, authorize('admin'), (req, res) => {
-  db.prepare('UPDATE master_actions SET is_active = 0 WHERE id = ?').run(req.params.id);
-  res.json({ success: true });
+// ── AUTO-GEOCODING ───────────────────────────────────────────────────────────
+router.get('/customers/missing-coords', authenticate, (req, res) => {
+  const missing = db.prepare('SELECT id, company_name, brand_site, address FROM master_customer WHERE latitude IS NULL').all();
+  res.json(missing);
+});
+
+router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  const { ids } = req.body; // Batch of IDs to geocode
+  if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid IDs' });
+
+  const customers = db.prepare(`SELECT * FROM master_customer WHERE id IN (${ids.join(',')})`).all();
+  const updateStmt = db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?');
+  
+  const results = [];
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  for (const c of customers) {
+    // Try address first, then brand_site + company_name
+    const searchTerms = [
+      c.address,
+      `${c.brand_site}, ${c.city || ''}`,
+      `${c.company_name}, ${c.city || ''}`
+    ].filter(Boolean);
+
+    let found = null;
+    for (const term of searchTerms) {
+      found = await geocode(term);
+      if (found) break;
+      await delay(1000); // 1s delay because Nominatim limit is 1 req/sec
+    }
+
+    if (found) {
+      updateStmt.run(found.latitude, found.longitude, c.id);
+      results.push({ id: c.id, success: true, ...found });
+    } else {
+      results.push({ id: c.id, success: false });
+    }
+  }
+
+  res.json({ success: true, results });
 });
 
 export default router;
