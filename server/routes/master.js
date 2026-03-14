@@ -10,9 +10,9 @@ router.get('/customers', authenticate, (req, res) => {
   res.json(db.prepare('SELECT * FROM master_customer ORDER BY company_name').all());
 });
 router.post('/customers', authenticate, authorize('admin', 'manager'), (req, res) => {
-  const { customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, sla } = req.body;
+  const { customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, sla, latitude, longitude } = req.body;
   try {
-    const r = db.prepare('INSERT INTO master_customer (customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, sla) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(customer_id, service_id, company_name, brand_site, address || null, service_type || null, grade || null, support_level || null, link_coverage || null, sla || null);
+    const r = db.prepare('INSERT INTO master_customer (customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, sla, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(customer_id, service_id, company_name, brand_site, address || null, service_type || null, grade || null, support_level || null, link_coverage || null, sla || null, latitude || null, longitude || null);
     res.status(201).json(db.prepare('SELECT * FROM master_customer WHERE id = ?').get(r.lastInsertRowid));
   } catch(e) {
     if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(400).json({ error: 'Customer ID atau Service ID sudah digunakan' });
@@ -24,12 +24,13 @@ router.post('/customers/batch', authenticate, authorize('admin', 'manager'), (re
   if (!customers || !Array.isArray(customers)) return res.status(400).json({ error: 'Invalid data' });
 
   const insert = db.prepare(`
-    INSERT INTO master_customer (customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, sla) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO master_customer (customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, sla, latitude, longitude) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(customer_id) DO UPDATE SET 
       service_id=excluded.service_id, company_name=excluded.company_name, brand_site=excluded.brand_site,
       address=excluded.address, service_type=excluded.service_type, grade=excluded.grade, 
-      support_level=excluded.support_level, link_coverage=excluded.link_coverage, sla=excluded.sla
+      support_level=excluded.support_level, link_coverage=excluded.link_coverage, sla=excluded.sla,
+      latitude=excluded.latitude, longitude=excluded.longitude
   `);
   
   const insertMany = db.transaction((rows) => {
@@ -38,7 +39,8 @@ router.post('/customers/batch', authenticate, authorize('admin', 'manager'), (re
       if (!row.customer_id) continue;
       insert.run(
         row.customer_id, row.service_id || String(Math.random()), row.company_name || '-', row.brand_site || '-', 
-        row.address || null, row.service_type || null, row.grade || null, row.support_level || null, row.link_coverage || null, row.sla || null
+        row.address || null, row.service_type || null, row.grade || null, row.support_level || null, row.link_coverage || null, row.sla || null,
+        row.latitude || null, row.longitude || null
       );
       count++;
     }
@@ -53,9 +55,9 @@ router.post('/customers/batch', authenticate, authorize('admin', 'manager'), (re
   }
 });
 router.put('/customers/:id', authenticate, authorize('admin', 'manager'), (req, res) => {
-  const { customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, is_active, sla } = req.body;
+  const { customer_id, service_id, company_name, brand_site, address, service_type, grade, support_level, link_coverage, is_active, sla, latitude, longitude } = req.body;
   try {
-    db.prepare('UPDATE master_customer SET customer_id = COALESCE(?, customer_id), service_id = COALESCE(?, service_id), company_name = COALESCE(?, company_name), brand_site = COALESCE(?, brand_site), address = COALESCE(?, address), service_type = COALESCE(?, service_type), grade = COALESCE(?, grade), support_level = COALESCE(?, support_level), link_coverage = COALESCE(?, link_coverage), sla = COALESCE(?, sla), is_active = COALESCE(?, is_active) WHERE id = ?').run(customer_id ?? null, service_id ?? null, company_name ?? null, brand_site ?? null, address ?? null, service_type ?? null, grade ?? null, support_level ?? null, link_coverage ?? null, sla ?? null, is_active ?? null, req.params.id);
+    db.prepare('UPDATE master_customer SET customer_id = COALESCE(?, customer_id), service_id = COALESCE(?, service_id), company_name = COALESCE(?, company_name), brand_site = COALESCE(?, brand_site), address = COALESCE(?, address), service_type = COALESCE(?, service_type), grade = COALESCE(?, grade), support_level = COALESCE(?, support_level), link_coverage = COALESCE(?, link_coverage), sla = COALESCE(?, sla), latitude = COALESCE(?, latitude), longitude = COALESCE(?, longitude), is_active = COALESCE(?, is_active) WHERE id = ?').run(customer_id ?? null, service_id ?? null, company_name ?? null, brand_site ?? null, address ?? null, service_type ?? null, grade ?? null, support_level ?? null, link_coverage ?? null, sla ?? null, latitude ?? null, longitude ?? null, is_active ?? null, req.params.id);
     res.json(db.prepare('SELECT * FROM master_customer WHERE id = ?').get(req.params.id));
   } catch(e) {
     if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(400).json({ error: 'Customer ID atau Service ID sudah digunakan' });

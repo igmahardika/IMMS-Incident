@@ -3,7 +3,8 @@ import { api } from '../utils/api.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Modal, PageSpinner, EmptyState } from '../components/ui/index.jsx';
-import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown } from 'lucide-react';
+import { CustomerMap } from '../components/ui/CustomerMap.jsx';
+import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Map as MapIcon, Table as TableIcon, MapPin } from 'lucide-react';
 
 // ─── Shared role/badge helpers ─────────────────────────────────────────────────
 const ROLE_COLORS = { admin: '#6366f1', manager: '#10b981', noc: '#3b82f6', technician: '#f59e0b' };
@@ -72,7 +73,12 @@ export function MasterCustomerPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '' });
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'map'
+  const [form, setForm] = useState({ 
+    customer_id: '', service_id: '', company_name: '', brand_site: '', 
+    address: '', service_type: 'Internet Dedicated', grade: 'Bronze', 
+    support_level: 'L1', link_coverage: '', latitude: null, longitude: null 
+  });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -80,7 +86,7 @@ export function MasterCustomerPage() {
   useEffect(() => { load(); }, []);
 
   const openEdit = (c) => { setModal(c); setForm({ ...c }); };
-  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '' }); };
+  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: null, longitude: null }); };
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createCustomer(form); addToast('Customer added successfully', 'success'); }
@@ -140,11 +146,24 @@ export function MasterCustomerPage() {
             <input type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} />
             <Database size={13} /> Bulk Upload
           </label>
+          <button className="btn btn-ghost btn-sm" onClick={() => setViewMode(viewMode === 'table' ? 'map' : 'table')}>
+            {viewMode === 'table' ? <><MapIcon size={13} /> Map View</> : <><TableIcon size={13} /> Table View</>}
+          </button>
           <button className="btn btn-primary" onClick={openCreate}><Plus size={14} /> Add Customer</button>
         </div>
       </div>
 
-      <TableCard>
+      {viewMode === 'map' && (
+        <div style={{ height: '500px', marginBottom: '1.5rem' }}>
+          <CustomerMap 
+            customers={customers.filter(c => c.latitude && c.longitude)} 
+            onMarkerClick={(c) => openEdit(c)}
+          />
+        </div>
+      )}
+
+      {viewMode === 'table' && (
+        <TableCard>
         {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div> :
          customers.length === 0 ? <EmptyState icon={<Database size={40} />} title="No customers found" desc="Add customer data or upload from Excel" /> : (
           <table className="data-table">
@@ -184,6 +203,7 @@ export function MasterCustomerPage() {
           </table>
         )}
       </TableCard>
+      )}
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add New Customer' : 'Edit Customer'}
         footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={handleSave}>Save Changes</button></>}
@@ -215,6 +235,35 @@ export function MasterCustomerPage() {
           </div>
         </div>
         <div className="form-group"><label className="form-label">Link Coverage (Maps/NMS URL)</label><input type="url" className="form-control" value={form.link_coverage} onChange={e => setF('link_coverage', e.target.value)} /></div>
+
+        <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <MapPin size={14} /> Geographic Location 
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>(Click map to pick coordinates)</span>
+          </label>
+          <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '0.65rem' }}>Latitude</label>
+              <input type="number" step="any" className="form-control" value={form.latitude || ''} onChange={e => setF('latitude', parseFloat(e.target.value))} placeholder="-6.123" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '0.65rem' }}>Longitude</label>
+              <input type="number" step="any" className="form-control" value={form.longitude || ''} onChange={e => setF('longitude', parseFloat(e.target.value))} placeholder="106.123" />
+            </div>
+          </div>
+          <div style={{ height: '200px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+            <CustomerMap 
+              pickerMode 
+              pickPosition={form.latitude && form.longitude ? [form.latitude, form.longitude] : null}
+              onLocationSelect={(latlng) => {
+                setF('latitude', latlng.lat);
+                setF('longitude', latlng.lng);
+              }}
+              center={form.latitude && form.longitude ? [form.latitude, form.longitude] : [-6.9147, 107.6098]}
+              zoom={15}
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

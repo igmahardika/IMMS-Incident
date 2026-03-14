@@ -41,6 +41,8 @@ const tables = [
     support_level TEXT,
     link_coverage TEXT,
     sla TEXT,
+    latitude REAL,
+    longitude REAL,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
