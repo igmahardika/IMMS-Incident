@@ -14,13 +14,13 @@ export async function startGeocoderWorker() {
 
   const processQueue = async () => {
     try {
-      // Find customers with missing coordinates
+      // Find customers with missing coordinates OR missing city
       const targets = db.prepare(`
         SELECT id, company_name, brand_site, address 
         FROM master_customer 
-        WHERE (latitude IS NULL OR latitude = 0) 
+        WHERE (latitude IS NULL OR latitude = 0 OR city IS NULL OR city = '' OR city = 'Unknown') 
         AND address IS NOT NULL AND address != ''
-        LIMIT 10
+        LIMIT 20
       `).all();
 
       if (targets.length > 0) {

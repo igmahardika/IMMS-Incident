@@ -21,7 +21,8 @@ export async function geocodePhoton(brand, address) {
     if (data.features && data.features.length > 0) {
       const feature = data.features[0];
       const [lon, lat] = feature.geometry.coordinates;
-      const city = feature.properties.city || feature.properties.state || feature.properties.county || 'Unknown';
+      const props = feature.properties;
+      const city = props.city || props.town || props.village || props.city_district || props.state || props.county || props.district || 'Unknown';
       return { lat, lon, city };
     }
   } catch (error) {

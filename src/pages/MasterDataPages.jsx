@@ -182,12 +182,79 @@ export function MasterCustomerPage() {
       )}
 
       {viewMode === 'map' && (
-        <div style={{ height: '500px', marginBottom: '1.5rem' }}>
-          <CustomerMap 
-            customers={customers.filter(c => c.latitude && c.longitude)} 
-            onMarkerClick={(c) => openEdit(c)}
-          />
-        </div>
+        <>
+          <div style={{ height: '500px', marginBottom: '1.5rem' }}>
+            <CustomerMap 
+              customers={customers.filter(c => c.latitude && c.longitude)} 
+              onMarkerClick={(c) => openEdit(c)}
+              center={customers.find(c => c.latitude)?.[0] ? [customers.find(c => c.latitude).latitude, customers.find(c => c.latitude).longitude] : [-6.9667, 110.4167]}
+            />
+          </div>
+          
+          <div className="card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+              <MapPin size={18} className="text-accent" />
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Sebaran Lokasi Per Kota/Kabupaten</h3>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+              {Object.entries(
+                customers.reduce((acc, c) => {
+                  if (c.latitude && c.longitude) {
+                    const city = c.city && c.city !== 'Unknown' ? c.city : 'Belum Terdeteksi Kota';
+                    acc[city] = (acc[city] || 0) + 1;
+                  }
+                  return acc;
+                }, {})
+              ).sort((a, b) => b[1] - a[1]).map(([city, count]) => (
+                <div key={city} style={{ 
+                  background: 'var(--bg-card)', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  padding: '0.85rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{city}</span>
+                  <span style={{ 
+                    background: 'var(--accent)', 
+                    color: 'white', 
+                    padding: '2px 10px', 
+                    borderRadius: '12px', 
+                    fontSize: '0.75rem',
+                    fontWeight: 700
+                  }}>{count} Unit</span>
+                </div>
+              ))}
+              {customers.filter(c => !c.latitude || c.latitude === 0).length > 0 && (
+                <div style={{ 
+                  background: 'rgba(239, 68, 68, 0.08)', 
+                  border: '1px solid rgba(239, 68, 68, 0.2)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.2rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--error)', fontSize: '0.85rem' }}>Antrean Sinkronisasi</span>
+                    <span style={{ 
+                      background: 'var(--error)', 
+                      color: 'white', 
+                      padding: '2px 10px', 
+                      borderRadius: '12px', 
+                      fontSize: '0.75rem',
+                      fontWeight: 700
+                    }}>{customers.filter(c => !c.latitude || c.latitude === 0).length} Unit</span>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(239, 68, 68, 0.7)' }}>Sedang diproses di background...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {viewMode === 'table' && (
