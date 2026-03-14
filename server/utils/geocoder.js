@@ -46,7 +46,23 @@ export async function geocodePhoton(brand, address) {
           }
 
           const props = validFeature.properties;
-          const city = props.city || props.town || props.village || props.city_district || props.state || props.county || props.district || 'Unknown';
+          
+          // Normalize City/Regency Name
+          const rawCity = props.county || props.city || props.town || props.city_district || props.state || 'Unknown';
+          const city = rawCity
+            .replace(/Kabupaten\s?/gi, '')
+            .replace(/Kab\.\s?/gi, '')
+            .replace(/Kab\s?/gi, '')
+            .replace(/Kota\s?/gi, '')
+            .replace(/Regency\s?/gi, '')
+            .replace(/City\s?/gi, '')
+            .replace(/Administrative\s?/gi, '')
+            .replace(/Admin\.\s?/gi, '')
+            .replace(/DKI\s?/gi, '')
+            .replace(/Special Region of\s?/gi, '')
+            .replace(/Daerah Khusus Ibukota\s?/gi, '')
+            .trim();
+
           return { lat, lon, city };
         }
         break;
