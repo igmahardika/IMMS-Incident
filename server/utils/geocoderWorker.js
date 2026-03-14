@@ -28,9 +28,9 @@ export async function startGeocoderWorker() {
         for (const target of targets) {
           const coords = await geocodePhoton(target.brand_site, target.address);
           if (coords) {
-            db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?')
-              .run(coords.lat, coords.lon, target.id);
-            console.log(`   ✅ Synced: ${target.brand_site || target.company_name}`);
+            db.prepare('UPDATE master_customer SET latitude = ?, longitude = ?, city = ? WHERE id = ?')
+              .run(coords.lat, coords.lon, coords.city, target.id);
+            console.log(`   ✅ Synced: ${target.brand_site || target.company_name} (${coords.city})`);
           } else {
             // Mark as failed to avoid retrying indefinitely (optional: can use a specific 'failed' value or retry later)
             // For now, we just skip it in the next loop by not updating it.

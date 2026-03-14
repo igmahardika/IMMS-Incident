@@ -78,7 +78,7 @@ export function MasterCustomerPage() {
   const [form, setForm] = useState({ 
     customer_id: '', service_id: '', company_name: '', brand_site: '', 
     address: '', service_type: 'Internet Dedicated', grade: 'Bronze', 
-    support_level: 'L1', link_coverage: '', latitude: null, longitude: null 
+    support_level: 'L1', link_coverage: '', latitude: null, longitude: null, city: '' 
   });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -95,7 +95,7 @@ export function MasterCustomerPage() {
     }
   }, [customers]);
   const openEdit = (c) => { setModal(c); setForm({ ...c }); };
-  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: null, longitude: null }); };
+  const openCreate = () => { setModal('create'); setForm({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: null, longitude: null, city: '' }); };
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createCustomer(form); addToast('Customer added successfully', 'success'); }

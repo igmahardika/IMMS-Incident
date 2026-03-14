@@ -19,8 +19,10 @@ export async function geocodePhoton(brand, address) {
     const data = await response.json();
 
     if (data.features && data.features.length > 0) {
-      const [lon, lat] = data.features[0].geometry.coordinates;
-      return { lat, lon };
+      const feature = data.features[0];
+      const [lon, lat] = feature.geometry.coordinates;
+      const city = feature.properties.city || feature.properties.state || feature.properties.county || 'Unknown';
+      return { lat, lon, city };
     }
   } catch (error) {
     console.error(`Geocoding failed for [${brand}]:`, error.message);

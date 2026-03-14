@@ -167,6 +167,7 @@ try { db.exec("ALTER TABLE master_customer ADD COLUMN sla TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN sla TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN customer_terdampak TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN koordinat TEXT;"); } catch(e) {}
+try { db.exec("ALTER TABLE master_customer ADD COLUMN city TEXT;"); } catch(e) {}
 
 // Segment-specific templates migration
 const segments = ['blue', 'yellow', 'orange', 'red', 'black'];
