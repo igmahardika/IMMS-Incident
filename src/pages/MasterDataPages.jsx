@@ -147,38 +147,10 @@ export function MasterCustomerPage() {
             <input type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} />
             <Database size={13} /> Bulk Upload
           </label>
-          <button className="btn btn-ghost btn-sm" onClick={async () => {
-            const targets = customers.filter(c => c.address && (!c.latitude || c.latitude === 0));
-            if (targets.length === 0) return addToast('All customers already have coordinates', 'info');
-            if(!confirm(`Synchronize coordinates for ${targets.length} customers? (Approx. ${targets.length}s)`)) return;
-            
-            setLoading(true);
-            try {
-              let count = 0;
-              for (let i = 0; i < targets.length; i++) {
-                const c = targets[i];
-                setSyncProgress({ current: i + 1, total: targets.length, label: c.brand_site || c.company_name });
-                
-                // Use Brand/Site + Address for better accuracy
-                const searchQuery = `${c.brand_site || ''} ${c.address}`.trim();
-                const query = searchQuery.toLowerCase().includes('semarang') ? searchQuery : `${searchQuery}, Semarang, Jawa Tengah`;
-                
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
-                const data = await res.json();
-                
-                if (data && data[0]) {
-                  await api.updateCustomer(c.id, { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) });
-                  count++;
-                }
-                await new Promise(r => setTimeout(r, 1000));
-              }
-              addToast(`Synchronized ${count} locations`, 'success');
-              load();
-            } catch(e) { addToast(e.message, 'error'); }
-            finally { setLoading(false); setSyncProgress(null); }
-          }}>
-            <MapPin size={13} /> Sync Locations
-          </button>
+          <div className="btn btn-ghost btn-sm" style={{ cursor: 'default', opacity: 0.8 }}>
+             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', marginRight: 6, boxShadow: '0 0 8px rgba(16,185,129,0.5)' }} />
+             Auto-sync Active
+          </div>
           <button className="btn btn-ghost btn-sm" onClick={() => setViewMode(viewMode === 'table' ? 'map' : 'table')}>
             {viewMode === 'table' ? <><MapIcon size={13} /> Map View</> : <><TableIcon size={13} /> Table View</>}
           </button>
@@ -306,15 +278,16 @@ export function MasterCustomerPage() {
                   if (!form.address) return addToast('Please enter address first', 'warning');
                   try {
                     const searchQuery = `${form.brand_site || ''} ${form.address}`.trim();
-                    const query = searchQuery.toLowerCase().includes('semarang') ? searchQuery : `${searchQuery}, Semarang, Jawa Tengah`;
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
+                    const query = searchQuery.toLowerCase().includes('semarang') ? searchQuery : `${searchQuery}, Semarang`;
+                    const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1`);
                     const data = await res.json();
-                    if (data && data[0]) {
-                      setF('latitude', parseFloat(data[0].lat));
-                      setF('longitude', parseFloat(data[0].lon));
+                    if (data.features && data.features.length > 0) {
+                      const [lon, lat] = data.features[0].geometry.coordinates;
+                      setF('latitude', lat);
+                      setF('longitude', lon);
                       addToast('Location found!', 'success');
                     } else {
-                      addToast('Location not found. Try refining address.', 'error');
+                      addToast('Location not found.', 'error');
                     }
                   } catch(e) { addToast(e.message, 'error'); }
                 }}
