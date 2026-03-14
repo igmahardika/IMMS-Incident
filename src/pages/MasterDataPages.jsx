@@ -146,6 +146,29 @@ export function MasterCustomerPage() {
             <input type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} />
             <Database size={13} /> Bulk Upload
           </label>
+          <button className="btn btn-ghost btn-sm" onClick={async () => {
+            if(!confirm('Synchronize missing coordinates for all customers? (Max 1 req/sec)')) return;
+            setLoading(true);
+            try {
+              let count = 0;
+              for (const c of customers) {
+                if (c.address && (!c.latitude || c.latitude === 0)) {
+                  const query = c.address.toLowerCase().includes('semarang') ? c.address : `${c.address}, Semarang, Jawa Tengah`;
+                  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
+                  const data = await res.json();
+                  if (data && data[0]) {
+                    await api.updateCustomer(c.id, { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) });
+                    count++;
+                  }
+                  await new Promise(r => setTimeout(r, 1000));
+                }
+              }
+              addToast(`Synchronized ${count} locations`, 'success');
+              load();
+            } catch(e) { addToast(e.message, 'error'); setLoading(false); }
+          }}>
+            <MapPin size={13} /> Sync Locations
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={() => setViewMode(viewMode === 'table' ? 'map' : 'table')}>
             {viewMode === 'table' ? <><MapIcon size={13} /> Map View</> : <><TableIcon size={13} /> Table View</>}
           </button>
@@ -249,6 +272,29 @@ export function MasterCustomerPage() {
             <div className="form-group">
               <label className="form-label" style={{ fontSize: '0.65rem' }}>Longitude</label>
               <input type="number" step="any" className="form-control" value={form.longitude || ''} onChange={e => setF('longitude', parseFloat(e.target.value))} placeholder="106.123" />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <button 
+                className="btn btn-ghost btn-sm" 
+                style={{ width: '100%', height: '38px' }}
+                onClick={async () => {
+                  if (!form.address) return addToast('Please enter address first', 'warning');
+                  try {
+                    const query = form.address.toLowerCase().includes('semarang') ? form.address : `${form.address}, Semarang, Jawa Tengah`;
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, { headers: { 'User-Agent': 'IMMS-Geocoder' } });
+                    const data = await res.json();
+                    if (data && data[0]) {
+                      setF('latitude', parseFloat(data[0].lat));
+                      setF('longitude', parseFloat(data[0].lon));
+                      addToast('Location found!', 'success');
+                    } else {
+                      addToast('Location not found. Try refining address.', 'error');
+                    }
+                  } catch(e) { addToast(e.message, 'error'); }
+                }}
+              >
+                🔍 Geocode Address
+              </button>
             </div>
           </div>
           <div style={{ height: '200px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>

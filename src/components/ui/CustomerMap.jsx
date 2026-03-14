@@ -41,7 +41,7 @@ function LocationMarker({ onLocationSelect, position }) {
   ) : null;
 }
 
-export function CustomerMap({ customers = [], onMarkerClick, onLocationSelect, pickerMode = false, pickPosition = null, center = [-6.9147, 107.6098], zoom = 13 }) {
+export function CustomerMap({ customers = [], onMarkerClick, onLocationSelect, pickerMode = false, pickPosition = null, center = [-6.9667, 110.4167], zoom = 13 }) {
   return (
     <div className="customer-map-container" style={{ height: '100%', width: '100%', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
