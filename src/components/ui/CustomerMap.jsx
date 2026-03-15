@@ -93,37 +93,30 @@ export default function CustomerMap({
     return () => clearInterval(interval);
   }, [filteredCustomers.length, geocodingStatus.active]);
 
-  // Auto-Geocoding Logic
-  useEffect(() => {
-    if (geocodingRef.current) return;
-    
-    const startAutoGeocode = async () => {
-      try {
-        const missing = await api.getCustomersWithMissingCoords();
-        if (missing && missing.length > 0) {
-          geocodingRef.current = true;
-          setGeocodingStatus({ active: true, current: 0, total: missing.length });
-          
-          // Process in small batches of 5 to avoid overloading/timeout
-          const batchSize = 5;
-          for (let i = 0; i < missing.length; i += batchSize) {
-            const batch = missing.slice(i, i + batchSize);
-            const ids = batch.map(m => m.id);
-            await api.autoGeocodeCustomers(ids);
-            
-            setGeocodingStatus(prev => ({ ...prev, current: i + batch.length }));
-          }
-          if (onRefresh) onRefresh(); 
-          setGeocodingStatus({ active: false, current: 0, total: 0 });
+  // Geocoding trigger moved to manual button to avoid 429 surges
+  const startAutoGeocode = async () => {
+    if (geocodingStatus.active) return;
+    try {
+      const missing = await api.getCustomersWithMissingCoords();
+      if (missing && missing.length > 0) {
+        setGeocodingStatus({ active: true, current: 0, total: missing.length });
+        
+        // Process in small batches
+        const batchSize = 3;
+        for (let i = 0; i < missing.length; i += batchSize) {
+          const batch = missing.slice(i, i + batchSize);
+          const ids = batch.map(m => m.id);
+          await api.autoGeocodeCustomers(ids);
+          setGeocodingStatus(prev => ({ ...prev, current: i + batch.length }));
         }
-      } catch (err) {
-        console.error('Auto-Geocoding error:', err);
-        setGeocodingStatus({ active: false, current: 0, total: 0 });
+        if (onRefresh) onRefresh(); 
       }
-    };
-
-    startAutoGeocode();
-  }, [onRefresh]);
+    } catch (err) {
+      console.error('Auto-Geocoding error:', err);
+    } finally {
+      setGeocodingStatus({ active: false, current: 0, total: 0 });
+    }
+  };
 
   // Fetch Trouble Map Data
   useEffect(() => {
@@ -253,11 +246,20 @@ export default function CustomerMap({
               placeholder="Search Site, Service ID, or City..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '320px', paddingLeft: '2.5rem' }}
+              style={{ width: '240px', paddingLeft: '2.5rem' }}
             />
             <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</span>
           </div>
             <button type="submit" className="btn btn-primary">Locate</button>
+            <button 
+              type="button" 
+              className={`btn ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'}`}
+              onClick={startAutoGeocode}
+              title="Sync coordinates for sites without 📍"
+              style={{ fontSize: '0.75rem', padding: '0 0.75rem' }}
+            >
+              {geocodingStatus.active ? 'Syncing...' : '🔄 Sync'}
+            </button>
           </form>
         </div>
       </header>

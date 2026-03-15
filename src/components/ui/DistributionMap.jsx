@@ -62,35 +62,29 @@ export default function DistributionMap({ data, onRefresh }) {
     return [];
   }, [viewMode, points]);
 
-  // Auto-Geocoding Engine
-  useEffect(() => {
-    if (geocodingRef.current) return;
-    
-    const startAutoGeocode = async () => {
-      try {
-        const missing = await api.getDistribusiWithMissingCoords();
-        if (missing && missing.length > 0) {
-          geocodingRef.current = true;
-          setGeocodingStatus({ active: true, current: 0, total: missing.length });
-          
-          const batchSize = 5;
-          for (let i = 0; i < missing.length; i += batchSize) {
-            const batch = missing.slice(i, i + batchSize);
-            const ids = batch.map(m => m.id);
-            await api.autoGeocodeDistribusi(ids);
-            setGeocodingStatus(prev => ({ ...prev, current: i + batch.length }));
-          }
-          if (onRefresh) onRefresh(); 
-          setGeocodingStatus({ active: false, current: 0, total: 0 });
+  // Manual Trigger for Geocoding
+  const startAutoGeocode = async () => {
+    if (geocodingStatus.active) return;
+    try {
+      const missing = await api.getDistribusiWithMissingCoords();
+      if (missing && missing.length > 0) {
+        setGeocodingStatus({ active: true, current: 0, total: missing.length });
+        
+        const batchSize = 3;
+        for (let i = 0; i < missing.length; i += batchSize) {
+          const batch = missing.slice(i, i + batchSize);
+          const ids = batch.map(m => m.id);
+          await api.autoGeocodeDistribusi(ids);
+          setGeocodingStatus(prev => ({ ...prev, current: i + batch.length }));
         }
-      } catch (err) {
-        console.error('Auto-Geocoding distribution error:', err);
-        setGeocodingStatus({ active: false, current: 0, total: 0 });
+        if (onRefresh) onRefresh(); 
       }
-    };
-
-    startAutoGeocode();
-  }, [onRefresh]);
+    } catch (err) {
+      console.error('Auto-Geocoding distribution error:', err);
+    } finally {
+      setGeocodingStatus({ active: false, current: 0, total: 0 });
+    }
+  };
 
   // Load Trouble Data
   const loadTroubleData = async () => {
@@ -215,13 +209,22 @@ export default function DistributionMap({ data, onRefresh }) {
                 placeholder="Search ODP, POP, or BTS..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ width: '240px', paddingLeft: '2.5rem' }}
+                style={{ width: '200px', paddingLeft: '2.5rem' }}
               />
               <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
                 <Search size={14} />
               </span>
             </div>
             <button type="submit" className="btn btn-primary">Locate</button>
+            <button 
+              type="button" 
+              className={`btn ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'}`}
+              onClick={startAutoGeocode}
+              title="Sync coordinates for nodes without 📍"
+              style={{ fontSize: '0.75rem', padding: '0 0.75rem' }}
+            >
+              {geocodingStatus.active ? 'Syncing...' : '🔄 Sync'}
+            </button>
           </form>
         </div>
       </header>

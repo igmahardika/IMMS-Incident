@@ -1,3 +1,13 @@
+import db from '../db.js';
+
+// Ensure metadata table exists for global state
+db.exec(`
+  CREATE TABLE IF NOT EXISTS metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  )
+`);
+
 /**
  * Geocoder utility for IMMS
  * Uses OpenStreetMap Nominatim API with Smart Fallbacks for Buildings
@@ -36,7 +46,34 @@ function smartCleanAddress(addr) {
     .trim();
 }
 
-async function geocode(address) {
+// Rate limiting settings
+const MIN_INTERVAL = 2000; // 2 seconds between requests
+
+async function waitIfNeeded() {
+  let isWaiting = true;
+  while (isWaiting) {
+    const now = Date.now();
+    const row = db.prepare("SELECT value FROM metadata WHERE key = 'last_geocoding_time'").get();
+    const lastTime = row ? parseInt(row.value) : 0;
+    
+    const timeSinceLast = now - lastTime;
+    if (timeSinceLast < MIN_INTERVAL) {
+      const waitTime = MIN_INTERVAL - timeSinceLast;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    } else {
+      // Try to "lock" the time
+      const updated = db.prepare("INSERT INTO metadata (key, value) VALUES ('last_geocoding_time', ?) ON CONFLICT(key) DO UPDATE SET value = ? WHERE value = ?").run(now.toString(), now.toString(), lastTime.toString());
+      if (updated.changes > 0) {
+        isWaiting = false;
+      } else {
+        // Someone else updated it just now, wait again
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+  }
+}
+
+async function geocode(address, retryCount = 0) {
   if (!address) return null;
   
   const lowerAddr = address.toLowerCase();
@@ -53,15 +90,30 @@ async function geocode(address) {
   }
 
   try {
+    await waitIfNeeded();
+
     const cleaned = smartCleanAddress(address);
     const query = encodeURIComponent(`${cleaned}, Jawa Tengah, Indonesia`);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'IMMS-Project-Assistant (antigravity@gemini.google.com)'
+        'User-Agent': 'IMMS-Internal-Geocoding-Service/1.0 (contact: fitroh.abdilah@imms.local)'
       }
     });
+
+    // Update time again after response to ensure interval starts AFTER request finishing
+    db.prepare("INSERT INTO metadata (key, value) VALUES ('last_geocoding_time', ?) ON CONFLICT(key) DO UPDATE SET value = ?").run(Date.now().toString(), Date.now().toString());
+
+    if (response.status === 429) {
+      if (retryCount < 3) {
+        const backoff = Math.pow(2, retryCount) * 2000;
+        console.warn(`[Geocoder] Rate limited (429). Retrying in ${backoff}ms... (Attempt ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, backoff));
+        return geocode(address, retryCount + 1);
+      }
+      throw new Error('Rate limit exceeded after multiple retries');
+    }
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
