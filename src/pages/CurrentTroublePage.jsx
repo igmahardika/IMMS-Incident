@@ -33,7 +33,10 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
     power_before: '',
     power_after: '',
     level_support: '',
+    classification_id: '',
   });
+  const [classes, setClasses] = useState([]);
+  const [selectedParent, setSelectedParent] = useState('');
   const [users, setUsers] = useState([]);
   const { addToast } = useToast();
   const { user } = useAuth();
@@ -54,8 +57,12 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
         ...prev,
         power_before: prev.power_before || fullData.power_before || '',
         power_after: prev.power_after || fullData.power_after || '',
+        classification_id: fullData.classification_id || '',
       }));
+      if (fullData.klasifikasi) setSelectedParent(fullData.klasifikasi);
     });
+
+    api.getClassifications().then(setClasses).catch(console.error);
 
     if (user?.role !== 'technician') {
       api.getUsers().then(setUsers).catch(e => {
@@ -110,6 +117,24 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                   </div>
                 )}
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Klasifikasi Utama</label>
+                  <select className="form-control" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setForm(p => ({ ...p, classification_id: '' })); }}>
+                    <option value="">— Pilih Kategori —</option>
+                    {[...new Set(classes.map(c => c.klasifikasi))].map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Sub Klasifikasi</label>
+                  <select className="form-control" value={form.classification_id} onChange={e => setForm(p => ({ ...p, classification_id: e.target.value }))} disabled={!selectedParent}>
+                    <option value="">— Pilih Detail —</option>
+                    {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
+                  </select>
+                </div>
+              </div>
+
               <div className="form-group mb-4">
                 <label className="form-label">Update Root Cause</label>
                 <textarea className="form-control" rows={3} value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Explain the root cause..." />
@@ -263,6 +288,14 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     });
     if (cause) setRootCause(cause);
     if (action) setActionTaken(action);
+    const classIdPart = parts.find(p => p.startsWith('Klasifikasi ID:'));
+    if (classIdPart) {
+      const cid = classIdPart.replace('Klasifikasi ID:', '').trim();
+      setClassificationId(cid);
+      // Also find and set parent for the select dropdown
+      const cl = classes.find(x => x.id == cid);
+      if (cl) setSelectedParent(cl.klasifikasi);
+    }
     addToast('Data terpilih dari riwayat', 'success');
   };
 

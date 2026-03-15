@@ -3,7 +3,8 @@ import { api } from '../utils/api.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Modal, PageSpinner, EmptyState } from '../components/ui/index.jsx';
-import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Map as MapIcon, LayoutList, MapPinOff, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Layout, Map as MapIcon, LayoutList, MapPinOff, Search } from 'lucide-react';
+import DistributionMap from '../components/ui/DistributionMap.jsx';
 import CustomerMap from '../components/ui/CustomerMap.jsx';
 import GeoSummary from '../components/ui/GeoSummary.jsx';
 
@@ -694,6 +695,7 @@ export function MasterDistribusiPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState({});
   const [showDropdown, setShowDropdown] = useState(false);
+  const [viewMode, setViewMode] = useState('tree'); // 'tree' | 'map'
   const { addToast } = useToast();
 
   const load = () => api.getDistribusi().then(setData).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
@@ -800,6 +802,20 @@ export function MasterDistribusiPage() {
           <div className="page-subtitle">Visual map of Fiber Optic & Wireless segmentation</div>
         </div>
         <div className="page-actions">
+          <div className="view-mode-toggle" style={{ marginRight: '1rem' }}>
+            <button 
+              className={`btn btn-sm ${viewMode === 'tree' ? 'btn-primary' : 'btn-ghost'}`} 
+              onClick={() => setViewMode('tree')}
+            >
+              <Layout size={14} /> Tree
+            </button>
+            <button 
+              className={`btn btn-sm ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`} 
+              onClick={() => setViewMode('map')}
+            >
+              <MapIcon size={14} /> Map
+            </button>
+          </div>
           <div style={{ position: 'relative' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setShowDropdown(!showDropdown)}><Download size={13} /> Template</button>
             {showDropdown && (
@@ -820,7 +836,9 @@ export function MasterDistribusiPage() {
         </div>
       </div>
 
-      {loading ? <PageSpinner /> : (
+      {loading ? <PageSpinner /> : viewMode === 'map' ? (
+        <DistributionMap data={data} onRefresh={load} />
+      ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
           {/* Fiber Optic Tree */}
           <div className="section-card">

@@ -369,6 +369,7 @@ router.put('/:id', authenticate, (req, res) => {
   if (power_before && power_before !== old.power_before) changes.push(`Power Before: ${power_before}`);
   if (power_after && power_after !== old.power_after) changes.push(`Power After: ${power_after}`);
   if (classification_id && classification_id !== old.classification_id) changes.push(`Klasifikasi diubah`);
+  if (classification_id) changes.push(`Klasifikasi ID: ${classification_id}`);
   
   const detailStr = changes.length > 0 ? changes.join(' | ') : 'Update data (tidak ada perubahan signifikan)';
 

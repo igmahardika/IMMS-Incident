@@ -227,24 +227,23 @@ router.put('/actions/:id', authenticate, authorize('admin', 'manager'), (req, re
   res.json(db.prepare('SELECT * FROM master_actions WHERE id = ?').get(req.params.id));
 });
 
-// ── AUTO-GEOCODING ───────────────────────────────────────────────────────────
+// ── AUTO-GEOCODING CUSTOMERS ──────────────────────────────────────────────────
 router.get('/customers/missing-coords', authenticate, (req, res) => {
   const missing = db.prepare('SELECT id, company_name, brand_site, address FROM master_customer WHERE latitude IS NULL').all();
   res.json(missing);
 });
 
 router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { ids } = req.body; // Batch of IDs to geocode
+  const { ids } = req.body; 
   if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid IDs' });
 
-  const customers = db.prepare(`SELECT * FROM master_customer WHERE id IN (${ids.join(',')})`).all();
+  const items = db.prepare(`SELECT * FROM master_customer WHERE id IN (${ids.join(',')})`).all();
   const updateStmt = db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?');
   
   const results = [];
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  for (const c of customers) {
-    // Try address first, then brand_site + company_name
+  for (const c of items) {
     const searchTerms = [
       c.address,
       `${c.brand_site}, ${c.city || ''}`,
@@ -255,7 +254,7 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
     for (const term of searchTerms) {
       found = await geocode(term);
       if (found) break;
-      await delay(1000); // 1s delay because Nominatim limit is 1 req/sec
+      await delay(1000);
     }
 
     if (found) {
@@ -263,6 +262,49 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
       results.push({ id: c.id, success: true, ...found });
     } else {
       results.push({ id: c.id, success: false });
+    }
+  }
+
+  res.json({ success: true, results });
+});
+
+// ── AUTO-GEOCODING DISTRIBUSI ──────────────────────────────────────────────────
+router.get('/distribusi/missing-coords', authenticate, (req, res) => {
+  const missing = db.prepare('SELECT id, type, level_1, level_2, level_3, level_4 FROM master_distribusi WHERE latitude IS NULL').all();
+  res.json(missing);
+});
+
+router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid IDs' });
+
+  const items = db.prepare(`SELECT * FROM master_distribusi WHERE id IN (${ids.join(',')})`).all();
+  const updateStmt = db.prepare('UPDATE master_distribusi SET latitude = ?, longitude = ? WHERE id = ?');
+  
+  const results = [];
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  for (const item of items) {
+    let searchTerms = [];
+    if (item.type === 'Fiber Optic') {
+      searchTerms = [item.level_4, item.level_3, item.level_1].filter(Boolean);
+    } else {
+      searchTerms = [item.level_1].filter(Boolean);
+    }
+
+    let found = null;
+    for (const term of searchTerms) {
+      if (term.length < 3) continue;
+      found = await geocode(`${term}, Semarang`);
+      if (found) break;
+      await delay(1000);
+    }
+
+    if (found) {
+      updateStmt.run(found.latitude, found.longitude, item.id);
+      results.push({ id: item.id, success: true, ...found });
+    } else {
+      results.push({ id: item.id, success: false });
     }
   }
 

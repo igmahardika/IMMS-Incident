@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { api, formatDateTime, MONTH_NAMES, calculateIncidentLevel } from '../utils/api.js';
 import { NcalBadge, StatusPill, DurationBadge, PageSpinner, EmptyState, LevelBadge } from '../components/ui/index.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Search, Download, Eye, Trash2 } from 'lucide-react';
+import { Search, Download, Eye, Trash2, LayoutList, Map as MapIcon } from 'lucide-react';
+import CustomerMap from '../components/ui/CustomerMap.jsx';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
@@ -26,6 +27,8 @@ export default function HistoryPage() {
   const [filters, setFilters] = useState({ month: '', year: String(currentYear), ncal: '', search: '' });
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleting, setDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
+  const [customers, setCustomers] = useState([]);
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -46,6 +49,12 @@ export default function HistoryPage() {
   }, [filters.month, filters.year, filters.ncal]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (viewMode === 'map' && customers.length === 0) {
+      api.getCustomers().then(setCustomers).catch(console.error);
+    }
+  }, [viewMode, customers.length]);
 
   const handleDeleteSelected = async () => {
     if (selectedIds.length === 0) return;
@@ -79,11 +88,43 @@ export default function HistoryPage() {
               <Trash2 size={13} /> {deleting ? 'Deleting...' : `Delete Selected (${selectedIds.length})`}
             </button>
           )}
+          <div className="btn-group" style={{ marginRight: '0.5rem' }}>
+            <button 
+              className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`} 
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <LayoutList size={14} />
+            </button>
+            <button 
+              className={`btn btn-sm ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`} 
+              onClick={() => setViewMode('map')}
+              title="Map View"
+            >
+              <MapIcon size={14} />
+            </button>
+          </div>
           <button className="btn btn-ghost btn-sm" onClick={() => exportCSV(filtered)}>
             <Download size={13} /> Export to CSV
           </button>
         </div>
       </div>
+
+      {viewMode === 'map' ? (
+        <CustomerMap 
+          customers={customers} 
+          onRefresh={() => api.getCustomers().then(setCustomers)} 
+          initialMode="trouble" 
+          showTroubleMode={true}
+          hideCustomerPins={true}
+          startDate={filters.month ? `${filters.year}-${filters.month}-01 00:00:00` : `${filters.year}-01-01 00:00:00`}
+          endDate={filters.month 
+            ? `${filters.year}-${filters.month}-${new Date(parseInt(filters.year), parseInt(filters.month), 0).getDate()} 23:59:59` 
+            : `${filters.year}-12-31 23:59:59`
+          }
+        />
+      ) : (
+        <>
 
       {/* Filter bar */}
       <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -187,6 +228,8 @@ export default function HistoryPage() {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

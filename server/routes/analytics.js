@@ -1,6 +1,7 @@
 import express from 'express';
 import db from '../db.js';
 import { authenticate } from '../middleware/auth.js';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -123,6 +124,83 @@ router.get('/technician-perf', authenticate, (req, res) => {
     GROUP BY COALESCE(u.name, 'Unassigned')
     ORDER BY total_handled DESC
   `).all(...params);
+  res.json(rows);
+});
+
+// ─── Trouble Map Data ────────────────────────────────────────────────────────
+router.get('/trouble-map', authenticate, (req, res) => {
+  const qStart = req.query.start_date;
+  const qEnd = req.query.end_date;
+  
+  const start_date = qStart || '2026-01-01 00:00:00';
+  const end_date = qEnd || '2026-12-31 23:59:59';
+
+  console.log('[API] /trouble-map date range:', { start_date, end_date });
+
+  const rows = db.prepare(`
+    SELECT 
+      c.id,
+      c.company_name,
+      c.brand_site,
+      c.latitude,
+      c.longitude,
+      COUNT(i.id) as incident_count,
+      MAX(i.created_at) as last_incident_at
+    FROM incidents i
+    JOIN master_customer c ON CAST(i.customer_id AS INTEGER) = c.id
+    WHERE i.customer_id IS NOT NULL 
+      AND (
+        (strftime('%Y-%m-%d %H:%M:%S', i.created_at) BETWEEN ? AND ?)
+        OR (strftime('%Y-%m-%d %H:%M:%S', i.end_time) BETWEEN ? AND ?)
+      )
+      AND c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+    GROUP BY c.id
+    ORDER BY incident_count DESC
+  `).all(start_date, end_date, start_date, end_date);
+  
+  try {
+    fs.appendFileSync('/tmp/imms_trouble_map.log', `[${new Date().toISOString()}] Start: ${start_date}, End: ${end_date}, Found: ${rows.length}\n`);
+  } catch(e) {}
+  
+  console.log('[API] /trouble-map result rows:', rows.length);
+  res.json(rows);
+});
+
+// ─── Distribution Trouble Spots ───────────────────────────────────────────────
+router.get('/distribution-trouble', authenticate, (req, res) => {
+  const qStart = req.query.start_date;
+  const qEnd = req.query.end_date;
+  
+  const start_date = qStart || '2026-01-01 00:00:00';
+  const end_date = qEnd || '2026-12-31 23:59:59';
+
+  console.log('[API] /distribution-trouble date range:', { start_date, end_date });
+
+  const rows = db.prepare(`
+    SELECT 
+      d.id,
+      d.level_1,
+      d.level_2,
+      d.level_3,
+      d.level_4,
+      d.type,
+      d.latitude,
+      d.longitude,
+      COUNT(i.id) as incident_count,
+      MAX(i.created_at) as last_incident_at
+    FROM incidents i
+    JOIN master_distribusi d ON i.odp_bts = d.level_4 OR i.odp_bts = d.level_2
+    WHERE i.ncal IN ('YELLOW', 'ORANGE', 'RED', 'BLACK')
+      AND (
+        (strftime('%Y-%m-%d %H:%M:%S', i.created_at) BETWEEN ? AND ?)
+        OR (strftime('%Y-%m-%d %H:%M:%S', i.end_time) BETWEEN ? AND ?)
+      )
+      AND d.latitude IS NOT NULL AND d.longitude IS NOT NULL
+    GROUP BY d.id
+    ORDER BY incident_count DESC
+  `).all(start_date, end_date, start_date, end_date);
+  
+  console.log('[API] /distribution-trouble result rows:', rows.length);
   res.json(rows);
 });
 

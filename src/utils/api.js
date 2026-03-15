@@ -1,4 +1,4 @@
-const BASE = 'http://127.0.0.1:3001/api';
+const BASE = `http://${window.location.hostname}:3001/api`;
 
 function getToken() {
   return localStorage.getItem('imms_token');
@@ -45,6 +45,12 @@ export const api = {
   getSla: (params = {}) => request(`/analytics/sla?${new URLSearchParams(params)}`),
   getRootCause: (params = {}) => request(`/analytics/root-cause?${new URLSearchParams(params)}`),
   getTechPerf: (params = {}) => request(`/analytics/technician-perf?${new URLSearchParams(params)}`),
+  getTroubleMapData: (start, end) => {
+    const params = new URLSearchParams();
+    if (start) params.append('start_date', start);
+    if (end) params.append('end_date', end);
+    return request(`/analytics/trouble-map?${params.toString()}`);
+  },
 
   // Master Data
   getCustomers: () => request('/master/customers'),
@@ -54,6 +60,10 @@ export const api = {
   uploadCustomers: (customers) => request('/master/customers/batch', { method: 'POST', body: JSON.stringify({ customers }) }),
   getCustomersWithMissingCoords: () => request('/master/customers/missing-coords'),
   autoGeocodeCustomers: (ids) => request('/master/customers/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
+
+  getDistribusiWithMissingCoords: () => request('/master/distribusi/missing-coords'),
+  autoGeocodeDistribusi: (ids) => request('/master/distribusi/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
+  getDistributionTrouble: (start, end) => request(`/analytics/distribution-trouble?start_date=${start || ''}&end_date=${end || ''}`),
 
   getClassifications: () => request('/master/classifications'),
   createClassification: (body) => request('/master/classifications', { method: 'POST', body: JSON.stringify(body) }),

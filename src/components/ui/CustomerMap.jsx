@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { api } from '../../utils/api';
@@ -40,11 +40,23 @@ function ChangeView({ center, zoom }) {
   return null;
 }
 
-export default function CustomerMap({ customers, onRefresh }) {
+export default function CustomerMap({ 
+  customers, 
+  onRefresh, 
+  initialMode = 'customers', 
+  showTroubleMode = false,
+  startDate = '2026-01-01',
+  endDate = '2026-02-28 23:59:59',
+  hideCustomerPins = false
+}) {
   const [renderedCount, setRenderedCount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [geocodingStatus, setGeocodingStatus] = useState({ active: false, current: 0, total: 0 });
+  const [mapMode, setMapMode] = useState(initialMode); // 'customers' | 'trouble'
+  const [troubleData, setTroubleData] = useState([]);
+  const [isTroubleLoading, setIsTroubleLoading] = useState(false);
+  const [troubleError, setTroubleError] = useState(null);
   
   const semarangCenter = [-7.0051, 110.4381];
   const [viewState, setViewState] = useState({ center: semarangCenter, zoom: 12 });
@@ -100,11 +112,8 @@ export default function CustomerMap({ customers, onRefresh }) {
             await api.autoGeocodeCustomers(ids);
             
             setGeocodingStatus(prev => ({ ...prev, current: i + batch.length }));
-            
-            // Periodically refresh data to show new points
-            if (onRefresh) onRefresh(); 
           }
-          
+          if (onRefresh) onRefresh(); 
           setGeocodingStatus({ active: false, current: 0, total: 0 });
         }
       } catch (err) {
@@ -115,6 +124,37 @@ export default function CustomerMap({ customers, onRefresh }) {
 
     startAutoGeocode();
   }, [onRefresh]);
+
+  // Fetch Trouble Map Data
+  useEffect(() => {
+    if (mapMode === 'trouble') {
+      const fetchTroubleData = async () => {
+        setIsTroubleLoading(true);
+        setTroubleError(null);
+        try {
+          const data = await api.getTroubleMapData(startDate, endDate);
+          setTroubleData(data);
+        } catch (err) {
+          console.error('Failed to fetch trouble map data:', err);
+          setTroubleError(err.message);
+        } finally {
+          setIsTroubleLoading(false);
+        }
+      };
+      fetchTroubleData();
+    }
+  }, [mapMode, startDate, endDate]);
+
+  const getBubbleColor = (count) => {
+    if (count > 10) return '#ef4444'; // Red 500
+    if (count > 5) return '#f97316';  // Orange 500
+    if (count > 2) return '#f59e0b';  // Amber 500
+    return '#eab308';                // Yellow 500
+  };
+
+  const getBubbleRadius = (count) => {
+    return Math.min(Math.max(count * 3, 8), 25);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -151,20 +191,61 @@ export default function CustomerMap({ customers, onRefresh }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Network Infrastructure Map</h3>
           
-          {(isProcessing || geocodingStatus.active) && (
+          {(isProcessing || geocodingStatus.active || isTroubleLoading) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.25rem 0.75rem', background: 'var(--bg-elevated)', borderRadius: '99px', border: '1px solid var(--border)' }}>
               <div className="spinner spinner-xs"></div>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                 {geocodingStatus.active 
-                  ? `Pencarian Koordinat Otomatis: ${geocodingStatus.current}/${geocodingStatus.total}`
+                   ? `Pencarian Koordinat Otomatis: ${geocodingStatus.current}/${geocodingStatus.total}`
+                  : mapMode === 'trouble' && isTroubleLoading
+                  ? 'Loading Trouble Patterns...'
                   : `Processing Nodes: ${Math.round((renderedCount / filteredCustomers.length) * 100 || 0)}%`
                 }
               </span>
             </div>
           )}
+          {mapMode === 'trouble' && !isTroubleLoading && (
+            <div style={{ 
+              fontSize: '0.75rem', 
+              fontWeight: 600, 
+              color: troubleError ? '#ef4444' : troubleData.length > 0 ? '#ef4444' : 'var(--text-muted)', 
+              background: troubleError ? 'rgba(239, 68, 68, 0.1)' : troubleData.length > 0 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-elevated)', 
+              padding: '0.25rem 0.75rem', 
+              borderRadius: '99px', 
+              border: '1px solid ' + (troubleError || troubleData.length > 0 ? 'rgba(239, 68, 68, 0.2)' : 'var(--border)') 
+            }}>
+              {troubleError 
+                ? `❌ Error: ${troubleError}`
+                : troubleData.length > 0 
+                ? `🎯 ${troubleData.length} Trouble Spots Detected` 
+                : `ℹ️ No Trouble Spots found (${startDate.split(' ')[0]} to ${endDate.split(' ')[0]})`}
+            </div>
+          )}
         </div>
-        
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem' }}>
+
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {showTroubleMode && (
+            <div className="btn-group" style={{ background: 'var(--bg-elevated)', padding: '2px', borderRadius: '8px' }}>
+              {!hideCustomerPins && (
+                <button 
+                  className={`btn btn-xs ${mapMode === 'customers' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setMapMode('customers')}
+                  style={{ fontSize: '0.7rem' }}
+                >
+                  Customer Pins
+                </button>
+              )}
+              <button 
+                className={`btn btn-xs ${mapMode === 'trouble' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setMapMode('trouble')}
+                style={{ fontSize: '0.7rem' }}
+              >
+                🔥 Trouble Spots
+              </button>
+            </div>
+          )}
+          
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem' }}>
           <div style={{ position: 'relative' }}>
             <input 
               type="text" 
@@ -176,8 +257,9 @@ export default function CustomerMap({ customers, onRefresh }) {
             />
             <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</span>
           </div>
-          <button type="submit" className="btn btn-primary">Locate</button>
-        </form>
+            <button type="submit" className="btn btn-primary">Locate</button>
+          </form>
+        </div>
       </header>
 
       <div style={{ flex: 1, position: 'relative' }}>
@@ -195,60 +277,108 @@ export default function CustomerMap({ customers, onRefresh }) {
           <ZoomControl position="bottomright" />
           <ChangeView center={viewState.center} zoom={viewState.zoom} />
           
-          {filteredCustomers.map((c) => (
-            <Marker 
-              key={c.id} 
-              position={[c.latitude, c.longitude]} 
-              icon={createCustomMarker(c.province)}
-            >
-              <Popup className="premium-popup">
-                <div style={{ minWidth: '220px', padding: '4px' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start',
-                    marginBottom: '8px'
-                  }}>
-                    <span style={{ 
-                      fontSize: '0.65rem', 
-                      fontWeight: 800, 
-                      textTransform: 'uppercase',
-                      color: PROVINCE_COLORS[c.province] || '#666',
-                      letterSpacing: '0.05em'
+          {mapMode === 'customers' && !hideCustomerPins ? (
+            filteredCustomers.map((c) => (
+              <Marker 
+                key={c.id} 
+                position={[c.latitude, c.longitude]} 
+                icon={createCustomMarker(c.province)}
+              >
+                <Popup className="premium-popup">
+                  <div style={{ minWidth: '220px', padding: '4px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'flex-start',
+                      marginBottom: '8px'
                     }}>
-                      {c.service_id}
-                    </span>
-                    <span style={{ 
-                      fontSize: '0.65rem',
+                      <span style={{ 
+                        fontSize: '0.65rem', 
+                        fontWeight: 800, 
+                        textTransform: 'uppercase',
+                        color: PROVINCE_COLORS[c.province] || '#666',
+                        letterSpacing: '0.05em'
+                      }}>
+                        {c.service_id}
+                      </span>
+                      <span style={{ 
+                        fontSize: '0.65rem',
+                        background: 'var(--bg-elevated)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border)'
+                      }}>{c.grade}</span>
+                    </div>
+                    
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{c.brand_site}</h4>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.company_name}</p>
+                    
+                    <div style={{ 
+                      fontSize: '0.7rem', 
+                      padding: '8px',
                       background: 'var(--bg-elevated)',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--border)'
-                    }}>{c.grade}</span>
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      marginBottom: '8px'
+                    }}>
+                      <div style={{ marginBottom: '4px' }}><strong>📍 Location:</strong> {c.city || 'N/A'}</div>
+                      <div><strong>🛠️ Type:</strong> {c.service_type}</div>
+                    </div>
+                    
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic', lineHeight: '1.4' }}>
+                      {c.address}
+                    </div>
                   </div>
-                  
-                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{c.brand_site}</h4>
-                  <p style={{ margin: '0 0 8px 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.company_name}</p>
-                  
-                  <div style={{ 
-                    fontSize: '0.7rem', 
-                    padding: '8px',
-                    background: 'var(--bg-elevated)',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    marginBottom: '8px'
-                  }}>
-                    <div style={{ marginBottom: '4px' }}><strong>📍 Location:</strong> {c.city || 'N/A'}</div>
-                    <div><strong>🛠️ Type:</strong> {c.service_type}</div>
+                </Popup>
+              </Marker>
+            ))
+          ) : (
+            troubleData
+              .filter(t => t.latitude != null && t.longitude != null)
+              .map((t) => (
+              <CircleMarker
+                key={t.id}
+                center={[Number(t.latitude), Number(t.longitude)]}
+                radius={getBubbleRadius(t.incident_count)}
+                pathOptions={{
+                  fillColor: getBubbleColor(t.incident_count),
+                  color: 'white',
+                  weight: 1,
+                  fillOpacity: 0.7
+                }}
+              >
+                <Popup className="premium-popup">
+                  <div style={{ minWidth: '220px', padding: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ef4444' }}>💥 {t.incident_count > 10 ? 'HIGH' : 'ACTIVE'} FREQUENCY AREA</span>
+                      <span style={{ 
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        background: getBubbleColor(t.incident_count),
+                        color: 'white',
+                        padding: '2px 8px',
+                        borderRadius: '99px'
+                      }}>{t.incident_count} Cases</span>
+                    </div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{t.brand_site}</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.company_name}</p>
+                    
+                    <div style={{ 
+                      fontSize: '0.7rem', 
+                      padding: '8px',
+                      background: 'var(--bg-elevated)',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      marginBottom: '4px'
+                    }}>
+                      <div><strong>📅 Analysis Period:</strong> {startDate.split(' ')[0]} to {endDate.split(' ')[0]}</div>
+                      <div><strong>🕒 Last Incident:</strong> {t.last_incident_at ? new Date(t.last_incident_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</div>
+                    </div>
                   </div>
-                  
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic', lineHeight: '1.4' }}>
-                    {c.address}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+                </Popup>
+              </CircleMarker>
+            ))
+          )}
         </MapContainer>
         
         <style>{`
