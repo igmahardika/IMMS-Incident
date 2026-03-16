@@ -29,7 +29,7 @@ export default function IncidentDetailPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} />
-              <h1 className="page-title" style={{ fontFamily: 'monospace', letterSpacing: '1px' }}>{incident.case_no}</h1>
+              <h1 className="page-title text-xl text-id">{incident.case_no}</h1>
               <StatusPill status={incident.status} />
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
@@ -57,41 +57,41 @@ export default function IncidentDetailPage() {
                   ['PIC / TECHNICIAN', incident.pic || incident.technician_name || incident.technician_name_manual || '—'],
                 ].map(([k, v]) => (
                   <div key={k}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>{k}</dt>
-                    <dd style={{ fontSize: '0.85rem', fontWeight: 500, marginTop: 4 }}>{v}</dd>
+                    <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>{k}</dt>
+                    <dd className="text-sm" style={{ marginTop: 4 }}>{v}</dd>
                   </div>
                 ))}
 
                 {incident.address && (
                   <div style={{ gridColumn: '1 / -1', marginTop: '0.25rem' }}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>SITE ADDRESS</dt>
-                    <dd style={{ fontSize: '0.8rem', marginTop: 4, color: 'var(--text-secondary)' }}>{incident.address}</dd>
+                    <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>SITE ADDRESS</dt>
+                    <dd className="text-sm" style={{ marginTop: 4, color: 'var(--text-secondary)' }}>{incident.address}</dd>
                   </div>
                 )}
 
                 {incident.koordinat && (
                   <div style={{ marginTop: '0.25rem' }}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>COORDINATES</dt>
-                    <dd style={{ fontSize: '0.85rem', fontFamily: 'monospace', marginTop: 4 }}>{incident.koordinat}</dd>
+                    <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>COORDINATES</dt>
+                    <dd className="text-sm text-id" style={{ marginTop: 4 }}>{incident.koordinat}</dd>
                   </div>
                 )}
                 
                 <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
-                  <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>INITIAL PROBLEM</dt>
-                  <dd className="preview-block" style={{ marginTop: 6, padding: '0.75rem', fontSize: '0.8rem', minHeight: 'auto' }}>{incident.initial_problem || '—'}</dd>
+                  <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>INITIAL PROBLEM</dt>
+                  <dd className="preview-block text-sm" style={{ marginTop: 6, padding: '0.75rem', minHeight: 'auto' }}>{incident.initial_problem || '—'}</dd>
                 </div>
 
                 {incident.indikasi && (
                   <div style={{ gridColumn: '1 / -1', marginTop: '0.25rem' }}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>INDICATION / SYMPTOMS</dt>
-                    <dd className="preview-block" style={{ marginTop: 6, padding: '0.75rem', fontSize: '0.8rem', minHeight: 'auto' }}>{incident.indikasi}</dd>
+                    <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>INDICATION / SYMPTOMS</dt>
+                    <dd className="preview-block text-sm" style={{ marginTop: 6, padding: '0.75rem', minHeight: 'auto' }}>{incident.indikasi}</dd>
                   </div>
                 )}
 
                 {incident.customer_terdampak && isDistribsi && (
                   <div style={{ gridColumn: '1 / -1', marginTop: '0.25rem' }}>
-                    <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>IMPACTED CUSTOMERS</dt>
-                    <dd className="preview-block" style={{ marginTop: 6, padding: '0.75rem', fontSize: '0.8rem', minHeight: 'auto' }}>{incident.customer_terdampak}</dd>
+                    <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>IMPACTED CUSTOMERS</dt>
+                    <dd className="preview-block text-sm" style={{ marginTop: 6, padding: '0.75rem', minHeight: 'auto' }}>{incident.customer_terdampak}</dd>
                   </div>
                 )}
               </dl>
@@ -103,16 +103,16 @@ export default function IncidentDetailPage() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>CABLE TYPE</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>{incident.kabel || '—'}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>CABLE TYPE</div>
+                      <div className="text-sm" style={{ marginTop: 4 }}>{incident.kabel || '—'}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>CABLE LENGTH</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>{incident.panjang_kabel ? `${incident.panjang_kabel}` : '—'}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>CABLE LENGTH</div>
+                      <div className="text-sm" style={{ marginTop: 4 }}>{incident.panjang_kabel ? `${incident.panjang_kabel}` : '—'}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>POWER (INI)</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4, fontFamily: 'monospace' }}>{incident.power_before || '—'}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>POWER (INI)</div>
+                      <div className="text-sm text-id" style={{ marginTop: 4 }}>{incident.power_before || '—'}</div>
                     </div>
                   </div>
                 </div>
@@ -133,8 +133,8 @@ export default function IncidentDetailPage() {
                   ['NETT DURATION', <DurationBadge key="n" seconds={incident.duration_nett_seconds} target={getSLATarget(incident.ncal)} />],
                 ].map(([k, v]) => (
                   <div key={k}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>{k}</div>
-                    <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 500 }}>{v}</div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{k}</div>
+                    <div className="text-sm" style={{ marginTop: 6, fontWeight: 500 }}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -176,12 +176,12 @@ export default function IncidentDetailPage() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div>
-                      <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>RX POWER (INI)</dt>
-                      <dd style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600, marginTop: 6 }}>{incident.power_before || '—'}</dd>
+                      <dt className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>RX POWER (INI)</dt>
+                      <dd className="text-id text-sm" style={{ fontWeight: 600, marginTop: 6 }}>{incident.power_before || '—'}</dd>
                     </div>
                     <div>
-                      <dt style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>RX POWER (FIN)</dt>
-                      <dd style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600, marginTop: 6 }}>{incident.power_after || '—'}</dd>
+                      <dt className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>RX POWER (FIN)</dt>
+                      <dd className="text-id text-sm" style={{ fontWeight: 600, marginTop: 6 }}>{incident.power_after || '—'}</dd>
                     </div>
                   </div>
                   <div>

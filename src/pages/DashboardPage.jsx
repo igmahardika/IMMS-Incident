@@ -57,8 +57,8 @@ export default function DashboardPage() {
     <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-title">Dashboard</div>
-          <div className="page-subtitle">Real-time Incident Monitoring & Performance</div>
+          <div className="page-title text-xl">Dashboard</div>
+          <div className="page-subtitle text-xs">Real-time Incident Monitoring & Performance</div>
         </div>
         <div className="page-actions">
           <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}>
@@ -70,20 +70,20 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="kpi-grid">
         <div className="kpi-card">
-          <div className="kpi-label">Active Incidents</div>
-          <div className="kpi-value" style={{ color: 'var(--danger)' }}>{data?.totalActive || 0}</div>
-          <div className="kpi-meta">Unresolved cases</div>
+          <div className="kpi-label text-xs">Active Incidents</div>
+          <div className="kpi-value text-xl" style={{ color: 'var(--danger)' }}>{data?.totalActive || 0}</div>
+          <div className="kpi-meta text-xs">Unresolved cases</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Resolved Incidents</div>
-          <div className="kpi-value" style={{ color: 'var(--success)' }}>{data?.totalDone || 0}</div>
-          <div className="kpi-meta">Total all time</div>
+          <div className="kpi-label text-xs">Resolved Incidents</div>
+          <div className="kpi-value text-xl" style={{ color: 'var(--success)' }}>{data?.totalDone || 0}</div>
+          <div className="kpi-meta text-xs">Total all time</div>
         </div>
         {NCAL_ORDER.map(ncal => (
           <div className="kpi-card" key={ncal}>
             <div className="kpi-label"><NcalBadge value={ncal} /></div>
-            <div className="kpi-value" style={{ color: NCAL_COLORS_KPI[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
-            <div className="kpi-meta">Currently active</div>
+            <div className="kpi-value text-xl" style={{ color: NCAL_COLORS_KPI[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
+            <div className="kpi-meta text-xs">Currently active</div>
           </div>
         ))}
       </div>
@@ -130,11 +130,11 @@ export default function DashboardPage() {
                   return (
                     <tr key={row.ncal}>
                       <td><NcalBadge value={row.ncal} /></td>
-                      <td className="text-center" style={{ fontWeight: 600 }}>{row.total_cases}</td>
-                      <td className="text-mono" style={{ fontSize: '0.786rem' }}>{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                      <td className="text-center" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
+                      <td className="text-center text-sm" style={{ fontWeight: 600 }}>{row.total_cases}</td>
+                      <td className="text-id text-xs">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                      <td className="text-center text-sm" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
                       <td className="text-right">
-                        <span style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700, fontSize: '0.845rem' }}>
+                        <span className="text-sm" style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>
                           {pct}%
                         </span>
                       </td>
@@ -156,13 +156,13 @@ export default function DashboardPage() {
               <div key={inc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 0.875rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
                 <div style={{ flexShrink: 0 }}><NcalBadge value={inc.ncal} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="id-link text-truncate" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ display: 'block', marginBottom: 2 }}>
-                    {inc.case_no} <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-family)', fontSize: '0.8rem' }}>— {inc.site_name_manual || '—'}</span>
+                  <div className="id-link text-truncate text-id text-sm" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ display: 'block', marginBottom: 2 }}>
+                    {inc.case_no} <span className="text-sm" style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-main)' }}>— {inc.site_name_manual || '—'}</span>
                   </div>
-                  <div style={{ fontSize: '0.714rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span className="text-truncate" style={{ maxWidth: 120 }}>{inc.technician_name || '—'}</span>
                     <span>·</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500, fontFamily: 'monospace' }}>{formatDuration(inc.duration_nett_seconds)}</span>
+                    <span className="text-id" style={{ color: 'var(--text-secondary)' }}>{formatDuration(inc.duration_nett_seconds)}</span>
                   </div>
                 </div>
               </div>

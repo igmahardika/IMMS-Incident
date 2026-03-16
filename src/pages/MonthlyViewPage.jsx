@@ -35,17 +35,17 @@ export default function MonthlyViewPage() {
     if (!count) return <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', opacity: 0.4 }}>—</div>;
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
-        <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          {count} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 500 }}>CASES</span>
+        <div className="text-sm" style={{ fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          {count} <span className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 500 }}>CASES</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
             <Clock size={10} style={{ opacity: 0.5 }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{gross ? formatDuration(Math.round(gross)) : '0s'}</span>
+            <span className="text-id" style={{ fontWeight: 500 }}>{gross ? formatDuration(Math.round(gross)) : '0s'}</span>
           </div>
-          <div style={{ fontSize: '0.68rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div className="text-xs" style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 5 }}>
             <Zap size={10} style={{ opacity: 0.8 }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{nett ? formatDuration(Math.round(nett)) : '0s'}</span>
+            <span className="text-id" style={{ fontWeight: 600 }}>{nett ? formatDuration(Math.round(nett)) : '0s'}</span>
           </div>
         </div>
       </div>
@@ -68,8 +68,8 @@ export default function MonthlyViewPage() {
     <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-title">Monthly View Analysis</div>
-          <div className="page-subtitle">Monthly performance patterns and handling duration by category</div>
+          <div className="page-title text-xl">Monthly View Analysis</div>
+          <div className="page-subtitle text-xs">Monthly performance patterns and handling duration by category</div>
         </div>
         <div className="page-actions">
           <div className="filter-bar" style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--border)' }}>
@@ -93,8 +93,8 @@ export default function MonthlyViewPage() {
                   <BarChart2 size={22} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL INCIDENTS {year}</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>{yearlyCount} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Cases</span></div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL INCIDENTS {year}</div>
+                  <div className="text-xl" style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{yearlyCount} <span className="text-sm" style={{ fontWeight: 500, color: 'var(--text-muted)' }}>Cases</span></div>
                 </div>
               </div>
             </SectionCard>
@@ -104,8 +104,8 @@ export default function MonthlyViewPage() {
                   <TrendingUp size={22} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>AVG NETT DURATION</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{formatDuration(avgYearlyNett)}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>AVG NETT DURATION</div>
+                  <div className="text-lg" style={{ fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{formatDuration(avgYearlyNett)}</div>
                 </div>
               </div>
             </SectionCard>
@@ -115,8 +115,8 @@ export default function MonthlyViewPage() {
                   <Calendar size={22} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>BUSIEST MONTH</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{MONTH_NAMES[busyMonthIdx - 1]}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>BUSIEST MONTH</div>
+                  <div className="text-lg" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{MONTH_NAMES[busyMonthIdx - 1]}</div>
                 </div>
               </div>
             </SectionCard>
@@ -127,13 +127,13 @@ export default function MonthlyViewPage() {
               <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead>
                   <tr>
-                    <th style={{ minWidth: 160, position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 10, borderBottom: '2px solid var(--border)' }}>Period</th>
+                    <th className="text-xs" style={{ minWidth: 160, position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 10, borderBottom: '2px solid var(--border)' }}>Period</th>
                     {NCAL_ORDER.map(n => (
                       <th key={n} style={{ textAlign: 'left', minWidth: 150, borderBottom: '2px solid var(--border)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <NcalBadge value={n} />
-                          <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', letterSpacing: '0.08em', fontWeight: 700, display: 'flex', gap: 8 }}>
-                            <span>CT</span>
+                          <div className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '0.08em', fontWeight: 700, display: 'flex', gap: 8 }}>
+                            <span>CASES</span>
                             <span>•</span>
                             <span>GROSS</span>
                             <span>•</span>
@@ -142,7 +142,7 @@ export default function MonthlyViewPage() {
                         </div>
                       </th>
                     ))}
-                    <th style={{ minWidth: 160, background: 'var(--bg-elevated)', borderBottom: '2px solid var(--border)' }}>Monthly Summary</th>
+                    <th className="text-xs" style={{ minWidth: 160, background: 'var(--bg-elevated)', borderBottom: '2px solid var(--border)' }}>Monthly Summary</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,12 +153,12 @@ export default function MonthlyViewPage() {
                     
                     return (
                       <tr key={mo} style={{ height: 80 }}>
-                        <td style={{ fontWeight: 800, fontSize: '0.82rem', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 5, borderRight: '1px solid var(--border)' }}>
+                        <td className="text-sm" style={{ fontWeight: 800, position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 5, borderRight: '1px solid var(--border)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 4, height: 24, borderRadius: 2, background: totalCount > 0 ? 'var(--accent)' : 'transparent' }} />
                             <div>
                               <div>{MONTH_NAMES[mo - 1]}</div>
-                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>Year {year}</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Year {year}</div>
                             </div>
                           </div>
                         </td>
@@ -174,11 +174,11 @@ export default function MonthlyViewPage() {
                         <td style={{ background: 'var(--bg-elevated)', verticalAlign: 'middle' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ fontWeight: 900, fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: 1 }}>{totalCount || 0}</div>
-                              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Cases</div>
+                              <div className="text-lg" style={{ fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{totalCount || 0}</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Cases</div>
                             </div>
-                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              Avg Nett: <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent)' }}>
+                            <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              Avg Nett: <span className="text-id" style={{ fontWeight: 700, color: 'var(--accent)' }}>
                                 {totalCount ? formatDuration(Math.round(totalNett / totalCount)) : '—'}
                               </span>
                             </div>
@@ -190,7 +190,7 @@ export default function MonthlyViewPage() {
                 </tbody>
                 <tfoot>
                   <tr style={{ background: 'var(--bg-elevated)', borderTop: '2px solid var(--accent)' }}>
-                    <td style={{ fontWeight: 900, color: 'var(--accent)', position: 'sticky', left: 0, background: 'var(--bg-elevated)', zIndex: 10, fontSize: '0.9rem' }}>YEARLY TOTAL</td>
+                    <td className="text-sm" style={{ fontWeight: 900, color: 'var(--accent)', position: 'sticky', left: 0, background: 'var(--bg-elevated)', zIndex: 10 }}>YEARLY TOTAL</td>
                     {NCAL_ORDER.map(n => {
                       const cnt = Object.values(grouped).reduce((s, m) => s + (m[n]?.count || 0), 0);
                       const nt = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalNett || 0), 0);
@@ -202,10 +202,10 @@ export default function MonthlyViewPage() {
                       );
                     })}
                     <td style={{ background: 'var(--accent)', color: '#fff', verticalAlign: 'middle', padding: '12px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <div style={{ fontWeight: 900, fontSize: '1.4rem', lineHeight: 1 }}>{yearlyCount}</div>
-                        <div style={{ fontSize: '0.6rem', opacity: 0.9, fontWeight: 700, textTransform: 'uppercase' }}>Grand Avg Nett</div>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 800 }}>
+                      <div className="page-stack" style={{ gap: 2 }}>
+                        <div className="text-xl" style={{ fontWeight: 900, lineHeight: 1 }}>{yearlyCount}</div>
+                        <div className="text-xs" style={{ opacity: 0.9, fontWeight: 700, textTransform: 'uppercase' }}>Grand Avg Nett</div>
+                        <div className="text-id text-sm" style={{ fontWeight: 800 }}>
                           {formatDuration(avgYearlyNett)}
                         </div>
                       </div>

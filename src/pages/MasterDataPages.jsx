@@ -87,8 +87,8 @@ export function MasterCustomerPage() {
     <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-title">Customer Master</div>
-          <div className="page-subtitle">{customers.length} registered customers</div>
+          <div className="page-title text-xl">Customer Master</div>
+          <div className="page-subtitle text-xs">{customers.length} registered customers</div>
         </div>
         <div style={{ flex: 1, maxWidth: '400px', margin: '0 2rem', position: 'relative' }}>
           <input 
@@ -161,19 +161,19 @@ export function MasterCustomerPage() {
                   <col className="col-md" /><col className="col-actions" />
                 </colgroup>
                 <thead><tr>
-                  <th className="text-center">#</th><th>Cust ID</th><th>Service ID</th>
-                  <th>Company Name</th><th>Brand / Site</th>
-                  <th>Grade</th><th>Level</th><th>Status</th>
-                  <th>Service Type</th><th className="text-right">Actions</th>
+                  <th className="text-center text-xs">#</th><th className="text-xs">Cust ID</th><th className="text-xs">Service ID</th>
+                  <th className="text-xs">Company Name</th><th className="text-xs">Brand / Site</th>
+                  <th className="text-xs">Grade</th><th className="text-xs">Level</th><th className="text-xs">Status</th>
+                  <th className="text-xs">Service Type</th><th className="text-right text-xs">Actions</th>
                 </tr></thead>
                 <tbody>
                   {paginated.map((c, i) => (
                     <tr key={c.id}>
-                      <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{startIdx + i + 1}</td>
-                      <td className="text-mono">{c.customer_id}</td>
-                      <td className="text-mono">{c.service_id}</td>
-                      <td style={{ fontWeight: 600 }} className="text-truncate">{c.company_name}</td>
-                      <td className="text-truncate" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <td className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>{startIdx + i + 1}</td>
+                      <td className="text-id text-xs">{c.customer_id}</td>
+                      <td className="text-id text-xs">{c.service_id}</td>
+                      <td className="text-sm" style={{ fontWeight: 600 }}>{c.company_name}</td>
+                      <td className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {c.brand_site}
                         {(!c.latitude || !c.longitude) && (
                           <span title="No coordinates found" style={{ color: '#ef4444', display: 'inline-flex' }}>
@@ -184,7 +184,7 @@ export function MasterCustomerPage() {
                       <td><GradeBadge grade={c.grade} /></td>
                       <td><AccentBadge text={c.support_level} /></td>
                       <td><StatusBadge active={c.is_active} /></td>
-                      <td style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }} className="text-truncate">{c.service_type}</td>
+                      <td className="text-xs" style={{ color: 'var(--text-secondary)' }}>{c.service_type}</td>
                       <td>
                         <div className="cell-actions">
                           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(c)} title="Edit"><Edit2 size={12} /></button>
@@ -274,9 +274,8 @@ export function MasterCustomerPage() {
         .compact-table tr:hover {
           background-color: var(--bg-elevated) !important;
         }
-        .text-mono {
+        .text-id {
           font-family: var(--font-mono);
-          font-size: 0.75rem !important;
           letter-spacing: -0.01em;
         }
         .table-pagination {
@@ -484,15 +483,15 @@ export function UserManagementPage() {
               <col className="col-xl" /><col className="col-md" /><col className="col-md" /><col className="col-sm" />
             </colgroup>
             <thead><tr>
-              <th>ID</th><th>Username</th><th>Name</th>
-              <th>Email</th><th>Role</th><th>Status</th><th className="text-right">Actions</th>
+              <th className="text-xs">ID</th><th className="text-xs">Username</th><th className="text-xs">Name</th>
+              <th className="text-xs">Email</th><th className="text-xs">Role</th><th className="text-xs">Status</th><th className="text-right text-xs">Actions</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
                 <tr key={u.id}>
-                  <td className="text-mono" style={{ color: 'var(--accent-light)', fontWeight: 700 }}>{u.employee_id || '—'}</td>
-                  <td className="text-mono">{u.username}</td>
-                  <td style={{ fontWeight: 600 }}>{u.name}</td>
+                  <td className="text-id text-sm" style={{ color: 'var(--accent-light)', fontWeight: 700 }}>{u.employee_id || '—'}</td>
+                  <td className="text-id text-sm">{u.username}</td>
+                  <td className="text-sm" style={{ fontWeight: 600 }}>{u.name}</td>
                   <td style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }} className="text-truncate">{u.email || '—'}</td>
                   <td><RoleBadge role={u.role} /></td>
                   <td>
@@ -601,14 +600,14 @@ export function MasterTechnicalSupportPage() {
               <col className="col-no" /><col className="col-sm" /><col className="col-auto" /><col className="col-lg" /><col className="col-actions" />
             </colgroup>
             <thead><tr>
-              <th className="text-center">#</th><th>No</th><th>Name</th><th>Unit</th><th className="text-right">Actions</th>
+              <th className="text-center text-xs">#</th><th className="text-xs">No</th><th className="text-xs">Name</th><th className="text-xs">Unit</th><th className="text-right text-xs">Actions</th>
             </tr></thead>
             <tbody>
               {data.map((item, i) => (
                 <tr key={item.id}>
-                  <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{i + 1}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{item.no || '—'}</td>
-                  <td style={{ fontWeight: 600 }}>{item.name}</td>
+                  <td className="text-center text-id text-xs" style={{ color: 'var(--text-muted)' }}>{i + 1}</td>
+                  <td className="text-id text-xs" style={{ color: 'var(--text-muted)' }}>{item.no || '—'}</td>
+                  <td className="text-sm" style={{ fontWeight: 600 }}>{item.name}</td>
                   <td>
                     <span style={{ fontSize: '0.786rem', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '0.125rem 0.5rem', borderRadius: 4, color: 'var(--text-secondary)' }}>
                       {item.unit}

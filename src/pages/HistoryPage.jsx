@@ -83,9 +83,17 @@ export default function HistoryPage() {
           <div className="page-subtitle">{filtered.length} records found</div>
         </div>
         <div className="page-actions">
+          {filtered.length > 0 && (
+            <button 
+              className="btn btn-ghost btn-sm" 
+              onClick={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))}
+            >
+              {allSelected ? 'Deselect All' : 'Select All'}
+            </button>
+          )}
           {selectedIds.length > 0 && (
             <button className="btn btn-danger btn-sm" onClick={handleDeleteSelected} disabled={deleting}>
-              <Trash2 size={13} /> {deleting ? 'Deleting...' : `Delete Selected (${selectedIds.length})`}
+              <Trash2 size={13} /> {deleting ? 'Deleting...' : `Delete (${selectedIds.length})`}
             </button>
           )}
           <div className="btn-group" style={{ marginRight: '0.5rem' }}>
@@ -160,69 +168,84 @@ export default function HistoryPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th className="text-center">
-                    <input
-                      type="checkbox"
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
-                      checked={allSelected}
-                      onChange={e => setSelectedIds(e.target.checked ? filtered.map(r => r.id) : [])}
-                    />
-                  </th>
-                  <th>Case No</th>
-                  <th>Level</th>
-                  <th>NCAL</th>
-                  <th>Site</th>
-                  <th>ODP / BTS</th>
-                  <th>Problem</th>
-                  <th>Technician</th>
-                  <th>Classification</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Gross</th>
-                  <th>Nett</th>
-                  <th className="text-right">Details</th>
+                  <th className="text-xs">Incident</th>
+                  <th className="text-xs">Site / ODP</th>
+                  <th className="text-xs">Technical Details</th>
+                  <th className="text-xs">Timeline</th>
+                  <th className="text-xs">Durations</th>
+                  <th className="text-xs">Technician</th>
+                  <th className="text-right text-xs">Details</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(row => (
-                  <tr
-                    key={row.id}
-                    style={{ background: selectedIds.includes(row.id) ? 'var(--accent-subtle)' : undefined }}
-                  >
-                    <td className="text-center">
-                      <input
-                        type="checkbox"
-                        style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
-                        checked={selectedIds.includes(row.id)}
-                        onChange={e => {
-                          if (e.target.checked) setSelectedIds(p => [...p, row.id]);
-                          else setSelectedIds(p => p.filter(id => id !== row.id));
-                        }}
-                      />
+                {filtered.map(row => {
+                  const isSelected = selectedIds.includes(row.id);
+                  return (
+                    <tr
+                      key={row.id}
+                      onClick={() => {
+                        setSelectedIds(p => isSelected ? p.filter(id => id !== row.id) : [...p, row.id]);
+                      }}
+                      style={{ 
+                        background: isSelected ? 'var(--accent-subtle)' : undefined,
+                        cursor: 'pointer'
+                      }}
+                      className="history-row"
+                    >
+                    <td>
+                      <div className="page-stack" style={{ gap: 4 }}>
+                        <div className="text-id text-sm" style={{ fontWeight: 600 }}>{row.case_no}</div>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <NcalBadge value={row.ncal} />
+                          <LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} />
+                        </div>
+                      </div>
                     </td>
-                    <td className="text-mono">{row.case_no}</td>
-                    <td><LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} /></td>
-                    <td><NcalBadge value={row.ncal} /></td>
-                    <td className="text-truncate" style={{ fontSize: '0.845rem' }}>
-                      {['ORANGE', 'RED', 'BLACK'].includes(row.ncal) ? (row.odp_bts || row.site_name_manual || '—') : (row.site_name_manual || row.company_name || '—')}
+                    <td>
+                      <div className="page-stack" style={{ gap: 2 }}>
+                        <div className="text-sm" style={{ fontWeight: 600 }}>
+                          {['ORANGE', 'RED', 'BLACK'].includes(row.ncal) ? (row.odp_bts || row.site_name_manual || '—') : (row.site_name_manual || row.company_name || '—')}
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.odp_bts || '—'}</div>
+                      </div>
                     </td>
-                    <td className="text-truncate" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{row.odp_bts || '—'}</td>
-                    <td className="text-truncate" style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }}>{row.initial_problem || '—'}</td>
-                    <td style={{ fontSize: '0.845rem' }}>{row.technician_name || '—'}</td>
-                    <td className="text-truncate" style={{ fontSize: '0.786rem', color: 'var(--text-muted)' }}>{row.classification_name || '—'}</td>
-                    <td style={{ fontSize: '0.786rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(row.start_time)}</td>
-                    <td style={{ fontSize: '0.786rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(row.end_time)}</td>
-                    <td><DurationBadge seconds={row.duration_gross_seconds} /></td>
-                    <td><DurationBadge seconds={row.duration_nett_seconds} /></td>
+                    <td style={{ maxWidth: '240px' }}>
+                      <div className="page-stack" style={{ gap: 4 }}>
+                        <div className="text-sm text-truncate" title={row.initial_problem}>{row.initial_problem || '—'}</div>
+                        <div className="text-xs text-truncate" style={{ color: 'var(--text-muted)' }} title={row.root_cause}>
+                           {row.root_cause || row.classification_name || '—'}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="page-stack" style={{ gap: 2 }}>
+                        <div className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span className="text-id">{formatDateTime(row.start_time)}</span>
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span className="text-id">{formatDateTime(row.end_time)}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <DurationBadge seconds={row.duration_nett_seconds} />
+                        <div className="text-xs" style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Gross: {Math.round(row.duration_gross_seconds/60)}m</div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="text-sm">{row.technician_name || '—'}</div>
+                    </td>
                     <td>
                       <div className="cell-actions">
-                        <button className="btn btn-ghost btn-icon btn-sm" onClick={() => navigate(`/incidents/${row.id}`)} title="Detail">
-                          <Eye size={13} />
+                        <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); navigate(`/incidents/${row.id}`); }} title="View Detailed Log">
+                          <Eye size={14} className="text-accent" />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           )}

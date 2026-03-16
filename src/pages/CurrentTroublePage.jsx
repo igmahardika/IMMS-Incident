@@ -4,7 +4,7 @@ import { api, formatDateTime, processTimeline, formatDuration, calculateIncident
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge } from '../components/ui/index.jsx';
-import { Play, Pause, Square, Edit2, RefreshCw, Plus, AlertTriangle, Clock, Bell } from 'lucide-react';
+import { Play, Pause, Square, Edit2, RefreshCw, Plus, AlertTriangle, Clock, Bell, Activity } from 'lucide-react';
 
 function PauseModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
@@ -146,25 +146,25 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
               <div className="section-card-body" style={{ padding: '0.875rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
                    <div>
-                     <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>SITE / SEGMENT</div>
-                     <div style={{ fontSize: '0.85rem', fontWeight: 600, marginTop: 2 }}>
+                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>SITE / SEGMENT</div>
+                     <div className="text-sm" style={{ marginTop: 2 }}>
                         {['ORANGE', 'RED', 'BLACK'].includes(iData.ncal) ? (iData.odp_bts || iData.site_name_manual || '—') : (iData.site_name_manual || iData.company_name || '—')}
                       </div>
                    </div>
                    <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr 1fr', gap: '0.875rem', alignItems: 'center' }}>
                       <LevelBadge level={calculateIncidentLevel(iData.start_time)} />
                       <div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>NCAL</div>
+                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>NCAL</div>
                         <div style={{ marginTop: 4 }}><NcalBadge value={iData.ncal} /></div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>STATUS</div>
+                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>STATUS</div>
                         <div style={{ marginTop: 4 }}><StatusPill status={iData.status} /></div>
                       </div>
                    </div>
                    <div>
-                     <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>NETT DURATION</div>
-                     <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)', marginTop: 4 }}>
+                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>NETT DURATION</div>
+                     <div className="text-xl text-id" style={{ color: 'var(--accent)', marginTop: 4 }}>
                        <LiveTimer 
                          startIso={iData.start_time} 
                          pausedSec={iData.total_pause_duration_seconds} 
@@ -502,12 +502,12 @@ export default function CurrentTroublePage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Case No</th>
-                    <th>Site / Segment</th>
-                    <th>Problem Information</th>
-                    <th>Status</th>
-                    <th>Timer</th>
-                    <th className="text-right">Actions</th>
+                    <th className="text-xs">Incident</th>
+                    <th className="text-xs">Site / Segment</th>
+                    <th className="text-xs">Handling Details</th>
+                    <th className="text-xs">Priority & SLA</th>
+                    <th className="text-xs">Elapsed Time</th>
+                    <th className="text-right text-xs">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -530,24 +530,45 @@ export default function CurrentTroublePage() {
                     return (
                       <tr key={inc.id}>
                         <td>
-                          <button className="id-link" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ background: 'none', border: 'none' }}>
-                            {inc.case_no}
-                          </button>
+                          <div className="page-stack" style={{ gap: 4 }}>
+                            <button className="id-link text-id text-sm" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ background: 'none', border: 'none', padding: 0 }}>
+                              {inc.case_no}
+                            </button>
+                            <StatusPill status={inc.status} />
+                          </div>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                            <LevelBadge level={calculateIncidentLevel(inc.start_time)} />
-                            <NcalBadge value={inc.ncal} />
+                          <div className="page-stack" style={{ gap: 2 }}>
+                            <div className="text-sm" style={{ fontWeight: 600 }}>
+                              {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
+                            </div>
+                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                              {inc.odp_bts || inc.service_id || '—'}
+                            </div>
                             {inc.recurring_count > 0 && (
-                              <div title={`Detected ${inc.recurring_count} other incidents in the last 24 hours`} style={{ display: 'flex', alignItems: 'center', color: 'var(--danger)' }}>
-                                <AlertTriangle size={14} />
-                                {inc.recurring_count >= 2 && <span style={{ fontSize: '0.65rem', fontWeight: 900, marginLeft: 2 }}>{inc.recurring_count + 1}X</span>}
+                              <div className="text-xs" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                                <AlertTriangle size={12} />
+                                <span>Recurring {inc.recurring_count + 1}X</span>
                               </div>
                             )}
+                          </div>
+                        </td>
+                        <td style={{ maxWidth: '280px' }}>
+                          <div className="page-stack" style={{ gap: 4 }}>
+                            <div className="text-sm text-truncate" style={{ color: 'var(--text-primary)' }}>{inc.initial_problem || '—'}</div>
+                            {inc.last_action && (
+                              <div className="text-xs" style={{ color: 'var(--text-muted)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Activity size={10} /> {inc.last_action}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <NcalBadge value={inc.ncal} />
+                            <LevelBadge level={calculateIncidentLevel(inc.start_time)} />
                             {inc.level_support && (
-                              <span style={{ 
-                                fontSize: '0.65rem', 
-                                fontWeight: 800, 
+                              <span className="text-xs" style={{ 
                                 background: 'var(--bg-elevated)', 
                                 color: 'var(--text-secondary)', 
                                 padding: '2px 6px', 
@@ -558,33 +579,25 @@ export default function CurrentTroublePage() {
                               </span>
                             )}
                           </div>
-                          <div style={{ fontWeight: 600, fontSize: '0.8rem' }} className="text-truncate">
-                            {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
-                          </div>
-                          {!['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) && inc.brand_site && <div style={{ fontSize: '0.714rem', color: 'var(--text-secondary)' }} className="text-truncate">{inc.brand_site}</div>}
                         </td>
                         <td>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} className="text-truncate">{inc.initial_problem || '—'}</div>
-                          <div style={{ fontSize: '0.714rem', color: 'var(--text-muted)' }} className="text-truncate">{inc.odp_bts || '—'}</div>
-                        </td>
-                        <td><StatusPill status={inc.status} /></td>
-                        <td>
-                          <div style={{ fontSize: '0.845rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                            <LiveTimer 
-                              startIso={inc.start_time} 
-                              pausedSec={inc.total_pause_duration_seconds} 
-                              paused={inc.status === 'pending'} 
-                              target={getSLATarget(inc.ncal)}
-                            />
+                          <div className="page-stack" style={{ gap: 2 }}>
+                            <div className="text-id text-sm" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                              <LiveTimer 
+                                startIso={inc.start_time} 
+                                pausedSec={inc.total_pause_duration_seconds} 
+                                paused={inc.status === 'pending'} 
+                                target={getSLATarget(inc.ncal)}
+                              />
+                            </div>
+                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDateTime(inc.start_time)}</div>
                           </div>
-                          <div style={{ fontSize: '0.714rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(inc.start_time)}</div>
                         </td>
                         <td>
                           <div className="cell-actions">
                             {actions.map(a => (
-                              <button key={a.label} className={`btn btn-sm btn-ghost`} onClick={a.onClick} title={a.label}>
-                                <a.icon size={14} className={a.className} />
-                                <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>{a.label}</span>
+                              <button key={a.label} className="btn btn-icon btn-ghost btn-sm" onClick={a.onClick} title={a.label}>
+                                <a.icon size={15} className={a.className} />
                               </button>
                             ))}
                           </div>

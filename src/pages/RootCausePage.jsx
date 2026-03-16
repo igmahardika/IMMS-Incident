@@ -51,8 +51,8 @@ export default function RootCausePage() {
     <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-title">Root Cause Analysis</div>
-          <div className="page-subtitle">Historical statistics of incident classifications</div>
+          <div className="page-title text-xl">Root Cause Analysis</div>
+          <div className="page-subtitle text-xs">Historical statistics of incident classifications</div>
         </div>
       </div>
 
@@ -114,17 +114,17 @@ export default function RootCausePage() {
           <SectionCard title="Classification Breakdown" style={{ gridColumn: '1 / -1' }}>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>#</th><th>Classification</th><th>Count</th><th>Percentage</th><th>Chart</th></tr></thead>
+                <thead><tr><th className="text-xs">#</th><th className="text-xs">Classification</th><th className="text-xs">Count</th><th className="text-xs">Percentage</th><th className="text-xs">Chart</th></tr></thead>
                 <tbody>
                   {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                   {data.map((row, i) => {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (
                       <tr key={row.classification}>
-                        <td style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{i + 1}</td>
-                        <td style={{ fontWeight: 600, fontSize: '0.82rem' }}>{row.classification}</td>
-                        <td><strong>{row.count}</strong></td>
-                        <td><span style={{ color: PIE_COLORS[i % PIE_COLORS.length], fontWeight: 700 }}>{pct}%</span></td>
+                        <td className="text-id text-sm" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{i + 1}</td>
+                        <td className="text-sm" style={{ fontWeight: 600 }}>{row.classification}</td>
+                        <td className="text-id text-sm"><strong>{row.count}</strong></td>
+                        <td className="text-id text-sm"><span style={{ color: PIE_COLORS[i % PIE_COLORS.length], fontWeight: 700 }}>{pct}%</span></td>
                         <td>
                           <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, minWidth: 80 }}>
                             <div style={{ height: '100%', width: `${pct}%`, background: PIE_COLORS[i % PIE_COLORS.length], borderRadius: 3, transition: 'width 0.5s ease' }} />

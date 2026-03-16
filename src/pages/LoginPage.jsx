@@ -63,8 +63,8 @@ export default function LoginPage() {
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>IMMS</h1>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
+          <h1 className="title-hero" style={{ margin: 0 }}>IMMS</h1>
+          <p className="text-sm" style={{ color: 'var(--text-muted)', marginTop: 4 }}>
             Incident & Maintenance Management System
           </p>
         </div>
@@ -77,8 +77,8 @@ export default function LoginPage() {
           padding: '1.75rem',
           boxShadow: 'var(--shadow-lg)',
         }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' }}>Account Login</h2>
-          <p style={{ fontSize: '0.786rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          <h2 className="text-lg" style={{ marginBottom: '0.25rem' }}>Account Login</h2>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
             Please enter your credentials to continue
           </p>
 
@@ -129,7 +129,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: 4, minHeight: 44, fontSize: '0.9rem' }}>
+            <button type="submit" className="btn btn-primary text-base" disabled={loading} style={{ marginTop: 4, minHeight: 44 }}>
               {loading ? (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div className="spinner spinner-sm" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
@@ -148,7 +148,7 @@ export default function LoginPage() {
           borderRadius: 'var(--radius)',
           padding: '0.875rem',
         }}>
-          <div style={{ fontSize: '0.643rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.625rem' }}>
+          <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.625rem' }}>
             Quick Access (Dev)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem' }}>
@@ -172,14 +172,14 @@ export default function LoginPage() {
                   e.currentTarget.style.background = 'none';
                 }}
               >
-                <div style={{ fontSize: '0.643rem', fontWeight: 700, color, letterSpacing: '0.04em' }}>{role}</div>
-                <div style={{ fontSize: '0.714rem', color: 'var(--text-secondary)', fontFamily: 'monospace', marginTop: 1 }}>{u}</div>
+                <div className="text-xs" style={{ color, letterSpacing: '0.04em' }}>{role}</div>
+                <div className="text-sm text-id" style={{ color: 'var(--text-secondary)', marginTop: 1 }}>{u}</div>
               </button>
             ))}
           </div>
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.714rem', color: 'var(--text-muted)' }}>
+        <p className="text-xs" style={{ textAlign: 'center', marginTop: '1.25rem', color: 'var(--text-muted)' }}>
           © 2026 IMMS — Internal Use Only
         </p>
       </div>

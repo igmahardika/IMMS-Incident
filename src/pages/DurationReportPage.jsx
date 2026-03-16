@@ -44,8 +44,8 @@ export default function DurationReportPage() {
     <div className="page-stack">
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-title">Duration Report</div>
-          <div className="page-subtitle">Analysis of handling duration & SLA performance</div>
+          <div className="page-title text-xl">Duration Report</div>
+          <div className="page-subtitle text-xs">Analysis of handling duration & SLA performance</div>
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export default function DurationReportPage() {
             <SectionCard title="SLA Summary per NCAL" subtitle={`Year ${year}`}>
               <div className="table-wrap">
                 <table>
-                  <thead><tr><th>NCAL</th><th>Total</th><th>Avg Nett</th><th>SLA Met</th><th>SLA Target</th><th>%</th></tr></thead>
+                  <thead><tr><th className="text-xs">NCAL</th><th className="text-xs">Total</th><th className="text-xs">Avg Nett</th><th className="text-xs">SLA Met</th><th className="text-xs">SLA Target</th><th className="text-xs">%</th></tr></thead>
                   <tbody>
                     {sla.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                     {sla.map(row => {
@@ -89,11 +89,11 @@ export default function DurationReportPage() {
                       return (
                         <tr key={row.ncal}>
                           <td><NcalBadge value={row.ncal} /></td>
-                          <td><strong>{row.total_cases}</strong></td>
-                          <td style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td>{row.sla_met || 0}</td>
-                          <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{row.sla_target_minutes ? `${row.sla_target_minutes} min` : '—'}</td>
-                          <td><span style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>{pct}%</span></td>
+                          <td className="text-id text-sm"><strong>{row.total_cases}</strong></td>
+                          <td className="text-id text-sm">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td className="text-id text-sm">{row.sla_met || 0}</td>
+                          <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{row.sla_target_minutes ? `${row.sla_target_minutes} min` : '—'}</td>
+                          <td className="text-id text-sm"><span style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>{pct}%</span></td>
                         </tr>
                       );
                     })}
@@ -106,16 +106,16 @@ export default function DurationReportPage() {
             <SectionCard title="Technician Performance" subtitle={`Year ${year}`}>
               <div className="table-wrap">
                 <table>
-                  <thead><tr><th>Technician</th><th>Total</th><th>Avg Duration</th><th>Min</th><th>Max</th></tr></thead>
+                  <thead><tr><th className="text-xs">Technician</th><th className="text-xs">Total</th><th className="text-xs">Avg Duration</th><th className="text-xs">Min</th><th className="text-xs">Max</th></tr></thead>
                   <tbody>
                     {techPerf.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                     {techPerf.map(row => (
                       <tr key={row.technician}>
-                        <td style={{ fontWeight: 600, fontSize: '0.8rem' }}>{row.technician}</td>
-                        <td>{row.total_handled}</td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--success)' }}>{formatDuration(row.min_nett)}</td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--danger)' }}>{formatDuration(row.max_nett)}</td>
+                        <td className="text-sm" style={{ fontWeight: 600 }}>{row.technician}</td>
+                        <td className="text-id text-sm">{row.total_handled}</td>
+                        <td className="text-id text-xs">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td className="text-id text-xs" style={{ color: 'var(--success)' }}>{formatDuration(row.min_nett)}</td>
+                        <td className="text-id text-xs" style={{ color: 'var(--danger)' }}>{formatDuration(row.max_nett)}</td>
                       </tr>
                     ))}
                   </tbody>

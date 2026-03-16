@@ -20,12 +20,11 @@ export function StatusPill({ status }) {
 export function RoleBadge({ role }) {
   const color = ROLE_COLORS[role] || '#999';
   return (
-    <span style={{
+    <span className="text-xs" style={{
       display: 'inline-flex', alignItems: 'center',
       padding: '0.125rem 0.5rem', borderRadius: '99px',
-      fontSize: '0.714rem', fontWeight: 700,
       background: `${color}22`, color,
-      textTransform: 'capitalize', letterSpacing: '0.04em'
+      textTransform: 'capitalize'
     }}>
       {role}
     </span>
@@ -35,9 +34,8 @@ export function RoleBadge({ role }) {
 export function GradeBadge({ grade }) {
   const color = GRADE_COLORS[grade] || 'var(--text-muted)';
   return (
-    <span style={{
+    <span className="text-xs" style={{
       display: 'inline-flex', padding: '0.125rem 0.438rem', borderRadius: 4,
-      fontSize: '0.714rem', fontWeight: 600,
       background: `${color}1a`, color, border: `1px solid ${color}30`
     }}>
       {grade}
@@ -47,10 +45,9 @@ export function GradeBadge({ grade }) {
 
 export function StatusBadge({ active }) {
   return (
-    <span style={{
+    <span className="text-xs" style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
       padding: '0.125rem 0.5rem', borderRadius: '99px',
-      fontSize: '0.714rem', fontWeight: 600,
       background: active ? 'var(--success-bg)' : 'var(--bg-card)',
       color: active ? 'var(--success)' : 'var(--text-muted)',
       border: '1px solid',
@@ -74,7 +71,7 @@ export function DurationBadge({ seconds, target }) {
   const s = seconds % 60;
   const isExceeded = target && seconds > target;
   return (
-    <span className={`timer-badge ${isExceeded ? 'timer-exceeded' : ''}`} style={isExceeded ? { color: 'var(--danger)', borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' } : {}}>
+    <span className={`timer-badge text-id ${isExceeded ? 'timer-exceeded' : ''}`} style={isExceeded ? { color: 'var(--danger)', borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' } : {}}>
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
     </span>
   );
@@ -106,7 +103,7 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
 
   return (
     <span
-      className={`timer-badge ${isExceeded ? 'timer-exceeded' : ''}`}
+      className={`timer-badge text-id ${isExceeded ? 'timer-exceeded' : ''}`}
       style={{ color, borderColor: border, background: bg }}
     >
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
@@ -187,10 +184,10 @@ export function PageSpinner() {
 
 export function LevelBadge({ level }) {
   return (
-    <span style={{ 
+    <span className="text-xs" style={{ 
       background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
-      padding: '0.2rem 0.5rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)',
-      display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: '0.05em'
+      padding: '0.2rem 0.5rem', color: 'var(--text-secondary)',
+      display: 'inline-flex', alignItems: 'center', gap: 4
     }}>
       LVL {level || 1}
     </span>
