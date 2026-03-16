@@ -71,6 +71,8 @@ const tables = [
     level_2 TEXT,
     level_3 TEXT,
     level_4 TEXT,
+    latitude REAL,
+    longitude REAL,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -165,6 +167,8 @@ try { db.exec("ALTER TABLE master_customer ADD COLUMN sla TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN sla TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN customer_terdampak TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE incidents ADD COLUMN koordinat TEXT;"); } catch(e) {}
+try { db.exec("ALTER TABLE master_distribusi ADD COLUMN latitude REAL;"); } catch(e) {}
+try { db.exec("ALTER TABLE master_distribusi ADD COLUMN longitude REAL;"); } catch(e) {}
 
 // Segment-specific templates migration
 const segments = ['blue', 'yellow', 'orange', 'red', 'black'];
