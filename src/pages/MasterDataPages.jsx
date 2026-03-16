@@ -1,66 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../utils/api.js';
+import { ROLE_COLORS, GRADE_COLORS } from '../utils/constants.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Modal, PageSpinner, EmptyState } from '../components/ui/index.jsx';
+import { Modal, PageSpinner, EmptyState, RoleBadge, StatusBadge, GradeBadge, AccentBadge } from '../components/ui/index.jsx';
 import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Layout, Map as MapIcon, LayoutList, MapPinOff, Search } from 'lucide-react';
 import DistributionMap from '../components/ui/DistributionMap.jsx';
 import CustomerMap from '../components/ui/CustomerMap.jsx';
 import GeoSummary from '../components/ui/GeoSummary.jsx';
 
-// ─── Shared role/badge helpers ─────────────────────────────────────────────────
-const ROLE_COLORS = { admin: '#6366f1', manager: '#10b981', noc: '#3b82f6', technician: '#f59e0b' };
-
-function RoleBadge({ role }) {
-  const color = ROLE_COLORS[role] || '#999';
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '0.125rem 0.5rem', borderRadius: '99px',
-      fontSize: '0.714rem', fontWeight: 700,
-      background: `${color}22`, color,
-      textTransform: 'capitalize', letterSpacing: '0.04em'
-    }}>
-      {role}
-    </span>
-  );
-}
-
-function StatusBadge({ active }) {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '0.125rem 0.5rem', borderRadius: '99px',
-      fontSize: '0.714rem', fontWeight: 600,
-      background: active ? 'var(--success-bg)' : 'var(--bg-card)',
-      color: active ? 'var(--success)' : 'var(--text-muted)',
-      border: '1px solid',
-      borderColor: active ? 'var(--success-border)' : 'var(--border)',
-    }}>
-      {active ? '✓ Active' : '— Inactive'}
-    </span>
-  );
-}
-
-function AccentBadge({ text }) {
-  return (
-    <span className="badge badge-accent">{text}</span>
-  );
-}
-
-function GradeBadge({ grade }) {
-  const colors = { VIP: '#a78bfa', Gold: '#f59e0b', Silver: '#94a3b8', Bronze: '#ea580c' };
-  const color = colors[grade] || 'var(--text-muted)';
-  return (
-    <span style={{
-      display: 'inline-flex', padding: '0.125rem 0.438rem', borderRadius: 4,
-      fontSize: '0.714rem', fontWeight: 600,
-      background: `${color}1a`, color, border: `1px solid ${color}30`
-    }}>
-      {grade}
-    </span>
-  );
-}
+// ─── Component helpers ────────────────────────────────────────────────────────
 
 function TableCard({ children }) {
   return (
@@ -114,21 +63,21 @@ export function MasterCustomerPage() {
         service_id: r['Service ID']?.toString() || '',
         company_name: r['Company Name']?.toString() || '',
         brand_site: r['Brand / Site']?.toString() || '',
-        address: r['Alamat']?.toString() || '',
-        service_type: r['Layanan']?.toString() || '',
+        address: r['Address']?.toString() || '',
+        service_type: r['Service']?.toString() || '',
         grade: r['Grade']?.toString() || '',
         support_level: r['Support Level']?.toString() || '',
         link_coverage: r['Link Coverage']?.toString() || '',
       })).filter(c => c.customer_id);
-      if (parsed.length === 0) throw new Error('Data tidak valid');
+      if (parsed.length === 0) throw new Error('Invalid data format');
       const res = await api.uploadCustomers(parsed);
-      addToast(`Berhasil upload ${res.count} customer`, 'success');
+      addToast(`Successfully uploaded ${res.count} customers`, 'success');
       load();
-    } catch(err) { addToast(`Gagal: ${err.message}`, 'error'); setLoading(false); }
+    } catch(err) { addToast(`Failed: ${err.message}`, 'error'); setLoading(false); }
     finally { e.target.value = null; }
   };
   const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ 'Customer ID': 'CUST-001', 'Service ID': 'SRV-001', 'Company Name': 'PT Contoh', 'Brand / Site': 'Cabang Utama', 'Alamat': 'Jl. Sudirman No 1', 'Layanan': 'Internet Dedicated', 'Grade': 'Gold', 'Support Level': 'L2', 'Link Coverage': 'https://maps.google.com/...' }]);
+    const ws = XLSX.utils.json_to_sheet([{ 'Customer ID': 'CUST-001', 'Service ID': 'SRV-001', 'Company Name': 'Example Co', 'Brand / Site': 'Main Branch', 'Address': 'Jl. Sudirman No 1', 'Service': 'Internet Dedicated', 'Grade': 'Gold', 'Support Level': 'L2', 'Link Coverage': 'https://maps.google.com/...' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
     XLSX.writeFile(wb, 'Template_Master_Customer.xlsx');
@@ -145,7 +94,7 @@ export function MasterCustomerPage() {
           <input 
             type="text" 
             className="form-control" 
-            placeholder="Cari Customer, Service ID, atau Alamat..." 
+            placeholder="Search Customer, Service ID, or Address..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ paddingLeft: '2.5rem', borderRadius: '99px' }}
@@ -196,7 +145,7 @@ export function MasterCustomerPage() {
              (c.address || '').toLowerCase().includes(searchQuery.toLowerCase())
            );
            
-           if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Tidak ditemukan" desc="Tidak ada data yang cocok dengan pencarian Anda" />;
+           if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="No data matches your search query" />;
            
            const totalPages = Math.ceil(filtered.length / rowsPerPage);
            const startIdx = (currentPage - 1) * rowsPerPage;
@@ -392,15 +341,15 @@ export function MasterClassificationPage() {
   
   const handleSave = async () => {
     try {
-      if (modal === 'create') { await api.createClassification(form); addToast('Klasifikasi ditambahkan', 'success'); }
-      else { await api.updateClassification(modal.id, form); addToast('Diperbarui', 'success'); }
+      if (modal === 'create') { await api.createClassification(form); addToast('Classification added', 'success'); }
+      else { await api.updateClassification(modal.id, form); addToast('Updated successfully', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus klasifikasi ini?')) return;
-    try { await api.deleteClassification(id); addToast('Dihapus', 'warning'); load(); }
+    if (!confirm('Delete this classification?')) return;
+    try { await api.deleteClassification(id); addToast('Deleted', 'warning'); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
 
@@ -600,8 +549,8 @@ export function MasterTechnicalSupportPage() {
   const openCreate = () => { setModal('create'); setForm({ no: '', name: '', unit: '' }); };
   const handleSave = async () => {
     try {
-      if (modal === 'create') { await api.createTechnicalSupport(form); addToast('Data ditambahkan', 'success'); }
-      else { await api.updateTechnicalSupport(modal.id, form); addToast('Diperbarui', 'success'); }
+      if (modal === 'create') { await api.createTechnicalSupport(form); addToast('Data added successfully', 'success'); }
+      else { await api.updateTechnicalSupport(modal.id, form); addToast('Updated successfully', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
@@ -616,7 +565,7 @@ export function MasterTechnicalSupportPage() {
       const rows = XLSX.utils.sheet_to_json(sheet);
       const parsed = rows.map(r => ({ no: r['No']?.toString() || '', name: r['Name']?.toString() || '', unit: r['Unit']?.toString() || '' })).filter(r => r.name && r.unit);
       const res = await api.uploadTechnicalSupport(parsed);
-      addToast(`Berhasil upload ${res.count} data`, 'success');
+      addToast(`Successfully uploaded ${res.count} records`, 'success');
       load();
     } catch(err) { addToast(err.message, 'error'); setLoading(false); }
     finally { e.target.value = null; }
@@ -740,7 +689,7 @@ export function MasterDistribusiPage() {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet);
       const res = await api.uploadDistribusi(type, rows);
-      addToast(`Berhasil upload ${res.count} data ${type}`, 'success');
+      addToast(`Successfully uploaded ${res.count} ${type} records`, 'success');
       load();
     } catch(err) { addToast(err.message, 'error'); setLoading(false); }
     finally { e.target.value = null; }
@@ -898,7 +847,7 @@ export function MasterActionPage() {
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createAction(form); addToast('Action added successfully', 'success'); }
-      else { await api.updateAction(modal.id, form); addToast('Updated', 'success'); }
+      else { await api.updateAction(modal.id, form); addToast('Updated successfully', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
@@ -932,7 +881,7 @@ export function MasterActionPage() {
                   <td>
                     <div className="cell-actions">
                       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(item)}><Edit2 size={12} /></button>
-                      <button className="btn btn-danger btn-icon btn-sm" onClick={() => { if(confirm('Hapus action ini?')) api.deleteAction(item.id).then(load); }}><Trash2 size={12} /></button>
+                      <button className="btn btn-danger btn-icon btn-sm" onClick={() => { if(confirm('Delete this action?')) api.deleteAction(item.id).then(load); }}><Trash2 size={12} /></button>
                     </div>
                   </td>
                 </tr>

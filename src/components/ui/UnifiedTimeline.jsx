@@ -20,7 +20,7 @@ const ACTION_COLORS = {
   'CLOSE': 'var(--success)',
 };
 
-export default function UnifiedTimeline({ timeline }) {
+export default function UnifiedTimeline({ timeline, filterType = 'technical' }) {
   if (!timeline || timeline.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
@@ -29,13 +29,45 @@ export default function UnifiedTimeline({ timeline }) {
     );
   }
 
-  let handlingCount = 0;
+  let renderedHandlingCount = 0;
+  
   return (
-    <div className="timeline-container" style={{ padding: '1rem' }}>
+    <div className="timeline-container" style={{ padding: '0.5rem 1rem' }}>
       {timeline.map((item, idx) => {
         const isPause = item.type === 'pause';
         const action = isPause ? 'PAUSE' : (item.action || 'UPDATE');
-        if (action === 'UPDATE') handlingCount++;
+        const text = item.details || item.reason || '';
+
+        // Parsing
+        let cause = '';
+        let actionTxt = '';
+        const others = [];
+        if (text.includes(' | ')) {
+          const parts = text.split(' | ');
+          parts.forEach(p => {
+            const cleanP = p.trim();
+            if (!cleanP) return;
+            if (cleanP.startsWith('Cause:') || cleanP.startsWith('Penyebab:')) {
+              cause = cleanP.replace(/^Cause:\s*|^Penyebab:\s*/, '').trim();
+            } else if (cleanP.startsWith('Last Action:') || cleanP.startsWith('Action Terakhir:')) {
+              actionTxt = cleanP.replace(/^Last Action:\s*|^Action Terakhir:\s*/, '').trim();
+            } else {
+              others.push(cleanP);
+            }
+          });
+        } else if (text && action === 'UPDATE') {
+          actionTxt = text;
+        }
+
+        const isTechnical = !!(cause || actionTxt || ['START', 'PAUSE', 'RESUME', 'CLOSE'].includes(action));
+        const isSystem = !!(others.length > 0 || ['CREATE'].includes(action));
+
+        // Filtering Logic
+        if (filterType === 'technical' && !isTechnical) return null;
+        if (filterType === 'system' && !isSystem) return null;
+
+        // Visual setup
+        if (filterType === 'technical' && (cause || actionTxt)) renderedHandlingCount++;
         
         const Icon = ACTION_ICONS[action] || Activity;
         const color = ACTION_COLORS[action] || 'var(--text-muted)';
@@ -43,7 +75,10 @@ export default function UnifiedTimeline({ timeline }) {
 
         const getActionLabel = () => {
           if (isPause) return 'Incident Paused';
-          if (action === 'UPDATE') return `Handling ${handlingCount}`;
+          if (action === 'UPDATE') {
+             if (filterType === 'technical' && (cause || actionTxt)) return `Handling ${renderedHandlingCount}`;
+             return 'System Update';
+          }
           if (action === 'START') return 'Action Started';
           if (action === 'RESUME') return 'Action Resumed';
           if (action === 'CREATE') return 'Incident Created';
@@ -52,59 +87,128 @@ export default function UnifiedTimeline({ timeline }) {
         };
 
         return (
-          <div key={item.id || idx} className="timeline-item" style={{ display: 'flex', gap: '1rem', position: 'relative', marginBottom: idx === timeline.length - 1 ? 0 : '1.5rem' }}>
+          <div key={item.id || idx} className="timeline-item" style={{ 
+            display: 'flex', 
+            gap: '1.25rem', 
+            position: 'relative', 
+            marginBottom: idx === timeline.length - 1 ? 0 : '1.75rem',
+            animation: 'fadeIn 0.3s ease-out'
+          }}>
             {/* Connector Line */}
             {idx !== timeline.length - 1 && (
-              <div style={{ position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0 }} />
+              <div style={{ position: 'absolute', left: '11px', top: '24px', bottom: '-20px', width: '2px', background: 'var(--border)', zIndex: 0, opacity: 0.6 }} />
             )}
 
-            {/* Icon */}
+            {/* Icon Circle */}
             <div style={{ 
-              width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-elevated)', border: `2px solid ${color}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, flexShrink: 0, marginTop: '2px'
+              width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-card)', border: `2px solid ${color}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, flexShrink: 0, marginTop: '2px',
+              boxShadow: `0 0 8px ${color}20`
             }}>
               <Icon size={12} style={{ color }} />
             </div>
 
-            {/* Content */}
+            {/* Content Area */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                     {getActionLabel()}
                     {item.user_name && (
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--bg-elevated)', padding: '1px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                         <User size={10} /> {item.user_name}
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '4px', letterSpacing: '-0.01em' }}>
                     {formatDateTime(timestamp)}
                   </div>
                 </div>
-                {item.segment_duration != null && item.segment_duration > 0 && (
+                {item.segment_duration != null && item.segment_duration > 0 && filterType === 'technical' && (
                   <div style={{ 
-                    fontSize: '0.68rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
-                    whiteSpace: 'nowrap'
+                    fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'var(--accent-subtle)', border: '1px solid rgba(99,102,241,0.15)', color: 'var(--accent)',
+                    whiteSpace: 'nowrap', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                   }}>
-                    {action === 'PAUSE' ? 'Paused for ' : 'Handled for '}
+                    {action === 'PAUSE' ? 'Paused ' : 'Effort '}
                     {formatDuration(item.segment_duration)}
                   </div>
                 )}
               </div>
 
-              {/* Details / Reason */}
-              {(item.details || item.reason) && (
-                <div className="preview-block" style={{ marginTop: '0.5rem', padding: '0.625rem', fontSize: '0.8rem', color: 'var(--text-secondary)', minHeight: 'auto', background: isPause ? 'rgba(251,191,36,0.05)' : undefined }}>
-                   {item.details || item.reason}
-                </div>
-              )}
-              
-              {isPause && item.pause_end && (
-                <div style={{ fontSize: '0.72rem', color: 'var(--success)', fontWeight: 600, marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Play size={10} /> Resumed at {formatDateTime(item.pause_end)}
-                </div>
-              )}
+              {/* Detail Content */}
+              <div style={{ marginTop: '0.875rem' }}>
+                {filterType === 'technical' && (cause || actionTxt) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: (cause && actionTxt) ? '1fr 1fr' : '1fr', gap: '1rem' }}>
+                    {cause && (
+                      <div className="preview-block" style={{ fontSize: '0.8rem', padding: '0.875rem', background: 'rgba(239, 68, 68, 0.03)', borderLeft: '4px solid var(--danger)', borderRadius: '4px 8px 8px 4px' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--danger)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, letterSpacing: '0.05em' }}>Root Cause</div>
+                        <div style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>{cause}</div>
+                      </div>
+                    )}
+                    {actionTxt && (
+                      <div className="preview-block" style={{ fontSize: '0.8rem', padding: '0.875rem', background: 'rgba(34, 197, 94, 0.03)', borderLeft: '4px solid var(--success)', borderRadius: '4px 8px 8px 4px' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--success)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, letterSpacing: '0.05em' }}>Action Taken</div>
+                        <div style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>{actionTxt}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {filterType === 'system' && others.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
+                    {others.map((o, idx) => {
+                      const isId = o.toLowerCase().includes('id:');
+                      const isTech = o.toLowerCase().includes('technician') || o.toLowerCase().includes('teknisi');
+                      const isClass = o.toLowerCase().includes('classification') || o.toLowerCase().includes('klasifikasi');
+                      
+                      let chipColor = 'var(--text-secondary)';
+                      let chipBg = 'var(--bg-elevated)';
+                      if (isTech) { chipColor = '#6366f1'; chipBg = 'rgba(99,102,241,0.08)'; }
+                      if (isClass) { chipColor = '#f59e0b'; chipBg = 'rgba(245,158,11,0.08)'; }
+
+                      return (
+                        <span key={idx} style={{ 
+                          fontSize: '0.725rem', 
+                          fontWeight: 700,
+                          padding: '4px 12px', 
+                          background: chipBg, 
+                          border: `1px solid ${chipColor}20`, 
+                          borderRadius: '100px',
+                          color: chipColor,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                        }}>
+                          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: chipColor }} />
+                          {o}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Lifecycle Messages */}
+                {((filterType === 'technical' && !cause && !actionTxt && action !== 'UPDATE') || (filterType === 'system' && action === 'CREATE')) && (
+                   <div style={{ 
+                     fontSize: '0.8rem', 
+                     color: 'var(--text-secondary)', 
+                     background: 'var(--bg-elevated)', 
+                     padding: '0.75rem 1rem', 
+                     borderRadius: '8px',
+                     border: '1px dashed var(--border)',
+                     fontStyle: action === 'CREATE' ? 'normal' : 'italic'
+                   }}>
+                     {action === 'CREATE' ? 'Initial entry: Incident established in the monitoring system.' : (item.details || item.reason || getActionLabel())}
+                   </div>
+                )}
+
+                {isPause && item.pause_end && filterType === 'technical' && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700, marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(34,197,94,0.05)', padding: '4px 10px', borderRadius: '4px', width: 'fit-content' }}>
+                    <Play size={12} fill="currentColor" /> Resumed at {formatDateTime(item.pause_end)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );

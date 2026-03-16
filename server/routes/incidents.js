@@ -297,7 +297,7 @@ router.post('/', authenticate, (req, res) => {
       db.prepare(`
         INSERT INTO notifications (user_id, incident_id, type, message)
         VALUES (?, ?, 'ASSIGNMENT', ?)
-      `).run(technician_id, incident.id, `Anda ditugaskan ke Case #${incident.case_no}`);
+      `).run(technician_id, incident.id, `You have been assigned to Case #${incident.case_no}`);
     }
 
     res.status(201).json(incident);
@@ -363,19 +363,20 @@ router.put('/:id', authenticate, (req, res) => {
   );
 
   const changes = [];
-  if (technician_id && technician_id !== old.technician_id) changes.push(`Teknisi diubah`);
-  if (root_cause) changes.push(`Penyebab: ${root_cause}`);
-  if (last_action) changes.push(`Action Terakhir: ${last_action}`);
+  if (technician_id && technician_id !== old.technician_id) changes.push(`Technician changed`);
+  if (root_cause) changes.push(`Cause: ${root_cause}`);
+  if (last_action) changes.push(`Last Action: ${last_action}`);
   if (power_before && power_before !== old.power_before) changes.push(`Power Before: ${power_before}`);
   if (power_after && power_after !== old.power_after) changes.push(`Power After: ${power_after}`);
-  if (classification_id && classification_id !== old.classification_id) changes.push(`Klasifikasi diubah`);
-  if (classification_id) changes.push(`Klasifikasi ID: ${classification_id}`);
+  if (classification_id && classification_id !== old.classification_id) changes.push(`Classification changed`);
   
-  const detailStr = changes.length > 0 ? changes.join(' | ') : 'Update data (tidak ada perubahan signifikan)';
+  const detailStr = changes.length > 0 ? changes.join(' | ') : null;
 
-  db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'UPDATE', ?)").run(
-    req.params.id, req.user.id, detailStr
-  );
+  if (detailStr) {
+    db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'UPDATE', ?)").run(
+      req.params.id, req.user.id, detailStr
+    );
+  }
 
   // ─── Internal Notifications ───
   // 1. Assignment Notification (to Technician)
@@ -383,7 +384,7 @@ router.put('/:id', authenticate, (req, res) => {
     db.prepare(`
       INSERT INTO notifications (user_id, incident_id, type, message)
       VALUES (?, ?, 'ASSIGNMENT', ?)
-    `).run(technician_id, req.params.id, `Anda ditugaskan ke Case #${old.case_no}`);
+    `).run(technician_id, req.params.id, `You have been assigned to Case #${old.case_no}`);
   }
 
   // 2. Update Notification (to Staff: NOC/Admin/Manager)
@@ -391,7 +392,7 @@ router.put('/:id', authenticate, (req, res) => {
     db.prepare(`
       INSERT INTO notifications (target_role, incident_id, type, message)
       VALUES ('staff', ?, 'TECH_UPDATE', ?)
-    `).run(req.params.id, `Teknisi ${req.user.name} memperbarui Case #${old.case_no}: ${detailStr}`);
+    `).run(req.params.id, `Technician ${req.user.name} updated Case #${old.case_no}: ${detailStr}`);
   }
 
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));

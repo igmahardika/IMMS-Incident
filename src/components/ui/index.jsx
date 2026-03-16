@@ -1,4 +1,5 @@
 import React from 'react';
+import { NCAL_COLORS, STATUS_COLORS, ROLE_COLORS, GRADE_COLORS } from '../../utils/constants.js';
 
 const NCAL_ICONS = { BLACK: '⬛', RED: '🔴', ORANGE: '🟠', YELLOW: '🟡', BLUE: '🔵' };
 
@@ -12,7 +13,58 @@ export function NcalBadge({ value }) {
 
 export function StatusPill({ status }) {
   const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
-  return <span className={`status-pill status-${status}`}>{labels[status] || status}</span>;
+  const color = STATUS_COLORS[status] || 'var(--text-muted)';
+  return <span className={`status-pill status-${status}`} style={{ borderColor: `${color}40`, background: `${color}10`, color }}>{labels[status] || status}</span>;
+}
+
+export function RoleBadge({ role }) {
+  const color = ROLE_COLORS[role] || '#999';
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '0.125rem 0.5rem', borderRadius: '99px',
+      fontSize: '0.714rem', fontWeight: 700,
+      background: `${color}22`, color,
+      textTransform: 'capitalize', letterSpacing: '0.04em'
+    }}>
+      {role}
+    </span>
+  );
+}
+
+export function GradeBadge({ grade }) {
+  const color = GRADE_COLORS[grade] || 'var(--text-muted)';
+  return (
+    <span style={{
+      display: 'inline-flex', padding: '0.125rem 0.438rem', borderRadius: 4,
+      fontSize: '0.714rem', fontWeight: 600,
+      background: `${color}1a`, color, border: `1px solid ${color}30`
+    }}>
+      {grade}
+    </span>
+  );
+}
+
+export function StatusBadge({ active }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '0.125rem 0.5rem', borderRadius: '99px',
+      fontSize: '0.714rem', fontWeight: 600,
+      background: active ? 'var(--success-bg)' : 'var(--bg-card)',
+      color: active ? 'var(--success)' : 'var(--text-muted)',
+      border: '1px solid',
+      borderColor: active ? 'var(--success-border)' : 'var(--border)',
+    }}>
+      {active ? '✓ Active' : '— Inactive'}
+    </span>
+  );
+}
+
+export function AccentBadge({ text }) {
+  return (
+    <span className="badge badge-accent">{text}</span>
+  );
 }
 
 export function DurationBadge({ seconds, target }) {

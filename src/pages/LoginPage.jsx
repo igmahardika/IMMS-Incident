@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { ROLE_COLORS } from '../utils/constants.js';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 
 const QUICK_LOGINS = [
-  { u: 'admin',   p: 'admin123',   role: 'Admin',    color: '#ef4444' },
-  { u: 'noc1',    p: 'noc123',     role: 'NOC',      color: '#3b82f6' },
-  { u: 'tech1',   p: 'tech123',    role: 'Teknisi',  color: '#10b981' },
-  { u: 'manager', p: 'manager123', role: 'Manager',  color: '#f59e0b' },
+  { u: 'admin',   p: 'admin123',   role: 'Admin',    color: ROLE_COLORS.admin },
+  { u: 'noc1',    p: 'noc123',     role: 'NOC',      color: ROLE_COLORS.noc },
+  { u: 'tech1',   p: 'tech123',    role: 'Technician', color: ROLE_COLORS.technician },
+  { u: 'manager', p: 'manager123', role: 'Manager',  color: ROLE_COLORS.manager },
 ];
 
 export default function LoginPage() {
@@ -26,7 +27,7 @@ export default function LoginPage() {
       await login(form.username, form.password);
       navigate('/');
     } catch (err) {
-      addToast(err.message || 'Login gagal. Periksa username dan password.', 'error');
+      addToast(err.message || 'Login failed. Please check your username and password.', 'error');
     } finally {
       setLoading(false);
     }
@@ -76,9 +77,9 @@ export default function LoginPage() {
           padding: '1.75rem',
           boxShadow: 'var(--shadow-lg)',
         }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' }}>Masuk ke Akun</h2>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' }}>Account Login</h2>
           <p style={{ fontSize: '0.786rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-            Silakan masukkan kredensial Anda untuk melanjutkan
+            Please enter your credentials to continue
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -90,7 +91,7 @@ export default function LoginPage() {
                   id="login-username"
                   type="text"
                   className="form-control"
-                  placeholder="Masukkan username"
+                  placeholder="Enter username"
                   style={{ paddingLeft: '2rem' }}
                   value={form.username}
                   onChange={(e) => setForm(p => ({ ...p, username: e.target.value }))}
@@ -109,7 +110,7 @@ export default function LoginPage() {
                   id="login-password"
                   type={showPw ? 'text' : 'password'}
                   className="form-control"
-                  placeholder="Masukkan password"
+                  placeholder="Enter password"
                   style={{ paddingLeft: '2rem', paddingRight: '2.5rem' }}
                   value={form.password}
                   onChange={(e) => setForm(p => ({ ...p, password: e.target.value }))}
@@ -132,9 +133,9 @@ export default function LoginPage() {
               {loading ? (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div className="spinner spinner-sm" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
-                  Memproses...
+                  Processing...
                 </span>
-              ) : 'Masuk'}
+              ) : 'Login'}
             </button>
           </form>
         </div>

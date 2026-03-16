@@ -142,9 +142,15 @@ export default function IncidentDetailPage() {
           </SectionCard>
 
           {/* Activity Logs (Unified Timeline) */}
-          <SectionCard title={<span><Activity size={15} /> Incident Activity Timeline</span>}>
+          <SectionCard title={<span><Activity size={15} /> Handling History</span>}>
             <div className="section-card-body" style={{ padding: 0 }}>
-              <UnifiedTimeline timeline={processTimeline(incident)} />
+              <UnifiedTimeline timeline={processTimeline(incident)} filterType="technical" />
+            </div>
+          </SectionCard>
+
+          <SectionCard title={<span><Activity size={15} /> System Activity Log</span>}>
+            <div className="section-card-body" style={{ padding: 0 }}>
+              <UnifiedTimeline timeline={processTimeline(incident)} filterType="system" />
             </div>
           </SectionCard>
         </div>

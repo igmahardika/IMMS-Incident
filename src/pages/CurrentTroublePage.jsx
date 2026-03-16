@@ -33,10 +33,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
     power_before: '',
     power_after: '',
     level_support: '',
-    classification_id: '',
   });
-  const [classes, setClasses] = useState([]);
-  const [selectedParent, setSelectedParent] = useState('');
   const [users, setUsers] = useState([]);
   const { addToast } = useToast();
   const { user } = useAuth();
@@ -57,12 +54,9 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
         ...prev,
         power_before: prev.power_before || fullData.power_before || '',
         power_after: prev.power_after || fullData.power_after || '',
-        classification_id: fullData.classification_id || '',
       }));
-      if (fullData.klasifikasi) setSelectedParent(fullData.klasifikasi);
     });
 
-    api.getClassifications().then(setClasses).catch(console.error);
 
     if (user?.role !== 'technician') {
       api.getUsers().then(setUsers).catch(e => {
@@ -118,22 +112,6 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Klasifikasi Utama</label>
-                  <select className="form-control" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setForm(p => ({ ...p, classification_id: '' })); }}>
-                    <option value="">— Pilih Kategori —</option>
-                    {[...new Set(classes.map(c => c.klasifikasi))].map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Sub Klasifikasi</label>
-                  <select className="form-control" value={form.classification_id} onChange={e => setForm(p => ({ ...p, classification_id: e.target.value }))} disabled={!selectedParent}>
-                    <option value="">— Pilih Detail —</option>
-                    {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
-                  </select>
-                </div>
-              </div>
 
               <div className="form-group mb-4">
                 <label className="form-label">Update Root Cause</label>
@@ -199,7 +177,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
               </div>
             </div>
 
-            {/* Handling History Only */}
+            {/* Handling History */}
             <div className="section-card">
               <div className="section-card-header" style={{ background: 'var(--accent-subtle)', borderBottomColor: 'rgba(99,102,241,0.1)', padding: '0.625rem 0.875rem' }}>
                 <div className="section-card-title" style={{ fontSize: '0.75rem', color: 'var(--accent-light)' }}>Handling History</div>
@@ -207,17 +185,23 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
               <div className="section-card-body" style={{ padding: 0 }}>
                 <UnifiedTimeline 
                   timeline={processTimeline(iData).filter(item => {
-                    const isTech = user?.role === 'technician';
                     const action = item.type === 'pause' ? 'PAUSE' : item.action;
-                    if (isTech) {
-                      // Technicians only see updates to Root Cause or Action Taken
-                      return action === 'UPDATE' && (
-                        (item.details || '').includes('Penyebab:') || 
-                        (item.details || '').includes('Action Terakhir:')
-                      );
-                    }
                     return action === 'UPDATE' || action === 'PAUSE';
                   })} 
+                  filterType="technical"
+                />
+              </div>
+            </div>
+
+            {/* System Activity */}
+            <div className="section-card">
+              <div className="section-card-header" style={{ background: 'var(--bg-elevated)', borderBottomColor: 'var(--border)', padding: '0.625rem 0.875rem' }}>
+                <div className="section-card-title" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>System Activity Log</div>
+              </div>
+              <div className="section-card-body" style={{ padding: 0 }}>
+                <UnifiedTimeline 
+                  timeline={processTimeline(iData)} 
+                  filterType="system"
                 />
               </div>
             </div>
@@ -283,12 +267,16 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     let cause = '';
     let action = '';
     parts.forEach(p => {
-      if (p.startsWith('Penyebab:')) cause = p.replace('Penyebab:', '').trim();
-      if (p.startsWith('Action Terakhir:')) action = p.replace('Action Terakhir:', '').trim();
+      if (p.startsWith('Cause:') || p.startsWith('Penyebab:')) {
+        cause = p.replace('Cause:', '').replace('Penyebab:', '').trim();
+      }
+      if (p.startsWith('Last Action:') || p.startsWith('Action Terakhir:')) {
+        action = p.replace('Last Action:', '').replace('Action Terakhir:', '').trim();
+      }
     });
     if (cause) setRootCause(cause);
     if (action) setActionTaken(action);
-    const classIdPart = parts.find(p => p.startsWith('Klasifikasi ID:'));
+    const classIdPart = parts.find(p => p.startsWith('Classification ID:'));
     if (classIdPart) {
       const cid = classIdPart.replace('Klasifikasi ID:', '').trim();
       setClassificationId(cid);
@@ -296,7 +284,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
       const cl = classes.find(x => x.id == cid);
       if (cl) setSelectedParent(cl.klasifikasi);
     }
-    addToast('Data terpilih dari riwayat', 'success');
+    addToast('Data selected from history', 'success');
   };
 
   const uniqueParents = [...new Set(classes.map(c => c.klasifikasi))];
@@ -304,11 +292,11 @@ function CloseModal({ open, onClose, incident, onClosed }) {
   const handleClose = async () => {
     try {
       if (!classificationId) {
-        addToast('Pilih klasifikasi terlebih dahulu', 'warning');
+        addToast('Please select a classification first', 'warning');
         return;
       }
       if (!actionTaken) {
-        addToast('Pilih penanganan terlebih dahulu', 'warning');
+        addToast('Please select a handling action first', 'warning');
         return;
       }
       await api.closeIncident(incident.id, { 
@@ -356,14 +344,14 @@ function CloseModal({ open, onClose, incident, onClosed }) {
           <div className="form-group">
             <label className="form-label" style={{ color: 'var(--text-primary)' }}>Klasifikasi Utama *</label>
             <select className="form-control" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
-              <option value="">— Pilih Kategori —</option>
+              <option value="">— Select Category —</option>
               {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label className="form-label" style={{ color: 'var(--text-primary)' }}>Sub Klasifikasi *</label>
             <select className="form-control" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
-              <option value="">— Pilih Detail —</option>
+              <option value="">— Select Detail —</option>
               {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
             </select>
           </div>
@@ -371,7 +359,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
 
         <div className="section-card" style={{ marginTop: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
           <div className="section-card-header" style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Handling History (Riwayat Update)</div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Handling History (Update History)</div>
           </div>
           <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
             {loadingHistory ? <div style={{ padding: '1rem', textAlign: 'center' }}><div className="spinner-sm" /></div> : (
@@ -379,14 +367,18 @@ function CloseModal({ open, onClose, incident, onClosed }) {
                 <thead><tr><th>No</th><th>Waktu</th><th>Penyebab</th><th>Penanganan</th><th className="text-right">Pilih</th></tr></thead>
                 <tbody>
                   {history.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Belum ada riwayat update</td></tr>
+                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>No update history yet</td></tr>
                   ) : [...history].reverse().map((item, idx) => {
                     const parts = (item.details || '').split(' | ');
                     let cause = '-';
                     let action = '-';
                     parts.forEach(p => {
-                      if (p.startsWith('Penyebab:')) cause = p.replace('Penyebab:', '').trim();
-                      if (p.startsWith('Action Terakhir:')) action = p.replace('Action Terakhir:', '').trim();
+                      if (p.startsWith('Cause:') || p.startsWith('Penyebab:')) {
+                        cause = p.replace('Cause:', '').replace('Penyebab:', '').trim();
+                      }
+                      if (p.startsWith('Last Action:') || p.startsWith('Action Terakhir:')) {
+                        action = p.replace('Last Action:', '').replace('Action Terakhir:', '').trim();
+                      }
                     });
                     const isSelected = rootCause === cause && actionTaken === action;
                     return (
@@ -396,7 +388,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
                         <td>{cause}</td>
                         <td>{action}</td>
                         <td className="text-right">
-                          <button className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-ghost text-accent'}`}><Plus size={12} /> {isSelected ? 'Terpilih' : 'Pilih'}</button>
+                          <button className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-ghost text-accent'}`}><Plus size={12} /> {isSelected ? 'Selected' : 'Select'}</button>
                         </td>
                       </tr>
                     );
@@ -413,7 +405,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
           <input type="datetime-local" className="form-control" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
         </div>
         <div className="info-banner info-banner-warning mt-4">
-          ⚠ Sistem akan menghitung durasi downtime secara otomatis berdasarkan waktu Start dan Waktu Up ini.
+          ⚠ The system will automatically calculate the downtime duration based on the Start time and this Up time.
         </div>
       </div>
     </Modal>
@@ -466,15 +458,15 @@ export default function CurrentTroublePage() {
   }, [incidents, addToast, alertedIds]);
 
   const handleStart = async (id) => {
-    try { await api.startAction(id); addToast('Action dimulai!', 'success'); load(); }
+    try { await api.startAction(id); addToast('Action started!', 'success'); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
   const handlePause = async (inc, reason) => {
-    try { await api.pauseIncident(inc.id, { reason }); addToast('Incident di-pause', 'warning'); setPauseModal(null); load(); }
+    try { await api.pauseIncident(inc.id, { reason }); addToast('Incident paused', 'warning'); setPauseModal(null); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
   const handleResume = async (id) => {
-    try { await api.resumeIncident(id); addToast('Incident dilanjutkan', 'success'); load(); }
+    try { await api.resumeIncident(id); addToast('Incident resumed', 'success'); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
 
@@ -501,9 +493,9 @@ export default function CurrentTroublePage() {
           {incidents.length === 0 ? (
             <EmptyState
               icon={<AlertTriangle size={48} />}
-              title="Tidak ada incident aktif"
-              desc="Semua jaringan terpantau dalam kondisi normal."
-              action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={14} /> Buat Incident Baru</button>}
+              title="No active incidents"
+              desc="All networks are monitoring as normal."
+              action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={14} /> Create New Incident</button>}
             />
           ) : (
             <div className="table-wrap">
@@ -547,7 +539,7 @@ export default function CurrentTroublePage() {
                             <LevelBadge level={calculateIncidentLevel(inc.start_time)} />
                             <NcalBadge value={inc.ncal} />
                             {inc.recurring_count > 0 && (
-                              <div title={`Terdeteksi ${inc.recurring_count} insiden lain dalam 24 jam terakhir`} style={{ display: 'flex', alignItems: 'center', color: 'var(--danger)' }}>
+                              <div title={`Detected ${inc.recurring_count} other incidents in the last 24 hours`} style={{ display: 'flex', alignItems: 'center', color: 'var(--danger)' }}>
                                 <AlertTriangle size={14} />
                                 {inc.recurring_count >= 2 && <span style={{ fontSize: '0.65rem', fontWeight: 900, marginLeft: 2 }}>{inc.recurring_count + 1}X</span>}
                               </div>
@@ -645,7 +637,7 @@ export default function CurrentTroublePage() {
                         </div>
                         <div style={{ fontSize: '0.714rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                           <span>{formatDateTime(n.created_at)}</span>
-                          {!n.is_read && <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Baru</span>}
+                          {!n.is_read && <span style={{ color: 'var(--accent)', fontWeight: 600 }}>New</span>}
                         </div>
                       </div>
                     ))}

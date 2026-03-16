@@ -1,17 +1,18 @@
 import db from '../db.js';
-
-// Ensure metadata table exists for global state
-db.exec(`
-  CREATE TABLE IF NOT EXISTS metadata (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  )
-`);
+import dotenv from 'dotenv';
+dotenv.config();
 
 /**
  * Geocoder utility for IMMS
- * Uses OpenStreetMap Nominatim API with Smart Fallbacks for Buildings
+ * Supports multiple providers: Google Maps, Mapbox, and OpenStreetMap (Nominatim)
  */
+
+const CONFIG = {
+  provider: process.env.GEOCODER_PROVIDER || 'nominatim',
+  googleKey: process.env.GOOGLE_MAPS_KEY,
+  mapboxKey: process.env.MAPBOX_KEY,
+  minInterval: parseInt(process.env.GEOCODER_INTERVAL || '1000'), // Default 1s
+};
 
 // Major Building Hubs in Semarang for fast fallback
 const BUILDING_COORDS = {
@@ -75,10 +76,9 @@ async function waitIfNeeded() {
 
 async function geocode(address, retryCount = 0) {
   if (!address) return null;
-  
   const lowerAddr = address.toLowerCase();
 
-  // Try Building Dictionary First
+  // 1. Try Building Dictionary First (Instant Match)
   for (const [key, coords] of Object.entries(BUILDING_COORDS)) {
     if (lowerAddr.includes(key)) {
       return { 
@@ -89,48 +89,61 @@ async function geocode(address, retryCount = 0) {
     }
   }
 
+  // 2. Choose Provider
   try {
-    await waitIfNeeded();
-
-    const cleaned = smartCleanAddress(address);
-    const query = encodeURIComponent(`${cleaned}, Jawa Tengah, Indonesia`);
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'IMMS-Internal-Geocoding-Service/1.0 (contact: fitroh.abdilah@imms.local)'
-      }
-    });
-
-    // Update time again after response to ensure interval starts AFTER request finishing
-    db.prepare("INSERT INTO metadata (key, value) VALUES ('last_geocoding_time', ?) ON CONFLICT(key) DO UPDATE SET value = ?").run(Date.now().toString(), Date.now().toString());
-
-    if (response.status === 429) {
-      if (retryCount < 3) {
-        const backoff = Math.pow(2, retryCount) * 2000;
-        console.warn(`[Geocoder] Rate limited (429). Retrying in ${backoff}ms... (Attempt ${retryCount + 1})`);
-        await new Promise(resolve => setTimeout(resolve, backoff));
-        return geocode(address, retryCount + 1);
-      }
-      throw new Error('Rate limit exceeded after multiple retries');
-    }
-
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    const data = await response.json();
-    if (data && data.length > 0) {
-      return {
-        latitude: parseFloat(data[0].lat),
-        longitude: parseFloat(data[0].lon),
-        display_name: data[0].display_name
-      };
-    }
-    
-    return null;
+    if (CONFIG.provider === 'google' && CONFIG.googleKey) return await geocodeGoogle(address);
+    if (CONFIG.provider === 'mapbox' && CONFIG.mapboxKey) return await geocodeMapbox(address);
+    return await geocodeNominatim(address, retryCount);
   } catch (error) {
-    console.error(`Geocoding failed for [${address}]:`, error.message);
+    console.error(`[Geocoder] Error with ${CONFIG.provider}:`, error.message);
     return null;
   }
+}
+
+async function geocodeGoogle(address) {
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${CONFIG.googleKey}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.status === 'OK' && data.results.length > 0) {
+    const loc = data.results[0].geometry.location;
+    return { latitude: loc.lat, longitude: loc.lng, display_name: data.results[0].formatted_address };
+  }
+  return null;
+}
+
+async function geocodeMapbox(address) {
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${CONFIG.mapboxKey}&limit=1`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.features && data.features.length > 0) {
+    const [lon, lat] = data.features[0].center;
+    return { latitude: lat, longitude: lon, display_name: data.features[0].place_name };
+  }
+  return null;
+}
+
+async function geocodeNominatim(address, retryCount = 0) {
+  await waitIfNeeded();
+  const cleaned = smartCleanAddress(address);
+  const query = encodeURIComponent(`${cleaned}, Jawa Tengah, Indonesia`);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
+  
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'IMMS-Internal-Geocoding-Service/1.0' }
+  });
+
+  // Lock the time immediately after request
+  db.prepare("INSERT INTO metadata (key, value) VALUES ('last_geocoding_time', ?) ON CONFLICT(key) DO UPDATE SET value = ?").run(Date.now().toString(), Date.now().toString());
+
+  if (response.status === 429 && retryCount < 3) {
+    const backoff = Math.pow(2, retryCount) * 2000;
+    await new Promise(r => setTimeout(r, backoff));
+    return geocodeNominatim(address, retryCount + 1);
+  }
+
+  if (!response.ok) return null;
+  const data = await response.json();
+  return data?.[0] ? { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon), display_name: data[0].display_name } : null;
 }
 
 export { geocode };

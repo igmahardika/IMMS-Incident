@@ -1,4 +1,5 @@
 const BASE = `http://${window.location.hostname}:3001/api`;
+import { NCAL_ORDER as CONST_NCAL_ORDER, MONTH_NAMES as CONST_MONTH_NAMES, SLA_TARGETS } from './constants.js';
 
 function getToken() {
   return localStorage.getItem('imms_token');
@@ -14,6 +15,15 @@ async function request(path, options = {}) {
       ...(options.headers || {}),
     },
   });
+
+  if (res.status === 401 && path !== '/auth/login') {
+    // Session expired or invalid - clear state and force login
+    localStorage.removeItem('imms_token');
+    localStorage.removeItem('imms_user');
+    window.location.href = '/login';
+    throw new Error('Session expired. Please login again.');
+  }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
@@ -126,8 +136,8 @@ export function elapsedSeconds(startIso) {
   return Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
 }
 
-export const NCAL_ORDER = ['BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
-export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+export const NCAL_ORDER = CONST_NCAL_ORDER;
+export const MONTH_NAMES = CONST_MONTH_NAMES;
 
 /**
  * Merges audit_logs and pause_logs into a single sorted timeline.
@@ -216,12 +226,5 @@ export function calculateIncidentLevel(startTime, nowOrEndTime) {
  * Returns SLA target in seconds based on NCAL.
  */
 export function getSLATarget(ncal) {
-  switch (ncal) {
-    case 'BLACK': return 2 * 3600;
-    case 'RED':
-    case 'ORANGE':
-    case 'YELLOW': return 4 * 3600;
-    case 'BLUE': return 6 * 3600;
-    default: return 4 * 3600;
-  }
+  return SLA_TARGETS[ncal] || SLA_TARGETS.DEFAULT;
 }

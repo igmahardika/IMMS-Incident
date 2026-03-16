@@ -20,10 +20,7 @@ export default function CreateIncidentPage() {
     odp_bts: '', level_support: '2', sla: '',
     initial_problem: '', indikasi: '', power_before: '', kabel: '', panjang_kabel: '', pic: '', customer_terdampak: '', koordinat: '', address_preview: '',
     distribusi_manual: '',
-    classification_id: ''
   });
-  const [classes, setClasses] = useState([]);
-  const [selectedParent, setSelectedParent] = useState('');
   const [customers, setCustomers] = useState([]);
   const [distribusi, setDistribusi] = useState([]);
   const [search, setSearch] = useState('');
@@ -40,7 +37,6 @@ export default function CreateIncidentPage() {
   useEffect(() => { 
     api.getCustomers().then(setCustomers).catch(console.error); 
     api.getDistribusi().then(setDistribusi).catch(console.error);
-    api.getClassifications().then(setClasses).catch(console.error);
   }, []);
 
   // Click outside to close dropdowns
@@ -344,23 +340,6 @@ export default function CreateIncidentPage() {
                     <input type="text" className="form-control" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
                   </div>
                 )}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Klasifikasi Utama</label>
-                  <select className="form-control" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); set('classification_id', ''); }}>
-                    <option value="">— Pilih Kategori —</option>
-                    {[...new Set(classes.map(c => c.klasifikasi))].map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Sub Klasifikasi</label>
-                  <select className="form-control" value={form.classification_id} onChange={e => set('classification_id', e.target.value)} disabled={!selectedParent}>
-                    <option value="">— Pilih Detail —</option>
-                    {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
-                  </select>
-                </div>
               </div>
 
               {isDistribsi && (
