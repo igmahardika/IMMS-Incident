@@ -153,7 +153,7 @@ export default function DashboardPage() {
               <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '2rem 1rem', textAlign: 'center' }}>No recently closed incidents</div>
             )}
             {(data?.recentClosed || []).map(inc => (
-              <div key={inc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.75rem 0.875rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div key={inc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.875rem 0', borderBottom: '1px dashed var(--border)' }}>
                 <div style={{ flexShrink: 0 }}><NcalBadge value={inc.ncal} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="id-link text-truncate text-id text-sm" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ display: 'block', marginBottom: 2 }}>

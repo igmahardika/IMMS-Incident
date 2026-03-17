@@ -168,6 +168,14 @@ export default function HistoryPage() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      className="form-checkbox"
+                      checked={allSelected} 
+                      onChange={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))} 
+                    />
+                  </th>
                   <th className="text-xs">Incident</th>
                   <th className="text-xs">Site / ODP</th>
                   <th className="text-xs">Technical Details</th>
@@ -192,6 +200,14 @@ export default function HistoryPage() {
                       }}
                       className="history-row"
                     >
+                    <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <input 
+                        type="checkbox" 
+                        className="form-checkbox"
+                        checked={isSelected}
+                        onChange={() => setSelectedIds(p => isSelected ? p.filter(id => id !== row.id) : [...p, row.id])}
+                      />
+                    </td>
                     <td>
                       <div className="page-stack" style={{ gap: 4 }}>
                         <div className="text-id text-sm" style={{ fontWeight: 600 }}>{row.case_no}</div>
