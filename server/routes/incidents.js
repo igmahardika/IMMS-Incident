@@ -210,7 +210,16 @@ router.get('/history', authenticate, (req, res) => {
   const rows = db.prepare(`
     SELECT i.*, u.name AS technician_name,
            s.company_name, s.brand_site, s.grade, s.support_level as cust_support_level, s.customer_id as cust_id,
-           c.klasifikasi, c.sub_klasifikasi
+           c.klasifikasi, c.sub_klasifikasi,
+           c.klasifikasi AS classification_name,
+           -- Pause slot 1
+           (SELECT pause_start FROM pause_logs WHERE incident_id = i.id ORDER BY pause_start ASC LIMIT 1 OFFSET 0) AS pause1_start,
+           (SELECT pause_end   FROM pause_logs WHERE incident_id = i.id ORDER BY pause_start ASC LIMIT 1 OFFSET 0) AS pause1_end,
+           -- Pause slot 2
+           (SELECT pause_start FROM pause_logs WHERE incident_id = i.id ORDER BY pause_start ASC LIMIT 1 OFFSET 1) AS pause2_start,
+           (SELECT pause_end   FROM pause_logs WHERE incident_id = i.id ORDER BY pause_start ASC LIMIT 1 OFFSET 1) AS pause2_end,
+           -- Escalation time from audit log (first ESCALATE action)
+           (SELECT timestamp FROM audit_logs WHERE incident_id = i.id AND action = 'ESCALATE' ORDER BY timestamp ASC LIMIT 1) AS escalation_time
     FROM incidents i
     LEFT JOIN users u ON i.technician_id = u.id
     LEFT JOIN master_customer s ON i.customer_id = s.id
