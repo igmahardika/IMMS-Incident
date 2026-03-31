@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { ThemeContext } from '../../App.jsx';
 import { SidebarContext } from './AppLayout.jsx';
 import { Shield, Menu, Sun, Moon } from 'lucide-react';
+import NotificationBell from '../ui/NotificationBell.jsx';
 
 const TITLES = {
   '/': 'Dashboard',
@@ -75,6 +76,9 @@ export default function Topbar() {
           <LiveClock />
         </span>
         <LiveClock />
+
+        {/* Notification Bell */}
+        <NotificationBell />
 
         {/* Theme toggle (visible in topbar on mobile, sidebar has one for desktop) */}
         <button

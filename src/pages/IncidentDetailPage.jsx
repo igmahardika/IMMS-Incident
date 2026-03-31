@@ -25,14 +25,12 @@ export default function IncidentDetailPage() {
     <div className="page-stack">
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => navigate(-1)}><ArrowLeft size={16} /></button>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => navigate(-1)}><ArrowLeft size={16} strokeWidth={1.5} /></button>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} />
-              <h1 className="page-title text-xl text-id">{incident.case_no}</h1>
+              <h1 className="page-title text-id tabular" style={{ fontSize: 'var(--f-xl)', fontWeight: 800 }}>{incident.case_no}</h1>
               <StatusPill status={incident.status} />
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+              <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} />
               <NcalBadge value={incident.ncal} />
             </div>
           </div>
@@ -53,12 +51,12 @@ export default function IncidentDetailPage() {
                 {[
                   [isDistribsi ? 'DISTRIBUTION' : 'SITE', (isDistribsi ? (incident.odp_bts || incident.site_name_manual) : (incident.site_name_manual || incident.company_name)) || '—'],
                   [incident.ncal === 'BLUE' ? 'DEVICE' : 'ODP / BTS / INFRA', incident.odp_bts || '—'],
-                  ['PRIORITY', incident.level_support || '—'],
+                  ['PRIORITY', incident.level_support ? `P${incident.level_support}` : '—'],
                   ['PIC / TECHNICIAN', incident.pic || incident.technician_name || incident.technician_name_manual || '—'],
                 ].map(([k, v]) => (
                   <div key={k}>
-                    <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>{k}</dt>
-                    <dd className="text-sm" style={{ marginTop: 4 }}>{v}</dd>
+                    <dt className="text-xs" style={{ color: 'var(--text-muted)', fontSize: 'var(--f-xs)', fontWeight: 600, letterSpacing: '0.04em' }}>{k}</dt>
+                    <dd className="text-sm" style={{ marginTop: 4, fontWeight: 500 }}>{v}</dd>
                   </div>
                 ))}
 
@@ -72,7 +70,7 @@ export default function IncidentDetailPage() {
                 {incident.koordinat && (
                   <div style={{ marginTop: '0.25rem' }}>
                     <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>COORDINATES</dt>
-                    <dd className="text-sm text-id" style={{ marginTop: 4 }}>{incident.koordinat}</dd>
+                    <dd className="text-sm text-id tabular" style={{ marginTop: 4 }}>{incident.koordinat}</dd>
                   </div>
                 )}
                 
@@ -112,7 +110,7 @@ export default function IncidentDetailPage() {
                     </div>
                     <div>
                       <div className="text-xs" style={{ color: 'var(--text-muted)' }}>POWER (INI)</div>
-                      <div className="text-sm text-id" style={{ marginTop: 4 }}>{incident.power_before || '—'}</div>
+                      <div className="text-sm text-id tabular" style={{ marginTop: 4 }}>{incident.power_before || '—'}</div>
                     </div>
                   </div>
                 </div>
@@ -121,19 +119,19 @@ export default function IncidentDetailPage() {
           </SectionCard>
 
           {/* Timeline & Durations */}
-          <SectionCard title={<span><Clock size={15} /> Timeline & Durations</span>}>
+          <SectionCard title={<span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--f-sm)' }}><Clock size={16} strokeWidth={1.5} /> Timeline & Durations</span>}>
             <div className="section-card-body" style={{ padding: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
                 {[
-                  ['REPORTED TIME', formatDateTime(incident.start_time)],
-                  ['START ACTION', formatDateTime(incident.start_action_time)],
-                  ['RESOLUTION TIME', formatDateTime(incident.end_time)],
+                  ['REPORTED TIME', <span className="tabular">{formatDateTime(incident.start_time)}</span>],
+                  ['START ACTION', <span className="tabular">{formatDateTime(incident.start_action_time)}</span>],
+                  ['RESOLUTION TIME', <span className="tabular">{formatDateTime(incident.end_time)}</span>],
                   ['TOTAL PAUSE', <DurationBadge key="p" seconds={incident.total_pause_duration_seconds} />],
                   ['GROSS DURATION', <DurationBadge key="g" seconds={incident.duration_gross_seconds} />],
                   ['NETT DURATION', <DurationBadge key="n" seconds={incident.duration_nett_seconds} target={getSLATarget(incident.ncal)} />],
                 ].map(([k, v]) => (
                   <div key={k}>
-                    <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{k}</div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: 'var(--f-xs)', fontWeight: 600 }}>{k}</div>
                     <div className="text-sm" style={{ marginTop: 6, fontWeight: 500 }}>{v}</div>
                   </div>
                 ))}
@@ -142,13 +140,13 @@ export default function IncidentDetailPage() {
           </SectionCard>
 
           {/* Activity Logs (Unified Timeline) */}
-          <SectionCard title={<span><Activity size={15} /> Handling History</span>}>
+          <SectionCard title={<span><Activity size={16} strokeWidth={1.5} /> Handling History</span>}>
             <div className="section-card-body" style={{ padding: 0 }}>
               <UnifiedTimeline timeline={processTimeline(incident)} filterType="technical" />
             </div>
           </SectionCard>
 
-          <SectionCard title={<span><Activity size={15} /> System Activity Log</span>}>
+          <SectionCard title={<span><Activity size={16} strokeWidth={1.5} /> System Activity Log</span>}>
             <div className="section-card-body" style={{ padding: 0 }}>
               <UnifiedTimeline timeline={processTimeline(incident)} filterType="system" />
             </div>
@@ -161,8 +159,8 @@ export default function IncidentDetailPage() {
             
             {/* Latest Resolution Stats */}
             <div className="section-card">
-              <div className="section-card-header" style={{ background: 'var(--accent-subtle)', borderBottomColor: 'rgba(99,102,241,0.2)' }}>
-                <div className="section-card-title" style={{ color: 'var(--accent-light)' }}>Technical Details</div>
+              <div className="section-card-header" style={{ background: 'var(--bg-elevated)', borderBottomColor: 'var(--border)' }}>
+                <div className="section-card-title" style={{ fontSize: 'var(--f-xs)', color: 'var(--text-secondary)' }}>Technical Details</div>
               </div>
               <div className="section-card-body" style={{ padding: '1rem' }}>
                 <dl style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -177,11 +175,11 @@ export default function IncidentDetailPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div>
                       <dt className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>RX POWER (INI)</dt>
-                      <dd className="text-id text-sm" style={{ fontWeight: 600, marginTop: 6 }}>{incident.power_before || '—'}</dd>
+                      <dd className="text-id text-sm tabular" style={{ fontWeight: 600, marginTop: 6 }}>{incident.power_before || '—'}</dd>
                     </div>
                     <div>
                       <dt className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>RX POWER (FIN)</dt>
-                      <dd className="text-id text-sm" style={{ fontWeight: 600, marginTop: 6 }}>{incident.power_after || '—'}</dd>
+                      <dd className="text-id text-sm tabular" style={{ fontWeight: 600, marginTop: 6 }}>{incident.power_after || '—'}</dd>
                     </div>
                   </div>
                   <div>

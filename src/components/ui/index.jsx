@@ -1,30 +1,66 @@
 import React from 'react';
 import { NCAL_COLORS, STATUS_COLORS, ROLE_COLORS, GRADE_COLORS } from '../../utils/constants.js';
 
-const NCAL_ICONS = { BLACK: '⬛', RED: '🔴', ORANGE: '🟠', YELLOW: '🟡', BLUE: '🔵' };
+const NCAL_DOT_COLORS = {
+  BLACK: '#a78bfa',  // purple — matches ncal-black-text token
+  RED:   '#fca5a5',  // matches ncal-red-text
+  ORANGE:'#fdba74',  // matches ncal-orange-text
+  YELLOW:'#fde68a',  // matches ncal-yellow-text
+  BLUE:  '#93c5fd',  // matches ncal-blue-text
+};
 
 export function NcalBadge({ value }) {
   return (
-    <span className={`ncal-badge ncal-${value}`}>
-      {NCAL_ICONS[value] || ''} {value}
+    <span className={`ncal-badge ncal-${value}`} aria-label={`NCAL ${value}`}>
+      <span style={{
+        display: 'inline-block', width: 6, height: 6, borderRadius: '2px', // sharper dot
+        background: NCAL_DOT_COLORS[value] || 'currentColor',
+        flexShrink: 0, verticalAlign: 'middle', marginTop: -1
+      }} />
+      {value}
     </span>
   );
 }
 
 export function StatusPill({ status }) {
   const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
-  const color = STATUS_COLORS[status] || 'var(--text-muted)';
-  return <span className={`status-pill status-${status}`} style={{ borderColor: `${color}40`, background: `${color}10`, color }}>{labels[status] || status}</span>;
+  const color = STATUS_COLORS[status] || 'var(--text-secondary)';
+  return (
+    <span 
+      className={`status-pill status-${status}`} 
+      style={{ 
+        background: `color-mix(in srgb, ${color}, transparent 80%)`, 
+        color,
+        fontSize: 'var(--f-xs)',
+        fontWeight: '600',
+        padding: '0 6px',
+        height: '18px',
+        borderRadius: 'var(--radius-sm)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        transition: 'all var(--t-theme)'
+      }}
+    >
+      {labels[status] || status}
+    </span>
+  );
 }
 
 export function RoleBadge({ role }) {
-  const color = ROLE_COLORS[role] || '#999';
+  const color = ROLE_COLORS[role] || 'var(--text-secondary)';
   return (
     <span className="text-xs" style={{
       display: 'inline-flex', alignItems: 'center',
-      padding: '0.125rem 0.5rem', borderRadius: '99px',
-      background: `${color}22`, color,
-      textTransform: 'capitalize'
+      padding: '0 6px', height: '18px', borderRadius: 'var(--radius-sm)',
+      background: `color-mix(in srgb, ${color}, transparent 80%)`, 
+      color,
+      fontSize: 'var(--f-xs)',
+      textTransform: 'uppercase',
+      fontWeight: '600',
+      letterSpacing: '0.04em',
+      transition: 'all var(--t-theme)'
     }}>
       {role}
     </span>
@@ -36,7 +72,7 @@ export function GradeBadge({ grade }) {
   return (
     <span className="text-xs" style={{
       display: 'inline-flex', padding: '0.125rem 0.438rem', borderRadius: 4,
-      background: `${color}1a`, color, border: `1px solid ${color}30`
+      background: `${color}33`, color
     }}>
       {grade}
     </span>
@@ -45,15 +81,17 @@ export function GradeBadge({ grade }) {
 
 export function StatusBadge({ active }) {
   return (
-    <span className="text-xs" style={{
+    <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '0.125rem 0.5rem', borderRadius: '99px',
-      background: active ? 'var(--success-bg)' : 'var(--bg-card)',
+      padding: '0 6px', height: '18px', borderRadius: 'var(--radius-sm)',
+      background: active ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
       color: active ? 'var(--success)' : 'var(--text-muted)',
-      border: '1px solid',
-      borderColor: active ? 'var(--success-border)' : 'var(--border)',
+      fontSize: 'var(--f-xs)',
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em'
     }}>
-      {active ? '✓ Active' : '— Inactive'}
+      {active ? 'Active' : 'Inactive'}
     </span>
   );
 }
@@ -71,7 +109,16 @@ export function DurationBadge({ seconds, target }) {
   const s = seconds % 60;
   const isExceeded = target && seconds > target;
   return (
-    <span className={`timer-badge text-id ${isExceeded ? 'timer-exceeded' : ''}`} style={isExceeded ? { color: 'var(--danger)', borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' } : {}}>
+    <span className="tabular" style={{ 
+      color: isExceeded ? 'var(--danger)' : 'var(--text-secondary)',
+      fontSize: 'var(--f-sm)',
+      fontWeight: 500,
+      fontFamily: 'var(--font-mono)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4
+    }}>
+      {isExceeded && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger)' }} />}
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
     </span>
   );
@@ -95,19 +142,36 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
   const h = Math.floor(elapsed / 3600);
   const m = Math.floor((elapsed % 3600) / 60);
   const s = elapsed % 60;
-  const isUrgent = elapsed > 14400; // 4 hours
+  const isWarning = elapsed > 7200 && elapsed <= 14400; // 2-4 hours
+  const isUrgent = elapsed > 14400; // >4 hours
   const isExceeded = target && elapsed > target;
-  const color = paused ? 'var(--warning)' : isExceeded ? 'var(--danger)' : isUrgent ? 'var(--danger)' : 'var(--success)';
-  const border = paused ? 'var(--warning-border)' : isExceeded ? 'var(--danger-border)' : isUrgent ? 'var(--danger-border)' : 'var(--success-border)';
-  const bg = paused ? 'var(--warning-bg)' : isExceeded ? 'var(--danger-bg)' : isUrgent ? 'var(--danger-bg)' : 'var(--success-bg)';
+  
+  const stateGroup = paused ? 'warning' : isExceeded || isUrgent ? 'danger' : isWarning ? 'warning' : 'success';
+  const color = `var(--${stateGroup})`;
+  const border = `var(--${stateGroup}-border)`;
+  const bg = `var(--${stateGroup}-bg)`;
 
   return (
     <span
-      className={`timer-badge text-id ${isExceeded ? 'timer-exceeded' : ''}`}
-      style={{ color, borderColor: border, background: bg }}
+      className="tabular"
+      style={{ 
+        color, 
+        fontSize: 'var(--f-sm)',
+        fontWeight: 600,
+        fontFamily: 'var(--font-mono)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6
+      }}
     >
+      <span style={{ 
+        width: 6, height: 6, borderRadius: '50%', 
+        background: color, 
+        boxShadow: !paused && (isUrgent || isExceeded) ? `0 0 8px ${color}` : 'none',
+        display: 'inline-block' 
+      }} />
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
-      {paused && ' ⏸'}
+      {paused && <span style={{ fontSize: '10px', opacity: 0.6 }}>PAUSED</span>}
     </span>
   );
 }
@@ -132,7 +196,7 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
         <div className="modal-header">
           <div className="modal-title">{title}</div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </button>
@@ -182,14 +246,27 @@ export function PageSpinner() {
   );
 }
 
-export function LevelBadge({ level }) {
+export function LevelBadge({ level, targetHours }) {
+  const isExceeded = targetHours != null && level > targetHours;
+  const isSafe = targetHours != null && level <= targetHours;
+
+  let ncalClass = '';
+  if (isExceeded) ncalClass = 'ncal-DANGER';
+  else if (isSafe) ncalClass = 'ncal-SUCCESS';
+
   return (
-    <span className="text-xs" style={{ 
-      background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
-      padding: '0.2rem 0.5rem', color: 'var(--text-secondary)',
-      display: 'inline-flex', alignItems: 'center', gap: 4
-    }}>
-      LVL {level || 1}
+    <span className={`ncal-badge ${ncalClass}`} style={Object.assign({
+      width: '64px' // adjusted strictly for L+3 digits (e.g., L398)
+    }, !ncalClass ? {
+      background: 'rgba(255, 255, 255, 0.1)',
+      color: 'var(--text-muted)'
+    } : {})}>
+      <span style={{
+        display: 'inline-block', width: 6, height: 6, borderRadius: '2px', // sharper dot
+        background: isExceeded ? 'var(--danger)' : isSafe ? 'var(--success)' : 'currentColor',
+        flexShrink: 0, verticalAlign: 'middle', marginTop: -1
+      }} />
+      L{level || 1}
     </span>
   );
 }

@@ -152,16 +152,11 @@ export default function CreateIncidentPage() {
     <div className="page-stack">
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => navigate(-1)}><ArrowLeft size={16} /></button>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={16} strokeWidth={1.5} /></button>
           <div>
-            <div className="page-title">New Incident</div>
-            <div className="page-subtitle">Create a new monitoring ticket</div>
+            <div className="page-title" style={{ fontSize: 'var(--f-xl)', fontWeight: 800 }}>New Incident</div>
+            <div className="page-subtitle" style={{ fontSize: 'var(--f-xs)' }}>Create a new monitoring ticket</div>
           </div>
-        </div>
-        <div className="page-actions">
-          <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? <Spinner size={16} /> : <><Send size={16} /> Create & Send</>}
-          </button>
         </div>
       </div>
 
@@ -181,7 +176,7 @@ export default function CreateIncidentPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Reported Time *</label>
-                  <input type="datetime-local" className="form-control" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
+                  <input type="datetime-local" className="form-control tabular" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">NCAL Segment *</label>
@@ -203,7 +198,7 @@ export default function CreateIncidentPage() {
           {/* Section 2: Asset/Infrastructure Selection */}
           <div className="section-card" style={{ position: 'relative', overflow: 'visible', zIndex: (showDropdown || showDistDropdown || showOdpDropdown) ? 20 : 1 }}>
             <div className="section-card-header" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="section-card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Network size={16} /> Asset & Network Configuration</div>
+              <div className="section-card-title" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--f-sm)' }}><Network size={16} strokeWidth={1.5} /> Asset & Network Configuration</div>
             </div>
             <div className="section-card-body">
               {!isDistribsi ? (
@@ -350,8 +345,8 @@ export default function CreateIncidentPage() {
               )}
 
               {form.ncal === 'YELLOW' && (
-                <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--warning)', borderRadius: 8, padding: '1rem', marginTop: '1rem' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--warning)', marginBottom: '0.75rem' }}>⚠️ Vendor Maintenance Order Details</div>
+                <div style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', borderRadius: 'var(--radius-sm)', padding: '1rem', marginTop: '1rem' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--warning)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}><Network size={16} strokeWidth={1.5} /> Vendor Maintenance Order Details</div>
                   <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
                     <div className="form-group">
                       <label className="form-label">Original Address (Site)</label>
@@ -384,7 +379,7 @@ export default function CreateIncidentPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', padding: '0.5rem 0' }}>
             <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>Cancel</button>
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              {loading ? <Spinner size={16} /> : <><Send size={16} /> Create Incident</>}
+              {loading ? <Spinner size={16} /> : <><Send size={16} strokeWidth={1.5} /> Create Incident</>}
             </button>
           </div>
         </div>
@@ -398,26 +393,26 @@ export default function CreateIncidentPage() {
             <div className="section-card-body" style={{ padding: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>NCAL SEGMENT</div>
-                  <div style={{ marginTop: 4 }}><NcalBadge value={form.ncal} /></div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>NCAL SEGMENT</div>
+                  <NcalBadge value={form.ncal} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>SITE / INFRASTRUCTURE</div>
-                  <div style={{ marginTop: 4, fontWeight: 600, fontSize: '0.9rem' }}>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>SITE / INFRASTRUCTURE</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
                     {isDistribsi 
                       ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : 'No infrastructure selected')
                       : (form.site_name_manual || 'No site selected')
                     }
                   </div>
-                  {!isDistribsi && form.sla && <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: 2, fontWeight: 700 }}>SLA {form.sla}</div>}
+                  {!isDistribsi && form.sla && <div className="text-xs" style={{ color: 'var(--accent)', marginTop: 4, fontWeight: 700 }}>SLA {form.sla}</div>}
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>PROBLEM SUMMARY</div>
-                  <div style={{ marginTop: 4, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{form.initial_problem || '—'}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>PROBLEM SUMMARY</div>
+                  <div className="text-sm" style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}>{form.initial_problem || '—'}</div>
                 </div>
                 <div className="divider" />
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                  This ticket will be created at {new Date(form.start_time).toLocaleString()} and relevant groups will be notified.
+                <div className="text-xs" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  This ticket will be created at <span className="tabular">{new Date(form.start_time).toLocaleString()}</span> and relevant groups will be notified.
                 </div>
               </div>
             </div>

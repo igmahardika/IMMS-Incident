@@ -80,20 +80,37 @@ export default function DurationReportPage() {
             {/* SLA Table */}
             <SectionCard title="SLA Summary per NCAL" subtitle={`Year ${year}`}>
               <div className="table-wrap">
-                <table>
-                  <thead><tr><th className="text-xs">NCAL</th><th className="text-xs">Total</th><th className="text-xs">Avg Nett</th><th className="text-xs">SLA Met</th><th className="text-xs">SLA Target</th><th className="text-xs">%</th></tr></thead>
+                <table className="data-table">
+                  <colgroup>
+                    <col className="cg-ncal" />
+                    <col className="cg-id-sm" />
+                    <col className="cg-duration" />
+                    <col className="cg-id-sm" />
+                    <col className="cg-duration" />
+                    <col className="cg-priority" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>NCAL</th>
+                      <th>Total</th>
+                      <th>Avg Nett</th>
+                      <th>SLA Met</th>
+                      <th>SLA Target</th>
+                      <th>%</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {sla.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                     {sla.map(row => {
                       const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                       return (
-                        <tr key={row.ncal}>
-                          <td><NcalBadge value={row.ncal} /></td>
-                          <td className="text-id text-sm"><strong>{row.total_cases}</strong></td>
-                          <td className="text-id text-sm">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td className="text-id text-sm">{row.sla_met || 0}</td>
-                          <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{row.sla_target_minutes ? `${row.sla_target_minutes} min` : '—'}</td>
-                          <td className="text-id text-sm"><span style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>{pct}%</span></td>
+                        <tr key={row.ncal} className="tr-hover-accent">
+                          <td className="text-center"><NcalBadge value={row.ncal} /></td>
+                          <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.total_cases}</td>
+                          <td className="text-center text-id text-sm">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
+                          <td className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>{row.sla_target_minutes ? `${row.sla_target_minutes} min` : '—'}</td>
+                          <td className="text-center tabular"><span className="text-sm" style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>{pct}%</span></td>
                         </tr>
                       );
                     })}
@@ -105,17 +122,32 @@ export default function DurationReportPage() {
             {/* Technician Performance */}
             <SectionCard title="Technician Performance" subtitle={`Year ${year}`}>
               <div className="table-wrap">
-                <table>
-                  <thead><tr><th className="text-xs">Technician</th><th className="text-xs">Total</th><th className="text-xs">Avg Duration</th><th className="text-xs">Min</th><th className="text-xs">Max</th></tr></thead>
+                <table className="data-table">
+                  <colgroup>
+                    <col className="cg-auto" />
+                    <col className="cg-id-sm" />
+                    <col className="cg-duration" />
+                    <col className="cg-duration" />
+                    <col className="cg-duration" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th className="text-left">Technician</th>
+                      <th>Total</th>
+                      <th>Avg Duration</th>
+                      <th>Min</th>
+                      <th>Max</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {techPerf.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                     {techPerf.map(row => (
-                      <tr key={row.technician}>
-                        <td className="text-sm" style={{ fontWeight: 600 }}>{row.technician}</td>
-                        <td className="text-id text-sm">{row.total_handled}</td>
-                        <td className="text-id text-xs">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td className="text-id text-xs" style={{ color: 'var(--success)' }}>{formatDuration(row.min_nett)}</td>
-                        <td className="text-id text-xs" style={{ color: 'var(--danger)' }}>{formatDuration(row.max_nett)}</td>
+                      <tr key={row.technician} className="tr-hover-accent">
+                        <td className="text-left text-sm" style={{ fontWeight: 600 }}>{row.technician}</td>
+                        <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.total_handled}</td>
+                        <td className="text-center text-id text-xs">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td className="text-center text-id text-xs" style={{ color: 'var(--success)' }}>{formatDuration(row.min_nett)}</td>
+                        <td className="text-center text-id text-xs" style={{ color: 'var(--danger)' }}>{formatDuration(row.max_nett)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../utils/api.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { PageSpinner, SectionCard } from '../components/ui/index.jsx';
-import { Save, Send, Settings } from 'lucide-react';
+import { Save, Send, Settings, Smartphone, Info } from 'lucide-react';
 
 export default function EscalationSettingsPage() {
   const segments_raw = ['blue', 'yellow', 'orange', 'red', 'black'];
@@ -279,7 +279,7 @@ export default function EscalationSettingsPage() {
           <div className="section-card">
             <div className="section-card-header">
               <div>
-                <div className="section-card-title">📱 Notification Preview</div>
+                <div className="section-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Smartphone size={14} /> Notification Preview</div>
                 <div className="section-card-subtitle">Real-time preview based on active templates</div>
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
@@ -332,7 +332,7 @@ export default function EscalationSettingsPage() {
 
               {/* Variable Glossary */}
               <div className="var-glossary">
-                <div className="var-glossary-title">💡 Variable Reference</div>
+                <div className="var-glossary-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Info size={12} /> Variable Reference</div>
                 <div className="var-glossary-grid">
                   <div><b>{'{ncal}'}</b>: Segment + Emoji</div>
                   <div><b>{'{level}'}</b>: Incident Duration Level</div>

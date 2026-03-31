@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, MONTH_NAMES, formatDuration } from '../utils/api.js';
-import { NcalBadge, Spinner, SectionCard } from '../components/ui/index.jsx';
-import { Calendar, Clock, Zap, TrendingUp, Filter, BarChart2 } from 'lucide-react';
+import { NcalBadge, Spinner } from '../components/ui/index.jsx';
+import { Calendar, Clock, Zap, TrendingUp, BarChart2 } from 'lucide-react';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
@@ -32,52 +32,49 @@ export default function MonthlyViewPage() {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
   const MetricCell = ({ count, nett, gross }) => {
-    if (!count) return <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', opacity: 0.4 }}>—</div>;
+    if (!count) return <div style={{ color: 'var(--text-muted)', opacity: 0.3, fontSize: '0.75rem' }}>—</div>;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '2px 0' }}>
         <div className="text-sm" style={{ fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          {count} <span className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 500 }}>CASES</span>
+          {count} <span className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 500 }}>cases</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <div className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Clock size={10} style={{ opacity: 0.5 }} />
-            <span className="text-id" style={{ fontWeight: 500 }}>{gross ? formatDuration(Math.round(gross)) : '0s'}</span>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Clock size={10} strokeWidth={1.5} style={{ opacity: 0.4 }} />
+            <span className="text-id tabular">{gross ? formatDuration(Math.round(gross)) : '0s'}</span>
           </div>
-          <div className="text-xs" style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Zap size={10} style={{ opacity: 0.8 }} />
-            <span className="text-id" style={{ fontWeight: 600 }}>{nett ? formatDuration(Math.round(nett)) : '0s'}</span>
+          <div className="text-xs" style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Zap size={10} strokeWidth={1.5} style={{ opacity: 0.7 }} />
+            <span className="text-id tabular" style={{ fontWeight: 600 }}>{nett ? formatDuration(Math.round(nett)) : '0s'}</span>
           </div>
         </div>
       </div>
     );
   };
 
-  // Yearly Stats for KPI
+  // Yearly Stats
   const yearlyCount = history.length;
   const yearlyNett = history.reduce((s, i) => s + (i.duration_nett_seconds || 0), 0);
   const avgYearlyNett = yearlyCount ? Math.round(yearlyNett / yearlyCount) : 0;
-  
-  // Find Busy Month
+
   const busyMonthIdx = Object.keys(grouped).reduce((a, b) => {
-    const countA = Object.values(grouped[a]).reduce((s, n) => s + n.count, 0);
-    const countB = Object.values(grouped[b]).reduce((s, n) => s + n.count, 0);
+    const countA = Object.values(grouped[a] || {}).reduce((s, n) => s + n.count, 0);
+    const countB = Object.values(grouped[b] || {}).reduce((s, n) => s + n.count, 0);
     return countA > countB ? a : b;
   }, Object.keys(grouped)[0] || 1);
 
   return (
     <div className="page-stack">
+      {/* Page Header */}
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-title text-xl">Monthly View Analysis</div>
-          <div className="page-subtitle text-xs">Monthly performance patterns and handling duration by category</div>
+          <div className="page-title">Monthly View Analysis</div>
+          <div className="page-subtitle">Monthly performance patterns and handling duration by category</div>
         </div>
         <div className="page-actions">
-          <div className="filter-bar" style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--border)' }}>
-            <Filter size={14} style={{ color: 'var(--text-muted)' }} />
-            <select className="form-control" value={year} onChange={e => setYear(e.target.value)} style={{ width: 100, border: 'none', background: 'transparent', height: 'auto', padding: '0 4px' }}>
-              {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
+          <select className="form-control" value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
+            {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
         </div>
       </div>
 
@@ -86,63 +83,71 @@ export default function MonthlyViewPage() {
       ) : (
         <>
           {/* KPI Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <SectionCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--accent-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
-                  <BarChart2 size={22} />
+          <div className="kpi-grid">
+            <div className="kpi-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--accent-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0 }}>
+                  <BarChart2 size={18} />
                 </div>
                 <div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL INCIDENTS {year}</div>
-                  <div className="text-xl" style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{yearlyCount} <span className="text-sm" style={{ fontWeight: 500, color: 'var(--text-muted)' }}>Cases</span></div>
+                  <div className="kpi-label">Total Incidents {year}</div>
+                  <div className="kpi-value tabular" style={{ fontSize: '1.5rem' }}>{yearlyCount} <span className="text-sm" style={{ fontWeight: 500, color: 'var(--text-muted)' }}>cases</span></div>
                 </div>
               </div>
-            </SectionCard>
-            <SectionCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
-                  <TrendingUp size={22} />
+            </div>
+            <div className="kpi-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)', flexShrink: 0 }}>
+                  <TrendingUp size={18} />
                 </div>
                 <div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>AVG NETT DURATION</div>
-                  <div className="text-lg" style={{ fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{formatDuration(avgYearlyNett)}</div>
+                  <div className="kpi-label">Avg Nett Duration</div>
+                  <div className="kpi-value tabular" style={{ fontSize: '1.25rem' }}>{formatDuration(avgYearlyNett)}</div>
                 </div>
               </div>
-            </SectionCard>
-            <SectionCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
-                  <Calendar size={22} />
+            </div>
+            <div className="kpi-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--warning-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--warning)', flexShrink: 0 }}>
+                  <Calendar size={18} />
                 </div>
                 <div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>BUSIEST MONTH</div>
-                  <div className="text-lg" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{MONTH_NAMES[busyMonthIdx - 1]}</div>
+                  <div className="kpi-label">Busiest Month</div>
+                  <div className="kpi-value" style={{ fontSize: '1.25rem' }}>{MONTH_NAMES[busyMonthIdx - 1] || '—'}</div>
                 </div>
               </div>
-            </SectionCard>
+            </div>
           </div>
 
+          {/* Main Table */}
           <div className="section-card" style={{ padding: 0 }}>
-            <div className="table-wrap" style={{ overflowX: 'auto' }}>
-              <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <div className="table-wrap">
+              <table className="data-table" style={{ borderCollapse: 'collapse' }}>
+                <colgroup>
+                  <col style={{ width: 180 }} />
+                  <col style={{ width: 145 }} />
+                  <col style={{ width: 145 }} />
+                  <col style={{ width: 145 }} />
+                  <col style={{ width: 145 }} />
+                  <col style={{ width: 145 }} />
+                  <col style={{ width: 180 }} />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th className="text-xs" style={{ minWidth: 160, position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 10, borderBottom: '2px solid var(--border)' }}>Period</th>
+                    <th className="text-left" style={{ position: 'sticky', left: 0, background: 'var(--bg-elevated)', zIndex: 10 }}>
+                      Period
+                    </th>
                     {NCAL_ORDER.map(n => (
-                      <th key={n} style={{ textAlign: 'left', minWidth: 150, borderBottom: '2px solid var(--border)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <th key={n}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center' }}>
                           <NcalBadge value={n} />
-                          <div className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '0.08em', fontWeight: 700, display: 'flex', gap: 8 }}>
-                            <span>CASES</span>
-                            <span>•</span>
-                            <span>GROSS</span>
-                            <span>•</span>
-                            <span>NETT</span>
+                          <div className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '0.04em', display: 'flex', gap: 6, fontWeight: 500 }}>
+                            <span>CASES</span><span style={{ opacity: 0.4 }}>·</span><span>GROSS</span><span style={{ opacity: 0.4 }}>·</span><span>NETT</span>
                           </div>
                         </div>
                       </th>
                     ))}
-                    <th className="text-xs" style={{ minWidth: 160, background: 'var(--bg-elevated)', borderBottom: '2px solid var(--border)' }}>Monthly Summary</th>
+                    <th>MONTHLY SUMMARY</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,35 +155,35 @@ export default function MonthlyViewPage() {
                     const monthData = grouped[mo] || {};
                     const totalCount = NCAL_ORDER.reduce((s, n) => s + (monthData[n]?.count || 0), 0);
                     const totalNett = NCAL_ORDER.reduce((s, n) => s + (monthData[n]?.totalNett || 0), 0);
-                    
+
                     return (
-                      <tr key={mo} style={{ height: 80 }}>
-                        <td className="text-sm" style={{ fontWeight: 800, position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 5, borderRight: '1px solid var(--border)' }}>
+                      <tr key={mo} className="tr-hover-accent" style={{ height: 72 }}>
+                        <td className="text-left text-sm" style={{ fontWeight: 700, position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 5 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 4, height: 24, borderRadius: 2, background: totalCount > 0 ? 'var(--accent)' : 'transparent' }} />
+                            <div style={{ width: 3, height: 20, borderRadius: 2, background: totalCount > 0 ? 'var(--accent)' : 'var(--border)', flexShrink: 0 }} />
                             <div>
                               <div>{MONTH_NAMES[mo - 1]}</div>
-                              <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Year {year}</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{year}</div>
                             </div>
                           </div>
                         </td>
                         {NCAL_ORDER.map(n => (
-                          <td key={n} style={{ verticalAlign: 'middle' }}>
-                            <MetricCell 
-                              count={monthData[n]?.count} 
+                          <td key={n} className="text-center" style={{ verticalAlign: 'middle' }}>
+                            <MetricCell
+                              count={monthData[n]?.count}
                               nett={monthData[n]?.totalNett}
                               gross={monthData[n]?.totalGross}
                             />
                           </td>
                         ))}
-                        <td style={{ background: 'var(--bg-elevated)', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <td className="text-center" style={{ verticalAlign: 'middle' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                               <div className="text-lg" style={{ fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{totalCount || 0}</div>
-                              <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Cases</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>cases</div>
                             </div>
                             <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              Avg Nett: <span className="text-id" style={{ fontWeight: 700, color: 'var(--accent)' }}>
+                              AVG: <span className="text-id tabular" style={{ fontWeight: 700, color: 'var(--accent)' }}>
                                 {totalCount ? formatDuration(Math.round(totalNett / totalCount)) : '—'}
                               </span>
                             </div>
@@ -189,24 +194,28 @@ export default function MonthlyViewPage() {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr style={{ background: 'var(--bg-elevated)', borderTop: '2px solid var(--accent)' }}>
-                    <td className="text-sm" style={{ fontWeight: 900, color: 'var(--accent)', position: 'sticky', left: 0, background: 'var(--bg-elevated)', zIndex: 10 }}>YEARLY TOTAL</td>
+                  <tr style={{ borderTop: '1px dashed var(--border-strong)' }}>
+                    <td className="text-xs text-left" style={{ fontWeight: 800, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', position: 'sticky', left: 0, background: 'var(--bg-elevated)', zIndex: 10 }}>
+                      Yearly Total
+                    </td>
                     {NCAL_ORDER.map(n => {
                       const cnt = Object.values(grouped).reduce((s, m) => s + (m[n]?.count || 0), 0);
                       const nt = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalNett || 0), 0);
                       const gr = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalGross || 0), 0);
                       return (
-                        <td key={n} style={{ verticalAlign: 'middle' }}>
+                        <td key={n} style={{ background: 'var(--bg-elevated)', verticalAlign: 'middle' }}>
                           <MetricCell count={cnt} nett={nt} gross={gr} />
                         </td>
                       );
                     })}
-                    <td style={{ background: 'var(--accent)', color: '#fff', verticalAlign: 'middle', padding: '12px' }}>
-                      <div className="page-stack" style={{ gap: 2 }}>
-                        <div className="text-xl" style={{ fontWeight: 900, lineHeight: 1 }}>{yearlyCount}</div>
-                        <div className="text-xs" style={{ opacity: 0.9, fontWeight: 700, textTransform: 'uppercase' }}>Grand Avg Nett</div>
-                        <div className="text-id text-sm" style={{ fontWeight: 800 }}>
-                          {formatDuration(avgYearlyNett)}
+                    <td className="text-center" style={{ background: 'var(--accent-subtle)', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                          <div className="text-xl" style={{ fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>{yearlyCount}</div>
+                          <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>total</div>
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          Grand Avg: <span className="text-id" style={{ fontWeight: 700, color: 'var(--accent)' }}>{formatDuration(avgYearlyNett)}</span>
                         </div>
                       </div>
                     </td>

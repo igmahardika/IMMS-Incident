@@ -75,32 +75,43 @@ export default function RootCausePage() {
 
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div> : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          {/* Pie Chart */}
-          <SectionCard title="Classification Distribution" subtitle={`Total: ${total} incidents`}>
-            <ChartContainer config={rootCauseConfig} style={{ height: 320 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={100} strokeWidth={2} stroke="var(--bg-elevated)" labelLine={false} label={CustomLabel}>
-                    {data.map((entry, i) => <Cell key={i} fill={rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
-                  <Legend content={<ChartLegend config={rootCauseConfig} />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          {/* Pie Chart — overflow:visible so outer labels aren't clipped */}
+          <SectionCard title="Classification Distribution" subtitle={`Total: ${total} incidents`} style={{ overflow: 'visible' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <ChartContainer config={rootCauseConfig} style={{ height: 280 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
+                    <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={95} strokeWidth={2} stroke="var(--bg-elevated)" labelLine={false} label={CustomLabel}>
+                      {data.map((entry, i) => <Cell key={i} fill={rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+              {/* Legend rendered outside ChartContainer to avoid clipping */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+                <ChartLegend
+                  payload={data.map((entry, i) => ({
+                    value: entry.classification,
+                    color: rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length],
+                  }))}
+                  config={rootCauseConfig}
+                />
+              </div>
+            </div>
           </SectionCard>
 
-          {/* Bar Chart */}
-          <SectionCard title="Frequency per Classification" subtitle="Sorted by frequency">
-            <ChartContainer config={rootCauseConfig} style={{ height: 320 }}>
+          {/* Bar Chart — overflow:visible prevents bar label clipping */}
+          <SectionCard title="Frequency per Classification" subtitle="Sorted by frequency" style={{ overflow: 'visible' }}>
+            <ChartContainer config={rootCauseConfig} style={{ height: 340 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.slice(0, 8)} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                <BarChart data={data.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 40, top: 8, bottom: 8 }}>
                   <CartesianGrid vertical={false} horizontal={false} />
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="classification" width={150} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="classification" width={160} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
-                  <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={24}>
-                    {data.slice(0, 8).map((entry, i) => {
+                  <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
+                    {data.slice(0, 10).map((entry, i) => {
                       const color = rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length];
                       return <Cell key={i} fill={color} />;
                     })}
@@ -113,20 +124,35 @@ export default function RootCausePage() {
           {/* Top Table */}
           <SectionCard title="Classification Breakdown" style={{ gridColumn: '1 / -1' }}>
             <div className="table-wrap">
-              <table>
-                <thead><tr><th className="text-xs">#</th><th className="text-xs">Classification</th><th className="text-xs">Count</th><th className="text-xs">Percentage</th><th className="text-xs">Chart</th></tr></thead>
+              <table className="data-table">
+                <colgroup>
+                  <col className="cg-check" />
+                  <col className="cg-auto" />
+                  <col className="cg-id-sm" />
+                  <col className="cg-priority" />
+                  <col className="cg-status" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th className="text-left">Classification</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                    <th className="text-left">Chart</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
                   {data.map((row, i) => {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (
-                      <tr key={row.classification}>
-                        <td className="text-id text-sm" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{i + 1}</td>
-                        <td className="text-sm" style={{ fontWeight: 600 }}>{row.classification}</td>
-                        <td className="text-id text-sm"><strong>{row.count}</strong></td>
-                        <td className="text-id text-sm"><span style={{ color: PIE_COLORS[i % PIE_COLORS.length], fontWeight: 700 }}>{pct}%</span></td>
-                        <td>
-                          <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, minWidth: 80 }}>
+                      <tr key={row.classification} className="tr-hover-accent">
+                        <td className="text-center text-xs tabular" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{i + 1}</td>
+                        <td className="text-left text-sm" style={{ fontWeight: 600 }}>{row.classification}</td>
+                        <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.count}</td>
+                        <td className="text-center tabular"><span style={{ color: PIE_COLORS[i % PIE_COLORS.length], fontWeight: 600, fontSize: 'var(--f-sm)' }}>{pct}%</span></td>
+                        <td className="text-left" style={{ paddingRight: '24px' }}>
+                          <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, minWidth: 80 }}>
                             <div style={{ height: '100%', width: `${pct}%`, background: PIE_COLORS[i % PIE_COLORS.length], borderRadius: 3, transition: 'width 0.5s ease' }} />
                           </div>
                         </td>

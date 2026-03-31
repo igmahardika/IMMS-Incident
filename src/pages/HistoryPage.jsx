@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, formatDateTime, MONTH_NAMES, calculateIncidentLevel } from '../utils/api.js';
+import { api, formatDateTime, MONTH_NAMES, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
 import { NcalBadge, StatusPill, DurationBadge, PageSpinner, EmptyState, LevelBadge } from '../components/ui/index.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Search, Download, Eye, Trash2, LayoutList, Map as MapIcon } from 'lucide-react';
@@ -166,26 +166,40 @@ export default function HistoryPage() {
             <EmptyState icon="📂" title="No data found" desc="Try adjusting filters or search queries" />
           ) : (
             <table className="data-table">
-              <thead>
-                <tr>
-                  <th style={{ width: 40, textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      className="form-checkbox"
-                      checked={allSelected} 
-                      onChange={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))} 
-                    />
-                  </th>
-                  <th className="text-xs">Incident</th>
-                  <th className="text-xs">Site / ODP</th>
-                  <th className="text-xs">Technical Details</th>
-                  <th className="text-xs">Timeline</th>
-                  <th className="text-xs">Durations</th>
-                  <th className="text-xs">Technician</th>
-                  <th className="text-right text-xs">Details</th>
-                </tr>
-              </thead>
-              <tbody>
+             <colgroup>
+               <col className="cg-check" />
+               <col className="cg-ncal" />
+               <col className="cg-id" />
+               <col className="cg-id" />
+               <col className="cg-auto" />
+               <col className="cg-auto" />
+               <col style={{ width: 140 }} />
+               <col style={{ width: 110 }} />
+               <col style={{ width: 120 }} />
+               <col className="cg-actions" />
+             </colgroup>
+             <thead>
+               <tr>
+                 <th>
+                   <input 
+                     type="checkbox" 
+                     className="form-checkbox"
+                     checked={allSelected} 
+                     onChange={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))} 
+                   />
+                 </th>
+                 <th>NCAL</th>
+                 <th className="text-left">INCIDENT</th>
+                 <th>LV</th>
+                 <th className="text-left">SITE / SEGMENT / ODP</th>
+                 <th className="text-left">TECHNICAL DETAILS</th>
+                 <th className="text-left">TIMELINE</th>
+                 <th>DURATIONS</th>
+                 <th className="text-left">TECHNICIAN</th>
+                 <th>DETAILS</th>
+               </tr>
+             </thead>
+            <tbody>
                 {filtered.map(row => {
                   const isSelected = selectedIds.includes(row.id);
                   return (
@@ -200,65 +214,65 @@ export default function HistoryPage() {
                       }}
                       className="history-row"
                     >
-                    <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                      <input 
-                        type="checkbox" 
-                        className="form-checkbox"
-                        checked={isSelected}
-                        onChange={() => setSelectedIds(p => isSelected ? p.filter(id => id !== row.id) : [...p, row.id])}
-                      />
-                    </td>
-                    <td>
-                      <div className="page-stack" style={{ gap: 4 }}>
-                        <div className="text-id text-sm" style={{ fontWeight: 600 }}>{row.case_no}</div>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <NcalBadge value={row.ncal} />
-                          <LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} />
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="page-stack" style={{ gap: 2 }}>
-                        <div className="text-sm" style={{ fontWeight: 600 }}>
-                          {['ORANGE', 'RED', 'BLACK'].includes(row.ncal) ? (row.odp_bts || row.site_name_manual || '—') : (row.site_name_manual || row.company_name || '—')}
-                        </div>
-                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.odp_bts || '—'}</div>
-                      </div>
-                    </td>
-                    <td style={{ maxWidth: '240px' }}>
-                      <div className="page-stack" style={{ gap: 4 }}>
-                        <div className="text-sm text-truncate" title={row.initial_problem}>{row.initial_problem || '—'}</div>
-                        <div className="text-xs text-truncate" style={{ color: 'var(--text-muted)' }} title={row.root_cause}>
-                           {row.root_cause || row.classification_name || '—'}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="page-stack" style={{ gap: 2 }}>
-                        <div className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span className="text-id">{formatDateTime(row.start_time)}</span>
-                        </div>
-                        <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span className="text-id">{formatDateTime(row.end_time)}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <DurationBadge seconds={row.duration_nett_seconds} />
-                        <div className="text-xs" style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Gross: {Math.round(row.duration_gross_seconds/60)}m</div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="text-sm">{row.technician_name || '—'}</div>
-                    </td>
-                    <td>
-                      <div className="cell-actions">
-                        <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); navigate(`/incidents/${row.id}`); }} title="View Detailed Log">
-                          <Eye size={14} className="text-accent" />
-                        </button>
-                      </div>
-                    </td>
+                     <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                       <input 
+                         type="checkbox" 
+                         className="form-checkbox"
+                         checked={isSelected}
+                         onChange={() => setSelectedIds(p => isSelected ? p.filter(id => id !== row.id) : [...p, row.id])}
+                       />
+                     </td>
+                     <td className="text-center">
+                       <NcalBadge value={row.ncal} />
+                     </td>
+                     <td className="text-left">
+                       <div className="text-id text-sm tabular" style={{ fontWeight: 700, fontSize: 'var(--f-sm)' }}>{row.case_no}</div>
+                     </td>
+                     <td className="text-center">
+                       <LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} targetHours={getSLATarget(row.ncal) / 3600} />
+                     </td>
+                     <td className="text-left">
+                       <div className="page-stack" style={{ gap: 2 }}>
+                         <div className="text-sm" style={{ fontWeight: 600 }}>
+                           {['ORANGE', 'RED', 'BLACK'].includes(row.ncal) ? (row.odp_bts || row.site_name_manual || '—') : (row.site_name_manual || row.company_name || '—')}
+                         </div>
+                         <div className="text-xs tabular" style={{ color: 'var(--text-secondary)' }}>{row.odp_bts || '—'}</div>
+                       </div>
+                     </td>
+                     <td className="text-left">
+                       <div className="page-stack" style={{ gap: 4 }}>
+                         <div className="text-sm" title={row.initial_problem}>{row.initial_problem || '—'}</div>
+                         <div className="text-xs" style={{ color: 'var(--text-muted)' }} title={row.root_cause}>
+                            {row.root_cause || row.classification_name || '—'}
+                         </div>
+                       </div>
+                     </td>
+                     <td className="text-left">
+                       <div className="page-stack" style={{ gap: 2 }}>
+                         <div className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                           <span className="text-id tabular">{formatDateTime(row.start_time)}</span>
+                         </div>
+                         <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                           <span className="text-id tabular">{formatDateTime(row.end_time)}</span>
+                         </div>
+                       </div>
+                     </td>
+                     <td className="text-center">
+                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                         <DurationBadge seconds={row.duration_nett_seconds} />
+                         <div className="text-id" style={{ color: 'var(--text-muted)', fontSize: '10px' }}>GROSS: {Math.round(row.duration_gross_seconds/60)}M</div>
+                       </div>
+                     </td>
+                     <td className="text-left">
+                       <div className="text-sm">{row.technician_name || '—'}</div>
+                     </td>
+                     <td className="text-center">
+                       <div className="cell-actions">
+                         <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); navigate(`/incidents/${row.id}`); }} title="View Detailed Log">
+                           <Eye size={16} strokeWidth={1.5} className="text-accent" />
+                         </button>
+                       </div>
+                     </td>
                   </tr>
                   )
                 })}

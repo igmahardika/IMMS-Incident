@@ -62,27 +62,38 @@ export default function DashboardPage() {
         </div>
         <div className="page-actions">
           <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}>
-            <Plus size={14} /> Create Incident
+            <Plus size={16} strokeWidth={2} /> Create Incident
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-label text-xs">Active Incidents</div>
-          <div className="kpi-value text-xl" style={{ color: 'var(--danger)' }}>{data?.totalActive || 0}</div>
+        <div className="kpi-card animate-fade-in delay-1" data-accent="danger">
+          <div className="kpi-header">
+            <div className="kpi-label">Active Incidents</div>
+            <AlertTriangle className="kpi-icon" size={18} strokeWidth={1.5} />
+          </div>
+          <div className="kpi-value display-number" style={{ color: 'var(--danger)' }}>{data?.totalActive || 0}</div>
           <div className="kpi-meta text-xs">Unresolved cases</div>
         </div>
-        <div className="kpi-card">
-          <div className="kpi-label text-xs">Resolved Incidents</div>
-          <div className="kpi-value text-xl" style={{ color: 'var(--success)' }}>{data?.totalDone || 0}</div>
+        
+        <div className="kpi-card animate-fade-in delay-2" data-accent="success">
+          <div className="kpi-header">
+            <div className="kpi-label">Resolved</div>
+            <CheckCircle className="kpi-icon" size={18} strokeWidth={1.5} />
+          </div>
+          <div className="kpi-value display-number" style={{ color: 'var(--success)' }}>{data?.totalDone || 0}</div>
           <div className="kpi-meta text-xs">Total all time</div>
         </div>
-        {NCAL_ORDER.map(ncal => (
-          <div className="kpi-card" key={ncal}>
-            <div className="kpi-label"><NcalBadge value={ncal} /></div>
-            <div className="kpi-value text-xl" style={{ color: NCAL_COLORS_KPI[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
+        
+        {NCAL_ORDER.map((ncal, i) => (
+          <div className={`kpi-card animate-fade-in delay-${(i % 5) + 3}`} data-accent={ncal.toLowerCase()} key={ncal}>
+            <div className="kpi-header">
+              <div className="kpi-label"><NcalBadge value={ncal} /></div>
+              <Activity className="kpi-icon" size={18} strokeWidth={1.5} />
+            </div>
+            <div className="kpi-value display-number" style={{ color: NCAL_COLORS_KPI[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
             <div className="kpi-meta text-xs">Currently active</div>
           </div>
         ))}
@@ -93,14 +104,14 @@ export default function DashboardPage() {
         <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`} style={{ gridColumn: '1 / -1' }}>
           <ChartContainer config={chartConfig} style={{ height: 400 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={12} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={12} />
+              <LineChart data={duration} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.05} />
+                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} width={40} />
                 <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
-                <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
+                <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={40} wrapperStyle={{ paddingTop: '20px' }} />
                 {NCAL_ORDER.map(ncal => (
-                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, stroke: 'var(--bg-surface)', strokeWidth: 2 }} connectNulls />
+                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={1.5} dot={{ r: 2, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 4, stroke: 'var(--bg-surface)', strokeWidth: 2 }} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -112,13 +123,20 @@ export default function DashboardPage() {
           <SectionCard title="SLA Summary This Year" subtitle="Based on NCAL segments" style={{ padding: 0 }}>
             <div className="table-wrap">
               <table className="data-table">
+                <colgroup>
+                  <col className="cg-ncal" />
+                  <col className="cg-priority" />
+                  <col className="cg-duration" />
+                  <col className="cg-priority" />
+                  <col className="cg-priority" />
+                </colgroup>
                 <thead>
                 <tr>
                   <th>NCAL</th>
-                  <th className="text-center">Total Cases</th>
-                  <th>Avg Duration</th>
-                  <th className="text-center">SLA Met</th>
-                  <th className="text-right">%</th>
+                  <th>CASES</th>
+                  <th>AVG DURATION</th>
+                  <th>SLA MET</th>
+                  <th>%</th>
                 </tr>
               </thead>
               <tbody>
@@ -129,11 +147,11 @@ export default function DashboardPage() {
                   const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                   return (
                     <tr key={row.ncal}>
-                      <td><NcalBadge value={row.ncal} /></td>
-                      <td className="text-center text-sm" style={{ fontWeight: 600 }}>{row.total_cases}</td>
-                      <td className="text-id text-xs">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                      <td className="text-center text-sm" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
-                      <td className="text-right">
+                      <td className="text-center"><NcalBadge value={row.ncal} /></td>
+                      <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.total_cases}</td>
+                      <td className="text-center text-id tabular" style={{ fontSize: 'var(--f-xs)' }}>{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                      <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
+                      <td className="text-center tabular">
                         <span className="text-sm" style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>
                           {pct}%
                         </span>
@@ -147,26 +165,33 @@ export default function DashboardPage() {
         </SectionCard>
 
         {/* Recent Closed */}
-        <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents">
-          <div className="page-stack" style={{ gap: '0.5rem' }}>
-            {(data?.recentClosed || []).length === 0 && (
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '2rem 1rem', textAlign: 'center' }}>No recently closed incidents</div>
-            )}
-            {(data?.recentClosed || []).map(inc => (
-              <div key={inc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.875rem 0', borderBottom: '1px dashed var(--border)' }}>
-                <div style={{ flexShrink: 0 }}><NcalBadge value={inc.ncal} /></div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="id-link text-truncate text-id text-sm" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ display: 'block', marginBottom: 2 }}>
-                    {inc.case_no} <span className="text-sm" style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-main)' }}>— {inc.site_name_manual || '—'}</span>
-                  </div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span className="text-truncate" style={{ maxWidth: 120 }}>{inc.technician_name || '—'}</span>
-                    <span>·</span>
-                    <span className="text-id" style={{ color: 'var(--text-secondary)' }}>{formatDuration(inc.duration_nett_seconds)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+        <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents" padding={0}>
+          <div className="table-wrap">
+            <table className="data-table">
+              <colgroup>
+                <col className="cg-ncal" />
+                <col className="cg-auto" />
+                <col className="cg-actions" style={{ width: 140 }} />
+              </colgroup>
+              <tbody>
+                {(data?.recentClosed || []).length === 0 && (
+                  <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 1rem' }}>No recently closed incidents</td></tr>
+                )}
+                {(data?.recentClosed || []).map(inc => (
+                  <tr key={inc.id} className="tr-hover-accent" style={{ cursor: 'pointer' }} onClick={() => navigate(`/incidents/${inc.id}`)}>
+                    <td className="text-center"><NcalBadge value={inc.ncal} /></td>
+                    <td className="text-left">
+                      <div className="id-link text-id text-sm" style={{ marginBottom: 2, fontWeight: 700 }}>{inc.case_no}</div>
+                      <div className="text-truncate text-xs" style={{ color: 'var(--text-secondary)' }}>{inc.site_name_manual || '—'}</div>
+                    </td>
+                    <td className="text-right">
+                      <div className="tabular text-sm" style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{formatDuration(inc.duration_nett_seconds)}</div>
+                      <div className="text-truncate text-xs" style={{ color: 'var(--text-muted)' }}>{inc.technician_name || '—'}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </SectionCard>
         </div>

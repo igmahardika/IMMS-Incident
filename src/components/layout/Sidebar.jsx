@@ -4,8 +4,8 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { ThemeContext } from '../../App.jsx';
 import {
   LayoutDashboard, AlertTriangle, PlusCircle, History, BarChart2,
-  TrendingUp, Database, Tag, Users, Settings, ChevronLeft, ChevronRight,
-  Power, ListChecks, Zap, Network, Sun, Moon, X
+  TrendingUp, Database, Tag, Users, UserCog, Settings, ChevronLeft, ChevronRight,
+  Power, ListChecks, Zap, Network, Sun, Moon, X, HardHat, LogOut, Check
 } from 'lucide-react';
 
 const menuGroups = [
@@ -41,10 +41,10 @@ const menuGroups = [
     items: [
       { to: '/master/customers', icon: Database, label: 'Customer Records', roles: ['admin', 'manager'] },
       { to: '/master/classifications', icon: Tag, label: 'Classifications', roles: ['admin', 'manager'] },
-      { to: '/master/technical-support', icon: Users, label: 'Personnel Records', roles: ['admin', 'manager'] },
+      { to: '/master/technical-support', icon: HardHat, label: 'Personnel Records', roles: ['admin', 'manager'] },
       { to: '/master/distribusi', icon: Network, label: 'Distribution Topology', roles: ['admin', 'manager'] },
       { to: '/master/actions', icon: ListChecks, label: 'Master Actions (Handling)', roles: ['admin', 'manager'] },
-      { to: '/master/users', icon: Users, label: 'User Accounts', roles: ['admin'] },
+      { to: '/master/users', icon: UserCog, label: 'User Accounts', roles: ['admin'] },
     ]
   },
   {
@@ -57,11 +57,21 @@ const menuGroups = [
 
 export default function Sidebar({ mobileOpen, onClose }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const { user, logout } = useAuth();
   const { theme, toggle: toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => {
+    if (confirmLogout) {
+      logout();
+      navigate('/login');
+    } else {
+      setConfirmLogout(true);
+      // Auto-reset confirm state after 3s if user doesn't click again
+      setTimeout(() => setConfirmLogout(false), 3000);
+    }
+  };
 
   const filteredGroups = menuGroups
     .map(group => ({
@@ -77,7 +87,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">
-          <Zap size={18} color="white" strokeWidth={2.5} />
+          <Zap size={18} color="white" strokeWidth={1.5} />
         </div>
         {!isCollapsed && (
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -91,7 +101,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
             onClick={onClose}
             style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
           >
-            <X size={16} />
+            <X size={18} strokeWidth={1.5} />
           </button>
         )}
       </div>
@@ -112,7 +122,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
                 title={isCollapsed ? item.label : ''}
                 onClick={mobileOpen ? onClose : undefined}
               >
-                <item.icon size={15} className="nav-icon" />
+                <item.icon size={20} strokeWidth={1.5} className="nav-icon" />
                 <span className="nav-label">{item.label}</span>
               </NavLink>
             ))}
@@ -126,9 +136,10 @@ export default function Sidebar({ mobileOpen, onClose }) {
           <button
             onClick={() => setCollapsed(c => !c)}
             className="btn btn-ghost btn-icon btn-sm"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {collapsed ? <ChevronRight size={16} strokeWidth={1.5} /> : <ChevronLeft size={16} strokeWidth={1.5} />}
           </button>
         </div>
       )}
@@ -140,21 +151,44 @@ export default function Sidebar({ mobileOpen, onClose }) {
           <button
             onClick={toggleTheme}
             className="btn btn-ghost btn-icon btn-sm"
+            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             style={{ flex: isCollapsed ? 1 : 'none' }}
           >
-            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            {theme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
           </button>
+          {/* Logout button — separate from user info to prevent accidental logout */}
+          {!isCollapsed && (
+            <button
+              onClick={handleLogout}
+              className={`btn btn-icon btn-sm ${confirmLogout ? 'btn-danger' : 'btn-ghost'}`}
+              aria-label={confirmLogout ? 'Confirm logout' : 'Logout'}
+              title={confirmLogout ? 'Click again to confirm logout' : 'Logout'}
+              style={{ marginLeft: 'auto', transition: 'all var(--t-base)' }}
+            >
+              {confirmLogout ? <Check size={14} /> : <LogOut size={14} />}
+            </button>
+          )}
         </div>
-        <div className="user-badge" onClick={handleLogout} title="Logout">
+        {/* User info — purely informational, not a button */}
+        <div className="user-badge" style={{ cursor: 'default' }}>
           <div className="user-avatar">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="user-info">
             <div className="user-name">{user?.name}</div>
-            <div className="user-role">{user?.role} · Logout</div>
+            <div className="user-role">{user?.role}</div>
           </div>
-          {!isCollapsed && <Power size={12} style={{ opacity: 0.4, flexShrink: 0 }} />}
+          {isCollapsed && (
+            <button
+              onClick={handleLogout}
+              className={`btn btn-icon btn-sm ${confirmLogout ? 'btn-danger' : 'btn-ghost'}`}
+              aria-label="Logout"
+              title={confirmLogout ? 'Click again to confirm' : 'Logout'}
+            >
+              <LogOut size={12} />
+            </button>
+          )}
         </div>
       </div>
     </aside>

@@ -161,19 +161,19 @@ export function MasterCustomerPage() {
                   <col className="col-md" /><col className="col-actions" />
                 </colgroup>
                 <thead><tr>
-                  <th className="text-center text-xs">#</th><th className="text-xs">Cust ID</th><th className="text-xs">Service ID</th>
-                  <th className="text-xs">Company Name</th><th className="text-xs">Brand / Site</th>
-                  <th className="text-xs">Grade</th><th className="text-xs">Level</th><th className="text-xs">Status</th>
-                  <th className="text-xs">Service Type</th><th className="text-right text-xs">Actions</th>
+                  <th>#</th><th className="text-left">Cust ID</th><th className="text-left">Service ID</th>
+                  <th className="text-left">Company Name</th><th className="text-left">Brand / Site</th>
+                  <th>Grade</th><th>Level</th><th>Status</th>
+                  <th className="text-left">Service Type</th><th className="text-right">Actions</th>
                 </tr></thead>
                 <tbody>
                   {paginated.map((c, i) => (
-                    <tr key={c.id}>
+                    <tr key={c.id} className="tr-hover-accent">
                       <td className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>{startIdx + i + 1}</td>
-                      <td className="text-id text-xs">{c.customer_id}</td>
-                      <td className="text-id text-xs">{c.service_id}</td>
-                      <td className="text-sm" style={{ fontWeight: 600 }}>{c.company_name}</td>
-                      <td className="text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <td className="text-id text-xs text-left">{c.customer_id}</td>
+                      <td className="text-id text-xs text-left">{c.service_id}</td>
+                      <td className="text-left text-sm" style={{ fontWeight: 600 }}>{c.company_name}</td>
+                      <td className="text-left text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {c.brand_site}
                         {(!c.latitude || !c.longitude) && (
                           <span title="No coordinates found" style={{ color: '#ef4444', display: 'inline-flex' }}>
@@ -181,11 +181,11 @@ export function MasterCustomerPage() {
                           </span>
                         )}
                       </td>
-                      <td><GradeBadge grade={c.grade} /></td>
-                      <td><AccentBadge text={c.support_level} /></td>
-                      <td><StatusBadge active={c.is_active} /></td>
-                      <td className="text-xs" style={{ color: 'var(--text-secondary)' }}>{c.service_type}</td>
-                      <td>
+                      <td className="text-center"><GradeBadge grade={c.grade} /></td>
+                      <td className="text-center"><AccentBadge text={c.support_level} /></td>
+                      <td className="text-center"><StatusBadge active={c.is_active} /></td>
+                      <td className="text-left text-xs" style={{ color: 'var(--text-secondary)' }}>{c.service_type}</td>
+                      <td className="text-right">
                         <div className="cell-actions">
                           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(c)} title="Edit"><Edit2 size={12} /></button>
                           <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(c.id)} title="Hapus"><Trash2 size={12} /></button>
@@ -483,23 +483,23 @@ export function UserManagementPage() {
               <col className="col-xl" /><col className="col-md" /><col className="col-md" /><col className="col-sm" />
             </colgroup>
             <thead><tr>
-              <th className="text-xs">ID</th><th className="text-xs">Username</th><th className="text-xs">Name</th>
-              <th className="text-xs">Email</th><th className="text-xs">Role</th><th className="text-xs">Status</th><th className="text-right text-xs">Actions</th>
+              <th>ID</th><th className="text-left">Username</th><th className="text-left">Name</th>
+              <th className="text-left">Email</th><th>Role</th><th>Status</th><th className="text-right">Actions</th>
             </tr></thead>
             <tbody>
               {users.map(u => (
-                <tr key={u.id}>
-                  <td className="text-id text-sm" style={{ color: 'var(--accent-light)', fontWeight: 700 }}>{u.employee_id || '—'}</td>
-                  <td className="text-id text-sm">{u.username}</td>
-                  <td className="text-sm" style={{ fontWeight: 600 }}>{u.name}</td>
-                  <td style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }} className="text-truncate">{u.email || '—'}</td>
-                  <td><RoleBadge role={u.role} /></td>
-                  <td>
+                <tr key={u.id} className="tr-hover-accent">
+                  <td className="text-center text-id text-sm" style={{ color: 'var(--accent-light)', fontWeight: 700 }}>{u.employee_id || '—'}</td>
+                  <td className="text-left text-id text-sm">{u.username}</td>
+                  <td className="text-left text-sm" style={{ fontWeight: 600 }}>{u.name}</td>
+                  <td style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }} className="text-truncate text-left">{u.email || '—'}</td>
+                  <td className="text-center"><RoleBadge role={u.role} /></td>
+                  <td className="text-center">
                     <button onClick={() => handleToggle(u)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       <StatusBadge active={u.is_active} />
                     </button>
                   </td>
-                  <td>
+                  <td className="text-right">
                     <div className="cell-actions">
                       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(u)}><Edit2 size={12} /></button>
                     </div>
@@ -600,20 +600,20 @@ export function MasterTechnicalSupportPage() {
               <col className="col-no" /><col className="col-sm" /><col className="col-auto" /><col className="col-lg" /><col className="col-actions" />
             </colgroup>
             <thead><tr>
-              <th className="text-center text-xs">#</th><th className="text-xs">No</th><th className="text-xs">Name</th><th className="text-xs">Unit</th><th className="text-right text-xs">Actions</th>
+              <th>#</th><th>No</th><th className="text-left">Name</th><th className="text-left">Unit</th><th className="text-right">Actions</th>
             </tr></thead>
             <tbody>
               {data.map((item, i) => (
-                <tr key={item.id}>
+                <tr key={item.id} className="tr-hover-accent">
                   <td className="text-center text-id text-xs" style={{ color: 'var(--text-muted)' }}>{i + 1}</td>
-                  <td className="text-id text-xs" style={{ color: 'var(--text-muted)' }}>{item.no || '—'}</td>
-                  <td className="text-sm" style={{ fontWeight: 600 }}>{item.name}</td>
-                  <td>
+                  <td className="text-center text-id text-xs" style={{ color: 'var(--text-muted)' }}>{item.no || '—'}</td>
+                  <td className="text-left text-sm" style={{ fontWeight: 600 }}>{item.name}</td>
+                  <td className="text-left">
                     <span style={{ fontSize: '0.786rem', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '0.125rem 0.5rem', borderRadius: 4, color: 'var(--text-secondary)' }}>
                       {item.unit}
                     </span>
                   </td>
-                  <td>
+                  <td className="text-right">
                     <div className="cell-actions">
                       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(item)}><Edit2 size={12} /></button>
                       <button className="btn btn-danger btn-icon btn-sm" onClick={() => api.deleteTechnicalSupport(item.id).then(load)}><Trash2 size={12} /></button>
@@ -870,14 +870,14 @@ export function MasterActionPage() {
               <col className="col-no" /><col className="col-auto" /><col className="col-actions" />
             </colgroup>
             <thead><tr>
-              <th className="text-center">#</th><th>Handling Action Name</th><th className="text-right">Actions</th>
+              <th>#</th><th className="text-left">Handling Action Name</th><th className="text-right">Actions</th>
             </tr></thead>
             <tbody>
               {data.map((item, i) => (
-                <tr key={item.id}>
+                <tr key={item.id} className="tr-hover-accent">
                   <td className="text-center" style={{ color: 'var(--text-muted)', fontSize: '0.786rem' }}>{i + 1}</td>
-                  <td style={{ fontWeight: 600 }}>{item.name}</td>
-                  <td>
+                  <td className="text-left" style={{ fontWeight: 600 }}>{item.name}</td>
+                  <td className="text-right">
                     <div className="cell-actions">
                       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => openEdit(item)}><Edit2 size={12} /></button>
                       <button className="btn btn-danger btn-icon btn-sm" onClick={() => { if(confirm('Delete this action?')) api.deleteAction(item.id).then(load); }}><Trash2 size={12} /></button>

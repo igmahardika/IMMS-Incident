@@ -4,7 +4,7 @@ import { api, formatDateTime, processTimeline, formatDuration, calculateIncident
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge } from '../components/ui/index.jsx';
-import { Play, Pause, Square, Edit2, RefreshCw, Plus, AlertTriangle, Clock, Bell, Activity } from 'lucide-react';
+import { Play, Pause, Square, Edit2, Plus, AlertTriangle, Activity, X as XIcon } from 'lucide-react';
 
 function PauseModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
@@ -152,7 +152,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                       </div>
                    </div>
                    <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr 1fr', gap: '0.875rem', alignItems: 'center' }}>
-                      <LevelBadge level={calculateIncidentLevel(iData.start_time)} />
+                      <LevelBadge level={calculateIncidentLevel(iData.start_time)} targetHours={getSLATarget(iData.ncal) / 3600} />
                       <div>
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>NCAL</div>
                         <div style={{ marginTop: 4 }}><NcalBadge value={iData.ncal} /></div>
@@ -316,7 +316,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
       footer={
         <>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleClose}>✕ Close Incident</button>
+          <button className="btn btn-danger" onClick={handleClose}><XIcon size={14} /> Close Incident</button>
         </>
       }
     >
@@ -364,7 +364,14 @@ function CloseModal({ open, onClose, incident, onClosed }) {
           <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
             {loadingHistory ? <div style={{ padding: '1rem', textAlign: 'center' }}><div className="spinner-sm" /></div> : (
               <table className="data-table no-border" style={{ fontSize: '0.78rem' }}>
-                <thead><tr><th>No</th><th>Waktu</th><th>Penyebab</th><th>Penanganan</th><th className="text-right">Pilih</th></tr></thead>
+                <colgroup>
+                  <col style={{ width: 100 }} />
+                  <col style={{ width: 140 }} />
+                  <col style={{ width: 'auto' }} />
+                  <col style={{ width: 'auto' }} />
+                  <col style={{ width: 100 }} />
+                </colgroup>
+                <thead><tr><th>No</th><th>Waktu</th><th className="text-left">Penyebab</th><th className="text-left">Penanganan</th><th className="text-right">Pilih</th></tr></thead>
                 <tbody>
                   {history.length === 0 ? (
                     <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>No update history yet</td></tr>
@@ -383,12 +390,12 @@ function CloseModal({ open, onClose, incident, onClosed }) {
                     const isSelected = rootCause === cause && actionTaken === action;
                     return (
                       <tr key={item.id} style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-subtle)' : 'transparent' }} onClick={() => selectFromHistory(item)}>
-                        <td style={{ fontWeight: 600 }}>HANDLING {idx + 1} {isSelected && '✓'}</td>
-                        <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(item.timestamp)}</td>
-                        <td>{cause}</td>
-                        <td>{action}</td>
+                        <td className="text-center" style={{ fontWeight: 600 }}>HANDLING {idx + 1} {isSelected && '✓'}</td>
+                        <td className="text-center" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(item.timestamp)}</td>
+                        <td className="text-left">{cause}</td>
+                        <td className="text-left">{action}</td>
                         <td className="text-right">
-                          <button className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-ghost text-accent'}`}><Plus size={12} /> {isSelected ? 'Selected' : 'Select'}</button>
+                          <button className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-ghost'}`}>{isSelected ? '✓ Selected' : 'Select'}</button>
                         </td>
                       </tr>
                     );
@@ -418,7 +425,6 @@ export default function CurrentTroublePage() {
   const [pauseModal, setPauseModal] = useState(null);
   const [updateModal, setUpdateModal] = useState(null);
   const [closeModal, setCloseModal] = useState(null);
-  const [notifications, setNotifications] = useState([]);
   const { addToast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -429,16 +435,11 @@ export default function CurrentTroublePage() {
     finally { setLoading(false); }
   }, []);
 
-  const loadNotifications = useCallback(async () => {
-    try { const data = await api.getNotifications(); setNotifications(data); } 
-    catch (e) { console.error(e); }
-  }, []);
-
   useEffect(() => { 
-    load(); loadNotifications();
-    const t = setInterval(() => { load(); loadNotifications(); }, 10000); 
+    load();
+    const t = setInterval(() => { load(); }, 10000); 
     return () => clearInterval(t); 
-  }, [load, loadNotifications]);
+  }, [load]);
 
   const [alertedIds, setAlertedIds] = useState(new Set());
 
@@ -481,12 +482,12 @@ export default function CurrentTroublePage() {
         </div>
         <div className="page-actions">
           {user?.role !== 'technician' && (
-            <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={16} /> Create Incident</button>
+            <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={16} strokeWidth={2} /> Create Incident</button>
           )}
         </div>
       </div>
 
-      <div className={['admin', 'noc', 'manager'].includes(user?.role) ? 'layout-with-aside' : ''}>
+      <div>
         
         {/* Main Incident List */}
         <div className="section-card" style={{ padding: 0 }}>
@@ -498,19 +499,30 @@ export default function CurrentTroublePage() {
               action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={14} /> Create New Incident</button>}
             />
           ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th className="text-xs">Incident</th>
-                    <th className="text-xs">Site / Segment</th>
-                    <th className="text-xs">Handling Details</th>
-                    <th className="text-xs">Priority & SLA</th>
-                    <th className="text-xs">Elapsed Time</th>
-                    <th className="text-right text-xs">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <table className="data-table">
+              <colgroup>
+                <col className="cg-ncal" />
+                <col style={{ width: 155 }} />
+                <col className="cg-id" />
+                <col className="cg-auto" />
+                <col className="cg-auto" />
+                <col className="cg-check" />
+                <col style={{ width: 140 }} />
+                <col className="cg-actions" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>NCAL</th>
+                  <th className="text-left">INCIDENT</th>
+                  <th>LV</th>
+                  <th className="text-left">SITE / SEGMENT / ODP</th>
+                  <th className="text-left">HANDLING DETAILS</th>
+                  <th>PRIORITY</th>
+                  <th>ELAPSED</th>
+                  <th className="text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
                   {incidents.map(inc => {
                     const actions = [];
                     if (inc.status === 'open') {
@@ -528,61 +540,76 @@ export default function CurrentTroublePage() {
                     }
 
                     return (
-                      <tr key={inc.id}>
-                        <td>
-                          <div className="page-stack" style={{ gap: 4 }}>
-                            <button className="id-link text-id text-sm" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ background: 'none', border: 'none', padding: 0 }}>
+                      <tr key={inc.id} className="tr-hover-accent">
+                        {/* NCAL */}
+                        <td className="text-center">
+                          <NcalBadge value={inc.ncal} />
+                        </td>
+                        {/* INCIDENT */}
+                        <td className="text-left">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <button className="id-link text-id text-sm tabular" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ background: 'none', border: 'none', padding: 0, fontWeight: 700, fontSize: 'var(--f-sm)', textAlign: 'left' }}>
                               {inc.case_no}
                             </button>
-                            <StatusPill status={inc.status} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <StatusPill status={inc.status} />
+                              {inc.recurring_count > 0 && (
+                                <span title={`Recurring ${inc.recurring_count + 1}X`}>
+                                  <AlertTriangle size={11} style={{ color: 'var(--danger)' }} />
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
-                        <td>
+                        {/* LV */}
+                        <td className="text-center">
+                          <LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} />
+                        </td>
+                        {/* SITE / SEGMENT / ODP */}
+                        <td className="text-left">
                           <div className="page-stack" style={{ gap: 2 }}>
                             <div className="text-sm" style={{ fontWeight: 600 }}>
                               {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
                             </div>
-                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                            <div className="text-xs tabular" style={{ color: 'var(--text-muted)' }}>
                               {inc.odp_bts || inc.service_id || '—'}
                             </div>
-                            {inc.recurring_count > 0 && (
-                              <div className="text-xs" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                <AlertTriangle size={12} />
-                                <span>Recurring {inc.recurring_count + 1}X</span>
-                              </div>
-                            )}
                           </div>
                         </td>
-                        <td style={{ maxWidth: '280px' }}>
-                          <div className="page-stack" style={{ gap: 4 }}>
-                            <div className="text-sm text-truncate" style={{ color: 'var(--text-primary)' }}>{inc.initial_problem || '—'}</div>
+                        {/* HANDLING DETAILS */}
+                        <td className="text-left">
+                          <div className="page-stack" style={{ gap: 3 }}>
+                            <div className="text-sm" style={{ color: 'var(--text-primary)' }}>{inc.initial_problem || '—'}</div>
                             {inc.last_action && (
                               <div className="text-xs" style={{ color: 'var(--text-muted)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Activity size={10} /> {inc.last_action}
+                                <Activity size={11} strokeWidth={1.5} /> {inc.last_action}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <NcalBadge value={inc.ncal} />
-                            <LevelBadge level={calculateIncidentLevel(inc.start_time)} />
-                            {inc.level_support && (
-                              <span className="text-xs" style={{ 
-                                background: 'var(--bg-elevated)', 
-                                color: 'var(--text-secondary)', 
-                                padding: '2px 6px', 
-                                borderRadius: 4, 
-                                border: '1px solid var(--border)' 
-                              }}>
-                                P{inc.level_support}
-                              </span>
-                            )}
-                          </div>
+                        {/* PRIORITY */}
+                        <td className="text-center">
+                          {inc.level_support ? (
+                            <span className="text-xs" style={{ 
+                              background: 'var(--bg-elevated)', 
+                              color: 'var(--text-muted)', 
+                              padding: '1px 6px', 
+                              height: '18px',
+                              borderRadius: 'var(--radius-sm)', 
+                              border: '1px solid var(--border)',
+                              fontSize: 'var(--f-xs)',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}>
+                              P{inc.level_support}
+                            </span>
+                          ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                         </td>
-                        <td>
+                        {/* ELAPSED */}
+                        <td className="text-center">
                           <div className="page-stack" style={{ gap: 2 }}>
-                            <div className="text-id text-sm" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            <div className="text-id text-sm tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                               <LiveTimer 
                                 startIso={inc.start_time} 
                                 pausedSec={inc.total_pause_duration_seconds} 
@@ -590,14 +617,15 @@ export default function CurrentTroublePage() {
                                 target={getSLATarget(inc.ncal)}
                               />
                             </div>
-                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDateTime(inc.start_time)}</div>
+                            <div className="text-id text-xs tabular" style={{ color: 'var(--text-muted)' }}>{formatDateTime(inc.start_time)}</div>
                           </div>
                         </td>
-                        <td>
+                        {/* ACTIONS */}
+                        <td className="text-right">
                           <div className="cell-actions">
                             {actions.map(a => (
-                              <button key={a.label} className="btn btn-icon btn-ghost btn-sm" onClick={a.onClick} title={a.label}>
-                                <a.icon size={15} className={a.className} />
+                              <button key={a.label} className="btn btn-icon btn-ghost btn-sm" onClick={a.onClick} title={a.label} aria-label={a.label}>
+                                <a.icon size={16} strokeWidth={1.5} className={a.className} />
                               </button>
                             ))}
                           </div>
@@ -607,59 +635,9 @@ export default function CurrentTroublePage() {
                   })}
                 </tbody>
               </table>
-            </div>
           )}
         </div>
 
-        {/* Sidebar: Recent Updates */}
-        {['admin', 'noc', 'manager'].includes(user?.role) && (
-          <div className="aside-sticky">
-            <div className="section-card">
-              <div className="section-card-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent)' }}>
-                  <Bell size={16} /> Recent Updates
-                </div>
-              </div>
-              <div className="section-card-body" style={{ padding: '0.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
-                {notifications.length === 0 ? (
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.786rem', textAlign: 'center', padding: '1rem 0' }}>No recent activities</div>
-                ) : (
-                  <div className="page-stack" style={{ gap: '0.625rem' }}>
-                    {notifications.map(n => (
-                      <div 
-                        key={n.id} 
-                        style={{ 
-                          fontSize: '0.845rem', 
-                          padding: '0.875rem', 
-                          background: n.is_read ? 'var(--bg-elevated)' : 'var(--accent-subtle)', 
-                          borderRadius: 'var(--radius-sm)', 
-                          border: `1px solid ${n.is_read ? 'var(--border)' : 'rgba(99,102,241,0.25)'}`,
-                          borderLeft: `3px solid ${n.is_read ? 'var(--border)' : 'var(--accent)'}`,
-                          cursor: 'pointer',
-                          transition: 'background var(--t-fast)'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = n.is_read ? 'var(--bg-card-hover)' : 'var(--accent-subtle)'}
-                        onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'var(--bg-elevated)' : 'var(--accent-subtle)'}
-                        onClick={() => {
-                          api.markNotificationRead(n.id);
-                          if (n.incident_id) navigate(`/incidents/${n.incident_id}`);
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: n.is_read ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
-                          {n.message}
-                        </div>
-                        <div style={{ fontSize: '0.714rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
-                          <span>{formatDateTime(n.created_at)}</span>
-                          {!n.is_read && <span style={{ color: 'var(--accent)', fontWeight: 600 }}>New</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Modals */}
