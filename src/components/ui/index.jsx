@@ -10,13 +10,18 @@ const NCAL_DOT_COLORS = {
 };
 
 export function NcalBadge({ value }) {
+  const badgeMap = {
+    BLACK: 'badge-neutral',
+    RED: 'badge-error',
+    DANGER: 'badge-error',
+    ORANGE: 'badge-warning',
+    YELLOW: 'badge-warning',
+    BLUE: 'badge-info',
+    SUCCESS: 'badge-success'
+  };
   return (
-    <span className={`ncal-badge ncal-${value}`} aria-label={`NCAL ${value}`}>
-      <span style={{
-        display: 'inline-block', width: 6, height: 6, borderRadius: '2px', // sharper dot
-        background: NCAL_DOT_COLORS[value] || 'currentColor',
-        flexShrink: 0, verticalAlign: 'middle', marginTop: -1
-      }} />
+    <span className={`badge ${badgeMap[value] || 'badge-neutral'} badge-sm font-semibold uppercase`} aria-label={`NCAL ${value}`}>
+      <span className="inline-block w-1.5 h-1.5 rounded-sm bg-current shrink-0 align-middle -mt-px mr-1.5" />
       {value}
     </span>
   );
@@ -24,56 +29,26 @@ export function NcalBadge({ value }) {
 
 export function StatusPill({ status }) {
   const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
-  const color = STATUS_COLORS[status] || 'var(--text-secondary)';
+  const badgeMap = { open: 'badge-info', progress: 'badge-success', pending: 'badge-warning', done: 'badge-ghost' };
   return (
-    <span 
-      className={`status-pill status-${status}`} 
-      style={{ 
-        background: `color-mix(in srgb, ${color}, transparent 80%)`, 
-        color,
-        fontSize: 'var(--f-xs)',
-        fontWeight: '600',
-        padding: '0 6px',
-        height: '18px',
-        borderRadius: 'var(--radius-sm)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        textTransform: 'uppercase',
-        letterSpacing: '0.04em',
-        transition: 'all var(--t-theme)'
-      }}
-    >
+    <span className={`badge ${badgeMap[status] || 'badge-ghost'} badge-sm font-semibold uppercase tracking-wider`}>
       {labels[status] || status}
     </span>
   );
 }
 
 export function RoleBadge({ role }) {
-  const color = ROLE_COLORS[role] || 'var(--text-secondary)';
   return (
-    <span className="text-xs" style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '0 6px', height: '18px', borderRadius: 'var(--radius-sm)',
-      background: `color-mix(in srgb, ${color}, transparent 80%)`, 
-      color,
-      fontSize: 'var(--f-xs)',
-      textTransform: 'uppercase',
-      fontWeight: '600',
-      letterSpacing: '0.04em',
-      transition: 'all var(--t-theme)'
-    }}>
+    <span className="badge badge-soft badge-neutral badge-sm font-semibold uppercase tracking-wider">
       {role}
     </span>
   );
 }
 
 export function GradeBadge({ grade }) {
-  const color = GRADE_COLORS[grade] || 'var(--text-muted)';
+  const colorMap = { VIP: 'badge-primary', Gold: 'badge-warning', Silver: 'badge-neutral', Bronze: 'badge-ghost' };
   return (
-    <span className="text-xs" style={{
-      display: 'inline-flex', padding: '0.125rem 0.438rem', borderRadius: 4,
-      background: `${color}33`, color
-    }}>
+    <span className={`badge ${colorMap[grade] || 'badge-ghost'} badge-sm font-semibold`}>
       {grade}
     </span>
   );
@@ -81,16 +56,7 @@ export function GradeBadge({ grade }) {
 
 export function StatusBadge({ active }) {
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '0 6px', height: '18px', borderRadius: 'var(--radius-sm)',
-      background: active ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-      color: active ? 'var(--success)' : 'var(--text-muted)',
-      fontSize: 'var(--f-xs)',
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em'
-    }}>
+    <span className={`badge ${active ? 'badge-success badge-soft' : 'badge-ghost'} badge-sm font-semibold uppercase tracking-wider gap-1`}>
       {active ? 'Active' : 'Inactive'}
     </span>
   );
@@ -98,7 +64,7 @@ export function StatusBadge({ active }) {
 
 export function AccentBadge({ text }) {
   return (
-    <span className="badge badge-accent">{text}</span>
+    <span className="badge badge-primary badge-soft badge-sm font-semibold">{text}</span>
   );
 }
 
@@ -190,21 +156,27 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
   }, [open, onClose]);
 
   if (!open) return null;
+  const sizeMap = { 'lg': 'max-w-3xl', 'xl': 'max-w-5xl', 'sm': 'max-w-sm' };
   return (
-    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal${size ? ' modal-' + size : ''}`} role="dialog" aria-modal="true">
-        <div className="modal-header">
-          <div className="modal-title">{title}</div>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M18 6 6 18M6 6l12 12"/>
-            </svg>
-          </button>
+    <dialog className="modal modal-open" open>
+      <div className={`modal-box p-0 flex flex-col ${sizeMap[size] || 'max-w-lg'}`}>
+        <div className="flex justify-between items-center p-4 border-b border-base-200 bg-base-100">
+          <h3 className="font-bold text-lg leading-none">{title}</h3>
+          <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose} aria-label="Close">✕</button>
         </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
+        <div className="p-4 overflow-y-auto max-h-[70vh]">
+          {children}
+        </div>
+        {footer && (
+          <div className="p-4 m-0 border-t border-base-200 bg-base-100 flex justify-end gap-2">
+            {footer}
+          </div>
+        )}
       </div>
-    </div>
+      <div className="modal-backdrop" onClick={onClose} style={{ cursor: 'default' }}>
+        <button>close</button>
+      </div>
+    </dialog>
   );
 }
 

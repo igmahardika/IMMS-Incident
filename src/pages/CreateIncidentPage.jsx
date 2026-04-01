@@ -170,17 +170,17 @@ export default function CreateIncidentPage() {
             </div>
             <div className="section-card-body">
               <div className="form-grid form-grid-3">
-                <div className="form-group">
-                  <label className="form-label">Case Number *</label>
-                  <input type="text" className="form-control" placeholder="e.g., C240313-001" value={form.case_no} onChange={e => set('case_no', e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Reported Time *</label>
-                  <input type="datetime-local" className="form-control tabular" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">NCAL Segment *</label>
-                  <select className="form-control" value={form.ncal} onChange={e => {
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text">Case Number *</span></div>
+                  <input type="text" className="input input-bordered w-full" placeholder="e.g., C240313-001" value={form.case_no} onChange={e => set('case_no', e.target.value)} required />
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text">Reported Time *</span></div>
+                  <input type="datetime-local" className="input input-bordered w-full tabular" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text">NCAL Segment *</span></div>
+                  <select className="select select-bordered w-full" value={form.ncal} onChange={e => {
                     set('ncal', e.target.value);
                     if (['ORANGE', 'RED', 'BLACK'].includes(e.target.value)) {
                       set('customer_id', ''); set('site_name_manual', ''); set('sla', ''); setSearch('');
@@ -190,7 +190,7 @@ export default function CreateIncidentPage() {
                   }} required>
                     {NCAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                </div>
+                </label>
               </div>
             </div>
           </div>
@@ -203,11 +203,11 @@ export default function CreateIncidentPage() {
             <div className="section-card-body">
               {!isDistribsi ? (
                 <div className="form-grid" style={{ gridTemplateColumns: form.ncal === 'BLUE' ? '1fr' : '1fr 1fr' }}>
-                  <div className="form-group custom-dropdown-container" style={{ position: 'relative', zIndex: showDropdown ? 100 : 1 }}>
-                    <label className="form-label">
-                      {form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}
-                    </label>
-                    <input type="text" className="form-control" placeholder="Search site or company name..." value={search} onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
+                  <div className="form-control w-full custom-dropdown-container" style={{ position: 'relative', zIndex: showDropdown ? 100 : 1 }}>
+                    <div className="label">
+                      <span className="label-text">{form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}</span>
+                    </div>
+                    <input type="text" className="input input-bordered w-full" placeholder="Search site or company name..." value={search} onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
                     {showDropdown && (
                       <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', marginTop: 4, maxHeight: 300, overflowY: 'auto', boxShadow: 'var(--shadow-xl)' }}>
                         {customers.filter(c => c.brand_site.toLowerCase().includes(search.toLowerCase()) || c.company_name.toLowerCase().includes(search.toLowerCase())).map(c => (
@@ -220,10 +220,10 @@ export default function CreateIncidentPage() {
                     )}
                   </div>
                   {form.ncal !== 'BLUE' && (
-                    <div className="form-group custom-dropdown-container" style={{ zIndex: showOdpDropdown ? 90 : 1 }}>
-                      <label className="form-label">{form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}</label>
+                    <div className="form-control w-full custom-dropdown-container" style={{ zIndex: showOdpDropdown ? 90 : 1 }}>
+                      <div className="label"><span className="label-text">{form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}</span></div>
                       <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
-                        <div className="form-control" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setShowOdpDropdown(!showOdpDropdown)}>
+                        <div className="input input-bordered w-full" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setShowOdpDropdown(!showOdpDropdown)}>
                           <span style={{ fontSize: '0.85rem' }}>{form.odp_bts || '— Select Item —'}</span>
                           <span style={{ fontSize: '0.7rem' }}>▼</span>
                         </div>
@@ -261,10 +261,10 @@ export default function CreateIncidentPage() {
                   )}
                 </div>
               ) : (
-                <div className="form-group">
-                  <label className="form-label">Infrastructure Selection ({form.ncal} Segment) *</label>
+                <div className="form-control w-full">
+                  <div className="label"><span className="label-text">Infrastructure Selection ({form.ncal} Segment) *</span></div>
                   <div className="custom-dropdown-container" style={{ position: 'relative', zIndex: showDistDropdown ? 110 : 1 }}>
-                    <div className="form-control" style={{ minHeight: '38px', height: 'auto', display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 8px', cursor: 'pointer' }} onClick={() => setShowDistDropdown(!showDistDropdown)}>
+                    <div className="input input-bordered w-full" style={{ minHeight: '38px', height: 'auto', display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 8px', cursor: 'pointer' }} onClick={() => setShowDistDropdown(!showDistDropdown)}>
                       {distForm.selectedItems.length === 0 ? <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '4px 0' }}>Search and select infrastructure items...</span> : distForm.selectedItems.map(item => (
                         <span key={item} style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '2px 8px', borderRadius: 4, fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                           {item}
@@ -298,21 +298,21 @@ export default function CreateIncidentPage() {
             </div>
             <div className="section-card-body">
               <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Initial Problem *</label>
-                  <textarea className="form-control" placeholder="Describe the detected issue..." value={form.initial_problem} onChange={e => set('initial_problem', e.target.value)} rows={3} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Technical Indications</label>
-                  <textarea className="form-control" placeholder="Loss of signal, high attenuation, etc..." value={form.indikasi} onChange={e => set('indikasi', e.target.value)} rows={3} />
-                </div>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text">Initial Problem *</span></div>
+                  <textarea className="textarea textarea-bordered w-full" placeholder="Describe the detected issue..." value={form.initial_problem} onChange={e => set('initial_problem', e.target.value)} rows={3} required />
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text">Technical Indications</span></div>
+                  <textarea className="textarea textarea-bordered w-full" placeholder="Loss of signal, high attenuation, etc..." value={form.indikasi} onChange={e => set('indikasi', e.target.value)} rows={3} />
+                </label>
               </div>
               
               <div className="form-grid form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Priority *</label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text">Priority *</span></div>
                   <select 
-                    className="form-control" 
+                    className="select select-bordered w-full" 
                     value={form.level_support} 
                     onChange={e => set('level_support', e.target.value)} 
                     required
@@ -324,52 +324,52 @@ export default function CreateIncidentPage() {
                   </select>
                   {!isDistribsi && form.customer_id && (
                     <div style={{ fontSize: '0.68rem', color: 'var(--accent)', marginTop: 4, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ background: 'var(--accent)', color: 'white', padding: '1px 4px', borderRadius: 3, fontSize: '0.6rem' }}>AUTO</span>
+                      <span className="badge badge-primary badge-sm text-[10px]">AUTO</span>
                       Pulled from customer record
                     </div>
                   )}
-                </div>
+                </label>
                 {!isDistribsi && (
-                  <div className="form-group">
-                    <label className="form-label">Assigned Technician / PIC</label>
-                    <input type="text" className="form-control" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
-                  </div>
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text">Assigned Technician / PIC</span></div>
+                    <input type="text" className="input input-bordered w-full" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
+                  </label>
                 )}
               </div>
 
               {isDistribsi && (
-                <div className="form-group" style={{ marginTop: '1rem' }}>
-                  <label className="form-label">Impacted Customers</label>
-                  <textarea className="form-control" placeholder="List impacted sites/companies..." value={form.customer_terdampak} onChange={e => set('customer_terdampak', e.target.value)} rows={2} />
-                </div>
+                <label className="form-control w-full" style={{ marginTop: '1rem' }}>
+                  <div className="label"><span className="label-text">Impacted Customers</span></div>
+                  <textarea className="textarea textarea-bordered w-full" placeholder="List impacted sites/companies..." value={form.customer_terdampak} onChange={e => set('customer_terdampak', e.target.value)} rows={2} />
+                </label>
               )}
 
               {form.ncal === 'YELLOW' && (
                 <div style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', borderRadius: 'var(--radius-sm)', padding: '1rem', marginTop: '1rem' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--warning)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}><Network size={16} strokeWidth={1.5} /> Vendor Maintenance Order Details</div>
                   <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">Original Address (Site)</label>
-                      <textarea className="form-control" rows={2} value={form.address_preview} disabled />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Coordinates (Manual Override)</label>
-                      <input type="text" className="form-control" placeholder="GPS Lat, Long" value={form.koordinat} onChange={e => set('koordinat', e.target.value)} />
-                    </div>
+                    <label className="form-control w-full">
+                      <div className="label"><span className="label-text">Original Address (Site)</span></div>
+                      <textarea className="textarea textarea-bordered w-full" rows={2} value={form.address_preview} disabled />
+                    </label>
+                    <label className="form-control w-full">
+                      <div className="label"><span className="label-text">Coordinates (Manual Override)</span></div>
+                      <input type="text" className="input input-bordered w-full" placeholder="GPS Lat, Long" value={form.koordinat} onChange={e => set('koordinat', e.target.value)} />
+                    </label>
                   </div>
                   <div className="form-grid form-grid-3">
-                    <div className="form-group">
-                      <label className="form-label">RX Power (Before)</label>
-                      <input type="text" className="form-control" placeholder="-20.5 dBm" value={form.power_before} onChange={e => set('power_before', e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Cable Type</label>
-                      <input type="text" className="form-control" placeholder="Dropcore / Patchcord" value={form.kabel} onChange={e => set('kabel', e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Total Length</label>
-                      <input type="text" className="form-control" placeholder="Meters" value={form.panjang_kabel} onChange={e => set('panjang_kabel', e.target.value)} />
-                    </div>
+                    <label className="form-control w-full">
+                      <div className="label"><span className="label-text">RX Power (Before)</span></div>
+                      <input type="text" className="input input-bordered w-full" placeholder="-20.5 dBm" value={form.power_before} onChange={e => set('power_before', e.target.value)} />
+                    </label>
+                    <label className="form-control w-full">
+                      <div className="label"><span className="label-text">Cable Type</span></div>
+                      <input type="text" className="input input-bordered w-full" placeholder="Dropcore / Patchcord" value={form.kabel} onChange={e => set('kabel', e.target.value)} />
+                    </label>
+                    <label className="form-control w-full">
+                      <div className="label"><span className="label-text">Total Length</span></div>
+                      <input type="text" className="input input-bordered w-full" placeholder="Meters" value={form.panjang_kabel} onChange={e => set('panjang_kabel', e.target.value)} />
+                    </label>
                   </div>
                 </div>
               )}
