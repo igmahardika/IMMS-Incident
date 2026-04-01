@@ -83,14 +83,14 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="login-username">Username</label>
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text">Username</span></div>
               <div style={{ position: 'relative' }}>
                 <User size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
                 <input
                   id="login-username"
                   type="text"
-                  className="form-control"
+                  className="input input-bordered w-full"
                   placeholder="Enter username"
                   style={{ paddingLeft: '2rem' }}
                   value={form.username}
@@ -100,16 +100,16 @@ export default function LoginPage() {
                   autoComplete="username"
                 />
               </div>
-            </div>
+            </label>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="login-password">Password</label>
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text">Password</span></div>
               <div style={{ position: 'relative' }}>
                 <Lock size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
                 <input
                   id="login-password"
                   type={showPw ? 'text' : 'password'}
-                  className="form-control"
+                  className="input input-bordered w-full"
                   placeholder="Enter password"
                   style={{ paddingLeft: '2rem', paddingRight: '2.5rem' }}
                   value={form.password}
@@ -127,7 +127,7 @@ export default function LoginPage() {
                   {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
-            </div>
+            </label>
 
             <button type="submit" className="btn btn-primary text-base" disabled={loading} style={{ marginTop: 4, minHeight: 44 }}>
               {loading ? (

@@ -17,10 +17,10 @@ function PauseModal({ open, onClose, onConfirm }) {
         </>
       }
     >
-      <div className="form-group">
-        <label className="form-label">Reason for Pause *</label>
-        <textarea className="form-control" placeholder="e.g., Awaiting materials, bad weather, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
-      </div>
+      <label className="form-control w-full">
+        <div className="label"><span className="label-text">Reason for Pause *</span></div>
+        <textarea className="textarea textarea-bordered w-full" placeholder="e.g., Awaiting materials, bad weather, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
+      </label>
     </Modal>
   );
 }
@@ -96,10 +96,10 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
             <div className="section-card-body" style={{ padding: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 {user?.role && user.role !== 'technician' && (
-                  <div className="form-group">
-                    <label className="form-label">Assign Technician</label>
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text">Assign Technician</span></div>
                     <select 
-                      className="form-control" 
+                      className="select select-bordered w-full" 
                       value={form.technician_id} 
                       onChange={e => setForm(p => ({ ...p, technician_id: e.target.value }))}
                     >
@@ -108,29 +108,29 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                         <option key={u.id} value={u.id}>{u.name}</option>
                       ))}
                     </select>
-                  </div>
+                  </label>
                 )}
               </div>
 
 
-              <div className="form-group mb-4">
-                <label className="form-label">Update Root Cause</label>
-                <textarea className="form-control" rows={3} value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Explain the root cause..." />
-              </div>
-              <div className="form-group mb-4">
-                <label className="form-label">Action Taken / Update Notes</label>
-                <textarea className="form-control" rows={4} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Explain the resolution steps or update technician notes..." />
-              </div>
+              <label className="form-control w-full mb-4">
+                <div className="label"><span className="label-text">Update Root Cause</span></div>
+                <textarea className="textarea textarea-bordered w-full" rows={3} value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Explain the root cause..." />
+              </label>
+              <label className="form-control w-full mb-4">
+                <div className="label"><span className="label-text">Action Taken / Update Notes</span></div>
+                <textarea className="textarea textarea-bordered w-full" rows={4} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Explain the resolution steps or update technician notes..." />
+              </label>
               {user?.role && user.role !== 'technician' && incident?.ncal === 'YELLOW' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">RX Power BEFORE (dBm)</label>
-                    <input type="text" className="form-control" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-20.5 dBm" />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">RX Power AFTER (dBm)</label>
-                    <input type="text" className="form-control" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-18.2 dBm" />
-                  </div>
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text">RX Power BEFORE (dBm)</span></div>
+                    <input type="text" className="input input-bordered w-full" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-20.5 dBm" />
+                  </label>
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text">RX Power AFTER (dBm)</span></div>
+                    <input type="text" className="input input-bordered w-full" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-18.2 dBm" />
+                  </label>
                 </div>
               )}
             </div>
@@ -341,20 +341,20 @@ function CloseModal({ open, onClose, incident, onClosed }) {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: 16 }}>
-          <div className="form-group">
-            <label className="form-label" style={{ color: 'var(--text-primary)' }}>Klasifikasi Utama *</label>
-            <select className="form-control" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
+          <label className="form-control w-full">
+            <div className="label"><span className="label-text">Klasifikasi Utama *</span></div>
+            <select className="select select-bordered w-full" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
               <option value="">— Select Category —</option>
               {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label" style={{ color: 'var(--text-primary)' }}>Sub Klasifikasi *</label>
-            <select className="form-control" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
+          </label>
+          <label className="form-control w-full">
+            <div className="label"><span className="label-text">Sub Klasifikasi *</span></div>
+            <select className="select select-bordered w-full" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
               <option value="">— Select Detail —</option>
               {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
             </select>
-          </div>
+          </label>
         </div>
 
         <div className="section-card" style={{ marginTop: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
@@ -407,10 +407,10 @@ function CloseModal({ open, onClose, incident, onClosed }) {
         </div>
 
 
-        <div className="form-group" style={{ marginTop: 16 }}>
-          <label className="form-label" style={{ color: 'var(--text-primary)' }}>Waktu Up (Restore Time) *</label>
-          <input type="datetime-local" className="form-control" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
-        </div>
+        <label className="form-control w-full" style={{ marginTop: 16 }}>
+          <div className="label"><span className="label-text">Waktu Up (Restore Time) *</span></div>
+          <input type="datetime-local" className="input input-bordered w-full" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
+        </label>
         <div className="info-banner info-banner-warning mt-4">
           ⚠ The system will automatically calculate the downtime duration based on the Start time and this Up time.
         </div>
