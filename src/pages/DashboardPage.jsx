@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
-import { NcalBadge, SectionCard, PageSpinner, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
+import { NcalBadge, SectionCard, CardSkeleton, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
 import { AlertTriangle, CheckCircle, Activity, TrendingUp, Plus, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
@@ -46,21 +46,31 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, [loadData]);
 
-  if (loading) return <PageSpinner />;
+  if (loading) return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardSkeleton /> <CardSkeleton /> <CardSkeleton /> <CardSkeleton />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2"><CardSkeleton /></div>
+        <div><CardSkeleton /></div>
+      </div>
+    </div>
+  );
 
   const byNcal = {};
   (data?.activeByNcal || []).forEach(r => { byNcal[r.ncal] = r.count; });
 
-  const NCAL_COLORS_KPI = { BLACK: 'var(--ncal-black-text)', RED: 'var(--ncal-red-text)', ORANGE: 'var(--ncal-orange-text)', YELLOW: 'var(--ncal-yellow-text)', BLUE: 'var(--ncal-blue-text)' };
+  const NCAL_COLORS_KPI = { BLACK: 'var(--color-neutral-content)', RED: 'var(--color-error)', ORANGE: 'var(--color-warning)', YELLOW: 'var(--color-info)', BLUE: 'var(--color-primary)' };
 
   return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div className="page-title-group">
-          <div className="page-title text-xl">Dashboard</div>
-          <div className="page-subtitle text-xs">Real-time Incident Monitoring & Performance</div>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Dashboard</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 leading-relaxed">System Health & Incident Monitoring</p>
         </div>
-        <div className="page-actions">
+        <div className="flex items-center gap-2">
           <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}>
             <Plus size={16} strokeWidth={2} /> Create Incident
           </button>
@@ -68,80 +78,80 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="flex flex-col gap-4">
-        <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-          <div className="stat">
-            <div className="stat-figure text-error"><AlertTriangle size={32} /></div>
-            <div className="stat-title uppercase tracking-widest text-xs font-bold opacity-70">Active Incidents</div>
-            <div className="stat-value text-error">{data?.totalActive || 0}</div>
-            <div className="stat-desc">Unresolved cases</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="stats stats-vertical lg:stats-horizontal shadow-sm bg-base-100 rounded-lg w-full">
+          <div className="stat p-4">
+            <div className="stat-figure text-error/20"><AlertTriangle size={28} /></div>
+            <div className="stat-title uppercase tracking-[0.15em] text-[10px] font-bold text-base-content/40">Active Cases</div>
+            <div className="stat-value text-error text-2xl font-bold">{data?.totalActive || 0}</div>
+            <div className="stat-desc text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/20 text-right mt-1">NOC Incident Queue</div>
           </div>
-          <div className="stat">
-            <div className="stat-figure text-success"><CheckCircle size={32} /></div>
-            <div className="stat-title uppercase tracking-widest text-xs font-bold opacity-70">Resolved</div>
-            <div className="stat-value text-success">{data?.totalDone || 0}</div>
-            <div className="stat-desc">Total all time</div>
+          <div className="stat p-4">
+            <div className="stat-figure text-success/20"><CheckCircle size={28} /></div>
+            <div className="stat-title uppercase tracking-[0.15em] text-[10px] font-bold text-base-content/40">Resolutions</div>
+            <div className="stat-value text-success text-2xl font-bold">{data?.totalDone || 0}</div>
+            <div className="stat-desc text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/20 text-right mt-1">Total History</div>
           </div>
         </div>
         
-        <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-          {NCAL_ORDER.map((ncal, i) => (
-            <div className="stat" key={ncal}>
-              <div className="stat-title mb-2"><NcalBadge value={ncal} /></div>
-              <div className="stat-value text-3xl" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
-              <div className="stat-desc">Active</div>
+        <div className="stats stats-vertical lg:stats-horizontal shadow-sm bg-base-100 rounded-lg w-full">
+          {NCAL_ORDER.map((ncal) => (
+            <div className="stat px-4" key={ncal}>
+              <div className="stat-title mb-1.5"><NcalBadge value={ncal} /></div>
+              <div className="stat-value text-2xl font-bold tracking-tight" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
+              <div className="stat-desc text-[10px] font-bold uppercase opacity-20 tracking-[0.15em] mt-1">Running</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="flex flex-col gap-4">
         {/* Duration Trend Chart */}
-        <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`} style={{ gridColumn: '1 / -1' }}>
-          <ChartContainer config={chartConfig} style={{ height: 400 }}>
+        <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`}>
+          <ChartContainer config={chartConfig} className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={duration} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.05} />
-                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} width={40} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-5" />
+                <XAxis dataKey="month" tick={{ className: "fill-base-content/40 font-bold", fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} />
+                <YAxis tick={{ className: "fill-base-content/40 font-bold", fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} width={40} />
                 <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
                 <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={40} wrapperStyle={{ paddingTop: '20px' }} />
                 {NCAL_ORDER.map(ncal => (
-                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={1.5} dot={{ r: 2, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 4, stroke: 'var(--bg-surface)', strokeWidth: 2 }} connectNulls />
+                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2} dot={{ r: 3, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 5, className: "stroke-base-100", strokeWidth: 2 }} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
         </SectionCard>
 
-        <div className="layout-with-aside">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* SLA Table */}
-          <SectionCard title="SLA Summary This Year" subtitle="Based on NCAL segments" style={{ padding: 0 }}>
+          <SectionCard title="SLA Summary This Year" subtitle="Based on NCAL segments" className="p-0">
             <div className="overflow-x-auto w-full">
               <table className="table table-zebra table-sm">
                 <thead>
-                <tr>
-                  <th className="w-1/12 text-center">NCAL</th>
-                  <th className="w-2/12 text-center">CASES</th>
-                  <th className="w-4/12 text-center">AVG DURATION</th>
-                  <th className="w-3/12 text-center">SLA MET</th>
-                  <th className="w-1/12 text-center">%</th>
+                <tr className="bg-base-200/50">
+                  <th className="w-1/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">NCAL</th>
+                  <th className="w-2/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">CASES</th>
+                  <th className="w-4/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">AVG DURATION</th>
+                  <th className="w-3/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">SLA MET</th>
+                  <th className="w-1/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">%</th>
                 </tr>
               </thead>
               <tbody>
                 {sla.length === 0 && (
-                  <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 1rem' }}>No data available</td></tr>
+                  <tr><td colSpan={5} className="text-center text-base-content/50 py-8 px-4">No data available</td></tr>
                 )}
                 {sla.map(row => {
                   const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                   return (
-                    <tr key={row.ncal}>
+                    <tr key={row.ncal} className="hover:bg-base-200 transition-colors">
                       <td className="text-center"><NcalBadge value={row.ncal} /></td>
-                      <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.total_cases}</td>
-                      <td className="text-center text-id tabular" style={{ fontSize: 'var(--f-xs)' }}>{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                      <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
-                      <td className="text-center tabular">
-                        <span className="text-sm" style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>
+                      <td className="text-center font-bold text-[12px]">{row.total_cases}</td>
+                      <td className="text-center font-mono text-[12px] opacity-70 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                      <td className="text-center text-[12px] font-medium text-primary/80">{row.sla_met || 0}</td>
+                      <td className="text-center">
+                        <span className={`font-bold text-[12px] tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
                           {pct}%
                         </span>
                       </td>
@@ -156,7 +166,7 @@ export default function DashboardPage() {
         {/* Recent Closed */}
         <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents" padding={0}>
           <div className="overflow-x-auto w-full">
-            <table className="table table-zebra table-sm">
+            <table className="table-imms">
               <thead>
                 <tr>
                   <th className="w-2/12 text-center">NCAL</th>
@@ -166,18 +176,18 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {(data?.recentClosed || []).length === 0 && (
-                  <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 1rem' }}>No recently closed incidents</td></tr>
+                  <tr><td colSpan={3} className="text-center text-base-content/20 py-8 px-4 text-[12px]">No recently closed incidents</td></tr>
                 )}
                 {(data?.recentClosed || []).map(inc => (
-                  <tr key={inc.id} className="tr-hover-accent" style={{ cursor: 'pointer' }} onClick={() => navigate(`/incidents/${inc.id}`)}>
+                  <tr key={inc.id} className="hover:bg-base-200 cursor-pointer transition-colors" onClick={() => navigate(`/incidents/${inc.id}`)}>
                     <td className="text-center"><NcalBadge value={inc.ncal} /></td>
                     <td className="text-left">
-                      <div className="id-link text-id text-sm" style={{ marginBottom: 2, fontWeight: 700 }}>{inc.case_no}</div>
-                      <div className="text-truncate text-xs" style={{ color: 'var(--text-secondary)' }}>{inc.site_name_manual || '—'}</div>
+                      <div className="font-mono text-[12px] font-bold text-primary mb-0.5 tracking-tighter">{inc.case_no}</div>
+                      <div className="truncate text-[12px] font-medium text-base-content/70">{inc.site_name_manual || '—'}</div>
                     </td>
                     <td className="text-right">
-                      <div className="tabular text-sm" style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{formatDuration(inc.duration_nett_seconds)}</div>
-                      <div className="text-truncate text-xs" style={{ color: 'var(--text-muted)' }}>{inc.technician_name || '—'}</div>
+                      <div className="font-mono text-[12px] font-bold text-base-content/90 mb-0.5">{formatDuration(inc.duration_nett_seconds)}</div>
+                      <div className="truncate text-[12px] font-medium text-base-content/40 uppercase tracking-[0.15em]">{inc.technician_name || '—'}</div>
                     </td>
                   </tr>
                 ))}

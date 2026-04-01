@@ -20,9 +20,9 @@ export default function GeoSummary({ customers }) {
 
   if (stats.sorted.length === 0) {
     return (
-      <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ padding: '2rem', textAlign: 'center' }}>
-        <Globe size={40} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+      <div className="card bg-base-200 border border-base-300 shadow-sm flex flex-col items-center justify-center p-12 text-center gap-4">
+        <Globe size={48} className="text-base-content/20" />
+        <div className="text-sm font-medium text-base-content/50 leading-relaxed">
           No geographical distribution data available. 
           <br />Use the Map View to trigger auto-geocoding.
         </div>
@@ -31,110 +31,86 @@ export default function GeoSummary({ customers }) {
   }
 
   return (
-    <div className="flex flex-col gap-6" style={{ gap: '1.5rem' }}>
+    <div className="flex flex-col gap-6">
       {/* Hero Stats */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
-        gap: '1rem' 
-      }}>
-        <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--primary)' }}>
-          <div style={{ padding: '0.75rem', background: 'var(--primary-subtle)', borderRadius: '12px', color: 'var(--primary)' }}>
-            <Users size={20} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="card bg-base-100 border border-base-300 shadow-sm p-6 flex flex-row items-center gap-5 border-l-4 border-l-primary relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+            <Users size={80} />
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Infrastructure</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.totalMapped.toLocaleString()} <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 500 }}>Mapped Nodes</span></div>
+          <div className="p-3 bg-primary/10 rounded-2xl text-primary shrink-0">
+            <Users size={24} />
+          </div>
+          <div className="z-10">
+            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Total Infrastructure</div>
+            <div className="text-2xl font-bold tracking-tight">
+              {stats.totalMapped.toLocaleString()} <span className="text-[10px] font-bold text-base-content/40 ml-1 uppercase tracking-[0.15em]">Mapped Nodes</span>
+            </div>
           </div>
         </div>
 
-        <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #10b981' }}>
-          <div style={{ padding: '0.75rem', background: '#10b98122', borderRadius: '12px', color: '#10b981' }}>
-            <TrendingUp size={20} />
+        <div className="card bg-base-100 border border-base-300 shadow-sm p-6 flex flex-row items-center gap-5 border-l-4 border-l-success relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+            <TrendingUp size={80} />
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Network Coverage</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.sorted.length} <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 500 }}>Cities & Regencies</span></div>
+          <div className="p-3 bg-success/10 rounded-2xl text-success shrink-0">
+            <TrendingUp size={24} />
+          </div>
+          <div className="z-10">
+            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Network Coverage</div>
+            <div className="text-2xl font-bold tracking-tight">
+              {stats.sorted.length} <span className="text-[10px] font-bold text-base-content/40 ml-1 uppercase tracking-[0.15em]">Cities & Regencies</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* City Grid */}
-      <div className="card bg-base-200 border border-base-300 shadow-sm">
-        <header style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <MapPin size={18} className="text-primary" />
-            <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>Geographical Distribution</h3>
+      <div className="card bg-base-100 border border-base-300 shadow-sm">
+        <header className="px-6 py-4 border-b border-base-200 flex justify-between items-center bg-base-100/50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <MapPin size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-tight text-base-content/80">Geographical Distribution</h3>
+              <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5">Updated real-time from geocoding task</p>
+            </div>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Updated real-time from geocoding task</span>
         </header>
 
-        <div style={{ 
-          padding: '1.5rem',
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-          gap: '1rem' 
-        }}>
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-base-200/30">
           {stats.sorted.map(([city, count]) => {
             const percentage = ((count / stats.totalWithCity) * 100).toFixed(1);
             return (
               <div 
                 key={city} 
-                className="geo-card"
-                style={{ 
-                  padding: '1.25rem', 
-                  background: 'var(--bg-elevated)', 
-                  border: '1px solid var(--border)', 
-                  borderRadius: '16px',
-                  transition: 'all 0.2s ease',
-                  cursor: 'default',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
+                className="group p-5 bg-base-100 border border-base-200 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30 relative overflow-hidden flex flex-col justify-between"
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{city}</div>
-                  <div style={{ 
-                    fontSize: '0.7rem', 
-                    fontWeight: 800, 
-                    color: 'var(--primary)', 
-                    background: 'var(--primary-subtle)', 
-                    padding: '2px 8px', 
-                    borderRadius: '20px' 
-                  }}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="font-bold text-sm tracking-tight text-base-content group-hover:text-primary transition-colors">{city}</div>
+                  <div className="badge badge-primary badge-outline font-bold text-[9px] px-1.5 py-0.5 h-auto">
                     {percentage}%
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>{count}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>sites</span>
+                <div className="flex items-baseline gap-1.5 mb-4">
+                  <span className="text-2xl font-bold tracking-tighter text-base-content">{count}</span>
+                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">sites</span>
                 </div>
 
                 {/* Progress Mini Bar */}
-                <div style={{ width: '100%', height: '4px', background: 'var(--border)', borderRadius: '2px', marginTop: '1rem' }}>
-                  <div style={{ 
-                    width: `${percentage}%`, 
-                    height: '100%', 
-                    background: 'var(--primary)', 
-                    borderRadius: '2px',
-                    boxShadow: '0 0 8px var(--primary-subtle)'
-                  }}></div>
+                <div className="w-full h-1.5 bg-base-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-1000 group-hover:bg-primary"
+                    style={{ width: `${percentage}%` }}
+                  ></div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
-
-      <style>{`
-        .geo-card:hover {
-          transform: translateY(-4px);
-          border-color: var(--primary);
-          box-shadow: var(--shadow-lg);
-          background: var(--bg-card);
-        }
-      `}</style>
     </div>
   );
 }

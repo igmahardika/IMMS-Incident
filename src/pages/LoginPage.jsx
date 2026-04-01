@@ -34,153 +34,108 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.5rem',
-      background: 'var(--bg-base)',
-    }}>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-base-200">
       {/* Subtle bg orbs */}
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
-        <div style={{ position: 'absolute', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)', top: '-10%', left: '-10%' }} />
-        <div style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)', bottom: '-5%', right: '-5%' }} />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,oklch(var(--p))_0%,transparent_70%)] opacity-5 top-[-10%] left-[-10%]" />
+        <div className="absolute w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,oklch(var(--s))_0%,transparent_70%)] opacity-5 bottom-[-5%] right-[-5%]" />
       </div>
 
-      <div style={{ width: '100%', maxWidth: 400, position: 'relative', zIndex: 1 }}>
+      <div className="w-full max-w-[400px] relative z-10">
         {/* Brand */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: 56, height: 56,
-            background: 'linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)',
-            borderRadius: 16,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 1rem',
-            boxShadow: '0 0 32px var(--accent-glow)',
-          }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary-content" strokeWidth="3">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
           </div>
-          <h1 className="title-hero" style={{ margin: 0 }}>IMMS</h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)', marginTop: 4 }}>
+          <h1 className="text-4xl font-bold tracking-tight text-base-content">IMMS</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mt-2">
             Incident & Maintenance Management System
           </p>
         </div>
 
         {/* Login Card */}
-        <div style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.75rem',
-          boxShadow: 'var(--shadow-lg)',
-        }}>
-          <h2 className="text-lg" style={{ marginBottom: '0.25rem' }}>Account Login</h2>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-            Please enter your credentials to continue
-          </p>
+        <div className="bg-base-100 shadow-2xl rounded-lg overflow-hidden">
+          <div className="p-10">
+            <h2 className="text-2xl font-bold tracking-tight text-base-content">Security Access</h2>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-8">
+              Authenticate to access the monitoring core
+            </p>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <label className="form-control w-full">
-              <div className="label"><span className="label-text">Username</span></div>
-              <div style={{ position: 'relative' }}>
-                <User size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-                <input
-                  id="login-username"
-                  type="text"
-                  className="input input-bordered w-full"
-                  placeholder="Enter username"
-                  style={{ paddingLeft: '2rem' }}
-                  value={form.username}
-                  onChange={(e) => setForm(p => ({ ...p, username: e.target.value }))}
-                  required
-                  autoFocus
-                  autoComplete="username"
-                />
-              </div>
-            </label>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <label className="form-control w-full">
+                <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Operator Identity</span></div>
+                <div className="relative flex items-center">
+                  <User size={16} className="absolute left-4 text-base-content/20 pointer-events-none" />
+                  <input
+                    id="login-username"
+                    type="text"
+                    className="input input-bordered w-full pl-12 font-bold text-[13.5px] tracking-tight h-12 rounded-lg focus:bg-base-200/50 transition-all"
+                    placeholder="Enter username"
+                    value={form.username}
+                    onChange={(e) => setForm(p => ({ ...p, username: e.target.value }))}
+                    required
+                    autoFocus
+                    autoComplete="username"
+                  />
+                </div>
+              </label>
 
-            <label className="form-control w-full">
-              <div className="label"><span className="label-text">Password</span></div>
-              <div style={{ position: 'relative' }}>
-                <Lock size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-                <input
-                  id="login-password"
-                  type={showPw ? 'text' : 'password'}
-                  className="input input-bordered w-full"
-                  placeholder="Enter password"
-                  style={{ paddingLeft: '2rem', paddingRight: '2.5rem' }}
-                  value={form.password}
-                  onChange={(e) => setForm(p => ({ ...p, password: e.target.value }))}
-                  required
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(v => !v)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px' }}
-                  tabIndex={-1}
-                  aria-label="Toggle password visibility"
-                >
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </label>
+              <label className="form-control w-full">
+                <div className="label pt-2"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Access Key</span></div>
+                <div className="relative flex items-center">
+                  <Lock size={16} className="absolute left-4 text-base-content/20 pointer-events-none" />
+                  <input
+                    id="login-password"
+                    type={showPw ? 'text' : 'password'}
+                    className="input input-bordered w-full pl-12 pr-12 font-bold text-[13.5px] tracking-tight h-12 rounded-lg focus:bg-base-200/50 transition-all"
+                    placeholder="Enter password"
+                    value={form.password}
+                    onChange={(e) => setForm(p => ({ ...p, password: e.target.value }))}
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(v => !v)}
+                    className="absolute right-4 text-base-content/20 hover:text-primary transition-all active:scale-90"
+                    tabIndex={-1}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </label>
 
-            <button type="submit" className="btn btn-primary text-base" disabled={loading} style={{ marginTop: 4, minHeight: 44 }}>
-              {loading ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div className="spinner spinner-sm" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
-                  Processing...
-                </span>
-              ) : 'Login'}
-            </button>
-          </form>
+              <button type="submit" className="btn btn-primary w-full mt-6 h-12 font-bold uppercase tracking-[0.15em] text-[10px] shadow-xl shadow-primary/20 rounded-lg" disabled={loading}>
+                {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Initialize Session'}
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* Quick login */}
-        <div style={{
-          marginTop: '1rem',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          padding: '0.875rem',
-        }}>
-          <div className="text-xs" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.625rem' }}>
-            Quick Access (Dev)
+        <div className="mt-8 bg-base-100 rounded-lg p-6 shadow-sm">
+          <div className="text-[9px] font-bold text-base-content/20 uppercase tracking-[0.15em] mb-4 text-center">
+            Development Quick Access
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem' }}>
-            {QUICK_LOGINS.map(({ u, p, role, color }) => (
+          <div className="grid grid-cols-2 gap-3">
+            {QUICK_LOGINS.map(({ u, p, role }) => (
               <button
                 key={u}
                 onClick={() => setForm({ username: u, password: p })}
-                style={{
-                  background: 'none', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                  textAlign: 'left', padding: '0.5rem 0.625rem',
-                  transition: 'all var(--t-base)',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = color;
-                  e.currentTarget.style.background = `${color}10`;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                  e.currentTarget.style.background = 'none';
-                }}
+                className="flex flex-col items-center justify-center p-4 bg-base-200 hover:bg-primary/5 rounded-lg transition-all text-center group active:scale-95"
               >
-                <div className="text-xs" style={{ color, letterSpacing: '0.04em' }}>{role}</div>
-                <div className="text-sm text-id" style={{ color: 'var(--text-secondary)', marginTop: 1 }}>{u}</div>
+                <div className="text-[10px] font-bold text-primary uppercase tracking-[0.15em] group-hover:scale-110 transition-transform">{role}</div>
+                <div className="text-[9px] font-mono font-bold text-base-content/30 mt-1 uppercase tracking-tighter">{u}</div>
               </button>
             ))}
           </div>
         </div>
 
-        <p className="text-xs" style={{ textAlign: 'center', marginTop: '1.25rem', color: 'var(--text-muted)' }}>
-          © 2026 IMMS — Internal Use Only
+        <p className="text-[10px] font-bold text-center mt-6 text-base-content/40 uppercase tracking-[0.15em]">
+          NCAL MONITORING FRAMEWORK © 2026<br />V 5.0.0 ENTERPRISE EDITION
         </p>
       </div>
     </div>

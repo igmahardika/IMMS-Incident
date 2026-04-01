@@ -20,10 +20,10 @@ const ACTION_COLORS = {
   'CLOSE': 'var(--success)',
 };
 
-export default function UnifiedTimeline({ timeline, filterType = 'technical' }) {
+export default function UnifiedTimeline({ timeline, filterType = 'technical', isCompact = false }) {
   if (!timeline || timeline.length === 0) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+      <div className="p-8 text-center text-base-content/50 text-xs font-medium italic">
         No activity history recorded yet.
       </div>
     );
@@ -32,7 +32,7 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical' }) 
   let renderedHandlingCount = 0;
   
   return (
-    <div className="timeline-container" style={{ padding: '0.5rem 1rem' }}>
+    <div className={`flex flex-col ${isCompact ? 'px-0 py-1' : 'px-4 py-2'}`}>
       {timeline.map((item, idx) => {
         const isPause = item.type === 'pause';
         const action = isPause ? 'PAUSE' : (item.action || 'UPDATE');
@@ -70,8 +70,17 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical' }) 
         if (filterType === 'technical' && (cause || actionTxt)) renderedHandlingCount++;
         
         const Icon = ACTION_ICONS[action] || Activity;
-        const color = ACTION_COLORS[action] || 'var(--text-muted)';
         const timestamp = item.timestamp || item.pause_start;
+
+        const colorClasses = {
+          'CREATE': 'text-error border-error',
+          'START': 'text-success border-success',
+          'UPDATE': 'text-primary border-primary',
+          'PAUSE': 'text-warning border-warning',
+          'RESUME': 'text-success border-success',
+          'CLOSE': 'text-success border-success',
+        };
+        const currentColors = colorClasses[action] || 'text-base-content/40 border-base-content/20';
 
         const getActionLabel = () => {
           if (isPause) return 'Incident Paused';
@@ -87,125 +96,82 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical' }) 
         };
 
         return (
-          <div key={item.id || idx} className="timeline-item" style={{ 
-            display: 'flex', 
-            gap: '1.25rem', 
-            position: 'relative', 
-            marginBottom: idx === timeline.length - 1 ? 0 : '1.75rem',
-            animation: 'fadeIn 0.3s ease-out'
-          }}>
+          <div key={item.id || idx} className="flex gap-4 relative group">
             {/* Connector Line */}
             {idx !== timeline.length - 1 && (
-              <div style={{ position: 'absolute', left: '11px', top: '24px', bottom: '-20px', width: '2px', background: 'var(--border)', zIndex: 0, opacity: 0.6 }} />
+              <div className="absolute left-[9px] top-6 bottom-[-24px] w-0.5 bg-base-300 opacity-40 z-0" />
             )}
 
             {/* Icon Circle */}
-            <div style={{ 
-              width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-card)', border: `2px solid ${color}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, flexShrink: 0, marginTop: '2px',
-              boxShadow: `0 0 8px ${color}20`
-            }}>
-              <Icon size={12} style={{ color }} />
+            <div className={`w-5 h-5 rounded-full bg-base-100 border-2 ${currentColors.split(' ')[1]} flex items-center justify-center z-10 shrink-0 mt-0.5 shadow-sm`}>
+              <Icon size={10} className={currentColors.split(' ')[0]} />
             </div>
 
             {/* Content Area */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                    {getActionLabel()}
+            <div className={`flex-1 min-w-0 ${isCompact ? 'pb-6' : 'pb-8'}`}>
+              <div className={`flex justify-between items-start gap-3 ${isCompact ? 'mb-2' : 'mb-3'}`}>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`${isCompact ? 'text-[11px]' : 'text-[13.5px]'} font-bold tracking-tight text-base-content leading-none`}>
+                      {getActionLabel()}
+                    </span>
                     {item.user_name && (
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--bg-elevated)', padding: '1px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                        <User size={10} /> {item.user_name}
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200/50 rounded-full text-[9px] font-bold text-base-content/70 uppercase tracking-[0.15em] leading-none">
+                        <User size={8} /> {item.user_name}
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '4px', letterSpacing: '-0.01em' }}>
+                  <div className={`${isCompact ? 'text-[9px]' : 'text-[10px]'} font-mono font-bold text-base-content/40 mt-1 uppercase tracking-wider`}>
                     {formatDateTime(timestamp)}
                   </div>
                 </div>
                 {item.segment_duration != null && item.segment_duration > 0 && filterType === 'technical' && (
-                  <div style={{ 
-                    fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'var(--accent-subtle)', border: '1px solid rgba(99,102,241,0.15)', color: 'var(--accent)',
-                    whiteSpace: 'nowrap', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                  }}>
-                    {action === 'PAUSE' ? 'Paused ' : 'Effort '}
+                  <div className="badge badge-primary badge-soft badge-xs font-bold text-[9px] px-1.5 h-5 rounded uppercase tracking-[0.15em] flex-shrink-0">
                     {formatDuration(item.segment_duration)}
                   </div>
                 )}
               </div>
 
               {/* Detail Content */}
-              <div style={{ marginTop: '0.875rem' }}>
+              <div className={isCompact ? 'mt-1.5' : 'mt-2.5'}>
                 {filterType === 'technical' && (cause || actionTxt) && (
-                  <div style={{ display: 'grid', gridTemplateColumns: (cause && actionTxt) ? '1fr 1fr' : '1fr', gap: '1rem' }}>
+                  <div className={`grid grid-cols-1 ${ (cause && actionTxt && !isCompact) ? 'md:grid-cols-2' : ''} gap-2`}>
                     {cause && (
-                      <div className="preview-block" style={{ fontSize: '0.8rem', padding: '0.875rem', background: 'rgba(239, 68, 68, 0.03)', borderLeft: '4px solid var(--danger)', borderRadius: '4px 8px 8px 4px' }}>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--danger)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, letterSpacing: '0.05em' }}>Root Cause</div>
-                        <div style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>{cause}</div>
+                      <div className="p-3 bg-error/5 rounded-xl">
+                        <div className="text-[9px] font-bold text-error/80 uppercase tracking-[0.15em] mb-1">Root Cause</div>
+                        <div className={`${isCompact ? 'text-[11px]' : 'text-[13.5px]'} font-bold text-base-content/80 leading-relaxed`}>{cause}</div>
                       </div>
                     )}
                     {actionTxt && (
-                      <div className="preview-block" style={{ fontSize: '0.8rem', padding: '0.875rem', background: 'rgba(34, 197, 94, 0.03)', borderLeft: '4px solid var(--success)', borderRadius: '4px 8px 8px 4px' }}>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--success)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, letterSpacing: '0.05em' }}>Action Taken</div>
-                        <div style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>{actionTxt}</div>
+                      <div className="p-3 bg-success/5 rounded-xl">
+                        <div className="text-[9px] font-bold text-success/80 uppercase tracking-[0.15em] mb-1">Action Taken</div>
+                        <div className={`${isCompact ? 'text-[11px]' : 'text-[13.5px]'} font-bold text-base-content/80 leading-relaxed`}>{actionTxt}</div>
                       </div>
                     )}
                   </div>
                 )}
 
                 {filterType === 'system' && others.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
-                    {others.map((o, idx) => {
-                      const isId = o.toLowerCase().includes('id:');
-                      const isTech = o.toLowerCase().includes('technician') || o.toLowerCase().includes('teknisi');
-                      const isClass = o.toLowerCase().includes('classification') || o.toLowerCase().includes('klasifikasi');
-                      
-                      let chipColor = 'var(--text-secondary)';
-                      let chipBg = 'var(--bg-elevated)';
-                      if (isTech) { chipColor = '#6366f1'; chipBg = 'rgba(99,102,241,0.08)'; }
-                      if (isClass) { chipColor = '#f59e0b'; chipBg = 'rgba(245,158,11,0.08)'; }
-
-                      return (
-                        <span key={idx} style={{ 
-                          fontSize: '0.725rem', 
-                          fontWeight: 700,
-                          padding: '4px 12px', 
-                          background: chipBg, 
-                          border: `1px solid ${chipColor}20`, 
-                          borderRadius: '100px',
-                          color: chipColor,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
-                        }}>
-                          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: chipColor }} />
-                          {o}
-                        </span>
-                      );
-                    })}
+                  <div className="flex flex-wrap gap-1.5">
+                    {others.map((o, offsetIdx) => (
+                      <span key={offsetIdx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-base-200/50 rounded-lg text-[10px] font-bold text-base-content/70">
+                        <div className="w-1 h-1 rounded-full bg-primary/40" />
+                        {o}
+                      </span>
+                    ))}
                   </div>
                 )}
 
                 {/* Lifecycle Messages */}
                 {((filterType === 'technical' && !cause && !actionTxt && action !== 'UPDATE') || (filterType === 'system' && action === 'CREATE')) && (
-                   <div style={{ 
-                     fontSize: '0.8rem', 
-                     color: 'var(--text-secondary)', 
-                     background: 'var(--bg-elevated)', 
-                     padding: '0.75rem 1rem', 
-                     borderRadius: '8px',
-                     border: '1px dashed var(--border)',
-                     fontStyle: action === 'CREATE' ? 'normal' : 'italic'
-                   }}>
+                   <div className={`p-3 bg-base-200/40 rounded-xl ${isCompact ? 'text-[11px]' : 'text-[13px]'} italic font-bold text-base-content/60 leading-relaxed`}>
                      {action === 'CREATE' ? 'Initial entry: Incident established in the monitoring system.' : (item.details || item.reason || getActionLabel())}
                    </div>
                 )}
 
                 {isPause && item.pause_end && filterType === 'technical' && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700, marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(34,197,94,0.05)', padding: '4px 10px', borderRadius: '4px', width: 'fit-content' }}>
-                    <Play size={12} fill="currentColor" /> Resumed at {formatDateTime(item.pause_end)}
+                  <div className={`flex items-center gap-2 mt-2 px-2 py-1 bg-success/10 rounded-lg w-fit ${isCompact ? 'text-[9px]' : 'text-[10px]'} font-bold text-success uppercase tracking-[0.15em]`}>
+                    <Play size={10} fill="currentColor" /> Resumed at {formatDateTime(item.pause_end)}
                   </div>
                 )}
               </div>

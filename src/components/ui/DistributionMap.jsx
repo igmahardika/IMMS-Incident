@@ -128,100 +128,78 @@ export default function DistributionMap({ data, onRefresh }) {
   };
 
   return (
-    <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ height: '700px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <header style={{ 
-        padding: '1rem', 
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'var(--bg-card)',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Network Segments Map</h3>
+    <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col overflow-hidden h-[700px]">
+      <header className="flex items-center justify-between flex-wrap gap-4 px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md z-50">
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-bold uppercase tracking-tight text-base-content/80">Network Segments Map</h3>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5 whitespace-nowrap">Active Infrastructure Nodes</p>
+          </div>
           
           {(isProcessing || geocodingStatus.active) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.25rem 0.75rem', background: 'var(--bg-elevated)', borderRadius: '99px', border: '1px solid var(--border)' }}>
-              <div className="spinner spinner-xs"></div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
+              <span className="loading loading-spinner loading-xs text-primary"></span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                 {geocodingStatus.active 
-                   ? `Auto-Geocoding Segments: ${geocodingStatus.current}/${geocodingStatus.total}`
-                   : `Loading Infrastructure Map...`
+                   ? `Syncing: ${geocodingStatus.current}/${geocodingStatus.total}`
+                   : `Loading Map...`
                 }
               </span>
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div className="btn-group" style={{ marginRight: '0.5rem' }}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="join bg-base-200 p-1 rounded-xl">
             <button 
-              className={`btn btn-sm ${viewMode === 'normal' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`btn btn-xs join-item border-none ${viewMode === 'normal' ? 'btn-primary shadow-sm' : 'bg-transparent text-base-content/60'}`}
               onClick={() => setViewMode('normal')}
             >
-              <Network size={14} /> Normal
+              <Network size={12} /> Normal
             </button>
             <button 
-              className={`btn btn-sm ${viewMode === 'trouble' ? 'btn-danger' : 'btn-ghost'}`}
+              className={`btn btn-xs join-item border-none ${viewMode === 'trouble' ? 'btn-error shadow-sm' : 'bg-transparent text-base-content/60'}`}
               onClick={() => setViewMode('trouble')}
             >
-              <MapIcon size={14} /> Trouble
+              <AlertTriangle size={12} /> Trouble
             </button>
           </div>
 
           {viewMode === 'trouble' && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              marginRight: '1rem', 
-              padding: '0.25rem 0.5rem', 
-              background: 'var(--bg-elevated)', 
-              borderRadius: '8px', 
-              border: '1px solid var(--border)' 
-            }}>
-              <Calendar size={13} style={{ color: 'var(--text-muted)' }} />
+            <div className="flex items-center gap-2 px-2 py-1 bg-base-200 rounded-xl border border-base-300">
+              <Calendar size={12} className="text-base-content/40" />
               <input 
                 type="date" 
-                className="input input-bordered input-sm" 
-                style={{ width: '130px', border: 'none', background: 'transparent' }} 
+                className="bg-transparent border-none text-[11px] font-bold text-base-content focus:outline-none w-24"
                 value={startDate} 
                 onChange={e => setStartDate(e.target.value)} 
               />
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>—</span>
+              <span className="text-base-content/20 text-xs">—</span>
               <input 
                 type="date" 
-                className="input input-bordered input-sm" 
-                style={{ width: '130px', border: 'none', background: 'transparent' }} 
+                className="bg-transparent border-none text-[11px] font-bold text-base-content focus:outline-none w-24"
                 value={endDate} 
                 onChange={e => setEndDate(e.target.value)} 
               />
             </div>
           )}
 
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem' }}>
-            <div style={{ position: 'relative' }}>
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <div className="relative flex items-center">
+              <Search size={14} className="absolute left-3 text-base-content/40 pointer-events-none" />
               <input 
                 type="text" 
-                className="input input-bordered input-md" 
-                placeholder="Search ODP, POP, or BTS..." 
+                className="input input-bordered input-sm pl-9 w-48 font-medium" 
+                placeholder="ODP, POP, or BTS..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ width: '200px', paddingLeft: '2.5rem' }}
               />
-              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
-                <Search size={14} />
-              </span>
             </div>
-            <button type="submit" className="btn btn-primary">Locate</button>
+            <button type="submit" className="btn btn-sm btn-primary font-bold">Locate</button>
             <button 
               type="button" 
-              className={`btn ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'}`}
+              className={`btn btn-sm ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'} px-3 font-bold`}
               onClick={startAutoGeocode}
-              title="Sync coordinates for nodes without 📍"
-              style={{ fontSize: '0.75rem', padding: '0 0.75rem' }}
             >
               {geocodingStatus.active ? 'Syncing...' : '🔄 Sync'}
             </button>
@@ -229,11 +207,11 @@ export default function DistributionMap({ data, onRefresh }) {
         </div>
       </header>
 
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div className="flex-1 relative">
         <MapContainer 
           center={SEMARANG_CENTER} 
           zoom={12} 
-          style={{ height: '100%', width: '100%' }}
+          className="h-full w-full z-0"
           zoomControl={false}
         >
           <TileLayer
@@ -251,39 +229,30 @@ export default function DistributionMap({ data, onRefresh }) {
                 icon={createODPIcon(p.type)}
               >
                 <Popup className="premium-popup">
-                  <div style={{ minWidth: '200px', padding: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      {p.type === 'Fiber Optic' ? <Database size={16} color="#4f46e5" /> : <Network size={16} color="#d97706" />}
-                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{p.level_4 || p.level_2 || 'Node'}</span>
+                  <div className="min-w-[200px] p-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${p.type === 'Fiber Optic' ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning'}`}>
+                        {p.type === 'Fiber Optic' ? <Database size={16} /> : <Network size={16} />}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold tracking-tight text-base-content leading-none">{p.level_4 || p.level_2 || 'Node'}</span>
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-1">{p.type}</span>
+                      </div>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {p.type === 'Fiber Optic' ? (
-                        <div style={{ 
-                          fontSize: '0.75rem', 
-                          padding: '8px',
-                          background: 'var(--bg-elevated)',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>POP:</span> <strong>{p.level_1}</strong></div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>OSC:</span> <strong>{p.level_2}</strong></div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>ODC:</span> <strong>{p.level_3}</strong></div>
+                    <div className="bg-base-200/50 rounded-xl p-3 border border-base-300 flex flex-col gap-2">
+                        {p.type === 'Fiber Optic' ? (
+                          <>
+                            <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">POP</span> <strong className="text-base-content">{p.level_1}</strong></div>
+                            <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">OSC</span> <strong className="text-base-content">{p.level_2}</strong></div>
+                            <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">ODC</span> <strong className="text-base-content">{p.level_3}</strong></div>
+                          </>
+                        ) : (
+                          <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">BTS Site</span> <strong className="text-base-content">{p.level_1}</strong></div>
+                        )}
+                        <div className="border-t border-base-300 pt-2 mt-1 text-[9px] font-mono font-medium text-base-content/40 text-right">
+                          {Number(p.latitude).toFixed(5)}, {Number(p.longitude).toFixed(5)}
                         </div>
-                      ) : (
-                        <div style={{ 
-                          fontSize: '0.75rem', 
-                          padding: '8px',
-                          background: 'var(--bg-elevated)',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>BTS Site:</span> <strong>{p.level_1}</strong></div>
-                        </div>
-                      )}
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'right' }}>
-                        {Number(p.latitude).toFixed(5)}, {Number(p.longitude).toFixed(5)}
-                      </div>
                     </div>
                   </div>
                 </Popup>
@@ -293,6 +262,7 @@ export default function DistributionMap({ data, onRefresh }) {
             troublePoints.map((p) => {
               const radius = 5 + Math.min(p.incident_count * 3, 25);
               const color = p.incident_count > 5 ? '#ef4444' : p.incident_count > 2 ? '#f59e0b' : '#eab308';
+              const variantClass = p.incident_count > 5 ? 'text-error bg-error/10 border-error/20' : p.incident_count > 2 ? 'text-warning bg-warning/10 border-warning/20' : 'text-accent bg-accent/10 border-accent/20';
               
               return (
                 <CircleMarker
@@ -307,29 +277,25 @@ export default function DistributionMap({ data, onRefresh }) {
                   }}
                 >
                   <Popup className="premium-popup">
-                    <div style={{ minWidth: '220px', padding: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '8px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
-                          <AlertTriangle size={18} />
+                    <div className="min-w-[220px] p-1">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${variantClass.split(' ')[0]} ${variantClass.split(' ')[1]} border ${variantClass.split(' ')[2]}`}>
+                          <AlertTriangle size={20} />
                         </div>
                         <div>
-                          <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>{p.level_4 || p.level_2}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Infrastructure Trouble Spot</div>
+                          <div className="text-sm font-bold tracking-tight text-base-content">{p.level_4 || p.level_2}</div>
+                          <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5">Infrastructure Trouble</div>
                         </div>
                       </div>
 
-                      <div style={{ background: 'var(--bg-elevated)', borderRadius: '8px', padding: '10px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Frekunsi Trouble:</span>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 800, color }}>{p.incident_count}x</span>
+                      <div className="bg-base-200/50 rounded-xl p-3.5 border border-base-300 flex flex-col gap-3">
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Frekunsi</span>
+                          <span className={`text-sm font-bold ${variantClass.split(' ')[0]}`}>{p.incident_count}x</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Status Terakhir:</span>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Terdeteksi</span>
-                        </div>
-                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '8px', marginTop: '2px' }}>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '4px' }}>LAST INCIDENT</div>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>{formatDateTime(p.last_incident_at)}</div>
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Last Incident</span>
+                          <span className="font-bold text-base-content">{formatDateTime(p.last_incident_at)}</span>
                         </div>
                       </div>
                     </div>
@@ -340,50 +306,37 @@ export default function DistributionMap({ data, onRefresh }) {
           )}
         </MapContainer>
 
-        {/* Legend */}
-        <div style={{ 
-          position: 'absolute', 
-          bottom: '20px', 
-          left: '20px', 
-          zIndex: 1000, 
-          background: 'var(--bg-card)', 
-          padding: '10px 14px', 
-          borderRadius: '10px', 
-          boxShadow: 'var(--shadow-lg)',
-          border: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px'
-        }}>
+        {/* Legend Overlay */}
+        <div className="absolute bottom-6 left-6 z-[1000] bg-base-100/80 backdrop-blur-md p-4 rounded-2xl border border-base-300 shadow-xl flex flex-col gap-2.5 min-w-[160px]">
           {viewMode === 'normal' ? (
             <>
-              <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '2px' }}>INFRASTRUCTURE</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#4f46e5' }}></div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>Fiber Optic (ODP)</span>
+              <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Infrastructure</div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-primary ring-4 ring-primary/10"></div>
+                <span className="text-xs font-bold text-base-content/70">Fiber Optic (ODP)</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#d97706' }}></div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>Wireless (Node)</span>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-warning ring-4 ring-warning/10"></div>
+                <span className="text-xs font-bold text-base-content/70">Wireless (Node)</span>
               </div>
-              <div style={{ marginTop: '4px', borderTop: '1px solid var(--border)', paddingTop: '6px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                Showing <strong>{points.length}</strong> active segments
+              <div className="mt-2 pt-2.5 border-t border-base-300 text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em] text-center">
+                {points.length} Active Nodes
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '4px' }}>TROUBLE INTENSITY</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }}></div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>High (&gt;5)</span>
+              <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1 text-error">Trouble Intensity</div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-error ring-4 ring-error/10"></div>
+                <span className="text-xs font-bold text-base-content/70">High (&gt;5 Events)</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b' }}></div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>Medium (3-5)</span>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-warning ring-4 ring-warning/10"></div>
+                <span className="text-xs font-bold text-base-content/70">Medium (3-5)</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#eab308' }}></div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>Low (1-2)</span>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-accent ring-4 ring-accent/10"></div>
+                <span className="text-xs font-bold text-base-content/70">Low (1-2)</span>
               </div>
             </>
           )}
@@ -391,24 +344,20 @@ export default function DistributionMap({ data, onRefresh }) {
 
         <style>{`
           .premium-popup .leaflet-popup-content-wrapper {
-            border-radius: 12px;
+            border-radius: 1.25rem;
             padding: 4px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-            background: var(--bg-card);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--color-base-300);
+            background: var(--color-base-100);
+          }
+          .premium-popup .leaflet-popup-tip {
+             background: var(--color-base-100);
+             border: 1px solid var(--color-base-300);
           }
           .custom-marker-odp {
             display: flex;
             align-items: center;
             justify-content: center;
-          }
-          @keyframes trouble-pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 0.4; }
-            100% { transform: scale(1); opacity: 0.8; }
-          }
-          .pulse-marker {
-            animation: trouble-pulse 2s infinite ease-in-out;
           }
         `}</style>
       </div>

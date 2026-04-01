@@ -15,7 +15,7 @@ const CustomLabel = ({ cx, cy, midAngle, outerRadius, name, percent }) => {
   const r = outerRadius + 20;
   const x = cx + r * Math.cos(-midAngle * RADIAN);
   const y = cy + r * Math.sin(-midAngle * RADIAN);
-  return <text x={x} y={y} fill="var(--text-secondary)" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11}>{`${(percent * 100).toFixed(0)}%`}</text>;
+  return <text x={x} y={y} className="fill-base-content/40 font-bold" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{`${(percent * 100).toFixed(0)}%`}</text>;
 };
 
 export default function RootCausePage() {
@@ -48,48 +48,49 @@ export default function RootCausePage() {
   }, [data]);
 
   return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div className="page-title-group">
-          <div className="page-title text-xl">Root Cause Analysis</div>
-          <div className="page-subtitle text-xs">Historical statistics of incident classifications</div>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <div className="text-2xl font-bold tracking-tight">Root Cause Analysis</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Historical statistics of incident classifications</div>
       </div>
 
-      <div className="filter-bar mb-4" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Filter size={14} /> FILTER:
+      <div className="flex flex-wrap items-center gap-4 bg-base-100 p-4 py-3 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+          <Filter size={14} /> Filter Analysis
         </div>
-        <select className="select select-bordered select-md " value={filters.year} onChange={e => setF('year', e.target.value)} style={{ width: 100 }}>
+        <select className="select select-sm w-32 font-bold text-[13.5px] bg-base-200/50" value={filters.year} onChange={e => setF('year', e.target.value)}>
           {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-        <select className="select select-bordered select-md " value={filters.month} onChange={e => setF('month', e.target.value)} style={{ width: 140 }}>
+        <select className="select select-sm w-40 font-bold text-[13.5px] bg-base-200/50" value={filters.month} onChange={e => setF('month', e.target.value)}>
           <option value="">All Months</option>
           {MONTH_NAMES.map((m, i) => <option key={i+1} value={String(i+1).padStart(2,'0')}>{m}</option>)}
         </select>
-        <select className="select select-bordered select-md " value={filters.ncal} onChange={e => setF('ncal', e.target.value)} style={{ width: 140 }}>
+        <select className="select select-sm w-40 font-bold text-[13.5px] bg-base-200/50" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
           <option value="">All NCAL</option>
           {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
         </select>
       </div>
 
-      {loading ? <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div> : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          {/* Pie Chart — overflow:visible so outer labels aren't clipped */}
-          <SectionCard title="Classification Distribution" subtitle={`Total: ${total} incidents`} style={{ overflow: 'visible' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <ChartContainer config={rootCauseConfig} style={{ height: 280 }}>
+      {loading ? <div className="flex justify-center py-20"><Spinner /></div> : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pie Chart */}
+          <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
+            <div className="p-6">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Classification Distribution</h3>
+              <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Total: {total} incidents</p>
+            </div>
+            <div className="p-6 overflow-visible">
+              <ChartContainer config={rootCauseConfig} className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
-                    <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={95} strokeWidth={2} stroke="var(--bg-elevated)" labelLine={false} label={CustomLabel}>
+                    <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={95} strokeWidth={2} stroke="currentColor" className="text-base-100" labelLine={false} label={CustomLabel}>
                       {data.map((entry, i) => <Cell key={i} fill={rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length]} />)}
                     </Pie>
                     <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
-              {/* Legend rendered outside ChartContainer to avoid clipping */}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+              <div className="mt-6 pt-6">
                 <ChartLegend
                   payload={data.map((entry, i) => ({
                     value: entry.classification,
@@ -99,61 +100,70 @@ export default function RootCausePage() {
                 />
               </div>
             </div>
-          </SectionCard>
+          </div>
 
-          {/* Bar Chart — overflow:visible prevents bar label clipping */}
-          <SectionCard title="Frequency per Classification" subtitle="Sorted by frequency" style={{ overflow: 'visible' }}>
-            <ChartContainer config={rootCauseConfig} style={{ height: 340 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 40, top: 8, bottom: 8 }}>
-                  <CartesianGrid vertical={false} horizontal={false} />
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="classification" width={160} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
-                  <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
-                    {data.slice(0, 10).map((entry, i) => {
-                      const color = rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length];
-                      return <Cell key={i} fill={color} />;
-                    })}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </SectionCard>
+          {/* Bar Chart */}
+          <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
+            <div className="p-6">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Frequency per Classification</h3>
+              <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Sorted by frequency</p>
+            </div>
+            <div className="p-6 overflow-visible">
+              <ChartContainer config={rootCauseConfig} className="h-[340px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 40, top: 8, bottom: 8 }}>
+                    <CartesianGrid vertical={false} horizontal={false} />
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="classification" width={160} tick={{ className: "fill-base-content/40 font-bold", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
+                      {data.slice(0, 10).map((entry, i) => {
+                        const color = rootCauseConfig[entry.classification]?.color || PIE_COLORS[i % PIE_COLORS.length];
+                        return <Cell key={i} fill={color} />;
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </div>
 
           {/* Top Table */}
-          <SectionCard title="Classification Breakdown" style={{ gridColumn: '1 / -1' }}>
-            <div className="table-wrap">
-              <table className="data-table">
-                <colgroup>
-                  <col className="cg-check" />
-                  <col className="cg-auto" />
-                  <col className="cg-id-sm" />
-                  <col className="cg-priority" />
-                  <col className="cg-status" />
-                </colgroup>
+          <div className="bg-base-100 shadow-xl rounded-2xl lg:col-span-2 overflow-hidden">
+            <div className="p-6">
+              <h3 className="text-base font-bold">Classification Breakdown</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="table-imms">
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th className="w-16 text-center">#</th>
                     <th className="text-left">Classification</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                    <th className="text-left">Chart</th>
+                    <th className="w-32 text-center">Count</th>
+                    <th className="w-32 text-center">Percentage</th>
+                    <th className="min-w-[200px] text-left">Distribution</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
+                  {data.length === 0 && <tr><td colSpan={5} className="text-center py-10 opacity-50">No data available</td></tr>}
                   {data.map((row, i) => {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (
-                      <tr key={row.classification} className="tr-hover-accent">
-                        <td className="text-center text-xs tabular" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{i + 1}</td>
-                        <td className="text-left text-sm" style={{ fontWeight: 600 }}>{row.classification}</td>
-                        <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.count}</td>
-                        <td className="text-center tabular"><span style={{ color: PIE_COLORS[i % PIE_COLORS.length], fontWeight: 600, fontSize: 'var(--f-sm)' }}>{pct}%</span></td>
-                        <td className="text-left" style={{ paddingRight: '24px' }}>
-                          <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, minWidth: 80 }}>
-                            <div style={{ height: '100%', width: `${pct}%`, background: PIE_COLORS[i % PIE_COLORS.length], borderRadius: 3, transition: 'width 0.5s ease' }} />
+                      <tr key={row.classification} className="hover:bg-base-200 transition-colors">
+                        <td className="text-center font-mono opacity-50 text-[12px]">#{i + 1}</td>
+                        <td className="font-semibold text-[12px]">{row.classification}</td>
+                        <td className="text-center font-mono font-bold text-[12px]">{row.count}</td>
+                        <td className="text-center font-mono">
+                          <span className="badge badge-sm font-bold text-[10px] uppercase tracking-wider" style={{ backgroundColor: `${PIE_COLORS[i % PIE_COLORS.length]}15`, color: PIE_COLORS[i % PIE_COLORS.length] }}>
+                            {pct}%
+                          </span>
+                        </td>
+                        <td>
+                          <div className="w-full bg-base-200 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-1000" 
+                              style={{ width: `${pct}%`, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} 
+                            />
                           </div>
                         </td>
                       </tr>
@@ -162,7 +172,7 @@ export default function RootCausePage() {
                 </tbody>
               </table>
             </div>
-          </SectionCard>
+          </div>
         </div>
       )}
     </div>

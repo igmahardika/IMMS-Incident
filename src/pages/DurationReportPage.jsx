@@ -41,119 +41,122 @@ export default function DurationReportPage() {
   }, [year]);
 
   return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div className="page-title-group">
-          <div className="page-title text-xl">Duration Report</div>
-          <div className="page-subtitle text-xs">Analysis of handling duration & SLA performance</div>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-bold tracking-tight uppercase">Duration Report</h1>
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Analysis of handling duration & SLA performance</p>
       </div>
 
-      <div className="filter-bar mb-4">
-        <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--text-muted)', marginRight: '0.5rem' }}>FILTER:</div>
-        <select className="select select-bordered select-md " value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
+      <div className="flex flex-wrap items-center gap-4 bg-base-100 p-3 px-4 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+          Filter Year:
+        </div>
+        <select className="select select-sm w-32 font-bold text-[13.5px] h-9 bg-base-200/50" value={year} onChange={e => setYear(e.target.value)}>
           {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
       </div>
 
-      {loading ? <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}><Spinner /></div> : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {loading ? <div className="flex justify-center pt-12"><Spinner /></div> : (
+        <div className="flex flex-col gap-4">
           {/* Line Chart */}
-          <SectionCard title="Avg Nett Duration Trend (Minutes)" subtitle={`Per NCAL - Year ${year}`}>
-            <ChartContainer config={chartConfig} style={{ height: 400 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickMargin={12} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} unit=" min" axisLine={false} tickLine={false} tickMargin={12} />
-                  <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
-                  <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
-                  {NCAL_ORDER.map(ncal => (
-                    <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, stroke: 'var(--bg-surface)', strokeWidth: 2 }} connectNulls />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </SectionCard>
+          <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
+            <div className="p-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Avg Nett Duration Trend (Minutes)</h3>
+              <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Per NCAL — Year {year}</p>
+            </div>
+            <div className="p-6">
+              <ChartContainer config={chartConfig} className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="month" tick={{ className: "fill-base-content/40 font-bold", fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} />
+                    <YAxis tick={{ className: "fill-base-content/40 font-bold", fontSize: 10 }} unit=" min" axisLine={false} tickLine={false} tickMargin={12} />
+                    <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
+                    <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
+                    {NCAL_ORDER.map(ncal => (
+                      <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, className: "stroke-base-100", strokeWidth: 2 }} connectNulls />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* SLA Table */}
-            <SectionCard title="SLA Summary per NCAL" subtitle={`Year ${year}`}>
-              <div className="table-wrap">
-                <table className="data-table">
-                  <colgroup>
-                    <col className="cg-ncal" />
-                    <col className="cg-id-sm" />
-                    <col className="cg-duration" />
-                    <col className="cg-id-sm" />
-                    <col className="cg-duration" />
-                    <col className="cg-priority" />
-                  </colgroup>
+            <div className="bg-base-100 shadow-xl rounded-2xl overflow-hidden">
+              <div className="p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">SLA Summary per NCAL</h3>
+                <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="table-imms">
                   <thead>
                     <tr>
-                      <th>NCAL</th>
-                      <th>Total</th>
-                      <th>Avg Nett</th>
-                      <th>SLA Met</th>
-                      <th>SLA Target</th>
-                      <th>%</th>
+                      <th className="w-20 text-center">NCAL</th>
+                      <th className="text-center">Total</th>
+                      <th className="text-center">Avg Nett</th>
+                      <th className="text-center">SLA Met</th>
+                      <th className="text-center whitespace-nowrap">SLA Target</th>
+                      <th className="text-center">%</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sla.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
+                    {sla.length === 0 && <tr><td colSpan={6} className="text-center py-10 opacity-50">No data available</td></tr>}
                     {sla.map(row => {
                       const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                       return (
-                        <tr key={row.ncal} className="tr-hover-accent">
+                        <tr key={row.ncal} className="hover:bg-base-200 transition-colors">
                           <td className="text-center"><NcalBadge value={row.ncal} /></td>
-                          <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.total_cases}</td>
-                          <td className="text-center text-id text-sm">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.sla_met || 0}</td>
-                          <td className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>{row.sla_target_minutes ? `${row.sla_target_minutes} min` : '—'}</td>
-                          <td className="text-center tabular"><span className="text-sm" style={{ color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>{pct}%</span></td>
+                          <td className="text-center font-bold text-[12px]">{row.total_cases}</td>
+                          <td className="text-center font-mono font-bold text-[12px] opacity-70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td className="text-center font-medium text-primary text-[12px]">{row.sla_met || 0}</td>
+                          <td className="text-center opacity-50 text-[10px] uppercase font-bold tracking-tighter">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
+                          <td className="text-center">
+                            <span className={`font-bold tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
+                              {pct}%
+                            </span>
+                          </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
-            </SectionCard>
+            </div>
 
             {/* Technician Performance */}
-            <SectionCard title="Technician Performance" subtitle={`Year ${year}`}>
-              <div className="table-wrap">
-                <table className="data-table">
-                  <colgroup>
-                    <col className="cg-auto" />
-                    <col className="cg-id-sm" />
-                    <col className="cg-duration" />
-                    <col className="cg-duration" />
-                    <col className="cg-duration" />
-                  </colgroup>
+            <div className="bg-base-100 shadow-xl rounded-2xl overflow-hidden">
+              <div className="p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Technician Performance</h3>
+                <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="table-imms">
                   <thead>
                     <tr>
-                      <th className="text-left">Technician</th>
-                      <th>Total</th>
-                      <th>Avg Duration</th>
-                      <th>Min</th>
-                      <th>Max</th>
+                      <th className="text-left py-3">Technician</th>
+                      <th className="text-center py-3">Total</th>
+                      <th className="text-center py-3">Avg</th>
+                      <th className="text-center py-3 text-success/80">Min</th>
+                      <th className="text-center py-3 text-error/80">Max</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {techPerf.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No data available</td></tr>}
+                    {techPerf.length === 0 && <tr><td colSpan={5} className="text-center py-10 opacity-50">No data available</td></tr>}
                     {techPerf.map(row => (
-                      <tr key={row.technician} className="tr-hover-accent">
-                        <td className="text-left text-sm" style={{ fontWeight: 600 }}>{row.technician}</td>
-                        <td className="text-center tabular" style={{ fontWeight: 600 }}>{row.total_handled}</td>
-                        <td className="text-center text-id text-xs">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td className="text-center text-id text-xs" style={{ color: 'var(--success)' }}>{formatDuration(row.min_nett)}</td>
-                        <td className="text-center text-id text-xs" style={{ color: 'var(--danger)' }}>{formatDuration(row.max_nett)}</td>
+                      <tr key={row.technician} className="hover:bg-base-200 transition-colors">
+                        <td className="font-bold text-[12px] tracking-tight">{row.technician}</td>
+                        <td className="text-center font-mono font-bold text-[12px]">{row.total_handled}</td>
+                        <td className="text-center font-mono font-bold text-[12px] text-base-content/70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td className="text-center font-mono text-[12px] text-success">{formatDuration(row.min_nett)}</td>
+                        <td className="text-center font-mono text-[12px] text-error">{formatDuration(row.max_nett)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </SectionCard>
+            </div>
           </div>
         </div>
       )}

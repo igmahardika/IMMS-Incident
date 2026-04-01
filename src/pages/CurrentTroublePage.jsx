@@ -9,18 +9,23 @@ import { Play, Pause, Square, Edit2, Plus, AlertTriangle, Activity, X as XIcon }
 function PauseModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
   return (
-    <Modal open={open} onClose={onClose} title="⏸ Pause Incident"
+    <Modal open={open} onClose={onClose} title="Pause Incident"
       footer={
         <>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-warning" onClick={() => { onConfirm(reason); setReason(''); }}>Pause Now</button>
+          <button className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={onClose}>Cancel</button>
+          <button className="btn btn-warning font-bold uppercase tracking-[0.15em] text-[10px] px-6" onClick={() => { onConfirm(reason); setReason(''); }}>Confirm Pause</button>
         </>
       }
     >
-      <label className="form-control w-full">
-        <div className="label"><span className="label-text">Reason for Pause *</span></div>
-        <textarea className="textarea textarea-bordered w-full" placeholder="e.g., Awaiting materials, bad weather, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
-      </label>
+      <div className="flex flex-col gap-4">
+        <label className="form-control w-full">
+          <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Reason for Halt *</span></div>
+          <textarea className="textarea w-full font-bold text-[13.5px] bg-base-200/80" placeholder="e.g., Awaiting materials, weather conditions, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
+        </label>
+        <div className="p-4 bg-warning/5 rounded-xl text-[11px] font-bold text-warning leading-relaxed">
+          PAUSE: This will stop the active timer. Ensure the reason is documented as it will be logged in the handling history.
+        </div>
+      </div>
     </Modal>
   );
 }
@@ -80,130 +85,148 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
     <Modal open={open} onClose={onClose} title={`Update Incident — ${incident.case_no}`} size="xl"
       footer={
         <>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSave}>Save Changes</button>
+          <button className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary px-8 font-bold uppercase tracking-[0.15em] text-[10px] shadow-lg shadow-primary/20" onClick={handleSave}>Save Changes</button>
         </>
       }
     >
-      <div className="layout-with-aside" style={{ marginBottom: '1.5rem', maxHeight: '72vh', overflowY: 'auto' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-4 max-h-[75vh] overflow-y-auto pr-1">
         
         {/* Main Column: Update Form */}
-        <div className="page-stack">
-          <div className="section-card">
-            <div className="section-card-header">
-              <div className="section-card-title">Update Resolution & Notes</div>
-            </div>
-            <div className="section-card-body" style={{ padding: '1rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                {user?.role && user.role !== 'technician' && (
-                  <label className="form-control w-full">
-                    <div className="label"><span className="label-text">Assign Technician</span></div>
-                    <select 
-                      className="select select-bordered w-full" 
-                      value={form.technician_id} 
-                      onChange={e => setForm(p => ({ ...p, technician_id: e.target.value }))}
-                    >
-                      <option value="">— Unassigned —</option>
-                      {users.filter(u => ['technician', 'noc', 'admin'].includes(u.role)).map(u => (
-                        <option key={u.id} value={u.id}>{u.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">Active Resolution Logs</h3>
+            <p className="text-[11px] font-bold text-base-content/60 leading-relaxed italic">Document the latest technical progress and root cause findings.</p>
+          </div>
+
+          <div className="flex flex-col gap-6 p-6 bg-base-200/30 rounded-2xl">
+            {user?.role && user.role !== 'technician' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Field Technician</span></div>
+                  <select 
+                    className="select w-full font-bold text-[13.5px] bg-base-200/80" 
+                    value={form.technician_id} 
+                    onChange={e => setForm(p => ({ ...p, technician_id: e.target.value }))}
+                  >
+                    <option value="">— Unassigned —</option>
+                    {users.filter(u => ['technician', 'noc', 'admin'].includes(u.role)).map(u => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
+            )}
 
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Root Cause Update</span></div>
+              <input type="text" className="input w-full font-bold text-[13.5px] bg-base-200/80" value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Brief summary of root cause..." />
+            </label>
 
-              <label className="form-control w-full mb-4">
-                <div className="label"><span className="label-text">Update Root Cause</span></div>
-                <textarea className="textarea textarea-bordered w-full" rows={3} value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Explain the root cause..." />
-              </label>
-              <label className="form-control w-full mb-4">
-                <div className="label"><span className="label-text">Action Taken / Update Notes</span></div>
-                <textarea className="textarea textarea-bordered w-full" rows={4} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Explain the resolution steps or update technician notes..." />
-              </label>
-              {user?.role && user.role !== 'technician' && incident?.ncal === 'YELLOW' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <label className="form-control w-full">
-                    <div className="label"><span className="label-text">RX Power BEFORE (dBm)</span></div>
-                    <input type="text" className="input input-bordered w-full" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-20.5 dBm" />
-                  </label>
-                  <label className="form-control w-full">
-                    <div className="label"><span className="label-text">RX Power AFTER (dBm)</span></div>
-                    <input type="text" className="input input-bordered w-full" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-18.2 dBm" />
-                  </label>
-                </div>
-              )}
-            </div>
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Technical Handling Notes</span></div>
+              <textarea className="textarea w-full font-bold text-[13.5px] leading-relaxed bg-base-200/80" rows={5} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Document resolution steps or field progress update..." />
+            </label>
+
+            {user?.role && user.role !== 'technician' && incident?.ncal === 'YELLOW' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-2">
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Optical RX (INI)</span></div>
+                  <input type="text" className="input w-full font-mono font-bold text-[13.5px] bg-base-200/80" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-00.00 dBm" />
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Optical RX (CUR)</span></div>
+                  <input type="text" className="input w-full font-mono font-bold text-[13.5px] bg-base-200/80" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-00.00 dBm" />
+                </label>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Sidebar: Compact Info & Handling History */}
-        <div className="aside-sticky" style={{ width: '340px' }}>
-          <div className="page-stack">
-            
-            {/* Compact Info Summary */}
-            <div className="section-card">
-              <div className="section-card-body" style={{ padding: '0.875rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
-                   <div>
-                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>SITE / SEGMENT</div>
-                     <div className="text-sm" style={{ marginTop: 2 }}>
-                        {['ORANGE', 'RED', 'BLACK'].includes(iData.ncal) ? (iData.odp_bts || iData.site_name_manual || '—') : (iData.site_name_manual || iData.company_name || '—')}
+        <div className="flex flex-col gap-6">
+          
+          {/* Compact Info Summary */}
+          <div className="flex flex-col gap-6 p-6 bg-base-200/50 rounded-2xl">
+            <div className="flex flex-col gap-2">
+                 <div className="text-[13.5px] font-bold tracking-tight leading-snug text-base-content">
+                 {['ORANGE', 'RED', 'BLACK'].includes(iData.ncal) ? (iData.odp_bts || iData.site_name_manual || '—') : (iData.site_name_manual || iData.company_name || '—')}
+               </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+               <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] leading-none">SLA Progress</span>
+               <div className="flex flex-col gap-2.5">
+                 <div className="flex items-center justify-between">
+                    <LevelBadge level={calculateIncidentLevel(iData.start_time)} targetHours={getSLATarget(iData.ncal) / 3600} />
+                    <NcalBadge value={iData.ncal} />
+                 </div>
+                 
+                 {(() => {
+                    const elapsed = (new Date() - new Date(iData.start_time)) / 1000;
+                    const target = getSLATarget(iData.ncal);
+                    const pct = Math.min(100, Math.max(5, (elapsed / target) * 100));
+                    const isDanger = pct > 80;
+                    return (
+                      <div className="flex flex-col gap-2 mt-1">
+                        <div className="w-full h-1.5 bg-base-content/5 rounded-full overflow-hidden">
+                           <div className={`h-full transition-all duration-1000 ${isDanger ? 'bg-error shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.15em]">
+                           <span className={isDanger ? 'text-error animate-pulse' : 'text-primary'}>{Math.round(pct)}% Used</span>
+                           <span className="opacity-40">{Math.round(target / 3600)}h Target</span>
+                        </div>
                       </div>
-                   </div>
-                   <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr 1fr', gap: '0.875rem', alignItems: 'center' }}>
-                      <LevelBadge level={calculateIncidentLevel(iData.start_time)} targetHours={getSLATarget(iData.ncal) / 3600} />
-                      <div>
-                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>NCAL</div>
-                        <div style={{ marginTop: 4 }}><NcalBadge value={iData.ncal} /></div>
-                      </div>
-                      <div>
-                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>STATUS</div>
-                        <div style={{ marginTop: 4 }}><StatusPill status={iData.status} /></div>
-                      </div>
-                   </div>
-                   <div>
-                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>NETT DURATION</div>
-                     <div className="text-xl text-id" style={{ color: 'var(--accent)', marginTop: 4 }}>
-                       <LiveTimer 
-                         startIso={iData.start_time} 
-                         pausedSec={iData.total_pause_duration_seconds} 
-                         paused={iData.status === 'pending'} 
-                         target={getSLATarget(iData.ncal)}
-                       />
-                     </div>
-                   </div>
+                    );
+                 })()}
+               </div>
+            </div>
+
+            <div className="flex flex-col gap-2.5 pt-4">
+                <div className="flex items-center justify-between">
+                   <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Nett Duration</span>
+                   <StatusPill status={iData.status} />
                 </div>
-              </div>
+                <div className="text-2xl font-bold font-mono tracking-tighter text-primary">
+                  <LiveTimer 
+                    startIso={iData.start_time} 
+                    pausedSec={iData.total_pause_duration_seconds} 
+                    paused={iData.status === 'pending'} 
+                    target={getSLATarget(iData.ncal)}
+                  />
+                </div>
             </div>
 
-            {/* Handling History */}
-            <div className="section-card">
-              <div className="section-card-header" style={{ background: 'var(--accent-subtle)', borderBottomColor: 'rgba(99,102,241,0.1)', padding: '0.625rem 0.875rem' }}>
-                <div className="section-card-title" style={{ fontSize: '0.75rem', color: 'var(--accent-light)' }}>Handling History</div>
-              </div>
-              <div className="section-card-body" style={{ padding: 0 }}>
-                <UnifiedTimeline 
-                  timeline={processTimeline(iData).filter(item => {
-                    const action = item.type === 'pause' ? 'PAUSE' : item.action;
-                    return action === 'UPDATE' || action === 'PAUSE';
-                  })} 
-                  filterType="technical"
-                />
-              </div>
+            <div className="flex flex-col gap-2 pt-4">
+               <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Reported Problem</span>
+               <div className="text-[11px] font-bold text-base-content/80 leading-relaxed italic">
+                 "{iData.initial_problem || 'No description provided'}"
+               </div>
+            </div>
+          </div>
+
+          {/* Activity Logs */}
+          <div className="flex flex-col gap-8 mt-2">
+            <div className="flex flex-col gap-4">
+               <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary/80 mb-1">Handling History</h3>
+               <div className="max-h-[300px] overflow-y-auto custom-scrollbar-slim rounded-xl bg-base-200/20">
+                 <UnifiedTimeline 
+                   timeline={processTimeline(iData)} 
+                   filterType="technical" 
+                   isCompact={true}
+                 />
+               </div>
             </div>
 
-            {/* System Activity */}
-            <div className="section-card">
-              <div className="section-card-header" style={{ background: 'var(--bg-elevated)', borderBottomColor: 'var(--border)', padding: '0.625rem 0.875rem' }}>
-                <div className="section-card-title" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>System Activity Log</div>
-              </div>
-              <div className="section-card-body" style={{ padding: 0 }}>
-                <UnifiedTimeline 
-                  timeline={processTimeline(iData)} 
-                  filterType="system"
-                />
-              </div>
+            <div className="flex flex-col gap-4">
+               <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mb-1">System Activity Log</h3>
+               <div className="max-h-[200px] overflow-y-auto custom-scrollbar-slim rounded-xl bg-base-200/20">
+                 <UnifiedTimeline 
+                   timeline={processTimeline(iData)} 
+                   filterType="system" 
+                   isCompact={true}
+                 />
+               </div>
             </div>
           </div>
         </div>
@@ -315,101 +338,102 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     <Modal open={open} onClose={onClose} title="Close Incident" size="lg"
       footer={
         <>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-danger" onClick={handleClose}><XIcon size={14} /> Close Incident</button>
+          <button className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={onClose}>Cancel</button>
+          <button className="btn btn-danger font-bold uppercase tracking-[0.15em] text-[10px]" onClick={handleClose}><XIcon size={14} /> Close Incident</button>
         </>
       }
     >
-      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-        <p>You are about to close incident <strong style={{ color: 'var(--text-primary)' }}>{incident.case_no}</strong>.</p>
-        <div className="preview-block" style={{ marginTop: 12, padding: '0.875rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontWeight: 600 }}><NcalBadge value={incident.ncal} /> &nbsp; {incident.site_name_manual || incident.company_name || '—'}</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Problem: <span style={{ color: 'var(--text-primary)' }}>{incident.initial_problem || '—'}</span></div>
-          {incident.odp_bts && (
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              {incident.ncal === 'BLUE' ? 'Device:' : 'ODP / BTS / Infra:'} <span style={{ color: 'var(--text-primary)' }}>{incident.odp_bts}</span>
-            </div>
-          )}
+      <div className="flex flex-col gap-6">
+        <div className="p-5 bg-base-200/50 rounded-lg flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Active Case</span>
+                <span className="text-sm font-bold font-mono text-primary">{incident.case_no}</span>
+             </div>
+             <NcalBadge value={incident.ncal} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Infrastructure</span>
+            <span className="text-[13.5px] font-bold text-base-content/80 tracking-tight">{incident.site_name_manual || incident.company_name || '—'}</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Reported Problem</span>
+            <span className="text-[11px] font-bold text-base-content/80 leading-relaxed italic">"{incident.initial_problem || '—'}"</span>
+          </div>
           {incident.recurring_count > 0 && (
-            <div className="info-banner info-banner-danger" style={{ marginTop: 8, padding: '6px 10px', fontSize: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <AlertTriangle size={14} /> 
-                <span><strong>Isu Berulang:</strong> Site ini telah mengalami {incident.recurring_count} insiden lain dalam 24 jam terakhir.</span>
-              </div>
+            <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-error/10 text-error text-[10px] font-bold uppercase tracking-[0.15em]">
+              <AlertTriangle size={14} /> 
+              Recurring Issue ({incident.recurring_count}X in 24h)
             </div>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: 16 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <label className="form-control w-full">
-            <div className="label"><span className="label-text">Klasifikasi Utama *</span></div>
-            <select className="select select-bordered w-full" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
+            <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Root Category *</span></div>
+            <select className="select w-full font-bold text-[13.5px] bg-base-200/80" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
               <option value="">— Select Category —</option>
               {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </label>
           <label className="form-control w-full">
-            <div className="label"><span className="label-text">Sub Klasifikasi *</span></div>
-            <select className="select select-bordered w-full" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
+            <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Sub-Classification *</span></div>
+            <select className="select w-full font-bold text-[13.5px] bg-base-200/80" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
               <option value="">— Select Detail —</option>
               {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
             </select>
           </label>
         </div>
 
-        <div className="section-card" style={{ marginTop: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-          <div className="section-card-header" style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Handling History (Update History)</div>
+        <SectionCard title="Update & Handling History" className="bg-base-200/50">
+          <div className="overflow-x-auto -mx-6 -my-6">
+            <table className="table table-xs border-separate border-spacing-0 w-full">
+              <thead>
+                <tr className="bg-base-200/50">
+                  <th className="text-center py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">#</th>
+                  <th className="text-left py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Timestamp</th>
+                  <th className="text-left py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Root Cause</th>
+                  <th className="text-left py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Action</th>
+                  <th className="text-center py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center py-10 text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/20">No update history available</td></tr>
+                ) : [...history].reverse().map((item, idx) => {
+                  const parts = (item.details || '').split(' | ');
+                  let cause = '-';
+                  let action = '-';
+                  parts.forEach(p => {
+                    if (p.startsWith('Cause:') || p.startsWith('Penyebab:')) {
+                      cause = p.replace('Cause:', '').replace('Penyebab:', '').trim();
+                    }
+                    if (p.startsWith('Last Action:') || p.startsWith('Action Terakhir:')) {
+                      action = p.replace('Last Action:', '').replace('Action Terakhir:', '').trim();
+                    }
+                  });
+                  const isSelected = rootCause === cause && actionTaken === action;
+                  return (
+                    <tr key={item.id} className={`hover:bg-base-300 transition-all cursor-pointer group ${isSelected ? 'bg-primary/10' : ''}`} onClick={() => selectFromHistory(item)}>
+                      <td className="text-center font-mono font-bold text-[12px] text-base-content/20">{idx + 1}</td>
+                      <td className="text-left font-mono text-[12px] font-bold text-base-content/40 whitespace-nowrap">{formatDateTime(item.timestamp)}</td>
+                      <td className="text-left font-semibold text-[12px] text-base-content/70 leading-snug line-clamp-1">{cause}</td>
+                      <td className="text-left font-semibold text-[12px] text-base-content/70 leading-snug line-clamp-1">{action}</td>
+                      <td className="text-center">
+                        <div className={`w-2 h-2 rounded-full mx-auto ${isSelected ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-base-content/10 group-hover:bg-base-content/20'}`} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-            {loadingHistory ? <div style={{ padding: '1rem', textAlign: 'center' }}><div className="spinner-sm" /></div> : (
-              <table className="data-table no-border" style={{ fontSize: '0.78rem' }}>
-                <colgroup>
-                  <col style={{ width: 100 }} />
-                  <col style={{ width: 140 }} />
-                  <col style={{ width: 'auto' }} />
-                  <col style={{ width: 'auto' }} />
-                  <col style={{ width: 100 }} />
-                </colgroup>
-                <thead><tr><th>No</th><th>Waktu</th><th className="text-left">Penyebab</th><th className="text-left">Penanganan</th><th className="text-right">Pilih</th></tr></thead>
-                <tbody>
-                  {history.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>No update history yet</td></tr>
-                  ) : [...history].reverse().map((item, idx) => {
-                    const parts = (item.details || '').split(' | ');
-                    let cause = '-';
-                    let action = '-';
-                    parts.forEach(p => {
-                      if (p.startsWith('Cause:') || p.startsWith('Penyebab:')) {
-                        cause = p.replace('Cause:', '').replace('Penyebab:', '').trim();
-                      }
-                      if (p.startsWith('Last Action:') || p.startsWith('Action Terakhir:')) {
-                        action = p.replace('Last Action:', '').replace('Action Terakhir:', '').trim();
-                      }
-                    });
-                    const isSelected = rootCause === cause && actionTaken === action;
-                    return (
-                      <tr key={item.id} style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-subtle)' : 'transparent' }} onClick={() => selectFromHistory(item)}>
-                        <td className="text-center" style={{ fontWeight: 600 }}>HANDLING {idx + 1} {isSelected && '✓'}</td>
-                        <td className="text-center" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDateTime(item.timestamp)}</td>
-                        <td className="text-left">{cause}</td>
-                        <td className="text-left">{action}</td>
-                        <td className="text-right">
-                          <button className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-ghost'}`}>{isSelected ? '✓ Selected' : 'Select'}</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
+        </SectionCard>
 
 
-        <label className="form-control w-full" style={{ marginTop: 16 }}>
-          <div className="label"><span className="label-text">Waktu Up (Restore Time) *</span></div>
-          <input type="datetime-local" className="input input-bordered w-full" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
+        <label className="form-control w-full mt-4">
+          <div className="label"><span className="label-text font-bold text-base-content/80">Waktu Up (Restore Time) *</span></div>
+          <input type="datetime-local" className="input w-full bg-base-200/80" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
         </label>
         <div className="info-banner info-banner-warning mt-4">
           ⚠ The system will automatically calculate the downtime duration based on the Start time and this Up time.
@@ -474,173 +498,150 @@ export default function CurrentTroublePage() {
   if (loading) return <PageSpinner />;
 
   return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div className="page-title-group">
-          <div className="page-title">Active Troubles</div>
-          <div className="page-subtitle">Currently monitoring {incidents.length} active incidents</div>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Active Troubles</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 leading-relaxed">
+            Monitoring <span className="text-primary">{incidents.length}</span> live incidents
+          </p>
         </div>
-        <div className="page-actions">
+        <div className="flex items-center gap-3">
           {user?.role !== 'technician' && (
-            <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={16} strokeWidth={2} /> Create Incident</button>
+            <button className="btn btn-primary btn-sm px-6 font-bold uppercase tracking-[0.15em] text-[11px] shadow-lg shadow-primary/20" onClick={() => navigate('/incidents/create')}>
+              <Plus size={16} /> Create Incident
+            </button>
           )}
         </div>
       </div>
 
-      <div>
-        
-        {/* Main Incident List */}
-        <div className="section-card" style={{ padding: 0 }}>
-          {incidents.length === 0 ? (
-            <EmptyState
-              icon={<AlertTriangle size={48} />}
-              title="No active incidents"
-              desc="All networks are monitoring as normal."
-              action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={14} /> Create New Incident</button>}
-            />
-          ) : (
-            <table className="data-table">
-              <colgroup>
-                <col className="cg-ncal" />
-                <col style={{ width: 155 }} />
-                <col className="cg-id" />
-                <col className="cg-auto" />
-                <col className="cg-auto" />
-                <col className="cg-check" />
-                <col style={{ width: 140 }} />
-                <col className="cg-actions" />
-              </colgroup>
+      <div className="card bg-base-100 shadow-sm overflow-hidden">
+        {incidents.length === 0 ? (
+          <EmptyState
+            icon={<AlertTriangle size={48} className="opacity-20" />}
+            title="No active incidents"
+            desc="All networks are monitoring as normal."
+            action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={16} /> Create New Incident</button>}
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table-imms">
               <thead>
                 <tr>
-                  <th>NCAL</th>
-                  <th className="text-left">INCIDENT</th>
-                  <th>LV</th>
-                  <th className="text-left">SITE / SEGMENT / ODP</th>
-                  <th className="text-left">HANDLING DETAILS</th>
-                  <th>PRIORITY</th>
-                  <th>ELAPSED</th>
-                  <th className="text-right">ACTIONS</th>
+                  <th className="text-center w-20">NCAL</th>
+                  <th className="text-left w-48">Incident</th>
+                  <th className="text-center w-16">Lv</th>
+                  <th className="text-left">Infrastructure</th>
+                  <th className="text-left">Current Logs</th>
+                  <th className="text-center w-24">Prio</th>
+                  <th className="text-center w-40 whitespace-nowrap">Downtime</th>
+                  <th className="text-right w-32 pr-4">Action</th>
                 </tr>
               </thead>
               <tbody>
-                  {incidents.map(inc => {
-                    const actions = [];
-                    if (inc.status === 'open') {
-                      actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success' });
-                    }
-                    if (inc.status === 'progress' && ['admin', 'noc'].includes(user?.role)) {
-                      actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning' });
-                    }
-                    if (inc.status === 'pending' && ['admin', 'noc'].includes(user?.role)) {
-                      actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success' });
-                    }
-                    actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary' });
-                    if (['admin', 'noc'].includes(user?.role)) {
-                      actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-danger' });
-                    }
+                {incidents.map(inc => {
+                  const actions = [];
+                  if (inc.status === 'open') {
+                    actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success' });
+                  }
+                  if (inc.status === 'progress' && ['admin', 'noc'].includes(user?.role)) {
+                    actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning' });
+                  }
+                  if (inc.status === 'pending' && ['admin', 'noc'].includes(user?.role)) {
+                    actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success' });
+                  }
+                  actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary' });
+                  if (['admin', 'noc'].includes(user?.role)) {
+                    actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error' });
+                  }
 
-                    return (
-                      <tr key={inc.id} className="tr-hover-accent">
-                        {/* NCAL */}
-                        <td className="text-center">
-                          <NcalBadge value={inc.ncal} />
-                        </td>
-                        {/* INCIDENT */}
-                        <td className="text-left">
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                            <button className="id-link text-id text-sm tabular" onClick={() => navigate(`/incidents/${inc.id}`)} style={{ background: 'none', border: 'none', padding: 0, fontWeight: 700, fontSize: 'var(--f-sm)', textAlign: 'left' }}>
-                              {inc.case_no}
-                            </button>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <StatusPill status={inc.status} />
-                              {inc.recurring_count > 0 && (
-                                <span title={`Recurring ${inc.recurring_count + 1}X`}>
-                                  <AlertTriangle size={11} style={{ color: 'var(--danger)' }} />
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        {/* LV */}
-                        <td className="text-center">
-                          <LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} />
-                        </td>
-                        {/* SITE / SEGMENT / ODP */}
-                        <td className="text-left">
-                          <div className="page-stack" style={{ gap: 2 }}>
-                            <div className="text-sm" style={{ fontWeight: 600 }}>
-                              {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
-                            </div>
-                            <div className="text-xs tabular" style={{ color: 'var(--text-muted)' }}>
-                              {inc.odp_bts || inc.service_id || '—'}
-                            </div>
-                          </div>
-                        </td>
-                        {/* HANDLING DETAILS */}
-                        <td className="text-left">
-                          <div className="page-stack" style={{ gap: 3 }}>
-                            <div className="text-sm" style={{ color: 'var(--text-primary)' }}>{inc.initial_problem || '—'}</div>
-                            {inc.last_action && (
-                              <div className="text-xs" style={{ color: 'var(--text-muted)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Activity size={11} strokeWidth={1.5} /> {inc.last_action}
+                  return (
+                    <tr key={inc.id} className="hover:bg-base-200 transition-colors group">
+                      <td className="text-center">
+                        <NcalBadge value={inc.ncal} />
+                      </td>
+                      <td className="text-left">
+                        <div className="flex flex-col gap-0.5">
+                          <button 
+                            className="text-[12px] font-bold font-mono tracking-tighter text-primary hover:underline text-left" 
+                            onClick={() => navigate(`/incidents/${inc.id}`)}
+                          >
+                            {inc.case_no}
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <StatusPill status={inc.status} />
+                            {inc.recurring_count > 0 && (
+                              <div className="tooltip tooltip-error" data-tip={`Recurring ${inc.recurring_count + 1}X`}>
+                                <AlertTriangle size={12} className="text-error" />
                               </div>
                             )}
                           </div>
-                        </td>
-                        {/* PRIORITY */}
-                        <td className="text-center">
-                          {inc.level_support ? (
-                            <span className="text-xs" style={{ 
-                              background: 'var(--bg-elevated)', 
-                              color: 'var(--text-muted)', 
-                              padding: '1px 6px', 
-                              height: '18px',
-                              borderRadius: 'var(--radius-sm)', 
-                              border: '1px solid var(--border)',
-                              fontSize: 'var(--f-xs)',
-                              fontWeight: 600,
-                              display: 'inline-flex',
-                              alignItems: 'center'
-                            }}>
-                              P{inc.level_support}
-                            </span>
-                          ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
-                        </td>
-                        {/* ELAPSED */}
-                        <td className="text-center">
-                          <div className="page-stack" style={{ gap: 2 }}>
-                            <div className="text-id text-sm tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                              <LiveTimer 
-                                startIso={inc.start_time} 
-                                pausedSec={inc.total_pause_duration_seconds} 
-                                paused={inc.status === 'pending'} 
-                                target={getSLATarget(inc.ncal)}
-                              />
+                        </div>
+                      </td>
+                      <td className="text-center">
+                        <LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} />
+                      </td>
+                      <td className="text-left">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[12px] font-semibold tracking-tight text-base-content/90">
+                            {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
+                          </span>
+                          <span className="text-[11px] font-mono font-medium text-base-content/40 uppercase tracking-[0.05em]">
+                            {inc.odp_bts || inc.service_id || '—'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="text-left">
+                        <div className="flex flex-col gap-1 max-w-xs md:max-w-md">
+                          <span className="text-[12px] font-medium text-base-content/70 leading-snug line-clamp-1">{inc.initial_problem || '—'}</span>
+                          {inc.last_action && (
+                            <div className="text-[11px] flex items-center gap-1 font-medium tracking-tight text-base-content/40">
+                              <Activity size={10} /> {inc.last_action}
                             </div>
-                            <div className="text-id text-xs tabular" style={{ color: 'var(--text-muted)' }}>{formatDateTime(inc.start_time)}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="text-center">
+                        {inc.level_support ? (
+                          <span className="badge badge-sm badge-soft border-none rounded-lg font-mono font-bold opacity-70">P{inc.level_support}</span>
+                        ) : <span className="opacity-20">—</span>}
+                      </td>
+                      <td className="text-center">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="text-sm font-bold font-mono tracking-tighter text-primary">
+                            <LiveTimer 
+                              startIso={inc.start_time} 
+                              pausedSec={inc.total_pause_duration_seconds} 
+                              paused={inc.status === 'pending'} 
+                              target={getSLATarget(inc.ncal)}
+                            />
                           </div>
-                        </td>
-                        {/* ACTIONS */}
-                        <td className="text-right">
-                          <div className="cell-actions">
-                            {actions.map(a => (
-                              <button key={a.label} className="btn btn-icon btn-ghost btn-sm" onClick={a.onClick} title={a.label} aria-label={a.label}>
-                                <a.icon size={16} strokeWidth={1.5} className={a.className} />
+                          <div className="text-[9px] font-mono font-bold text-base-content/20 uppercase tracking-tighter">SINCE {new Date(inc.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                      </td>
+                      <td className="text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {actions.map(a => (
+                            <div key={a.label} className="tooltip tooltip-top" data-tip={a.label}>
+                              <button 
+                                className={`btn btn-ghost btn-circle btn-xs ${a.className}`} 
+                                onClick={a.onClick}
+                              >
+                                <a.icon size={14} />
                               </button>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-          )}
-        </div>
-
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Modals */}
       <PauseModal open={!!pauseModal} onClose={() => setPauseModal(null)} onConfirm={(r) => handlePause(pauseModal, r)} />
       <UpdateModal open={!!updateModal} onClose={() => setUpdateModal(null)} incident={updateModal} onSaved={load} />
       <CloseModal open={!!closeModal} onClose={() => setCloseModal(null)} incident={closeModal} onClosed={load} />

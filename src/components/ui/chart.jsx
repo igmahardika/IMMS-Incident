@@ -36,25 +36,25 @@ export function ChartTooltip({ active, payload, label, config = {}, valueFormatt
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="chart-tooltip">
-      <div className="chart-tooltip-label">{label}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className="bg-base-100 border border-base-300 shadow-2xl rounded-xl p-4 min-w-[140px] backdrop-blur-md">
+      <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mb-3 border-b border-base-200 pb-2">{label}</div>
+      <div className="flex flex-col gap-2.5">
         {payload.map((item, idx) => {
           const cfg = config[item.dataKey] || config[item.name] || {};
-          const label = cfg.label || item.name || item.dataKey;
+          const lbl = cfg.label || item.name || item.dataKey;
           const color = cfg.color || item.color || item.fill;
 
           return (
-            <div key={idx} className="chart-tooltip-item">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div className="chart-tooltip-indicator" style={{ background: color }} />
-                <span className="chart-tooltip-key">{label}</span>
+            <div key={idx} className="flex items-center justify-between gap-6 text-[11px] font-bold">
+              <div className="flex items-center gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-sm shrink-0 shadow-sm" style={{ background: color }} />
+                <span className="text-base-content/40 uppercase tracking-[0.15em]">{lbl}</span>
               </div>
-              <span className="chart-tooltip-value">
+              <span className="font-mono text-base-content">
                 {valueFormatter
                   ? valueFormatter(item.value, item.name, item)
                   : typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
-                {item.unit && !valueFormatter && <span style={{ marginLeft: 2, fontSize: '0.65rem', opacity: 0.7 }}>{item.unit}</span>}
+                {item.unit && !valueFormatter && <span className="ml-0.5 text-[0.65rem] opacity-70">{item.unit}</span>}
               </span>
             </div>
           );
@@ -71,17 +71,17 @@ export function ChartLegend({ payload, config = {} }) {
   if (!payload || !payload.length) return null;
 
   return (
-    <div className="chart-legend">
+    <div className="flex flex-wrap items-center justify-center gap-5 text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mt-4 px-4 py-2 bg-base-200/30 rounded-xl border border-base-200">
       {payload.map((entry, idx) => {
         const key = entry.dataKey || entry.value;
         const cfg = config[key] || {};
-        const label = cfg.label || entry.value || key;
+        const lbl = cfg.label || entry.value || key;
         const color = cfg.color || entry.color;
 
         return (
-          <div key={idx} className="chart-legend-item">
-            <div className="chart-legend-indicator" style={{ background: color }} />
-            <span>{label}</span>
+          <div key={idx} className="flex items-center gap-2 transition-all hover:text-base-content">
+            <div className="w-1.5 h-1.5 rounded-sm shrink-0 shadow-xs" style={{ background: color }} />
+            <span>{lbl}</span>
           </div>
         );
       })}

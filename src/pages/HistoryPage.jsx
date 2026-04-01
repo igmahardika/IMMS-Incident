@@ -99,13 +99,13 @@ export default function HistoryPage() {
   const toggleRow = id => setSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
   return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div className="page-title-group">
-          <div className="page-title">Incident History</div>
-          <div className="page-subtitle">{filtered.length} records found</div>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold tracking-tight uppercase">Incident History</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">{filtered.length} records found</p>
         </div>
-        <div className="page-actions">
+        <div className="flex items-center gap-2 flex-wrap">
           {selectedIds.length > 0 && (
             <>
               <button className="btn btn-ghost btn-sm"
@@ -117,10 +117,10 @@ export default function HistoryPage() {
               </button>
             </>
           )}
-          <div className="btn-group" style={{ marginRight: '0.5rem' }}>
-            <button className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`}
+          <div className="join">
+            <button className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setViewMode('list')} title="List View"><LayoutList size={14} /></button>
-            <button className={`btn btn-sm ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`}
+            <button className={`btn btn-sm join-item ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setViewMode('map')} title="Map View"><MapIcon size={14} /></button>
           </div>
           <button className="btn btn-ghost btn-sm" onClick={() => exportCSV(filtered)}>
@@ -140,23 +140,23 @@ export default function HistoryPage() {
       ) : (
         <>
           {/* Filter bar */}
-          <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <div className="filter-search" style={{ flex: 1, minWidth: '240px' }}>
-              <Search size={13} className="filter-search-icon" />
-              <input type="text" className="input input-bordered input-md  filter-input"
-                placeholder="Search by case, site, technician..."
+          <div className="flex items-center gap-2 flex-wrap bg-base-100 p-3 rounded-xl shadow-sm">
+            <label className="input input-ghost input-md flex items-center gap-2 flex-1 min-w-[240px] bg-base-200/50">
+              <Search size={16} className="text-base-content/30" />
+              <input type="text" className="grow font-bold text-[13.5px]"
+                placeholder="Search case, site, technician..."
                 value={filters.search} onChange={e => setF('search', e.target.value)} />
-            </div>
-            <select className="select select-bordered select-md " style={{ width: 100 }} value={filters.year}
+            </label>
+            <select className="select select-ghost select-md w-[100px] font-bold text-[13.5px] bg-base-200/50" value={filters.year}
               onChange={e => setF('year', e.target.value)}>
               {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <select className="select select-bordered select-md " style={{ width: 140 }} value={filters.month}
+            <select className="select select-ghost select-md w-[140px] font-bold text-[13.5px] bg-base-200/50" value={filters.month}
               onChange={e => setF('month', e.target.value)}>
               <option value="">All Months</option>
               {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
             </select>
-            <select className="select select-bordered select-md " style={{ width: 140 }} value={filters.ncal}
+            <select className="select select-ghost select-md w-[140px] font-bold text-[13.5px] bg-base-200/50" value={filters.ncal}
               onChange={e => setF('ncal', e.target.value)}>
               <option value="">All NCAL</option>
               {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
@@ -164,52 +164,48 @@ export default function HistoryPage() {
           </div>
 
           {/* Table */}
-          <div className="section-card" style={{ padding: 0 }}>
-            {/* TABLE_CSS removed */}
-            <div style={{ overflowX: 'auto', width: '100%' }}>
+          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
+            <div className="overflow-x-auto w-full">
               {loading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div>
+                <div className="flex flex-col items-center justify-center p-20 gap-4">
+                  <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Syncing History Data</span>
+                </div>
               ) : filtered.length === 0 ? (
-                <EmptyState icon="📂" title="No data found" desc="Try adjusting filters or search queries" />
+                <EmptyState
+                  icon={<Search size={48} className="opacity-20" />}
+                  title="No results found"
+                  desc="Try adjusting your filters or search terms."
+                />
               ) : (
-                /*
-                  Column widths (content-driven, single font var(--font-main) 11px):
-                  cb=36  case=110  site=175  ncal=90  spt=80  status=72  lv=46
-                  tech=145  seg=148  t_open=132  t_esc=132  t_end=132
-                  gross=82  nett=82
-                  p1s=132  p1e=132  p2s=132  p2e=132  tot=82
-                  problem=200  penyebab=160  action=160  klasif=120
-                  pwrB=62  pwrA=62  detail=40
-                  Total ≈ 2,840px
-                */
-                <table className="table table-zebra table-sm" style={{ minWidth: '2840px' }}>
+                <table className="table-imms" style={{ minWidth: '2840px' }}>
                   <thead>
-                    <tr>
+                    <tr className="bg-base-200/50 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                       <th className="w-[36px]" />
-                      <th className="w-[110px] text-left">No Case</th>
-                      <th className="w-[175px] text-left">Site</th>
-                      <th className="w-[90px] text-center">NCAL</th>
-                      <th className="w-[80px] text-center">Spt. Level</th>
-                      <th className="w-[72px] text-center">Status</th>
-                      <th className="w-[62px] text-center">Lv</th>
-                      <th className="w-[145px] text-left">Technician</th>
-                      <th className="w-[148px] text-left">Segment / ODP</th>
-                      <th className="w-[132px] text-left">Start Open</th>
-                      <th className="w-[132px] text-left">Start Esc.</th>
-                      <th className="w-[132px] text-left">End</th>
-                      <th className="w-[82px] text-center">Gross</th>
-                      <th className="w-[82px] text-center">Nett</th>
-                      <th className="w-[132px] text-left">Pause 1 Start</th>
-                      <th className="w-[132px] text-left">Pause 1 End</th>
-                      <th className="w-[132px] text-left">Pause 2 Start</th>
-                      <th className="w-[132px] text-left">Pause 2 End</th>
-                      <th className="w-[82px] text-center">Tot. Pause</th>
-                      <th className="w-[200px] text-left">Problem</th>
-                      <th className="w-[160px] text-left">Penyebab</th>
-                      <th className="w-[160px] text-left">Action Terakhir</th>
-                      <th className="w-[120px] text-left">Klasifikasi</th>
-                      <th className="w-[62px] text-center">Pwr↓</th>
-                      <th className="w-[62px] text-center">Pwr↑</th>
+                      <th className="w-[110px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">No Case</th>
+                      <th className="w-[175px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Site</th>
+                      <th className="w-[90px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">NCAL</th>
+                      <th className="w-[80px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Spt. Level</th>
+                      <th className="w-[72px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Status</th>
+                      <th className="w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Lv</th>
+                      <th className="w-[145px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Technician</th>
+                      <th className="w-[148px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Segment / ODP</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Start Open</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Start Esc.</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">End</th>
+                      <th className="w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Gross</th>
+                      <th className="w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Nett</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 1 Start</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 1 End</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 2 Start</th>
+                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 2 End</th>
+                      <th className="w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Tot. Pause</th>
+                      <th className="w-[200px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Problem</th>
+                      <th className="w-[160px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Penyebab</th>
+                      <th className="w-[160px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Action Terakhir</th>
+                      <th className="w-[120px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Klasifikasi</th>
+                      <th className="w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pwr↓</th>
+                      <th className="w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pwr↑</th>
                       <th className="w-[40px]" />
                     </tr>
                   </thead>
@@ -232,144 +228,143 @@ export default function HistoryPage() {
                       //   .dim   = muted secondary text
                       //   .bold  = primary bold (case no, site, nett dur)
                       //   .faint = very muted (pause, escalation)
-                      const dim   = { color: 'var(--text-secondary)' };
-                      const bold  = { color: 'var(--text-primary)', fontWeight: 600 };
-                      const faint = { color: 'var(--text-muted)' };
-                      const nwrap = 'ht-nowrap'; // class shorthand for fixed-format values
+                      // Style helpers mapped to JetBrains Mono and Font-Medium
+                      const dim   = 'text-base-content/60 font-medium';
+                      const bold  = 'text-base-content/90 font-semibold';
+                      const faint = 'text-base-content/40 font-medium';
+                      const nwrap = 'font-mono whitespace-nowrap text-[12px] tracking-tight tabular-nums'; // Uniform 12px
+                      const awrap = 'whitespace-normal font-sans text-[12px] leading-tight tracking-tight'; // Uniform 12px
 
                       return (
                         <tr key={row.id} className={isSel ? 'sel' : ''} onClick={() => toggleRow(row.id)}>
 
                           {/* Checkbox — hover-reveal */}
-                          <td style={{ padding: '0 8px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                          <td className="px-2 text-center" onClick={e => e.stopPropagation()}>
                             <input type="checkbox" className={`form-checkbox ht-cb`}
                               checked={isSel} onChange={() => toggleRow(row.id)} />
                           </td>
 
-                          {/* No Case — fixed width code, nowrap */}
                           <td>
-                            <span className={nwrap} style={bold}>{row.case_no || '—'}</span>
+                            <span className={`${nwrap} ${bold}`}>{row.case_no || '—'}</span>
                           </td>
 
                           {/* Site — wraps if long */}
                           <td title={siteName}>
-                            <span className="ht-wrap" style={bold}>{siteName}</span>
+                            <span className={`${awrap} ${bold}`}>{siteName}</span>
                           </td>
 
                           {/* NCAL */}
-                          <td style={{ textAlign: 'center' }}>
+                          <td className="text-center">
                             <NcalBadge value={row.ncal} />
                           </td>
 
                           {/* Support Level */}
-                          <td style={{ textAlign: 'center' }}>
-                            <span style={dim}>{sptLv}</span>
+                          <td className="text-center">
+                            <span className={dim}>{sptLv}</span>
                           </td>
 
                           {/* Status */}
-                          <td style={{ textAlign: 'center' }}>
+                          <td className="text-center">
                             <StatusPill status={row.status} />
                           </td>
 
                           {/* Level */}
-                          <td style={{ textAlign: 'center' }}>
+                          <td className="text-center text-[10px]">
                             <LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)}
                               targetHours={getSLATarget(row.ncal) / 3600} />
                           </td>
 
                           {/* Technician — wraps if long */}
                           <td title={row.technician_name}>
-                            <span className="ht-wrap" style={dim}>{row.technician_name || '—'}</span>
+                            <span className={`${awrap} ${dim}`}>{row.technician_name || '—'}</span>
                           </td>
 
                           {/* Segment / ODP — wraps */}
                           <td title={segOdp}>
-                            <span className="ht-wrap" style={faint}>{segOdp}</span>
+                            <span className={`${awrap} ${faint}`}>{segOdp}</span>
                           </td>
 
                           {/* Start Open — fixed format, nowrap */}
                           <td>
-                            <span className={nwrap} style={dim}>{formatDateTime(row.start_time) || '—'}</span>
+                            <span className={`${nwrap} ${dim}`}>{formatDateTime(row.start_time) || '—'}</span>
                           </td>
 
                           {/* Start Escalation */}
                           <td>
-                            <span className={nwrap} style={faint}>{formatDateTime(row.escalation_time) || '—'}</span>
+                            <span className={`${nwrap} ${faint}`}>{formatDateTime(row.escalation_time) || '—'}</span>
                           </td>
 
                           {/* End */}
                           <td>
-                            <span className={nwrap} style={dim}>{formatDateTime(row.end_time) || '—'}</span>
+                            <span className={`${nwrap} ${dim}`}>{formatDateTime(row.end_time) || '—'}</span>
                           </td>
 
                           {/* Gross Duration */}
-                          <td style={{ textAlign: 'center' }}>
-                            <span className={nwrap} style={faint}>{fmtDur(grossSec)}</span>
+                          <td className="text-center">
+                            <span className={`${nwrap} ${faint}`}>{fmtDur(grossSec)}</span>
                           </td>
 
                           {/* Nett Duration — primary/bold */}
-                          <td style={{ textAlign: 'center' }}>
-                            <span className={nwrap} style={bold}>{fmtDur(nettSec)}</span>
+                          <td className="text-center">
+                            <span className={`${nwrap} ${bold}`}>{fmtDur(nettSec)}</span>
                           </td>
 
                           {/* Pause 1 Start */}
-                          <td><span className={nwrap} style={faint}>{formatDateTime(row.pause1_start) || '—'}</span></td>
+                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_start) || '—'}</span></td>
 
                           {/* Pause 1 End */}
-                          <td><span className={nwrap} style={faint}>{formatDateTime(row.pause1_end) || '—'}</span></td>
+                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_end) || '—'}</span></td>
 
                           {/* Pause 2 Start */}
-                          <td><span className={nwrap} style={faint}>{formatDateTime(row.pause2_start) || '—'}</span></td>
+                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_start) || '—'}</span></td>
 
                           {/* Pause 2 End */}
-                          <td><span className={nwrap} style={faint}>{formatDateTime(row.pause2_end) || '—'}</span></td>
+                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_end) || '—'}</span></td>
 
                           {/* Total Pause */}
-                          <td style={{ textAlign: 'center' }}>
-                            <span className={nwrap} style={faint}>{fmtDur(pauseSec)}</span>
+                          <td className="text-center">
+                            <span className={`${nwrap} ${faint}`}>{fmtDur(pauseSec)}</span>
                           </td>
 
                           {/* Problem — wrap max 3 lines */}
                           <td title={row.initial_problem}>
-                            <span className="ht-wrap" style={dim}>{row.initial_problem || ''}</span>
+                            <span className={`${awrap} ${dim}`}>{row.initial_problem || ''}</span>
                           </td>
 
                           {/* Penyebab */}
                           <td title={row.root_cause}>
-                            <span className="ht-wrap" style={dim}>{row.root_cause || ''}</span>
+                            <span className={`${awrap} ${dim}`}>{row.root_cause || ''}</span>
                           </td>
 
                           {/* Action Terakhir */}
                           <td title={row.last_action}>
-                            <span className="ht-wrap" style={dim}>{row.last_action || ''}</span>
+                            <span className={`${awrap} ${dim}`}>{row.last_action || ''}</span>
                           </td>
 
                           {/* Klasifikasi — wraps */}
                           <td title={row.classification_name || row.klasifikasi}>
-                            <span className="ht-wrap" style={dim}>{row.classification_name || row.klasifikasi || ''}</span>
+                            <span className={`${awrap} ${dim}`}>{row.classification_name || row.klasifikasi || ''}</span>
                           </td>
 
                           {/* Power Before */}
-                          <td style={{ textAlign: 'center' }}>
-                            <span className={nwrap}
-                              style={{ color: row.power_before != null ? 'var(--info)' : 'transparent' }}>
+                          <td className="text-center">
+                            <span className={`${nwrap} text-info`}>
                               {row.power_before != null ? row.power_before : ''}
                             </span>
                           </td>
 
                           {/* Power After */}
-                          <td style={{ textAlign: 'center' }}>
-                            <span className={nwrap}
-                              style={{ color: row.power_after != null ? 'var(--success)' : 'transparent' }}>
+                          <td className="text-center">
+                            <span className={`${nwrap} text-success`}>
                               {row.power_after != null ? row.power_after : ''}
                             </span>
                           </td>
 
                           {/* Detail */}
-                          <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                            <button className="btn btn-ghost btn-icon btn-sm"
+                          <td className="text-center" onClick={e => e.stopPropagation()}>
+                            <button className="btn btn-ghost btn-sm"
                               onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
-                              <Eye size={13} strokeWidth={1.5} className="text-accent" />
+                              <Eye size={16} className="text-accent" />
                             </button>
                           </td>
                         </tr>

@@ -74,177 +74,106 @@ export default function NotificationBell() {
     setOpen(false);
     if (n.incident_id) navigate(`/incidents/${n.incident_id}`);
     fetchNotifications();
-  };
-
-  return (
-    <div style={{ position: 'relative' }} ref={panelRef}>
+  };  return (
+    <div className="dropdown dropdown-end" ref={panelRef}>
       {/* Bell Button */}
       <button
-        className="theme-toggle"
-        onClick={() => setOpen(v => !v)}
+        tabIndex={0}
+        className="btn btn-ghost btn-circle btn-sm relative"
         aria-label="Notifications"
         title="Notifications"
-        style={{ position: 'relative' }}
       >
-        <Bell size={15} style={{ color: unread > 0 ? 'var(--accent-light)' : 'currentColor' }} />
+        <Bell size={18} className={unread > 0 ? 'text-primary' : 'opacity-60'} />
         {unread > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: 3, right: 3,
-            width: 8, height: 8,
-            borderRadius: '50%',
-            background: 'var(--danger)',
-            border: '1.5px solid var(--bg-surface)',
-            animation: 'pulse 2s infinite',
-          }} />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error border border-base-100 animate-pulse" />
         )}
       </button>
 
       {/* Dropdown Panel */}
-      {open && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 8px)',
-          right: 0,
-          width: 360,
-          maxHeight: 480,
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius)',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.45)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          zIndex: 2000,
-          animation: 'fadeIn 0.15s ease',
-        }}>
-          {/* Header */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0.75rem 1rem',
-            borderBottom: '1px solid var(--border)',
-            background: 'var(--surface-0)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Bell size={14} style={{ color: 'var(--accent)' }} />
-              <span style={{ fontWeight: 700, fontSize: '0.866rem', color: 'var(--text-primary)' }}>
-                Recent Updates
+      <div tabIndex={0} className="dropdown-content z-[2000] menu p-0 shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-base-100/95 backdrop-blur-xl rounded-2xl w-80 md:w-[400px] mt-3 overflow-hidden flex flex-col max-h-[520px]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 bg-base-100/50">
+          <div className="flex items-center gap-2.5">
+            <span className="font-bold text-[10px] tracking-[0.15em] text-base-content/40 uppercase">
+              Recent Updates
+            </span>
+            {unread > 0 && (
+              <span className="badge badge-primary badge-sm font-bold text-[9px] h-5 rounded-md px-1.5 animate-pulse">
+                {unread} NEW
               </span>
-              {unread > 0 && (
-                <span style={{
-                  background: 'var(--danger)',
-                  color: '#fff',
-                  fontSize: '0.643rem',
-                  fontWeight: 700,
-                  borderRadius: 99,
-                  padding: '1px 6px',
-                  lineHeight: 1.6,
-                }}>
-                  {unread} new
-                </span>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {unread > 0 && (
-                <button
-                  onClick={handleMarkAllRead}
-                  className="btn btn-ghost btn-sm"
-                  style={{ fontSize: '0.714rem', gap: 4 }}
-                  title="Mark all as read"
-                >
-                  <CheckCheck size={12} />
-                  All read
-                </button>
-              )}
-              <button
-                onClick={() => setOpen(false)}
-                className="btn btn-ghost btn-sm btn-square"
-                aria-label="Close"
-              >
-                <X size={14} />
-              </button>
-            </div>
+            )}
           </div>
+          <div className="flex items-center">
+            {unread > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="btn btn-ghost btn-xs text-[9px] font-bold uppercase tracking-[0.15em] gap-1.5 text-primary hover:bg-primary/10 rounded-md"
+                title="Mark all as read"
+              >
+                <CheckCheck size={12} />
+                Mark all read
+              </button>
+            )}
+          </div>
+        </div>
 
-          {/* List */}
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-            {notifications.length === 0 ? (
-              <div style={{
-                padding: '2.5rem 1rem',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.8rem',
-              }}>
-                <Bell size={28} style={{ opacity: 0.2, marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
-                No notifications yet
+        {/* List */}
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
+          {notifications.length === 0 ? (
+            <div className="py-16 px-6 text-center opacity-30 flex flex-col items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-200 flex items-center justify-center">
+                <Bell size={24} />
               </div>
-            ) : (
-              notifications.map(n => (
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em]">No notifications yet</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5 p-3">
+              {notifications.map(n => (
                 <div
                   key={n.id}
                   onClick={() => handleClickNotif(n)}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderBottom: '1px solid var(--border)',
-                    cursor: 'pointer',
-                    background: n.is_read ? 'transparent' : 'var(--accent-subtle)',
-                    borderLeft: `3px solid ${n.is_read ? 'transparent' : 'var(--accent)'}`,
-                    transition: 'background var(--t-fast)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'transparent' : 'var(--accent-subtle)'}
+                  className={`group relative flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all duration-300 ${
+                    n.is_read 
+                    ? 'bg-transparent text-base-content/50 hover:bg-base-content/5' 
+                    : 'bg-primary/5 text-base-content shadow-sm hover:bg-primary/10'
+                  }`}
                 >
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8,
-                  }}>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      fontWeight: n.is_read ? 400 : 600,
-                      color: n.is_read ? 'var(--text-secondary)' : 'var(--text-primary)',
-                      lineHeight: 1.45,
-                      flex: 1,
-                    }}>
+                  <div className="flex justify-between items-start gap-4">
+                    <span className={`text-[13.5px] leading-relaxed tracking-tight ${n.is_read ? 'font-medium' : 'font-bold text-base-content'}`}>
                       {n.message}
                     </span>
                     {n.incident_id && (
-                      <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 2 }} />
+                      <ExternalLink size={12} className="text-base-content/20 group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
                     )}
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.714rem', color: 'var(--text-muted)' }}>
-                      {formatDateTime(n.created_at)}
-                    </span>
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-mono font-bold text-base-content/30 uppercase tracking-[0.15em]">
+                        {formatDateTime(n.created_at)}
+                      </span>
+                    </div>
                     {!n.is_read && (
-                      <span style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: 'var(--accent)',
-                        display: 'inline-block',
-                      }} />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-bold text-primary uppercase tracking-[0.15em]">New</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]" />
+                      </div>
                     )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer */}
-          {notifications.length > 0 && (
-            <div style={{
-              padding: '0.5rem 1rem',
-              borderTop: '1px solid var(--border)',
-              fontSize: '0.714rem',
-              color: 'var(--text-muted)',
-              background: 'var(--surface-0)',
-              textAlign: 'center',
-            }}>
-              {notifications.length} total notifications
+              ))}
             </div>
           )}
         </div>
-      )}
+
+        {/* Footer */}
+        {notifications.length > 0 && (
+          <div className="px-5 py-3 bg-base-200/30 text-center">
+            <span className="text-[10px] font-bold text-base-content/30 tracking-[0.15em] uppercase">
+              End of notifications
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -29,7 +29,7 @@ function LiveClock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="topbar-time">
+    <span className="font-mono tracking-tighter text-base-content/40 font-bold uppercase text-[10px]">
       {time.toLocaleString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
     </span>
   );
@@ -43,37 +43,36 @@ export default function Topbar() {
   const parts = location.pathname.split('/').filter(Boolean);
 
   return (
-    <div className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-40 px-4 min-h-[64px]">
-      <div className="flex-none lg:hidden mr-2">
-        <label htmlFor="main-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost btn-sm">
+    <div className="navbar bg-base-100 h-14 min-h-[3.5rem] sticky top-0 z-40 px-4 transition-colors">
+      <div className="navbar-start w-auto lg:w-1/2">
+        <label htmlFor="main-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost lg:hidden mr-2">
           <Menu size={20} />
         </label>
-      </div>
-
-      <div className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden">
-        <div className="breadcrumbs text-sm h-full flex items-center">
+        <div className="breadcrumbs text-[10px] hidden sm:block">
           <ul>
-            <li><span className="opacity-60 text-[10px] uppercase tracking-widest font-bold">IMMS</span></li>
+            <li><span className="text-base-content/40 tracking-[0.15em] font-bold uppercase">IMMS</span></li>
             {parts.map((p, i) => (
               <li key={i}>
                 {i === parts.length - 1
-                  ? <span className="font-semibold text-base-content">{TITLES[location.pathname] || p}</span>
-                  : <span className="capitalize">{p}</span>
+                  ? <span className="font-bold text-base-content uppercase tracking-tight">{TITLES[location.pathname] || p}</span>
+                  : <span className="capitalize font-medium opacity-40">{p}</span>
                 }
               </li>
             ))}
-            {parts.length === 0 && <li><span className="font-semibold text-base-content">Dashboard</span></li>}
+            {parts.length === 0 && <li><span className="font-bold text-base-content uppercase tracking-tight">Dashboard</span></li>}
           </ul>
         </div>
       </div>
 
-      <div className="flex-none gap-2 hidden sm:flex items-center">
-        {/* Time */}
-        <div className="text-xs font-mono font-medium opacity-70 px-2 mr-2">
+      <div className="navbar-center lg:hidden">
+        <span className="font-semibold">{TITLES[location.pathname] || parts[parts.length - 1] || 'Dashboard'}</span>
+      </div>
+
+      <div className="navbar-end w-full lg:w-1/2 gap-2">
+        <div className="hidden sm:flex items-center px-2">
           <LiveClock />
         </div>
         
-        {/* Theme toggle */}
         <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm">
           <input type="checkbox" onChange={toggleTheme} checked={theme === 'dark'} />
           <Sun className="swap-on w-[18px] h-[18px]" />
@@ -82,9 +81,8 @@ export default function Topbar() {
         
         <NotificationBell />
 
-        {/* Role badge */}
-        <div className="badge badge-primary badge-soft badge-sm ml-2 font-bold tracking-widest gap-1 uppercase rounded-md h-7">
-          <Shield size={12} />
+        <div className="badge badge-primary badge-soft badge-xs font-bold tracking-[0.15em] gap-1.5 uppercase rounded h-6 px-2.5">
+          <Shield size={10} />
           {user?.role}
         </div>
       </div>

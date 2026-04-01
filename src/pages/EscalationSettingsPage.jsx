@@ -107,15 +107,15 @@ export default function EscalationSettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 font-sans">
+    <div className="flex flex-col gap-6">
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold flex items-center gap-2">
-            <Settings size={18} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: 8 }} />
+          <div className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Settings size={18} />
             Escalation Settings
           </div>
-          <div className="text-sm opacity-70">Configure automated notifications via Webhook endpoints</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Configure automated notifications via Webhook endpoints</div>
         </div>
         <div className="flex items-center gap-2">
           <button className="btn btn-ghost btn-sm" onClick={handleTest} disabled={testing || !cfg.webhook_url}>
@@ -130,88 +130,99 @@ export default function EscalationSettingsPage() {
       {/* Main layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
         {/* Left: config form */}
-        <div className="flex flex-col gap-6 font-sans">
+        <div className="flex flex-col gap-6">
           {/* Webhook config */}
-          <div className="card bg-base-200 border border-base-300 shadow-sm">
-            <div className="card-body pb-3 border-b border-base-300">
-              <div>
-                <div className="card-title text-sm">Webhook Configuration</div>
-                <div className="text-xs opacity-70">Set up platforms and notification endpoint URLs</div>
-              </div>
-              {/* Active status indicator */}
-              <div className="status-row">
-                <div className={`status-dot ${cfg.is_active ? 'status-dot-active' : 'status-dot-inactive'}`} />
-                <span className="text-xs opacity-70">
-                  {cfg.is_active ? 'Active' : 'Inactive'}
-                </span>
+          <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">
+            <div className="p-8 bg-base-200/30">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight text-base-content">Core Configuration</h1>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 mt-1">Notification endpoints & Global Status</p>
+                </div>
+                {/* Active status indicator */}
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${cfg.is_active ? 'bg-success/10 text-success' : 'bg-base-300/30 text-base-content/30'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${cfg.is_active ? 'bg-success animate-pulse' : 'bg-base-content/10'}`} />
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">
+                    {cfg.is_active ? 'Live' : 'Offline'}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="card-body pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-                <div className="form-control">
-                  <label className="label-text text-sm">Platform</label>
-                  <select className="select select-bordered select-md " value={cfg.type} onChange={e => setF('type', e.target.value)}>
-                    <option value="telegram">Telegram Bot</option>
-                    <option value="whatsapp">WhatsApp API</option>
-                    <option value="custom">Custom Webhook</option>
+            <div className="p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="form-control w-full">
+                  <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Integration Platform</span></label>
+                  <select className="select select-bordered select-md w-full font-bold text-[13.5px] tracking-tight h-12 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
+                    <option value="telegram">Telegram Protocol</option>
+                    <option value="whatsapp">WhatsApp Business API</option>
+                    <option value="custom">Standard Webhook (JSON)</option>
                   </select>
                 </div>
-                <div className="form-control">
-                  <label className="label-text text-sm">Notification Status</label>
-                  <div style={{ paddingTop: 10 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                <div className="form-control w-full">
+                  <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Service Enforcement</span></label>
+                  <div className="flex items-center h-12">
+                    <label className="label cursor-pointer justify-start gap-4 p-0">
                       <input
-                        type="checkbox" checked={!!cfg.is_active}
+                        type="checkbox" 
+                        className="toggle toggle-primary toggle-sm"
+                        checked={!!cfg.is_active}
                         onChange={e => setF('is_active', e.target.checked)}
-                        style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
                       />
-                      <span style={{ fontSize: '0.857rem', fontWeight: 500 }}>Enable notification delivery</span>
+                      <span className="label-text text-[13.5px] font-bold tracking-tight text-base-content/70">Enable automated event pushing</span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="form-control" style={{ marginBottom: '0.75rem' }}>
-                <label className="label-text text-sm">
-                  {cfg.type === 'telegram' ? 'Webhook URL — Internal Coordination Group' : 'Webhook URL (Internal)'} *
+              <div className="form-control w-full">
+                <label className="label pb-2">
+                  <span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+                    {cfg.type === 'telegram' ? 'Internal Coordination Endpoint' : 'Internal Webhook Resource'}
+                  </span>
                 </label>
                 <input
-                  type="url" className="input input-bordered input-md "
+                  type="url" 
+                  className="input input-bordered input-md w-full font-mono font-bold text-[12px] h-12 rounded-lg bg-base-200/30 focus:bg-base-100 transition-all font-bold"
                   value={cfg.webhook_url || ''}
                   onChange={e => setF('webhook_url', e.target.value)}
-                  placeholder="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<INTERNAL>"
+                  placeholder="https://core-api.v1/..."
                 />
               </div>
 
-              <div className="form-control">
-                <label className="label-text text-sm">
-                  {cfg.type === 'telegram' ? 'Webhook URL — Vendor / MO Group' : 'Webhook URL (Vendor)'}
+              <div className="form-control w-full">
+                <label className="label pb-2">
+                  <span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+                    {cfg.type === 'telegram' ? 'Vendor / Operation Endpoint' : 'External Webhook Resource'}
+                  </span>
                 </label>
                 <input
-                  type="url" className="input input-bordered input-md "
+                  type="url" 
+                  className="input input-bordered input-md w-full font-mono font-bold text-[12px] h-12 rounded-lg bg-base-200/30 focus:bg-base-100 transition-all font-bold"
                   value={cfg.webhook_url_vendor || ''}
                   onChange={e => setF('webhook_url_vendor', e.target.value)}
-                  placeholder="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<VENDOR>"
+                  placeholder="https://vendor-api.v1/..."
                 />
               </div>
             </div>
           </div>
 
           {/* Template editing */}
-          <div className="card bg-base-200 border border-base-300 shadow-sm">
-            <div className="card-body pb-3 border-b border-base-300">
-              <div>
-                <div className="card-title text-sm">Message Templates</div>
-                <div className="text-xs opacity-70">OPEN & CLOSE message templates per NCAL segment</div>
-              </div>
+          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
+            <div className="p-6 bg-base-200/30">
+              <h3 className="text-base font-bold">Message Templates</h3>
+              <p className="text-xs opacity-60">OPEN & CLOSE message templates per NCAL segment</p>
             </div>
-            <div className="card-body pt-4">
+            <div className="p-0">
               {/* Tab bar */}
-              <div className="tab-bar">
+              <div className="flex bg-base-200 p-2 gap-1 overflow-x-auto no-scrollbar">
                 {segments.map(seg => (
                   <button
                     key={seg}
-                    className={`tab-btn${previewNcal === seg ? ' active' : ''}`}
+                    className={`px-6 py-2.5 text-[10px] font-bold tracking-[0.15em] uppercase transition-all rounded-lg ${
+                      previewNcal === seg 
+                        ? 'bg-primary text-primary-content shadow-lg shadow-primary/20' 
+                        : 'text-base-content/40 hover:bg-base-300 hover:text-base-content/60'
+                    }`}
                     onClick={() => setPreviewNcal(seg)}
                   >
                     {seg}
@@ -219,56 +230,75 @@ export default function EscalationSettingsPage() {
                 ))}
               </div>
 
-              <div className="form-section">
-                <div className="form-section-title">Template OPEN — {previewNcal}</div>
-                <div className="form-control">
-                  <label className="label-text text-sm">Internal Group</label>
-                  <textarea
-                    className="textarea textarea-bordered textarea-md " rows={5}
-                    value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
-                    onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
-                    placeholder="Notification template for internal groups..."
-                  />
-                </div>
-                {previewNcal === 'YELLOW' && (
-                  <div className="form-control">
-                    <label className="label-text text-sm">Vendor / MO Group</label>
-                    <textarea
-                      className="textarea textarea-bordered textarea-md " rows={5}
-                      value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
-                      onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
-                      placeholder="Template for Maintenance Order to vendors..."
-                    />
+              <div className="p-8 space-y-8">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Deployment Template — {previewNcal}</span>
                   </div>
-                )}
-              </div>
-
-              <div className="form-section">
-                <div className="form-section-title">Template CLOSE — {previewNcal}</div>
-                <div className="form-control">
-                  <label className="label-text text-sm">Internal Group</label>
-                  <textarea
-                    className="textarea textarea-bordered textarea-md " rows={5}
-                    value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
-                    onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
-                    placeholder="Resolution notification template for internal groups..."
-                  />
-                </div>
-                {previewNcal === 'YELLOW' && (
-                  <div className="form-control">
-                    <label className="label-text text-sm">Vendor / MO Group</label>
-                    <textarea
-                      className="textarea textarea-bordered textarea-md " rows={5}
-                      value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
-                      onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
-                      placeholder="Close order template for vendors..."
-                    />
+                  <div className="grid grid-cols-1 gap-6">
+                    <label className="form-control w-full">
+                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Internal Coordination Payload</span></div>
+                      <textarea
+                        className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                        rows={6}
+                        value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
+                        onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
+                        placeholder="Define internal notification schema..."
+                      />
+                    </label>
+                    {previewNcal === 'YELLOW' && (
+                      <label className="form-control w-full">
+                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Vendor / MO Protocol</span></div>
+                        <textarea
+                          className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                          rows={6}
+                          value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
+                          onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
+                          placeholder="Define vendor maintenance order schema..."
+                        />
+                      </label>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="info-banner info-banner-accent" style={{ marginTop: '0.25rem' }}>
-                Empty fields will automatically fall back to the Global Template.
+                <div className="divider opacity-10"></div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-5 bg-success rounded-full" />
+                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Resolution Template — {previewNcal}</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6">
+                    <label className="form-control w-full">
+                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Internal Resolution Payload</span></div>
+                      <textarea
+                        className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                        rows={6}
+                        value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
+                        onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
+                        placeholder="Define internal resolution schema..."
+                      />
+                    </label>
+                    {previewNcal === 'YELLOW' && (
+                      <label className="form-control w-full">
+                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Vendor Clearance Protocol</span></div>
+                        <textarea
+                          className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                          rows={6}
+                          value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
+                          onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
+                          placeholder="Define vendor clearance schema..."
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div className="alert alert-info bg-info/10 text-info-content rounded-lg p-3">
+                  <Info size={16} />
+                  <span className="text-xs font-medium">Empty fields will automatically fall back to the Global Template.</span>
+                </div>
               </div>
             </div>
           </div>
@@ -276,34 +306,35 @@ export default function EscalationSettingsPage() {
 
         {/* Right: sticky preview */}
         <div className="lg:sticky lg:top-6 h-fit">
-          <div className="card bg-base-200 border border-base-300 shadow-sm">
-            <div className="card-body pb-3 border-b border-base-300">
-              <div>
-                <div className="card-title text-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Smartphone size={18} /> Notification Preview</div>
-                <div className="text-xs opacity-70">Real-time preview based on active templates</div>
-              </div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {['open', 'close'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setPreviewType(t)}
-                    className={`btn btn-sm ${previewType === t ? 'btn-primary' : 'btn-ghost'}`}
-                    style={{ textTransform: 'capitalize', minHeight: 28, padding: '0 10px' }}
-                  >
-                    {t}
-                  </button>
-                ))}
+          <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">
+            <div className="p-6 bg-base-200/30">
+               <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="card-title text-base font-bold flex items-center gap-2"><Smartphone size={18} className="text-primary" /> Preview</h3>
+                  <p className="text-xs opacity-60">Mobile notification view</p>
+                </div>
+                <div className="join bg-base-200/50 p-1 rounded-lg">
+                  {['open', 'close'].map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setPreviewType(t)}
+                      className={`btn btn-xs join-item border-none ${previewType === t ? 'btn-primary shadow-sm' : 'bg-transparent opacity-60'}`}
+                      
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="card-body pt-4">
+            <div className="p-8 space-y-8">
               {/* NCAL selector */}
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <div className="flex flex-wrap gap-2">
                 {segments.map(n => (
                   <button
                     key={n}
                     onClick={() => setPreviewNcal(n)}
-                    className={`btn btn-sm ${previewNcal === n ? 'btn-secondary' : 'btn-ghost'}`}
-                    style={{ minHeight: 28, padding: '0 10px', fontWeight: 700, fontSize: '0.714rem' }}
+                    className={`btn btn-xs rounded-lg border-none h-8 px-4 transition-all ${previewNcal === n ? 'btn-primary shadow-lg shadow-primary/20' : 'bg-base-300 text-base-content/40 hover:bg-base-content/10'} font-bold text-[10px] tracking-[0.15em]`}
                   >
                     {n}
                   </button>
@@ -311,42 +342,48 @@ export default function EscalationSettingsPage() {
               </div>
 
               {/* Internal preview */}
-              <div style={{ marginBottom: '0.875rem' }}>
-                <div className="form-section-title" style={{ marginBottom: 6 }}>Internal Group — {previewNcal}</div>
-                <div className="preview-block">
-                  {renderPreview(getActiveTemplate(previewType, 'internal'), previewNcal, previewType === 'close') || <span style={{ color: 'var(--text-muted)' }}>Template is empty</span>}
+              <div className="space-y-3">
+                <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-primary" />
+                  Internal Simulation
+                </div>
+                <div className="bg-base-200/50 rounded-lg p-5 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-base-content/80 shadow-inner">
+                  {renderPreview(getActiveTemplate(previewType, 'internal'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
                 </div>
               </div>
 
               {/* Vendor preview (Yellow only or if template exists) */}
               {(previewNcal === 'YELLOW' || getActiveTemplate(previewType, 'vendor')) && (
-                <div style={{ marginBottom: '0.875rem' }}>
-                  <div className="form-section-title" style={{ marginBottom: 6 }}>
-                    Vendor / MO {previewNcal === 'YELLOW' ? '— Yellow Only' : ''}
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-warning" />
+                    Vendor Simulation
                   </div>
-                  <div className="preview-block" style={{ borderColor: 'var(--info-border)', background: 'var(--info-bg)' }}>
-                    {renderPreview(getActiveTemplate(previewType, 'vendor'), previewNcal, previewType === 'close') || <span style={{ color: 'var(--text-muted)' }}>Template is empty</span>}
+                  <div className="bg-warning/5 rounded-lg p-5 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-warning/80 shadow-inner">
+                    {renderPreview(getActiveTemplate(previewType, 'vendor'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
                   </div>
                 </div>
               )}
 
               {/* Variable Glossary */}
-              <div className="var-glossary">
-                <div className="var-glossary-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Info size={12} /> Variable Reference</div>
-                <div className="var-glossary-grid">
-                  <div><b>{'{ncal}'}</b>: Segment + Emoji</div>
-                  <div><b>{'{level}'}</b>: Incident Duration Level</div>
-                  <div><b>{'{odp}'}</b>: Distribution Name (ODP/Radio)</div>
-                  <div><b>{'{odc}'}</b>: Alias for RED (ODC)</div>
-                  <div><b>{'{pop}'}</b>: Alias for BLACK (POP)</div>
-                  <div><b>{'{osc}'}</b>: Alias for BLACK (OSC)</div>
-                  <div><b>{'{bts}'}</b>: Alias for RED (BTS)</div>
-                  <div><b>{'{brand}'}</b>: Brand / Site Name</div>
-                  <div><b>{'{duration}'}</b>: Downtime duration</div>
-                  <div><b>{'{time}'}</b>: Local time (HH:mm)</div>
-                  <div><b>{'{date}'}</b>: Date (DD Month YYYY)</div>
-                  <div><b>{'{address}'}</b>: Customer address (from master)</div>
-                  <div><b>{'{koordinat}'}</b>: Customer coordinates</div>
+               <div className="bg-primary/5 rounded-lg p-6">
+                <div className="text-[10px] font-bold text-primary uppercase tracking-[0.15em] flex items-center gap-2 mb-4">
+                  <Info size={14} /> Data Directives
+                </div>
+                <div className="grid grid-cols-1 gap-2 text-[11px] font-bold">
+                  {[
+                    ['{ncal}', 'Segment Icon'],
+                    ['{level}', 'Service Prio'],
+                    ['{odp}', 'Infra ID'],
+                    ['{brand}', 'Site Name'],
+                    ['{duration}', 'Time Metric'],
+                    ['{time}', 'Local Time'],
+                  ].map(([v, d]) => (
+                    <div key={v} className="flex justify-between items-center py-1.5 last:border-0">
+                      <span className="font-mono text-primary bg-primary/10 px-1.5 rounded">{v}</span>
+                      <span className="text-base-content/30 uppercase tracking-[0.15em] text-[10px] font-bold">{d}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

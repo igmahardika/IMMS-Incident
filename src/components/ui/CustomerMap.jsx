@@ -172,91 +172,76 @@ export default function CustomerMap({
   };
 
   return (
-    <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ height: '700px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <header style={{ 
-        padding: '1rem', 
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'var(--bg-card)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Network Infrastructure Map</h3>
+    <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col overflow-hidden h-[700px]">
+      <header className="flex items-center justify-between flex-wrap gap-4 px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md z-50">
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-bold uppercase tracking-tight text-base-content/80">Customer Density Map</h3>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5 whitespace-nowrap">Service Locations & Analytics</p>
+          </div>
           
           {(isProcessing || geocodingStatus.active || isTroubleLoading) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.25rem 0.75rem', background: 'var(--bg-elevated)', borderRadius: '99px', border: '1px solid var(--border)' }}>
-              <div className="spinner spinner-xs"></div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
+              <span className="loading loading-spinner loading-xs text-primary"></span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                 {geocodingStatus.active 
-                   ? `Pencarian Koordinat Otomatis: ${geocodingStatus.current}/${geocodingStatus.total}`
-                  : mapMode === 'trouble' && isTroubleLoading
-                  ? 'Loading Trouble Patterns...'
-                  : `Processing Nodes: ${Math.round((renderedCount / filteredCustomers.length) * 100 || 0)}%`
+                   ? `Syncing: ${geocodingStatus.current}/${geocodingStatus.total}`
+                   : isTroubleLoading ? 'Analyzing Patterns...' : `Loading Nodes...`
                 }
               </span>
             </div>
           )}
           {mapMode === 'trouble' && !isTroubleLoading && (
-            <div style={{ 
-              fontSize: '0.75rem', 
-              fontWeight: 600, 
-              color: troubleError ? '#ef4444' : troubleData.length > 0 ? '#ef4444' : 'var(--text-muted)', 
-              background: troubleError ? 'rgba(239, 68, 68, 0.1)' : troubleData.length > 0 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-elevated)', 
-              padding: '0.25rem 0.75rem', 
-              borderRadius: '99px', 
-              border: '1px solid ' + (troubleError || troubleData.length > 0 ? 'rgba(239, 68, 68, 0.2)' : 'var(--border)') 
-            }}>
+            <div className={`badge badge-sm font-bold gap-2 ${
+              troubleError || troubleData.length > 0
+                ? 'badge-error badge-outline'
+                : 'badge-ghost opacity-60'
+            }`}>
               {troubleError 
-                ? `❌ Error: ${troubleError}`
+                ? `Error: ${troubleError}`
                 : troubleData.length > 0 
-                ? `🎯 ${troubleData.length} Trouble Spots Detected` 
-                : `ℹ️ No Trouble Spots found (${startDate.split(' ')[0]} to ${endDate.split(' ')[0]})`}
+                ? `${troubleData.length} Trouble Spots` 
+                : `No Trouble Spots`}
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="flex items-center gap-3 flex-wrap">
           {showTroubleMode && (
-            <div className="btn-group" style={{ background: 'var(--bg-elevated)', padding: '2px', borderRadius: '8px' }}>
+            <div className="join bg-base-200 p-1 rounded-xl">
               {!hideCustomerPins && (
                 <button 
-                  className={`btn btn-xs ${mapMode === 'customers' ? 'btn-primary' : 'btn-ghost'}`}
+                  className={`btn btn-xs join-item border-none ${mapMode === 'customers' ? 'btn-primary shadow-sm' : 'bg-transparent text-base-content/60'}`}
                   onClick={() => setMapMode('customers')}
-                  style={{ fontSize: '0.7rem' }}
                 >
-                  Customer Pins
+                  Customers
                 </button>
               )}
               <button 
-                className={`btn btn-xs ${mapMode === 'trouble' ? 'btn-primary' : 'btn-ghost'}`}
+                className={`btn btn-xs join-item border-none ${mapMode === 'trouble' ? 'btn-error shadow-sm' : 'bg-transparent text-base-content/60'}`}
                 onClick={() => setMapMode('trouble')}
-                style={{ fontSize: '0.7rem' }}
               >
-                🔥 Trouble Spots
+                Trouble
               </button>
             </div>
           )}
           
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem' }}>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              className="input input-bordered input-md" 
-              placeholder="Search Site, Service ID, or City..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '240px', paddingLeft: '2.5rem' }}
-            />
-            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</span>
-          </div>
-            <button type="submit" className="btn btn-primary">Locate</button>
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-base-content/40 pointer-events-none text-xs">🔍</span>
+              <input 
+                type="text" 
+                className="input input-bordered input-sm pl-9 w-56 font-medium" 
+                placeholder="Site, Service ID, or City..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="btn btn-sm btn-primary font-bold">Locate</button>
             <button 
               type="button" 
-              className={`btn ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'}`}
+              className={`btn btn-sm ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'} px-3 font-bold`}
               onClick={startAutoGeocode}
-              title="Sync coordinates for sites without 📍"
-              style={{ fontSize: '0.75rem', padding: '0 0.75rem' }}
             >
               {geocodingStatus.active ? 'Syncing...' : '🔄 Sync'}
             </button>
@@ -264,17 +249,17 @@ export default function CustomerMap({
         </div>
       </header>
 
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div className="flex-1 relative">
         <MapContainer 
           center={semarangCenter} 
           zoom={12} 
-          style={{ height: '100%', width: '100%' }}
+          className="h-full w-full z-0"
           zoomControl={false}
           scrollWheelZoom={true}
         >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <ZoomControl position="bottomright" />
           <ChangeView center={viewState.center} zoom={viewState.zoom} />
@@ -287,47 +272,31 @@ export default function CustomerMap({
                 icon={createCustomMarker(c.province)}
               >
                 <Popup className="premium-popup">
-                  <div style={{ minWidth: '220px', padding: '4px' }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'flex-start',
-                      marginBottom: '8px'
-                    }}>
-                      <span style={{ 
-                        fontSize: '0.65rem', 
-                        fontWeight: 800, 
-                        textTransform: 'uppercase',
-                        color: PROVINCE_COLORS[c.province] || '#666',
-                        letterSpacing: '0.05em'
-                      }}>
+                  <div className="min-w-[220px] p-1">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-bold tracking-[0.15em] uppercase opacity-40">
                         {c.service_id}
                       </span>
-                      <span style={{ 
-                        fontSize: '0.65rem',
-                        background: 'var(--bg-elevated)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        border: '1px solid var(--border)'
-                      }}>{c.grade}</span>
+                      <div className="badge badge-neutral badge-outline font-bold text-[9px] px-1.5 py-0.5 h-auto rounded-md">
+                        {c.grade}
+                      </div>
                     </div>
                     
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{c.brand_site}</h4>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.company_name}</p>
+                    <h4 className="text-sm font-bold tracking-tight text-base-content mb-0.5">{c.brand_site}</h4>
+                    <p className="text-[11px] font-medium text-base-content/60 mb-3">{c.company_name}</p>
                     
-                    <div style={{ 
-                      fontSize: '0.7rem', 
-                      padding: '8px',
-                      background: 'var(--bg-elevated)',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border)',
-                      marginBottom: '8px'
-                    }}>
-                      <div style={{ marginBottom: '4px' }}><strong>📍 Location:</strong> {c.city || 'N/A'}</div>
-                      <div><strong>🛠️ Type:</strong> {c.service_type}</div>
+                    <div className="bg-base-200/50 border border-base-300 rounded-xl p-3 flex flex-col gap-2 mb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-base-content/40 uppercase tracking-wider">Location</span>
+                        <div className="text-[11px] font-bold text-base-content">{c.city || 'N/A'}</div>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-base-content/40 uppercase tracking-wider">Type</span>
+                        <div className="text-[11px] font-bold text-base-content">{c.service_type}</div>
+                      </div>
                     </div>
                     
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic', lineHeight: '1.4' }}>
+                    <div className="text-[10px] font-medium text-base-content/40 leading-relaxed italic border-t border-base-200 pt-2">
                       {c.address}
                     </div>
                   </div>
@@ -350,31 +319,25 @@ export default function CustomerMap({
                 }}
               >
                 <Popup className="premium-popup">
-                  <div style={{ minWidth: '220px', padding: '4px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ef4444' }}>💥 {t.incident_count > 10 ? 'HIGH' : 'ACTIVE'} FREQUENCY AREA</span>
-                      <span style={{ 
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        background: getBubbleColor(t.incident_count),
-                        color: 'white',
-                        padding: '2px 8px',
-                        borderRadius: '99px'
-                      }}>{t.incident_count} Cases</span>
+                  <div className="min-w-[220px] p-1">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-[10px] font-bold tracking-[0.15em] text-error uppercase">💥 Area Pattern</span>
+                      <div className="badge badge-error font-bold text-[9px] px-2 py-0.5 h-auto rounded-full">
+                        {t.incident_count} Cases
+                      </div>
                     </div>
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{t.brand_site}</h4>
-                    <p style={{ margin: '0 0 12px 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.company_name}</p>
+                    <h4 className="text-sm font-bold tracking-tight text-base-content mb-0.5">{t.brand_site}</h4>
+                    <p className="text-[11px] font-medium text-base-content/60 mb-3">{t.company_name}</p>
                     
-                    <div style={{ 
-                      fontSize: '0.7rem', 
-                      padding: '8px',
-                      background: 'var(--bg-elevated)',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)',
-                      marginBottom: '4px'
-                    }}>
-                      <div><strong>📅 Analysis Period:</strong> {startDate.split(' ')[0]} to {endDate.split(' ')[0]}</div>
-                      <div><strong>🕒 Last Incident:</strong> {t.last_incident_at ? new Date(t.last_incident_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</div>
+                    <div className="bg-base-200/50 border border-base-300 rounded-xl p-3.5 flex flex-col gap-3">
+                      <div className="flex justify-between items-center text-[11px]">
+                         <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Analysis Period</span>
+                         <span className="font-bold text-base-content text-right">{startDate.split(' ')[0]} to {endDate.split(' ')[0]}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                         <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Last Incident</span>
+                         <span className="font-bold text-base-content">{t.last_incident_at ? new Date(t.last_incident_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
+                      </div>
                     </div>
                   </div>
                 </Popup>
@@ -385,14 +348,15 @@ export default function CustomerMap({
         
         <style>{`
           .premium-popup .leaflet-popup-content-wrapper {
-            border-radius: 12px;
-            padding: 8px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 4px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--color-base-300);
+            background: var(--color-base-100);
           }
           .premium-popup .leaflet-popup-tip {
-            box-shadow: none;
-            border: 1px solid var(--border);
+             background: var(--color-base-100);
+             border: 1px solid var(--color-base-300);
           }
         `}</style>
       </div>

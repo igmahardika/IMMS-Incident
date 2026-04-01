@@ -56,10 +56,8 @@ const menuGroups = [
 ];
 
 export default function Sidebar({ mobileOpen, onClose }) {
-  const [collapsed, setCollapsed] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const { user, logout } = useAuth();
-  const { theme, toggle: toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -68,7 +66,6 @@ export default function Sidebar({ mobileOpen, onClose }) {
       navigate('/login');
     } else {
       setConfirmLogout(true);
-      // Auto-reset confirm state after 3s if user doesn't click again
       setTimeout(() => setConfirmLogout(false), 3000);
     }
   };
@@ -80,36 +77,35 @@ export default function Sidebar({ mobileOpen, onClose }) {
     }))
     .filter(group => group.items.length > 0);
 
-  const isCollapsed = collapsed && !mobileOpen;
-
   return (
-    <aside className="w-64 min-h-full bg-base-300 text-base-content flex flex-col shadow-xl">
-      {/* Header/Logo */}
-      <div className="flex items-center gap-3 p-4 border-b border-base-200 min-h-[64px]">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-content">
-          <Zap size={18} strokeWidth={1.5} />
+    <ul className="menu bg-base-100 text-base-content min-h-full w-60 p-2.5 flex flex-col flex-nowrap [&_li]:border-none">
+      {/* Header/Logo strictly as a menu item without hover standard effects */}
+      <li className="mb-4">
+        <div className="flex items-center gap-3 p-2 bg-transparent hover:bg-transparent active:bg-transparent cursor-default">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-content">
+            <Zap size={18} strokeWidth={1.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-lg leading-tight tracking-tighter text-base-content">IMMS</div>
+            <div className="text-[9px] text-base-content/40 uppercase tracking-[0.2em] font-bold">Enterprise</div>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-bold text-lg leading-tight tracking-tight">IMMS</div>
-          <div className="text-xs opacity-60 uppercase tracking-widest font-semibold">Incident Mgmt</div>
-        </div>
-      </div>
+      </li>
 
-      {/* Nav using daisyUI menu */}
-      <ul className="menu menu-md px-4 py-4 flex-1 overflow-y-auto w-full">
+      <div className="flex-1 overflow-y-auto w-full">
         {filteredGroups.map((group) => (
-          <li key={group.label} className="mt-4 first:mt-0">
-            <h2 className="menu-title text-[10px] uppercase opacity-50 tracking-widest">{group.label}</h2>
-            <ul>
+          <li key={group.label} className="mt-2.5 first:mt-0">
+            <h2 className="menu-title text-[10px] font-bold uppercase text-base-content/40 tracking-[0.15em] mb-1">{group.label}</h2>
+            <ul className="gap-0.5 bg-transparent w-full p-0">
               {group.items.map((item) => (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
                     end={item.to === '/'}
-                    className={({ isActive }) => `${isActive ? 'active' : ''}`}
+                    className={({ isActive }) => `text-[13.5px] font-semibold py-1.5 transition-colors ${isActive ? 'active bg-primary/10 text-primary' : 'text-base-content/80 hover:bg-base-200'}`}
                     onClick={mobileOpen ? onClose : undefined}
                   >
-                    <item.icon size={18} strokeWidth={1.5} />
+                    <span className="flex items-center justify-center w-5 opacity-70"><item.icon size={16} strokeWidth={1.5} /></span>
                     {item.label}
                   </NavLink>
                 </li>
@@ -117,28 +113,29 @@ export default function Sidebar({ mobileOpen, onClose }) {
             </ul>
           </li>
         ))}
-      </ul>
+      </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-base-200 bg-base-300">
-        <div className="flex items-center gap-3">
+      {/* Footer Profile section as a single list item */}
+      <li className="mt-auto my-2 lg:block hidden"></li>
+      <li className="mt-auto md:mt-2">
+        <div className="flex items-center gap-3 bg-transparent hover:bg-base-200 active:bg-base-200 pt-2 transition-colors">
           <div className="avatar placeholder">
             <div className="bg-neutral text-neutral-content rounded-full w-9">
               <span className="text-sm font-semibold">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
             </div>
           </div>
           <div className="flex-1 min-w-0">
-             <div className="font-bold truncate text-sm">{user?.name}</div>
-             <div className="text-[10px] opacity-60 uppercase tracking-wider font-semibold">{user?.role}</div>
+             <div className="font-semibold truncate text-[13px] text-base-content">{user?.name}</div>
+             <div className="text-[9px] text-base-content/40 uppercase tracking-[0.1em] font-bold">{user?.role}</div>
           </div>
           <button 
-             onClick={handleLogout}
+             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLogout(); }}
              className={`btn btn-sm btn-circle btn-ghost ${confirmLogout ? 'btn-error text-error-content hover:bg-error/90' : 'text-error'}`}
           >
              {confirmLogout ? <Check size={16} /> : <LogOut size={16} />}
           </button>
         </div>
-      </div>
-    </aside>
+      </li>
+    </ul>
   );
 }

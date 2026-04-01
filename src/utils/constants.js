@@ -1,7 +1,7 @@
 export const NCAL_ORDER = ['BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 
 export const NCAL_COLORS = {
-  BLACK:  '#000000',
+  BLACK:  '#64748b',
   RED:    '#ef4444',
   ORANGE: '#f59e0b',
   YELLOW: '#eab308',

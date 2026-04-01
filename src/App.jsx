@@ -14,6 +14,7 @@ import DurationReportPage from './pages/DurationReportPage.jsx';
 import RootCausePage from './pages/RootCausePage.jsx';
 import { MasterCustomerPage, MasterClassificationPage, UserManagementPage, MasterTechnicalSupportPage, MasterDistribusiPage, MasterActionPage } from './pages/MasterDataPages.jsx';
 import EscalationSettingsPage from './pages/EscalationSettingsPage.jsx';
+import { AlertTriangle } from 'lucide-react';
 
 // ─── Theme Context ────────────────────────────────────────────────────────────
 export const ThemeContext = React.createContext({ theme: 'dark', toggle: () => {} });
@@ -33,22 +34,30 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          height: '100vh', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          background: 'var(--bg-base)', gap: 16, padding: '2rem'
-        }}>
-          <div style={{ fontSize: '2rem' }}>⚠</div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Something went wrong</div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: 420, textAlign: 'center' }}>
-            {this.state.error?.message || 'An unexpected error occurred.'}
+        <div className="min-h-screen bg-base-100 flex flex-col items-center justify-center p-8 text-center gap-6">
+          <div className="w-16 h-16 rounded-3xl bg-error/10 flex items-center justify-center text-error animate-bounce">
+            <AlertTriangle size={32} />
           </div>
-          <button
-            className="old-btn old-btn-primary"
-            onClick={() => { this.setState({ hasError: false, error: null }); }}
-          >
-            Try Again
-          </button>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-base-content">System Exception Detected</h1>
+            <p className="text-sm font-medium text-base-content/50 max-w-md leading-relaxed mx-auto">
+              {this.state.error?.message || 'An unexpected error occurred in the IMMS runtime environment.'}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <button
+              className="btn btn-primary font-bold px-8"
+              onClick={() => { window.location.reload(); }}
+            >
+              Reload Interface
+            </button>
+            <button
+              className="btn btn-ghost font-bold"
+              onClick={() => { this.setState({ hasError: false, error: null }); }}
+            >
+              Reset Session
+            </button>
+          </div>
         </div>
       );
     }
@@ -78,8 +87,8 @@ function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
 
   if (loading) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
-      <div className="spinner" />
+    <div className="min-h-screen bg-base-100 flex items-center justify-center">
+      <span className="loading loading-spinner loading-lg text-primary"></span>
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;

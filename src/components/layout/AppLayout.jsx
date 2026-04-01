@@ -24,7 +24,7 @@ export default function AppLayout({ children }) {
           <Topbar />
           
           {/* Page content */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-4 md:p-6 bg-base-200/30">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-4 md:p-5 bg-base-200">
             {children}
           </main>
         </div> 

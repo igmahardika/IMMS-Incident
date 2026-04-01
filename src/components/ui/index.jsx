@@ -1,5 +1,6 @@
 import React from 'react';
 import { NCAL_COLORS, STATUS_COLORS, ROLE_COLORS, GRADE_COLORS } from '../../utils/constants.js';
+import { getNcalBadgeClass } from '../../utils/themeMap.js';
 
 const NCAL_DOT_COLORS = {
   BLACK: '#a78bfa',  // purple — matches ncal-black-text token
@@ -10,18 +11,10 @@ const NCAL_DOT_COLORS = {
 };
 
 export function NcalBadge({ value }) {
-  const badgeMap = {
-    BLACK: 'badge-neutral',
-    RED: 'badge-error',
-    DANGER: 'badge-error',
-    ORANGE: 'badge-warning',
-    YELLOW: 'badge-warning',
-    BLUE: 'badge-info',
-    SUCCESS: 'badge-success'
-  };
+  const badgeClass = getNcalBadgeClass(value);
   return (
-    <span className={`badge ${badgeMap[value] || 'badge-neutral'} badge-sm font-semibold uppercase`} aria-label={`NCAL ${value}`}>
-      <span className="inline-block w-1.5 h-1.5 rounded-sm bg-current shrink-0 align-middle -mt-px mr-1.5" />
+    <span className={`badge ${badgeClass} badge-soft text-[10px] h-5 px-2 border-none rounded-md font-bold uppercase tracking-[0.15em]`} aria-label={`NCAL ${value}`}>
+      <span className="inline-block w-1 h-1 rounded-full bg-current shrink-0 align-middle -mt-0.5 mr-1.5" />
       {value}
     </span>
   );
@@ -31,7 +24,7 @@ export function StatusPill({ status }) {
   const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
   const badgeMap = { open: 'badge-info', progress: 'badge-success', pending: 'badge-warning', done: 'badge-ghost' };
   return (
-    <span className={`badge ${badgeMap[status] || 'badge-ghost'} badge-sm font-semibold uppercase tracking-wider`}>
+    <span className={`badge ${badgeMap[status] || 'badge-ghost'} badge-soft text-[10px] h-5 px-2 border-none rounded-md font-bold uppercase tracking-[0.15em]`}>
       {labels[status] || status}
     </span>
   );
@@ -39,7 +32,7 @@ export function StatusPill({ status }) {
 
 export function RoleBadge({ role }) {
   return (
-    <span className="badge badge-soft badge-neutral badge-sm font-semibold uppercase tracking-wider">
+    <span className="badge badge-soft badge-neutral badge-sm border-none rounded-lg font-semibold uppercase tracking-wider">
       {role}
     </span>
   );
@@ -48,7 +41,7 @@ export function RoleBadge({ role }) {
 export function GradeBadge({ grade }) {
   const colorMap = { VIP: 'badge-primary', Gold: 'badge-warning', Silver: 'badge-neutral', Bronze: 'badge-ghost' };
   return (
-    <span className={`badge ${colorMap[grade] || 'badge-ghost'} badge-sm font-semibold`}>
+    <span className={`badge ${colorMap[grade] || 'badge-ghost'} badge-soft badge-sm border-none rounded-lg font-semibold`}>
       {grade}
     </span>
   );
@@ -56,7 +49,7 @@ export function GradeBadge({ grade }) {
 
 export function StatusBadge({ active }) {
   return (
-    <span className={`badge ${active ? 'badge-success badge-soft' : 'badge-ghost'} badge-sm font-semibold uppercase tracking-wider gap-1`}>
+    <span className={`badge ${active ? 'badge-success badge-soft' : 'badge-ghost'} badge-sm border-none rounded-lg font-semibold uppercase tracking-wider gap-1`}>
       {active ? 'Active' : 'Inactive'}
     </span>
   );
@@ -64,27 +57,19 @@ export function StatusBadge({ active }) {
 
 export function AccentBadge({ text }) {
   return (
-    <span className="badge badge-primary badge-soft badge-sm font-semibold">{text}</span>
+    <span className="badge badge-primary badge-soft badge-sm border-none rounded-lg font-semibold">{text}</span>
   );
 }
 
 export function DurationBadge({ seconds, target }) {
-  if (seconds == null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+  if (seconds == null) return <span className="text-[color:var(--text-muted)]">—</span>;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   const isExceeded = target && seconds > target;
   return (
-    <span className="tabular" style={{ 
-      color: isExceeded ? 'var(--danger)' : 'var(--text-secondary)',
-      fontSize: 'var(--f-sm)',
-      fontWeight: 500,
-      fontFamily: 'var(--font-mono)',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4
-    }}>
-      {isExceeded && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger)' }} />}
+    <span className={`font-mono text-sm font-medium inline-flex items-center gap-1 ${isExceeded ? 'text-error' : 'text-base-content/70'}`}>
+      {isExceeded && <span className="inline-block w-1.5 h-1.5 rounded-full bg-error animate-pulse" />}
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
     </span>
   );
@@ -112,38 +97,32 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
   const isUrgent = elapsed > 14400; // >4 hours
   const isExceeded = target && elapsed > target;
   
-  const stateGroup = paused ? 'warning' : isExceeded || isUrgent ? 'danger' : isWarning ? 'warning' : 'success';
-  const color = `var(--${stateGroup})`;
-  const border = `var(--${stateGroup}-border)`;
-  const bg = `var(--${stateGroup}-bg)`;
+  const statusClasses = {
+    success: 'text-success bg-success shadow-success/20',
+    warning: 'text-warning bg-warning shadow-warning/20',
+    danger:  'text-error bg-error shadow-error/40 animate-pulse',
+    paused:  'text-base-content/40 bg-base-content/40 shadow-none'
+  };
+
+  const state = paused ? 'paused' : (isExceeded || isUrgent) ? 'danger' : isWarning ? 'warning' : 'success';
 
   return (
-    <span
-      className="tabular"
-      style={{ 
-        color, 
-        fontSize: 'var(--f-sm)',
-        fontWeight: 600,
-        fontFamily: 'var(--font-mono)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6
-      }}
-    >
-      <span style={{ 
-        width: 6, height: 6, borderRadius: '50%', 
-        background: color, 
-        boxShadow: !paused && (isUrgent || isExceeded) ? `0 0 8px ${color}` : 'none',
-        display: 'inline-block' 
-      }} />
+    <span className={`font-mono text-xs font-bold inline-flex items-center gap-1.5 ${statusClasses[state].split(' ')[0]}`}>
+      <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${statusClasses[state].split(' ')[1]} ${!paused && (isUrgent || isExceeded) ? 'shadow-[0_0_8px_rgba(var(--color-error),0.5)]' : ''}`} />
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
-      {paused && <span style={{ fontSize: '10px', opacity: 0.6 }}>PAUSED</span>}
+      {paused && <span className="text-[9px] font-bold tracking-[0.15em] opacity-60 ml-0.5 uppercase">PAUSED</span>}
     </span>
   );
 }
 
-export function Spinner({ size = 'md' }) {
-  return <div className={`spinner${size === 'sm' ? ' spinner-sm' : ''}`} />;
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+export function Spinner({ size = 'md', className = '' }) {
+  const sizes = { sm: 'loading-sm', md: 'loading-md', lg: 'loading-lg' };
+  return (
+    <div className="flex items-center justify-center p-4">
+      <span className={`loading loading-spinner text-primary ${sizes[size] || 'loading-md'} ${className}`}></span>
+    </div>
+  );
 }
 
 export function Modal({ open, onClose, title, children, footer, size = '' }) {
@@ -156,24 +135,24 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
   }, [open, onClose]);
 
   if (!open) return null;
-  const sizeMap = { 'lg': 'max-w-3xl', 'xl': 'max-w-5xl', 'sm': 'max-w-sm' };
+  const sizeMap = { 'sm': 'max-w-sm', 'md': 'max-w-md', 'lg': 'max-w-lg', '2xl': 'max-w-2xl', '3xl': 'max-w-3xl', 'xl': 'max-w-5xl' };
   return (
     <dialog className="modal modal-open" open>
-      <div className={`modal-box p-0 flex flex-col ${sizeMap[size] || 'max-w-lg'}`}>
-        <div className="flex justify-between items-center p-4 border-b border-base-200 bg-base-100">
-          <h3 className="font-bold text-lg leading-none">{title}</h3>
-          <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose} aria-label="Close">✕</button>
+      <div className={`modal-box p-0 flex flex-col shadow-2xl overflow-hidden rounded-xl ${sizeMap[size] || 'max-w-lg'}`}>
+        <div className="flex justify-between items-center px-4 py-3.5 bg-base-100">
+          <h3 className="font-bold text-[10px] uppercase tracking-[0.15em] text-base-content/70 leading-none">{title}</h3>
+          <button className="btn btn-xs btn-circle btn-ghost opacity-40 hover:opacity-100" onClick={onClose} aria-label="Close">✕</button>
         </div>
-        <div className="p-4 overflow-y-auto max-h-[70vh]">
+        <div className="px-4 py-4 overflow-y-auto max-h-[75vh]">
           {children}
         </div>
         {footer && (
-          <div className="p-4 m-0 border-t border-base-200 bg-base-100 flex justify-end gap-2">
+          <div className="px-4 py-4 m-0 flex justify-end gap-2 bg-base-100/30">
             {footer}
           </div>
         )}
       </div>
-      <div className="modal-backdrop" onClick={onClose} style={{ cursor: 'default' }}>
+      <div className="modal-backdrop bg-black/70 backdrop-blur-sm cursor-default" onClick={onClose}>
         <button>close</button>
       </div>
     </dialog>
@@ -182,29 +161,39 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
 
 export function EmptyState({ icon, title, desc, action }) {
   return (
-    <div className="empty-state">
-      <div className="empty-state-icon">{icon}</div>
-      <div className="empty-state-title">{title}</div>
-      {desc && <div className="empty-state-desc">{desc}</div>}
-      {action && <div style={{ marginTop: 12 }}>{action}</div>}
+    <div className="hero bg-base-100 rounded-xl p-10 min-h-[300px]">
+      <div className="hero-content text-center flex-col">
+        <div className="text-5xl opacity-30 mb-2">{icon || '📦'}</div>
+        <div className="max-w-md">
+          <h2 className="text-xl font-bold">{title}</h2>
+          {desc && <p className="py-4 text-sm opacity-70">{desc}</p>}
+          {action && <div className="mt-2">{action}</div>}
+        </div>
+      </div>
     </div>
   );
 }
 
-export function SectionCard({ title, subtitle, action, children, style, noPadding }) {
+// ─── SectionCard ──────────────────────────────────────────────────────────────
+export function SectionCard({ title, subtitle, footer, children, className = '', headerAction, style, padding = true }) {
   return (
-    <div className="section-card" style={style}>
-      {(title || action) && (
-        <div className="section-card-header">
-          <div>
-            {title && <div className="section-card-title">{title}</div>}
-            {subtitle && <div className="section-card-subtitle">{subtitle}</div>}
+    <div className={`card bg-base-100 shadow-sm rounded-lg overflow-hidden ${className}`} style={style}>
+      <div className={`card-body ${padding ? 'p-4' : 'p-0'}`}>
+        {(title || headerAction) && (
+          <div className="flex items-center justify-between mb-4 px-0.5">
+            <div>
+              {title && <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">{title}</h2>}
+              {subtitle && <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-1 leading-relaxed opacity-60">{subtitle}</p>}
+            </div>
+            {headerAction}
           </div>
-          {action && <div>{action}</div>}
-        </div>
-      )}
-      <div className={noPadding ? '' : 'section-card-body'}>
+        )}
         {children}
+        {footer && (
+          <div className="card-actions justify-end mt-4 pt-4">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -212,7 +201,7 @@ export function SectionCard({ title, subtitle, action, children, style, noPaddin
 
 export function PageSpinner() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '4rem' }}>
+    <div className="flex items-center justify-center pt-16">
       <Spinner />
     </div>
   );
@@ -227,17 +216,14 @@ export function LevelBadge({ level, targetHours }) {
   else if (isSafe) ncalClass = 'ncal-SUCCESS';
 
   return (
-    <span className={`ncal-badge ${ncalClass}`} style={Object.assign({
-      width: '64px' // adjusted strictly for L+3 digits (e.g., L398)
-    }, !ncalClass ? {
-      background: 'rgba(255, 255, 255, 0.1)',
-      color: 'var(--text-muted)'
-    } : {})}>
-      <span style={{
-        display: 'inline-block', width: 6, height: 6, borderRadius: '2px', // sharper dot
-        background: isExceeded ? 'var(--danger)' : isSafe ? 'var(--success)' : 'currentColor',
-        flexShrink: 0, verticalAlign: 'middle', marginTop: -1
-      }} />
+    <span
+      className={`inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded-lg w-16 justify-center ${
+        isExceeded ? 'bg-error/10 text-error'
+        : isSafe ? 'bg-success/10 text-success'
+        : 'bg-base-content/10 text-base-content/50'
+      }`}
+    >
+      <span className={`inline-block w-1.5 h-1.5 rounded-sm shrink-0 ${isExceeded ? 'bg-error' : isSafe ? 'bg-success' : 'bg-base-content/30'}`} />
       L{level || 1}
     </span>
   );
@@ -245,3 +231,71 @@ export function LevelBadge({ level, targetHours }) {
 
 export * from './chart.jsx';
 export { default as UnifiedTimeline } from './UnifiedTimeline.jsx';
+
+// ─── Atomic UI Components & Skeletons ─────────────────────────────────────────
+
+export function Button({ children, variant = 'primary', size = 'md', outline = false, icon, isLoading, className = '', ...props }) {
+  const variantMap = {
+    primary: 'btn-primary',
+    error: 'btn-error',
+    warning: 'btn-warning',
+    info: 'btn-info',
+    success: 'btn-success',
+    neutral: 'btn-neutral',
+    ghost: 'btn-ghost'
+  };
+  const sizeMap = { sm: 'btn-sm', md: '', lg: 'btn-lg', xs: 'btn-xs' };
+  
+  const baseClass = `btn ${variantMap[variant] || 'btn-primary'} ${sizeMap[size]} ${outline ? 'btn-outline' : ''} transition-all duration-300 ${className}`;
+  
+  return (
+    <button className={baseClass} disabled={isLoading || props.disabled} {...props}>
+      {isLoading ? <span className="loading loading-spinner loading-xs"></span> : icon}
+      {children}
+    </button>
+  );
+}
+
+export function Input({ label, error, type = 'text', className = '', ...props }) {
+  return (
+    <label className="form-control w-full gap-1.5">
+      {label && (
+        <div className="label p-0 min-h-0"><span className="label-text font-bold text-[10px] uppercase tracking-[0.15em] text-base-content/40">{label}</span></div>
+      )}
+      <input type={type} className={`input input-md w-full focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-bold text-[13.5px] bg-base-200/50 ${error ? 'input-error' : ''} ${className}`} {...props} />
+      {error && (
+        <div className="label pb-0 pt-1 min-h-0"><span className="label-text-alt text-error font-bold text-[10px]">{error}</span></div>
+      )}
+    </label>
+  );
+}
+
+export function TableSkeleton({ rows = 5 }) {
+  return (
+    <div className="w-full flex flex-col gap-4 p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="skeleton h-8 w-1/3"></div>
+        <div className="skeleton h-8 w-1/4"></div>
+      </div>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex gap-4 items-center">
+          <div className="skeleton h-12 w-full"></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CardSkeleton() {
+  return (
+    <div className="card bg-base-100 shadow-sm p-6 w-full flex flex-col gap-4">
+      <div className="flex items-center gap-4">
+        <div className="skeleton h-12 w-12 rounded-2xl"></div>
+        <div className="flex flex-col gap-2">
+          <div className="skeleton h-3 w-16"></div>
+          <div className="skeleton h-6 w-24"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
