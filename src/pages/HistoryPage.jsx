@@ -16,56 +16,7 @@ const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
 //   • td has overflow:hidden so content NEVER bleeds into adjacent columns
 //   • Spans use white-space:normal → long text wraps within the column width
 //   • Only fixed-format values (timestamps, HH:MM:SS, case no) use nowrap
-const TABLE_CSS = `
-  .ht {
-    border-collapse: collapse;
-    font-size: 10px;
-    font-family: var(--font-main);
-    table-layout: fixed;
-    width: 100%;
-  }
-  .ht thead th {
-    font-size: 9px; font-weight: 600;
-    letter-spacing: 0.05em; text-transform: uppercase;
-    color: var(--text-muted);
-    padding: 8px 8px;
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 2;
-    background: var(--bg-elevated);
-    white-space: nowrap; vertical-align: middle;
-  }
-  [data-theme="light"] .ht thead th { background: #f8fafc; }
-  .ht tbody td {
-    padding: 5px 7px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-    overflow: hidden;
-    font-size: 10px;
-    font-family: var(--font-main);
-    color: var(--text-secondary);
-    line-height: 1.35;
-  }
-  .ht tbody tr:last-child td { border-bottom: none; }
-  .ht tbody tr { transition: background 80ms; cursor: pointer; }
-  .ht tbody tr:hover { background: var(--bg-card-hover); }
-  .ht tbody tr.sel { background: var(--accent-subtle); }
-  /* Hover-reveal checkbox */
-  .ht-cb { opacity: 0; transition: opacity 80ms; display: block; }
-  .ht tbody tr:hover .ht-cb,
-  .ht tbody tr.sel .ht-cb { opacity: 1; }
-  /* Wrapping cell: content wraps, max 3 lines */
-  .ht-wrap {
-    white-space: normal;
-    word-break: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.35;
-  }
-  /* Nowrap for fixed-format strings (timestamps, durations, codes) */
-  .ht-nowrap { white-space: nowrap; }
-`;
+  /* TABLE_CSS block intentionally removed for Tailwind classes */
 
 // Format seconds → HH:MM:SS
 function fmtDur(sec) {
@@ -192,20 +143,20 @@ export default function HistoryPage() {
           <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div className="filter-search" style={{ flex: 1, minWidth: '240px' }}>
               <Search size={13} className="filter-search-icon" />
-              <input type="text" className="form-control filter-input"
+              <input type="text" className="input input-bordered input-md  filter-input"
                 placeholder="Search by case, site, technician..."
                 value={filters.search} onChange={e => setF('search', e.target.value)} />
             </div>
-            <select className="form-control" style={{ width: 100 }} value={filters.year}
+            <select className="select select-bordered select-md " style={{ width: 100 }} value={filters.year}
               onChange={e => setF('year', e.target.value)}>
               {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <select className="form-control" style={{ width: 140 }} value={filters.month}
+            <select className="select select-bordered select-md " style={{ width: 140 }} value={filters.month}
               onChange={e => setF('month', e.target.value)}>
               <option value="">All Months</option>
               {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
             </select>
-            <select className="form-control" style={{ width: 140 }} value={filters.ncal}
+            <select className="select select-bordered select-md " style={{ width: 140 }} value={filters.ncal}
               onChange={e => setF('ncal', e.target.value)}>
               <option value="">All NCAL</option>
               {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
@@ -214,7 +165,7 @@ export default function HistoryPage() {
 
           {/* Table */}
           <div className="section-card" style={{ padding: 0 }}>
-            <style>{TABLE_CSS}</style>
+            {/* TABLE_CSS removed */}
             <div style={{ overflowX: 'auto', width: '100%' }}>
               {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><div className="spinner" /></div>
@@ -231,64 +182,35 @@ export default function HistoryPage() {
                   pwrB=62  pwrA=62  detail=40
                   Total ≈ 2,840px
                 */
-                <table className="ht" style={{ minWidth: '2840px' }}>
-                  <colgroup>
-                    <col style={{ width: 36 }} />
-                    <col style={{ width: 110 }} />
-                    <col style={{ width: 175 }} />
-                    <col style={{ width: 90 }} />
-                    <col style={{ width: 80 }} />
-                    <col style={{ width: 72 }} />
-                    <col style={{ width: 62 }} />
-                    <col style={{ width: 145 }} />
-                    <col style={{ width: 148 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 82 }} />
-                    <col style={{ width: 82 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 132 }} />
-                    <col style={{ width: 82 }} />
-                    <col style={{ width: 200 }} />
-                    <col style={{ width: 160 }} />
-                    <col style={{ width: 160 }} />
-                    <col style={{ width: 120 }} />
-                    <col style={{ width: 62 }} />
-                    <col style={{ width: 62 }} />
-                    <col style={{ width: 40 }} />
-                  </colgroup>
-
+                <table className="table table-zebra table-sm" style={{ minWidth: '2840px' }}>
                   <thead>
                     <tr>
-                      <th />
-                      <th style={{ textAlign: 'left' }}>No Case</th>
-                      <th style={{ textAlign: 'left' }}>Site</th>
-                      <th style={{ textAlign: 'center' }}>NCAL</th>
-                      <th style={{ textAlign: 'center' }}>Spt. Level</th>
-                      <th style={{ textAlign: 'center' }}>Status</th>
-                      <th style={{ textAlign: 'center' }}>Lv</th>
-                      <th style={{ textAlign: 'left' }}>Technician</th>
-                      <th style={{ textAlign: 'left' }}>Segment / ODP</th>
-                      <th style={{ textAlign: 'left' }}>Start Open</th>
-                      <th style={{ textAlign: 'left' }}>Start Esc.</th>
-                      <th style={{ textAlign: 'left' }}>End</th>
-                      <th style={{ textAlign: 'center' }}>Gross</th>
-                      <th style={{ textAlign: 'center' }}>Nett</th>
-                      <th style={{ textAlign: 'left' }}>Pause 1 Start</th>
-                      <th style={{ textAlign: 'left' }}>Pause 1 End</th>
-                      <th style={{ textAlign: 'left' }}>Pause 2 Start</th>
-                      <th style={{ textAlign: 'left' }}>Pause 2 End</th>
-                      <th style={{ textAlign: 'center' }}>Tot. Pause</th>
-                      <th style={{ textAlign: 'left' }}>Problem</th>
-                      <th style={{ textAlign: 'left' }}>Penyebab</th>
-                      <th style={{ textAlign: 'left' }}>Action Terakhir</th>
-                      <th style={{ textAlign: 'left' }}>Klasifikasi</th>
-                      <th style={{ textAlign: 'center' }}>Pwr↓</th>
-                      <th style={{ textAlign: 'center' }}>Pwr↑</th>
-                      <th />
+                      <th className="w-[36px]" />
+                      <th className="w-[110px] text-left">No Case</th>
+                      <th className="w-[175px] text-left">Site</th>
+                      <th className="w-[90px] text-center">NCAL</th>
+                      <th className="w-[80px] text-center">Spt. Level</th>
+                      <th className="w-[72px] text-center">Status</th>
+                      <th className="w-[62px] text-center">Lv</th>
+                      <th className="w-[145px] text-left">Technician</th>
+                      <th className="w-[148px] text-left">Segment / ODP</th>
+                      <th className="w-[132px] text-left">Start Open</th>
+                      <th className="w-[132px] text-left">Start Esc.</th>
+                      <th className="w-[132px] text-left">End</th>
+                      <th className="w-[82px] text-center">Gross</th>
+                      <th className="w-[82px] text-center">Nett</th>
+                      <th className="w-[132px] text-left">Pause 1 Start</th>
+                      <th className="w-[132px] text-left">Pause 1 End</th>
+                      <th className="w-[132px] text-left">Pause 2 Start</th>
+                      <th className="w-[132px] text-left">Pause 2 End</th>
+                      <th className="w-[82px] text-center">Tot. Pause</th>
+                      <th className="w-[200px] text-left">Problem</th>
+                      <th className="w-[160px] text-left">Penyebab</th>
+                      <th className="w-[160px] text-left">Action Terakhir</th>
+                      <th className="w-[120px] text-left">Klasifikasi</th>
+                      <th className="w-[62px] text-center">Pwr↓</th>
+                      <th className="w-[62px] text-center">Pwr↑</th>
+                      <th className="w-[40px]" />
                     </tr>
                   </thead>
 

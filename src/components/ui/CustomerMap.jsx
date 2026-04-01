@@ -172,7 +172,7 @@ export default function CustomerMap({
   };
 
   return (
-    <div className="section-card" style={{ height: '700px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ height: '700px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <header style={{ 
         padding: '1rem', 
         borderBottom: '1px solid var(--border)',
@@ -242,7 +242,7 @@ export default function CustomerMap({
           <div style={{ position: 'relative' }}>
             <input 
               type="text" 
-              className="form-control" 
+              className="input input-bordered input-md" 
               placeholder="Search Site, Service ID, or City..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

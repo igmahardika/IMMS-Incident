@@ -72,7 +72,7 @@ export default function MonthlyViewPage() {
           <div className="page-subtitle">Monthly performance patterns and handling duration by category</div>
         </div>
         <div className="page-actions">
-          <select className="form-control" value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
+          <select className="select select-bordered select-md " value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
             {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>

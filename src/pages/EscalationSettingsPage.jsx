@@ -107,57 +107,57 @@ export default function EscalationSettingsPage() {
   };
 
   return (
-    <div className="page-stack">
+    <div className="flex flex-col gap-6 font-sans">
       {/* Page Header */}
-      <div className="page-header">
-        <div className="page-title-group">
-          <div className="page-title">
-            <Settings size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: 8 }} />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <div className="text-2xl font-semibold flex items-center gap-2">
+            <Settings size={18} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: 8 }} />
             Escalation Settings
           </div>
-          <div className="page-subtitle">Configure automated notifications via Webhook endpoints</div>
+          <div className="text-sm opacity-70">Configure automated notifications via Webhook endpoints</div>
         </div>
-        <div className="page-actions">
+        <div className="flex items-center gap-2">
           <button className="btn btn-ghost btn-sm" onClick={handleTest} disabled={testing || !cfg.webhook_url}>
-            <Send size={13} /> {testing ? 'Sending...' : 'Global Test'}
+            <Send size={18} /> {testing ? 'Sending...' : 'Global Test'}
           </button>
           <button className="btn btn-primary" onClick={handleSave}>
-            <Save size={14} /> Save Configuration
+            <Save size={18} /> Save Configuration
           </button>
         </div>
       </div>
 
       {/* Main layout */}
-      <div className="layout-with-aside">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
         {/* Left: config form */}
-        <div className="page-stack">
+        <div className="flex flex-col gap-6 font-sans">
           {/* Webhook config */}
-          <div className="section-card">
-            <div className="section-card-header">
+          <div className="card bg-base-200 border border-base-300 shadow-sm">
+            <div className="card-body pb-3 border-b border-base-300">
               <div>
-                <div className="section-card-title">Webhook Configuration</div>
-                <div className="section-card-subtitle">Set up platforms and notification endpoint URLs</div>
+                <div className="card-title text-sm">Webhook Configuration</div>
+                <div className="text-xs opacity-70">Set up platforms and notification endpoint URLs</div>
               </div>
               {/* Active status indicator */}
               <div className="status-row">
                 <div className={`status-dot ${cfg.is_active ? 'status-dot-active' : 'status-dot-inactive'}`} />
-                <span style={{ fontSize: '0.786rem', color: 'var(--text-secondary)' }}>
+                <span className="text-xs opacity-70">
                   {cfg.is_active ? 'Active' : 'Inactive'}
                 </span>
               </div>
             </div>
-            <div className="section-card-body">
-              <div className="form-grid form-grid-2" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Platform</label>
-                  <select className="form-control" value={cfg.type} onChange={e => setF('type', e.target.value)}>
+            <div className="card-body pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+                <div className="form-control">
+                  <label className="label-text text-sm">Platform</label>
+                  <select className="select select-bordered select-md " value={cfg.type} onChange={e => setF('type', e.target.value)}>
                     <option value="telegram">Telegram Bot</option>
                     <option value="whatsapp">WhatsApp API</option>
                     <option value="custom">Custom Webhook</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Notification Status</label>
+                <div className="form-control">
+                  <label className="label-text text-sm">Notification Status</label>
                   <div style={{ paddingTop: 10 }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
                       <input
@@ -171,24 +171,24 @@ export default function EscalationSettingsPage() {
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                <label className="form-label">
+              <div className="form-control" style={{ marginBottom: '0.75rem' }}>
+                <label className="label-text text-sm">
                   {cfg.type === 'telegram' ? 'Webhook URL — Internal Coordination Group' : 'Webhook URL (Internal)'} *
                 </label>
                 <input
-                  type="url" className="form-control"
+                  type="url" className="input input-bordered input-md "
                   value={cfg.webhook_url || ''}
                   onChange={e => setF('webhook_url', e.target.value)}
                   placeholder="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<INTERNAL>"
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">
+              <div className="form-control">
+                <label className="label-text text-sm">
                   {cfg.type === 'telegram' ? 'Webhook URL — Vendor / MO Group' : 'Webhook URL (Vendor)'}
                 </label>
                 <input
-                  type="url" className="form-control"
+                  type="url" className="input input-bordered input-md "
                   value={cfg.webhook_url_vendor || ''}
                   onChange={e => setF('webhook_url_vendor', e.target.value)}
                   placeholder="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<VENDOR>"
@@ -198,14 +198,14 @@ export default function EscalationSettingsPage() {
           </div>
 
           {/* Template editing */}
-          <div className="section-card">
-            <div className="section-card-header">
+          <div className="card bg-base-200 border border-base-300 shadow-sm">
+            <div className="card-body pb-3 border-b border-base-300">
               <div>
-                <div className="section-card-title">Message Templates</div>
-                <div className="section-card-subtitle">OPEN & CLOSE message templates per NCAL segment</div>
+                <div className="card-title text-sm">Message Templates</div>
+                <div className="text-xs opacity-70">OPEN & CLOSE message templates per NCAL segment</div>
               </div>
             </div>
-            <div className="section-card-body">
+            <div className="card-body pt-4">
               {/* Tab bar */}
               <div className="tab-bar">
                 {segments.map(seg => (
@@ -221,20 +221,20 @@ export default function EscalationSettingsPage() {
 
               <div className="form-section">
                 <div className="form-section-title">Template OPEN — {previewNcal}</div>
-                <div className="form-group">
-                  <label className="form-label">Internal Group</label>
+                <div className="form-control">
+                  <label className="label-text text-sm">Internal Group</label>
                   <textarea
-                    className="form-control" rows={5}
+                    className="textarea textarea-bordered textarea-md " rows={5}
                     value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
                     onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
                     placeholder="Notification template for internal groups..."
                   />
                 </div>
                 {previewNcal === 'YELLOW' && (
-                  <div className="form-group">
-                    <label className="form-label">Vendor / MO Group</label>
+                  <div className="form-control">
+                    <label className="label-text text-sm">Vendor / MO Group</label>
                     <textarea
-                      className="form-control" rows={5}
+                      className="textarea textarea-bordered textarea-md " rows={5}
                       value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
                       onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
                       placeholder="Template for Maintenance Order to vendors..."
@@ -245,20 +245,20 @@ export default function EscalationSettingsPage() {
 
               <div className="form-section">
                 <div className="form-section-title">Template CLOSE — {previewNcal}</div>
-                <div className="form-group">
-                  <label className="form-label">Internal Group</label>
+                <div className="form-control">
+                  <label className="label-text text-sm">Internal Group</label>
                   <textarea
-                    className="form-control" rows={5}
+                    className="textarea textarea-bordered textarea-md " rows={5}
                     value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
                     onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
                     placeholder="Resolution notification template for internal groups..."
                   />
                 </div>
                 {previewNcal === 'YELLOW' && (
-                  <div className="form-group">
-                    <label className="form-label">Vendor / MO Group</label>
+                  <div className="form-control">
+                    <label className="label-text text-sm">Vendor / MO Group</label>
                     <textarea
-                      className="form-control" rows={5}
+                      className="textarea textarea-bordered textarea-md " rows={5}
                       value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
                       onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
                       placeholder="Close order template for vendors..."
@@ -275,12 +275,12 @@ export default function EscalationSettingsPage() {
         </div>
 
         {/* Right: sticky preview */}
-        <div className="aside-sticky">
-          <div className="section-card">
-            <div className="section-card-header">
+        <div className="lg:sticky lg:top-6 h-fit">
+          <div className="card bg-base-200 border border-base-300 shadow-sm">
+            <div className="card-body pb-3 border-b border-base-300">
               <div>
-                <div className="section-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Smartphone size={14} /> Notification Preview</div>
-                <div className="section-card-subtitle">Real-time preview based on active templates</div>
+                <div className="card-title text-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Smartphone size={18} /> Notification Preview</div>
+                <div className="text-xs opacity-70">Real-time preview based on active templates</div>
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
                 {['open', 'close'].map(t => (
@@ -295,7 +295,7 @@ export default function EscalationSettingsPage() {
                 ))}
               </div>
             </div>
-            <div className="section-card-body">
+            <div className="card-body pt-4">
               {/* NCAL selector */}
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: '1rem' }}>
                 {segments.map(n => (

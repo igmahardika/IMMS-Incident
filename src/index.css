@@ -1,4 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  /* Mapping existing IMMS tokens */
+  --color-primary: var(--accent);
+  --color-primary-content: var(--text-inverse);
+  --color-base-100: var(--bg-base);
+  --color-base-200: var(--bg-surface);
+  --color-base-300: var(--bg-elevated);
+  
+  --font-sans: "Inter", var(--font-main);
+  --font-mono: "JetBrains Mono", var(--font-mono);
+
+  --radius-field: var(--radius);
+  --radius-box: var(--radius-lg);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    IMMS Design System — 2026

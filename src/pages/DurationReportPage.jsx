@@ -51,7 +51,7 @@ export default function DurationReportPage() {
 
       <div className="filter-bar mb-4">
         <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--text-muted)', marginRight: '0.5rem' }}>FILTER:</div>
-        <select className="form-control" value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
+        <select className="select select-bordered select-md " value={year} onChange={e => setYear(e.target.value)} style={{ width: 100 }}>
           {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
       </div>

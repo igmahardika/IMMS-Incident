@@ -20,7 +20,7 @@ export default function GeoSummary({ customers }) {
 
   if (stats.sorted.length === 0) {
     return (
-      <div className="section-card" style={{ padding: '2rem', textAlign: 'center' }}>
+      <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ padding: '2rem', textAlign: 'center' }}>
         <Globe size={40} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
         <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
           No geographical distribution data available. 
@@ -31,14 +31,14 @@ export default function GeoSummary({ customers }) {
   }
 
   return (
-    <div className="page-stack" style={{ gap: '1.5rem' }}>
+    <div className="flex flex-col gap-6" style={{ gap: '1.5rem' }}>
       {/* Hero Stats */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
         gap: '1rem' 
       }}>
-        <div className="section-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--primary)' }}>
+        <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--primary)' }}>
           <div style={{ padding: '0.75rem', background: 'var(--primary-subtle)', borderRadius: '12px', color: 'var(--primary)' }}>
             <Users size={20} />
           </div>
@@ -48,7 +48,7 @@ export default function GeoSummary({ customers }) {
           </div>
         </div>
 
-        <div className="section-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #10b981' }}>
+        <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #10b981' }}>
           <div style={{ padding: '0.75rem', background: '#10b98122', borderRadius: '12px', color: '#10b981' }}>
             <TrendingUp size={20} />
           </div>
@@ -60,7 +60,7 @@ export default function GeoSummary({ customers }) {
       </div>
 
       {/* City Grid */}
-      <div className="section-card">
+      <div className="card bg-base-200 border border-base-300 shadow-sm">
         <header style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <MapPin size={18} className="text-primary" />

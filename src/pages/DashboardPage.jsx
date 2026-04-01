@@ -68,35 +68,31 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="kpi-grid">
-        <div className="kpi-card animate-fade-in delay-1" data-accent="danger">
-          <div className="kpi-header">
-            <div className="kpi-label">Active Incidents</div>
-            <AlertTriangle className="kpi-icon" size={18} strokeWidth={1.5} />
+      <div className="flex flex-col gap-4">
+        <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
+          <div className="stat">
+            <div className="stat-figure text-error"><AlertTriangle size={32} /></div>
+            <div className="stat-title uppercase tracking-widest text-xs font-bold opacity-70">Active Incidents</div>
+            <div className="stat-value text-error">{data?.totalActive || 0}</div>
+            <div className="stat-desc">Unresolved cases</div>
           </div>
-          <div className="kpi-value display-number" style={{ color: 'var(--danger)' }}>{data?.totalActive || 0}</div>
-          <div className="kpi-meta text-xs">Unresolved cases</div>
+          <div className="stat">
+            <div className="stat-figure text-success"><CheckCircle size={32} /></div>
+            <div className="stat-title uppercase tracking-widest text-xs font-bold opacity-70">Resolved</div>
+            <div className="stat-value text-success">{data?.totalDone || 0}</div>
+            <div className="stat-desc">Total all time</div>
+          </div>
         </div>
         
-        <div className="kpi-card animate-fade-in delay-2" data-accent="success">
-          <div className="kpi-header">
-            <div className="kpi-label">Resolved</div>
-            <CheckCircle className="kpi-icon" size={18} strokeWidth={1.5} />
-          </div>
-          <div className="kpi-value display-number" style={{ color: 'var(--success)' }}>{data?.totalDone || 0}</div>
-          <div className="kpi-meta text-xs">Total all time</div>
-        </div>
-        
-        {NCAL_ORDER.map((ncal, i) => (
-          <div className={`kpi-card animate-fade-in delay-${(i % 5) + 3}`} data-accent={ncal.toLowerCase()} key={ncal}>
-            <div className="kpi-header">
-              <div className="kpi-label"><NcalBadge value={ncal} /></div>
-              <Activity className="kpi-icon" size={18} strokeWidth={1.5} />
+        <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
+          {NCAL_ORDER.map((ncal, i) => (
+            <div className="stat" key={ncal}>
+              <div className="stat-title mb-2"><NcalBadge value={ncal} /></div>
+              <div className="stat-value text-3xl" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
+              <div className="stat-desc">Active</div>
             </div>
-            <div className="kpi-value display-number" style={{ color: NCAL_COLORS_KPI[ncal] || 'var(--text-primary)' }}>{byNcal[ncal] || 0}</div>
-            <div className="kpi-meta text-xs">Currently active</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -121,22 +117,15 @@ export default function DashboardPage() {
         <div className="layout-with-aside">
           {/* SLA Table */}
           <SectionCard title="SLA Summary This Year" subtitle="Based on NCAL segments" style={{ padding: 0 }}>
-            <div className="table-wrap">
-              <table className="data-table">
-                <colgroup>
-                  <col className="cg-ncal" />
-                  <col className="cg-priority" />
-                  <col className="cg-duration" />
-                  <col className="cg-priority" />
-                  <col className="cg-priority" />
-                </colgroup>
+            <div className="overflow-x-auto w-full">
+              <table className="table table-zebra table-sm">
                 <thead>
                 <tr>
-                  <th>NCAL</th>
-                  <th>CASES</th>
-                  <th>AVG DURATION</th>
-                  <th>SLA MET</th>
-                  <th>%</th>
+                  <th className="w-1/12 text-center">NCAL</th>
+                  <th className="w-2/12 text-center">CASES</th>
+                  <th className="w-4/12 text-center">AVG DURATION</th>
+                  <th className="w-3/12 text-center">SLA MET</th>
+                  <th className="w-1/12 text-center">%</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,13 +155,15 @@ export default function DashboardPage() {
 
         {/* Recent Closed */}
         <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents" padding={0}>
-          <div className="table-wrap">
-            <table className="data-table">
-              <colgroup>
-                <col className="cg-ncal" />
-                <col className="cg-auto" />
-                <col className="cg-actions" style={{ width: 140 }} />
-              </colgroup>
+          <div className="overflow-x-auto w-full">
+            <table className="table table-zebra table-sm">
+              <thead>
+                <tr>
+                  <th className="w-2/12 text-center">NCAL</th>
+                  <th className="w-5/12 text-left">INCIDENT</th>
+                  <th className="w-5/12 text-right">DETAILS</th>
+                </tr>
+              </thead>
               <tbody>
                 {(data?.recentClosed || []).length === 0 && (
                   <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 1rem' }}>No recently closed incidents</td></tr>

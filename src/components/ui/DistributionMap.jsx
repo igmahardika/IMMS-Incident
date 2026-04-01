@@ -128,7 +128,7 @@ export default function DistributionMap({ data, onRefresh }) {
   };
 
   return (
-    <div className="section-card" style={{ height: '700px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="card bg-base-200 border border-base-300 shadow-sm" style={{ height: '700px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <header style={{ 
         padding: '1rem', 
         borderBottom: '1px solid var(--border)',
@@ -185,7 +185,7 @@ export default function DistributionMap({ data, onRefresh }) {
               <Calendar size={13} style={{ color: 'var(--text-muted)' }} />
               <input 
                 type="date" 
-                className="form-control form-control-xs" 
+                className="input input-bordered input-sm" 
                 style={{ width: '130px', border: 'none', background: 'transparent' }} 
                 value={startDate} 
                 onChange={e => setStartDate(e.target.value)} 
@@ -193,7 +193,7 @@ export default function DistributionMap({ data, onRefresh }) {
               <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>—</span>
               <input 
                 type="date" 
-                className="form-control form-control-xs" 
+                className="input input-bordered input-sm" 
                 style={{ width: '130px', border: 'none', background: 'transparent' }} 
                 value={endDate} 
                 onChange={e => setEndDate(e.target.value)} 
@@ -205,7 +205,7 @@ export default function DistributionMap({ data, onRefresh }) {
             <div style={{ position: 'relative' }}>
               <input 
                 type="text" 
-                className="form-control" 
+                className="input input-bordered input-md" 
                 placeholder="Search ODP, POP, or BTS..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

@@ -158,7 +158,7 @@ export default function NotificationBell() {
               )}
               <button
                 onClick={() => setOpen(false)}
-                className="btn btn-ghost btn-sm btn-icon"
+                className="btn btn-ghost btn-sm btn-square"
                 aria-label="Close"
               >
                 <X size={14} />

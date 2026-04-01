@@ -44,7 +44,7 @@ class ErrorBoundary extends React.Component {
             {this.state.error?.message || 'An unexpected error occurred.'}
           </div>
           <button
-            className="btn btn-primary"
+            className="old-btn old-btn-primary"
             onClick={() => { this.setState({ hasError: false, error: null }); }}
           >
             Try Again

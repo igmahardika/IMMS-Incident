@@ -60,14 +60,14 @@ export default function RootCausePage() {
         <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Filter size={14} /> FILTER:
         </div>
-        <select className="form-control" value={filters.year} onChange={e => setF('year', e.target.value)} style={{ width: 100 }}>
+        <select className="select select-bordered select-md " value={filters.year} onChange={e => setF('year', e.target.value)} style={{ width: 100 }}>
           {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-        <select className="form-control" value={filters.month} onChange={e => setF('month', e.target.value)} style={{ width: 140 }}>
+        <select className="select select-bordered select-md " value={filters.month} onChange={e => setF('month', e.target.value)} style={{ width: 140 }}>
           <option value="">All Months</option>
           {MONTH_NAMES.map((m, i) => <option key={i+1} value={String(i+1).padStart(2,'0')}>{m}</option>)}
         </select>
-        <select className="form-control" value={filters.ncal} onChange={e => setF('ncal', e.target.value)} style={{ width: 140 }}>
+        <select className="select select-bordered select-md " value={filters.ncal} onChange={e => setF('ncal', e.target.value)} style={{ width: 140 }}>
           <option value="">All NCAL</option>
           {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
         </select>
