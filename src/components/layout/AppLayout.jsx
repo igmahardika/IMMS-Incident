@@ -10,20 +10,28 @@ export default function AppLayout({ children }) {
 
   return (
     <SidebarContext.Provider value={{ mobileOpen, setMobileOpen }}>
-      <div className="app-layout">
-        {/* Mobile overlay */}
-        <div
-          className={`sidebar-overlay${mobileOpen ? ' visible' : ''}`}
-          onClick={closeMobile}
+      <div className="drawer lg:drawer-open h-screen w-full bg-base-100">
+        <input 
+          id="main-drawer" 
+          type="checkbox" 
+          className="drawer-toggle" 
+          checked={mobileOpen}
+          onChange={(e) => setMobileOpen(e.target.checked)} 
         />
-
-        <Sidebar mobileOpen={mobileOpen} onClose={closeMobile} />
-
-        <div className="main-area">
+        
+        <div className="drawer-content flex flex-col h-full overflow-hidden">
+          {/* Navbar */}
           <Topbar />
-          <main className="page-content fade-in">
+          
+          {/* Page content */}
+          <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-4 md:p-6 bg-base-200/30">
             {children}
           </main>
+        </div> 
+        
+        <div className="drawer-side z-[100]">
+          <label htmlFor="main-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+          <Sidebar mobileOpen={mobileOpen} onClose={closeMobile} />
         </div>
       </div>
     </SidebarContext.Provider>

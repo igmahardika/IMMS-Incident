@@ -43,59 +43,51 @@ export default function Topbar() {
   const parts = location.pathname.split('/').filter(Boolean);
 
   return (
-    <header className="topbar">
-      <div className="topbar-left">
-        {/* Mobile hamburger */}
-        <button
-          className="hamburger-btn"
-          onClick={() => setMobileOpen(v => !v)}
-          aria-label="Open navigation"
-        >
+    <div className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-40 px-4 min-h-[64px]">
+      <div className="flex-none lg:hidden mr-2">
+        <label htmlFor="main-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost btn-sm">
           <Menu size={20} />
-        </button>
-
-        {/* Breadcrumb */}
-        <nav className="breadcrumb">
-          <span>IMMS</span>
-          {parts.map((p, i) => (
-            <React.Fragment key={i}>
-              <span className="breadcrumb-sep">›</span>
-              {i === parts.length - 1
-                ? <span className="breadcrumb-current">{TITLES[location.pathname] || p}</span>
-                : <span style={{ textTransform: 'capitalize' }}>{p}</span>
-              }
-            </React.Fragment>
-          ))}
-          {parts.length === 0 && <span className="breadcrumb-current">Dashboard</span>}
-        </nav>
+        </label>
       </div>
 
-      <div className="topbar-right">
-        {/* Time — hide on small mobile */}
-        <span style={{ display: 'none' }} className="topbar-time-desktop">
-          <LiveClock />
-        </span>
-        <LiveClock />
-
-        {/* Notification Bell */}
-        <NotificationBell />
-
-        {/* Theme toggle (visible in topbar on mobile, sidebar has one for desktop) */}
-        <button
-          className="theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
-
-        {/* Role badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--accent-subtle)', border: '1px solid var(--border-focus)', borderRadius: 'var(--radius-xs)', padding: '0.25rem 0.625rem' }}>
-          <Shield size={11} style={{ color: 'var(--accent)' }} />
-          <span style={{ fontSize: '0.714rem', fontWeight: 700, color: 'var(--accent-light)', letterSpacing: '0.04em' }}>{user?.role?.toUpperCase()}</span>
+      <div className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden">
+        <div className="breadcrumbs text-sm h-full flex items-center">
+          <ul>
+            <li><span className="opacity-60 text-[10px] uppercase tracking-widest font-bold">IMMS</span></li>
+            {parts.map((p, i) => (
+              <li key={i}>
+                {i === parts.length - 1
+                  ? <span className="font-semibold text-base-content">{TITLES[location.pathname] || p}</span>
+                  : <span className="capitalize">{p}</span>
+                }
+              </li>
+            ))}
+            {parts.length === 0 && <li><span className="font-semibold text-base-content">Dashboard</span></li>}
+          </ul>
         </div>
       </div>
-    </header>
+
+      <div className="flex-none gap-2 hidden sm:flex items-center">
+        {/* Time */}
+        <div className="text-xs font-mono font-medium opacity-70 px-2 mr-2">
+          <LiveClock />
+        </div>
+        
+        {/* Theme toggle */}
+        <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm">
+          <input type="checkbox" onChange={toggleTheme} checked={theme === 'dark'} />
+          <Sun className="swap-on w-[18px] h-[18px]" />
+          <Moon className="swap-off w-[18px] h-[18px]" />
+        </label>
+        
+        <NotificationBell />
+
+        {/* Role badge */}
+        <div className="badge badge-primary badge-soft badge-sm ml-2 font-bold tracking-widest gap-1 uppercase rounded-md h-7">
+          <Shield size={12} />
+          {user?.role}
+        </div>
+      </div>
+    </div>
   );
 }

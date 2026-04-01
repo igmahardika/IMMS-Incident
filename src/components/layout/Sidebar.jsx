@@ -83,112 +83,60 @@ export default function Sidebar({ mobileOpen, onClose }) {
   const isCollapsed = collapsed && !mobileOpen;
 
   return (
-    <aside className={`sidebar${isCollapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}>
-      {/* Logo */}
-      <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <Zap size={18} color="white" strokeWidth={1.5} />
+    <aside className="w-64 min-h-full bg-base-300 text-base-content flex flex-col shadow-xl">
+      {/* Header/Logo */}
+      <div className="flex items-center gap-3 p-4 border-b border-base-200 min-h-[64px]">
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-content">
+          <Zap size={18} strokeWidth={1.5} />
         </div>
-        {!isCollapsed && (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sidebar-logo-text">IMMS</div>
-            <div className="sidebar-logo-sub">Incident Management</div>
-          </div>
-        )}
-        {/* Mobile close button */}
-        {mobileOpen && (
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
-          >
-            <X size={18} strokeWidth={1.5} />
-          </button>
-        )}
+        <div className="flex-1 min-w-0">
+          <div className="font-bold text-lg leading-tight tracking-tight">IMMS</div>
+          <div className="text-xs opacity-60 uppercase tracking-widest font-semibold">Incident Mgmt</div>
+        </div>
       </div>
 
-      {/* Nav */}
-      <nav className="sidebar-nav">
+      {/* Nav using daisyUI menu */}
+      <ul className="menu menu-md px-4 py-4 flex-1 overflow-y-auto w-full">
         {filteredGroups.map((group) => (
-          <div key={group.label}>
-            <div className="sidebar-section">
-              <span className="sidebar-section-label">{group.label}</span>
-            </div>
-            {group.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                title={isCollapsed ? item.label : ''}
-                onClick={mobileOpen ? onClose : undefined}
-              >
-                <item.icon size={20} strokeWidth={1.5} className="nav-icon" />
-                <span className="nav-label">{item.label}</span>
-              </NavLink>
-            ))}
-          </div>
+          <li key={group.label} className="mt-4 first:mt-0">
+            <h2 className="menu-title text-[10px] uppercase opacity-50 tracking-widest">{group.label}</h2>
+            <ul>
+              {group.items.map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.to === '/'}
+                    className={({ isActive }) => `${isActive ? 'active' : ''}`}
+                    onClick={mobileOpen ? onClose : undefined}
+                  >
+                    <item.icon size={18} strokeWidth={1.5} />
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </li>
         ))}
-      </nav>
-
-      {/* Desktop collapse toggle */}
-      {!mobileOpen && (
-        <div className="sidebar-toggle-row">
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            className="btn btn-ghost btn-icon btn-sm"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {collapsed ? <ChevronRight size={16} strokeWidth={1.5} /> : <ChevronLeft size={16} strokeWidth={1.5} />}
-          </button>
-        </div>
-      )}
+      </ul>
 
       {/* Footer */}
-      <div className="sidebar-footer">
-        {/* Theme toggle + logout row */}
-        <div className="sidebar-footer-actions">
-          <button
-            onClick={toggleTheme}
-            className="btn btn-ghost btn-icon btn-sm"
-            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            style={{ flex: isCollapsed ? 1 : 'none' }}
+      <div className="p-4 border-t border-base-200 bg-base-300">
+        <div className="flex items-center gap-3">
+          <div className="avatar placeholder">
+            <div className="bg-neutral text-neutral-content rounded-full w-9">
+              <span className="text-sm font-semibold">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+             <div className="font-bold truncate text-sm">{user?.name}</div>
+             <div className="text-[10px] opacity-60 uppercase tracking-wider font-semibold">{user?.role}</div>
+          </div>
+          <button 
+             onClick={handleLogout}
+             className={`btn btn-sm btn-circle btn-ghost ${confirmLogout ? 'btn-error text-error-content hover:bg-error/90' : 'text-error'}`}
           >
-            {theme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+             {confirmLogout ? <Check size={16} /> : <LogOut size={16} />}
           </button>
-          {/* Logout button — separate from user info to prevent accidental logout */}
-          {!isCollapsed && (
-            <button
-              onClick={handleLogout}
-              className={`btn btn-icon btn-sm ${confirmLogout ? 'btn-danger' : 'btn-ghost'}`}
-              aria-label={confirmLogout ? 'Confirm logout' : 'Logout'}
-              title={confirmLogout ? 'Click again to confirm logout' : 'Logout'}
-              style={{ marginLeft: 'auto', transition: 'all var(--t-base)' }}
-            >
-              {confirmLogout ? <Check size={14} /> : <LogOut size={14} />}
-            </button>
-          )}
-        </div>
-        {/* User info — purely informational, not a button */}
-        <div className="user-badge" style={{ cursor: 'default' }}>
-          <div className="user-avatar">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-          <div className="user-info">
-            <div className="user-name">{user?.name}</div>
-            <div className="user-role">{user?.role}</div>
-          </div>
-          {isCollapsed && (
-            <button
-              onClick={handleLogout}
-              className={`btn btn-icon btn-sm ${confirmLogout ? 'btn-danger' : 'btn-ghost'}`}
-              aria-label="Logout"
-              title={confirmLogout ? 'Click again to confirm' : 'Logout'}
-            >
-              <LogOut size={12} />
-            </button>
-          )}
         </div>
       </div>
     </aside>
