@@ -43,12 +43,12 @@ export default function DurationReportPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight uppercase">Duration Report</h1>
-        <p className="text-xs md:text-xs font-semibold uppercase tracking-wider text-base-content/40">Analysis of handling duration & SLA performance</p>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight uppercase">Duration Report</h1>
+        <p className="text-xs md:text-xs font-bold uppercase tracking-wider text-base-content/65">Analysis of handling duration & SLA performance</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 bg-base-100 p-3 px-4 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+        <div className="flex items-center gap-2 text-xs font-bold text-base-content/65 uppercase tracking-wider">
           Filter Year:
         </div>
         <select className="select select-sm w-32 font-semibold text-sm h-9 bg-base-200/50" value={year} onChange={e => setYear(e.target.value)}>
@@ -61,16 +61,16 @@ export default function DurationReportPage() {
           {/* Line Chart */}
           <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
             <div className="p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Avg Nett Duration Trend (Minutes)</h3>
-              <p className="text-sm font-medium text-base-content/70 mt-1 uppercase tracking-tight">Per NCAL — Year {year}</p>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/65">Avg Nett Duration Trend (Minutes)</h3>
+              <p className="text-sm font-bold text-base-content/85 mt-1 uppercase tracking-tight">Per NCAL — Year {year}</p>
             </div>
             <div className="p-6">
               <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="month" tick={{ className: "fill-base-content/40 font-medium", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} />
-                    <YAxis tick={{ className: "fill-base-content/40 font-medium", fontSize: 12 }} unit=" min" axisLine={false} tickLine={false} tickMargin={12} />
+                    <XAxis dataKey="month" tick={{ className: "fill-base-content/70 font-bold", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} />
+                    <YAxis tick={{ className: "fill-base-content/70 font-bold", fontSize: 12 }} unit=" min" axisLine={false} tickLine={false} tickMargin={12} />
                     <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
                     <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
                     {NCAL_ORDER.map(ncal => (
@@ -86,19 +86,19 @@ export default function DurationReportPage() {
             {/* SLA Table */}
             <div className="bg-base-100 shadow-xl rounded-2xl overflow-hidden">
               <div className="p-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">SLA Summary per NCAL</h3>
-                <p className="text-sm font-medium text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/65">SLA Summary per NCAL</h3>
+                <p className="text-sm font-bold text-base-content/85 mt-1 uppercase tracking-tight">Year {year}</p>
               </div>
               <div className="overflow-auto max-h-[50vh] custom-scrollbar w-full p-0">
                 <table className="table table-sm table-pin-rows table-stacked w-full">
                   <thead>
                     <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs text-base-content/50 py-3">NCAL</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs text-base-content/50 py-3">Total</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs text-base-content/50 py-3">Avg Nett</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs text-base-content/50 py-3">SLA Met</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-center whitespace-nowrap uppercase tracking-wider text-xs text-base-content/50 py-3">SLA Target</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs text-base-content/50 py-3">%</th>
+                    <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">NCAL</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Total</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Avg Nett</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">SLA Met</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">SLA Target</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">%</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -109,9 +109,9 @@ export default function DurationReportPage() {
                         <tr key={row.ncal} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
                           <td data-label="NCAL" className="text-center md:py-3"><NcalBadge value={row.ncal} /></td>
                           <td data-label="TOTAL" className="text-center font-semibold text-sm md:py-3">{row.total_cases}</td>
-                          <td data-label="AVG NETT" className="text-center font-mono font-semibold text-sm opacity-70 md:py-3">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td data-label="SLA MET" className="text-center font-medium text-primary text-sm md:py-3">{row.sla_met || 0}</td>
-                          <td data-label="SLA TARGET" className="text-center opacity-50 text-xs uppercase font-semibold tracking-tighter md:py-3">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
+                          <td data-label="AVG NETT" className="text-center font-mono font-bold text-sm text-base-content/85 md:py-3">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td data-label="SLA MET" className="text-center font-bold text-primary text-sm md:py-3">{row.sla_met || 0}</td>
+                          <td data-label="SLA TARGET" className="text-center text-base-content/65 text-xs uppercase font-bold tracking-tighter md:py-3">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
                           <td data-label="PERCENTAGE" className="text-center md:py-3">
                             <span className={`font-bold tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
                               {pct}%
@@ -135,11 +135,11 @@ export default function DurationReportPage() {
                 <table className="table table-sm table-pin-rows table-stacked w-full">
                   <thead>
                     <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                    <th className="bg-base-100/90 backdrop-blur-md text-left min-w-[200px] uppercase tracking-wider text-xs text-base-content/50 py-3">Technician</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs text-base-content/50 py-3">Total</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[120px] uppercase tracking-wider text-xs text-base-content/50 py-3">Avg</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs text-success/70 py-3">Min</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs text-error/70 py-3">Max</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-left min-w-[200px] uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Technician</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Total</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[120px] uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Avg</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-success py-3">Min</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-error py-3">Max</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -142,7 +142,7 @@ export default function HistoryPage() {
           {/* Filter bar */}
           <div className="flex items-center gap-2 flex-wrap bg-base-100 p-3 rounded-xl shadow-sm">
             <label className="input input-ghost input-md flex items-center gap-2 flex-1 min-w-[240px] bg-base-200/50">
-              <Search size={16} className="text-base-content/30" />
+              <Search size={16} className="text-base-content/60" />
               <input type="text" className="grow font-semibold text-sm"
                 placeholder="Search case, site, technician..."
                 value={filters.search} onChange={e => setF('search', e.target.value)} />
@@ -169,7 +169,7 @@ export default function HistoryPage() {
               {loading ? (
                 <div className="flex flex-col items-center justify-center p-20 gap-4">
                   <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Syncing History Data</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/65">Syncing History Data</span>
                 </div>
               ) : filtered.length === 0 ? (
                 <EmptyState
@@ -182,30 +182,30 @@ export default function HistoryPage() {
                   <thead>
                     <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
                       <th className="bg-base-100/80 backdrop-blur-xl w-[36px]" />
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[110px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">No Case</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[200px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Site</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">NCAL</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Spt. Level</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[80px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Status</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[60px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Lv</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[160px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Technician</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[160px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Segment / ODP</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Start Open</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Start Esc.</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">End</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Gross</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Nett</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Pause 1 Start</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Pause 1 End</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Pause 2 Start</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Pause 2 End</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Tot. Pause</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[240px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Problem</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[220px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Penyebab</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[220px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Action Terakhir</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[140px] text-left text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Klasifikasi</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[70px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Pwr↓</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[70px] text-center text-xs font-semibold uppercase tracking-wider text-base-content/50 py-3">Pwr↑</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[110px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">No Case</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[200px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Site</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">NCAL</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Spt. Level</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[80px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Status</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[60px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Lv</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[160px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Technician</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[160px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Segment / ODP</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Start Open</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Start Esc.</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">End</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Gross</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Nett</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 1 Start</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 1 End</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 2 Start</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 2 End</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Tot. Pause</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[240px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Problem</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[220px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Penyebab</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[220px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Action Terakhir</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[140px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Klasifikasi</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[70px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pwr↓</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[70px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pwr↑</th>
                       <th className="bg-base-100/80 backdrop-blur-xl w-[40px]" />
                     </tr>
                   </thead>
@@ -229,10 +229,10 @@ export default function HistoryPage() {
                       //   .bold  = primary bold (case no, site, nett dur)
                       //   .faint = very muted (pause, escalation)
                       // Style helpers mapped to JetBrains Mono and Font-Medium
-                      const dim   = 'text-base-content/60 font-medium';
-                      const bold  = 'text-base-content/90 font-semibold';
-                      const faint = 'text-base-content/40 font-medium';
-                      const reg   = 'text-base-content/70 font-normal'; // True regular for long text
+                      const dim   = 'text-base-content/65 font-bold';
+                      const bold  = 'text-base-content/95 font-bold';
+                      const faint = 'text-base-content/45 font-bold';
+                      const reg   = 'text-base-content/85 font-medium'; // Higher contrast for body text
                       const nwrap = 'font-mono whitespace-nowrap text-sm tracking-tight tabular-nums';
                       const awrap = 'whitespace-normal font-sans text-sm leading-relaxed tracking-tight'; 
 

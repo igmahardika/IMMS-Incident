@@ -29,7 +29,7 @@ function LiveClock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="font-mono tracking-tighter text-base-content/40 font-semibold uppercase text-xs">
+    <span className="font-mono tracking-tighter text-base-content/65 font-bold uppercase text-xs">
       {time.toLocaleDateString('en-GB', { weekday: 'short' })}, {String(time.getDate()).padStart(2, '0')}/{String(time.getMonth() + 1).padStart(2, '0')}/{time.getFullYear()} {String(time.getHours()).padStart(2, '0')}:{String(time.getMinutes()).padStart(2, '0')} WIB
     </span>
   );
@@ -50,12 +50,12 @@ export default function Topbar() {
         </label>
         <div className="breadcrumbs text-xs hidden sm:block">
           <ul>
-            <li><span className="text-base-content/40 tracking-wider font-semibold uppercase">IMMS</span></li>
+            <li><span className="text-base-content/65 tracking-wider font-bold uppercase">IMMS</span></li>
             {parts.map((p, i) => (
               <li key={i}>
                 {i === parts.length - 1
                   ? <span className="font-semibold text-base-content uppercase tracking-tight">{TITLES[location.pathname] || p}</span>
-                  : <span className="capitalize font-medium opacity-40">{p}</span>
+                  : <span className="capitalize font-bold text-base-content/65">{p}</span>
                 }
               </li>
             ))}

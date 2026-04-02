@@ -87,7 +87,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-lg leading-tight tracking-tighter text-base-content">IMMS</div>
-            <div className="text-xs text-base-content/40 uppercase tracking-widest font-semibold">Enterprise</div>
+            <div className="text-xs text-base-content/65 uppercase tracking-widest font-bold">Enterprise</div>
           </div>
         </div>
       </li>
@@ -95,7 +95,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
       <div className="flex-1 overflow-y-auto w-full">
         {filteredGroups.map((group) => (
           <li key={group.label} className="mt-2.5 first:mt-0">
-            <h2 className="menu-title text-xs font-semibold uppercase text-base-content/40 tracking-wider mb-1">{group.label}</h2>
+            <h2 className="menu-title text-xs font-bold uppercase text-base-content/65 tracking-wider mb-1">{group.label}</h2>
             <ul className="gap-0.5 bg-transparent w-full p-0">
               {group.items.map((item) => (
                 <li key={item.to}>
@@ -125,8 +125,8 @@ export default function Sidebar({ mobileOpen, onClose }) {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-             <div className="font-semibold truncate text-[14px] md:text-sm text-base-content">{user?.name}</div>
-             <div className="text-xs md:text-xs text-base-content/40 uppercase tracking-wider font-semibold">{user?.role}</div>
+             <div className="font-bold truncate text-[14px] md:text-sm text-base-content">{user?.name}</div>
+             <div className="text-xs md:text-xs text-base-content/65 uppercase tracking-wider font-bold">{user?.role}</div>
           </div>
           <button 
              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLogout(); }}

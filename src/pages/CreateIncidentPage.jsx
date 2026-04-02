@@ -154,8 +154,8 @@ export default function CreateIncidentPage() {
         <div className="flex items-center gap-4">
           <button className="btn btn-ghost btn-circle btn-sm" onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={18} /></button>
           <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold tracking-tight uppercase">New Incident</h1>
-            <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Create a new monitoring ticket</p>
+            <h1 className="text-xl font-bold tracking-tight uppercase text-base-content">New Incident</h1>
+            <p className="text-xs font-semibold uppercase tracking-wider text-base-content/65">Create a new monitoring ticket</p>
           </div>
         </div>
       </div>
@@ -166,15 +166,15 @@ export default function CreateIncidentPage() {
           <SectionCard title="General Information" className="overflow-visible z-30">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <label className="form-control w-full gap-1.5">
-                <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/50">Case Number *</span></div>
+                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Case Number *</span></div>
                 <input type="text" className="input input-md w-full font-mono font-semibold text-sm bg-base-200/50" placeholder="e.g., C240313-001" value={form.case_no} onChange={e => set('case_no', e.target.value)} required />
               </label>
               <label className="form-control w-full gap-1.5">
-                <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/50">Reported Time *</span></div>
+                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Reported Time *</span></div>
                 <input type="datetime-local" className="input input-md w-full font-mono font-semibold text-sm bg-base-200/50 px-3" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
               </label>
               <label className="form-control w-full gap-1.5">
-                <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/50">NCAL Segment *</span></div>
+                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">NCAL Segment *</span></div>
                 <select className="select select-md w-full font-semibold text-sm bg-base-200/50" value={form.ncal} onChange={e => {
                   set('ncal', e.target.value);
                   if (['ORANGE', 'RED', 'BLACK'].includes(e.target.value)) {
@@ -195,7 +195,7 @@ export default function CreateIncidentPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-control w-full relative gap-1.5 custom-dropdown-container">
                   <div className="label p-0 min-h-0">
-                    <span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">{form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}</span>
+                    <span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">{form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}</span>
                   </div>
                   <input type="text" className="input input-md w-full font-semibold text-sm bg-base-200/50" placeholder="Search site or company name..." value={search} onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
                   {showDropdown && (
@@ -211,7 +211,7 @@ export default function CreateIncidentPage() {
                 </div>
                 {form.ncal !== 'BLUE' && (
                   <div className="form-control w-full relative gap-1.5 custom-dropdown-container">
-                    <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">{form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}</span></div>
+                    <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">{form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}</span></div>
                     <div className="flex flex-col gap-2">
                       <div className="input input-md w-full flex items-center justify-between cursor-pointer font-semibold text-sm bg-base-200/50" onClick={() => setShowOdpDropdown(!showOdpDropdown)}>
                         <span>{form.odp_bts || '— Select Distribution —'}</span>
@@ -256,7 +256,7 @@ export default function CreateIncidentPage() {
               </div>
             ) : (
               <div className="form-control w-full relative gap-1.5 custom-dropdown-container">
-                <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Infrastructure Selection ({form.ncal} Segment) *</span></div>
+                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Infrastructure Selection ({form.ncal} Segment) *</span></div>
                 <div className="input input-md w-full h-auto min-h-[44px] flex flex-wrap gap-2 items-center p-3 cursor-pointer transition-all bg-base-200/50 hover:bg-base-200" onClick={() => setShowDistDropdown(!showDistDropdown)}>
                   {distForm.selectedItems.length === 0 ? (
                     <span className="text-base-content/50 text-sm font-medium uppercase tracking-wider pl-1">Search and select items...</span>
@@ -296,11 +296,11 @@ export default function CreateIncidentPage() {
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <label className="form-control w-full gap-1.5">
-                  <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Initial Problem *</span></div>
+                  <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Initial Problem *</span></div>
                   <textarea className="textarea w-full font-semibold text-sm bg-base-200/50 leading-relaxed" placeholder="Describe the detected issue..." value={form.initial_problem} onChange={e => set('initial_problem', e.target.value)} rows={3} required />
                 </label>
                 <label className="form-control w-full gap-1.5">
-                  <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Technical Indications</span></div>
+                  <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Technical Indications</span></div>
                   <textarea className="textarea w-full font-semibold text-sm text-base-content/80 bg-base-200/50 leading-relaxed" placeholder="Loss of signal, high attenuation, etc..." value={form.indikasi} onChange={e => set('indikasi', e.target.value)} rows={3} />
                 </label>
               </div>
@@ -330,7 +330,7 @@ export default function CreateIncidentPage() {
                 </label>
                 {!isDistribsi && (
                   <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Assigned Technician / PIC</span></div>
+                  <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Assigned Technician / PIC</span></div>
                     <input type="text" className="input input-ghost bg-base-200/50 w-full font-semibold text-sm" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
                   </label>
                 )}
@@ -338,7 +338,7 @@ export default function CreateIncidentPage() {
 
               {isDistribsi && (
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Impacted Customers</span></div>
+                  <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Impacted Customers</span></div>
                   <textarea className="textarea textarea-ghost bg-base-200/50 w-full font-semibold text-sm" placeholder="List impacted sites/companies..." value={form.customer_terdampak} onChange={e => set('customer_terdampak', e.target.value)} rows={2} />
                 </label>
               )}
@@ -350,25 +350,25 @@ export default function CreateIncidentPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Original Address (Site)</span></div>
+                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Original Address (Site)</span></div>
                       <textarea className="textarea textarea-ghost bg-base-200 w-full opacity-60 text-xs font-semibold" rows={2} value={form.address_preview} disabled />
                     </label>
                     <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Coordinates (Override)</span></div>
+                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Coordinates (Override)</span></div>
                       <input type="text" className="input input-ghost bg-base-200 w-full font-mono font-semibold text-sm" placeholder="GPS Lat, Long" value={form.koordinat} onChange={e => set('koordinat', e.target.value)} />
                     </label>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">RX Power (Before)</span></div>
+                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">RX Power (Before)</span></div>
                       <input type="text" className="input input-ghost bg-base-200 w-full font-mono font-semibold text-sm" placeholder="-20.5 dBm" value={form.power_before} onChange={e => set('power_before', e.target.value)} />
                     </label>
                     <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Cable Type</span></div>
+                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Cable Type</span></div>
                       <input type="text" className="input input-ghost bg-base-200 w-full font-semibold text-sm" placeholder="Dropcore..." value={form.kabel} onChange={e => set('kabel', e.target.value)} />
                     </label>
                     <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">Total Length</span></div>
+                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Total Length</span></div>
                       <input type="text" className="input input-ghost bg-base-200 w-full font-mono font-semibold text-sm" placeholder="Meters" value={form.panjang_kabel} onChange={e => set('panjang_kabel', e.target.value)} />
                     </label>
                   </div>
@@ -391,12 +391,12 @@ export default function CreateIncidentPage() {
             <div className="flex flex-col gap-6">
               <div className="p-5 bg-base-200 rounded-lg flex flex-col gap-6">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-medium text-base-content/30 uppercase tracking-wider">Impact Segment</span>
+                  <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Impact Segment</span>
                   <NcalBadge value={form.ncal} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-medium text-base-content/30 uppercase tracking-wider">Infrastructures</span>
-                  <div className="font-semibold text-sm tracking-tight leading-tight text-base-content">
+                  <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Infrastructures</span>
+                  <div className="font-bold text-sm tracking-tight leading-tight text-base-content">
                     {isDistribsi 
                       ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : 'None')
                       : (form.site_name_manual || 'None')
@@ -404,23 +404,23 @@ export default function CreateIncidentPage() {
                   </div>
                   {!isDistribsi && form.sla && (
                     <div className="flex items-center gap-2 mt-1">
-                       <span className="text-xs font-medium text-primary uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full">Grade {form.sla}</span>
+                       <span className="text-xs font-bold text-primary uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">Grade {form.sla}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 px-1">
-                <span className="text-xs font-medium text-base-content/30 uppercase tracking-wider">Initial Issue</span>
-                <div className="text-sm font-medium leading-relaxed text-base-content/70 italic">
-                  {form.initial_problem || <span className="opacity-20">Awaiting input...</span>}
+                <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Initial Issue</span>
+                <div className="text-sm font-semibold leading-relaxed text-base-content/85 italic">
+                  {form.initial_problem || <span className="opacity-20 text-xs">Awaiting input...</span>}
                 </div>
               </div>
 
               <div className="mt-2 p-3 bg-base-300/30 rounded-xl">
-                <div className="text-xs font-medium text-base-content/40 uppercase tracking-wider mb-1">Ticket Metadata</div>
-                <div className="text-xs font-semibold text-base-content/40 leading-relaxed">
-                  Log <span className="text-primary font-bold">#{form.case_no || 'TBD'}</span> at <span className="font-mono text-base-content/60">{formatDateTime(form.start_time)}</span>
+                <div className="text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Ticket Metadata</div>
+                <div className="text-xs font-bold text-base-content/65 leading-relaxed">
+                  Log <span className="text-primary font-bold">#{form.case_no || 'TBD'}</span> at <span className="font-mono text-base-content/80">{formatDateTime(form.start_time)}</span>
                 </div>
               </div>
             </div>

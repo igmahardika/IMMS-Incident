@@ -53,8 +53,8 @@ export default function MonthlyViewPage() {
           </div>
         </div>
         <div className="flex flex-col border-l border-base-content/10 pl-1.5">
-          <div className="text-xs text-base-content/40 font-bold flex items-center gap-1 uppercase tracking-tighter leading-none scale-90 origin-left">
-            <span className="font-mono text-base-content/50">{formatDuration(avgGross)}</span>
+          <div className="text-xs text-base-content/65 font-bold flex items-center gap-1 uppercase tracking-tighter leading-none">
+            <span className="font-mono text-base-content/80 text-[11px]">{formatDuration(avgGross)}</span>
           </div>
         </div>
       </div>
@@ -80,13 +80,13 @@ export default function MonthlyViewPage() {
       <div className="flex items-center justify-between gap-4 py-1">
         <div className="flex items-baseline gap-3">
           <div className="text-xl font-bold tracking-tight">Monthly Analysis</div>
-          <div className="hidden md:block text-xs font-semibold uppercase tracking-wider text-base-content/30">Performance patterns by category</div>
+          <div className="hidden md:block text-xs font-semibold uppercase tracking-wider text-base-content/50">Performance patterns by category</div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold opacity-30 uppercase tracking-widest">
+          <div className="flex items-center gap-1.5 text-xs font-bold opacity-50 uppercase tracking-widest">
             <Calendar size={12} /> Year
           </div>
-          <select className="select select-bordered select-xs w-24 font-bold h-7 min-h-0" value={year} onChange={e => setYear(e.target.value)}>
+          <select className="select select-bordered select-xs w-24 font-bold h-7 min-h-0 text-xs" value={year} onChange={e => setYear(e.target.value)}>
             {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
@@ -103,8 +103,8 @@ export default function MonthlyViewPage() {
                 <BarChart2 size={18} />
               </div>
               <div>
-                <div className="text-xs font-bold text-base-content/30 uppercase tracking-tighter leading-none scale-90 origin-left">Total Case</div>
-                <div className="text-lg font-bold font-mono tracking-tighter text-base-content mt-0.5 leading-none">{yearlyCount}</div>
+                <div className="text-xs font-bold text-base-content/65 uppercase tracking-tighter leading-none">Total Case</div>
+                <div className="text-xl font-bold font-mono tracking-tighter text-base-content mt-1 leading-none">{yearlyCount}</div>
               </div>
             </div>
             
@@ -147,7 +147,7 @@ export default function MonthlyViewPage() {
               <table className="table table-bordered w-full border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-base-200/50 backdrop-blur-md">
-                    <th className="sticky left-0 bg-base-200/80 z-30 min-w-[140px] border-r border-base-content/5 uppercase tracking-tighter text-xs text-base-content/40 py-2 font-bold">Period</th>
+                    <th className="sticky left-0 bg-base-200/80 z-30 min-w-[140px] border-r border-base-content/10 uppercase tracking-tighter text-xs text-base-content/65 py-2.5 font-bold">Period</th>
                     {NCAL_ORDER.map(n => (
                       <th key={n} className="text-center min-w-[110px] md:min-w-[130px] pb-1.5 bg-transparent border-r border-base-content/5">
                         <div className="flex flex-col items-center gap-1.5">
@@ -155,7 +155,7 @@ export default function MonthlyViewPage() {
                         </div>
                       </th>
                     ))}
-                    <th className="sticky right-0 bg-base-200/80 z-30 text-center min-w-[140px] md:min-w-[160px] uppercase tracking-widest text-[10px] text-base-content/40 py-2.5 border-l border-base-content/5 font-bold">Performance</th>
+                    <th className="sticky right-0 bg-base-200/80 z-30 text-center min-w-[140px] md:min-w-[160px] uppercase tracking-tighter text-xs text-base-content/65 py-2.5 border-l border-base-content/10 font-bold">Performance</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-content/5">
@@ -190,11 +190,11 @@ export default function MonthlyViewPage() {
                         <td className="sticky right-0 bg-base-100 group-hover:bg-base-100 z-10 text-center border-l border-base-content/10">
                           <div className="flex flex-col gap-0 items-center px-2">
                             <div className="flex items-center gap-1.5">
-                               <span className="text-base font-bold font-mono tracking-tighter text-primary">{totalCount || 0}</span>
-                               <span className="badge badge-sm font-bold opacity-30 uppercase h-3.5 px-0.5 text-xs scale-75 origin-right border-none">{eff}%</span>
+                               <span className="text-lg font-bold font-mono tracking-tighter text-primary">{totalCount || 0}</span>
+                               <span className="badge badge-sm font-bold opacity-65 uppercase h-4 px-1 text-xs border-none">{eff}%</span>
                             </div>
-                            <div className="text-xs font-bold text-base-content/30 flex items-center gap-1 uppercase tracking-tighter leading-none scale-90 origin-right">
-                               <span className="font-mono text-base-content/60">{formatDuration(avgNett)}</span>
+                            <div className="text-xs font-bold text-base-content/65 flex items-center gap-1 uppercase tracking-tighter leading-none">
+                               <span className="font-mono text-base-content/85">{formatDuration(avgNett)}</span>
                             </div>
                           </div>
                         </td>

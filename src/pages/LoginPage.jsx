@@ -50,7 +50,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-base-content">IMMS</h1>
-          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mt-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 mt-2">
             Incident & Maintenance Management System
           </p>
         </div>
@@ -59,15 +59,15 @@ export default function LoginPage() {
         <div className="bg-base-100 shadow-2xl rounded-lg overflow-hidden">
           <div className="p-10">
             <h2 className="text-2xl font-bold tracking-tight text-base-content">Security Access</h2>
-            <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-8">
+            <p className="text-xs font-bold text-base-content/65 uppercase tracking-wider mb-8">
               Authenticate to access the monitoring core
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <label className="form-control w-full">
-                <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Operator Identity</span></div>
+                <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Operator Identity</span></div>
                 <div className="relative flex items-center">
-                  <User size={16} className="absolute left-4 text-base-content/20 pointer-events-none" />
+                  <User size={16} className="absolute left-4 text-base-content/40 pointer-events-none" />
                   <input
                     id="login-username"
                     type="text"
@@ -83,9 +83,9 @@ export default function LoginPage() {
               </label>
 
               <label className="form-control w-full">
-                <div className="label pt-2"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Access Key</span></div>
+                <div className="label pt-2"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Access Key</span></div>
                 <div className="relative flex items-center">
-                  <Lock size={16} className="absolute left-4 text-base-content/20 pointer-events-none" />
+                  <Lock size={16} className="absolute left-4 text-base-content/40 pointer-events-none" />
                   <input
                     id="login-password"
                     type={showPw ? 'text' : 'password'}
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPw(v => !v)}
-                    className="absolute right-4 text-base-content/20 hover:text-primary transition-all active:scale-90"
+                    className="absolute right-4 text-base-content/30 hover:text-primary transition-all active:scale-90"
                     tabIndex={-1}
                     aria-label="Toggle password visibility"
                   >
@@ -128,13 +128,13 @@ export default function LoginPage() {
                 className="flex flex-col items-center justify-center p-4 bg-base-200 hover:bg-primary/5 rounded-lg transition-all text-center group active:scale-95"
               >
                 <div className="text-xs font-semibold text-primary uppercase tracking-wider group-hover:scale-110 transition-transform">{role}</div>
-                <div className="text-xs font-mono font-semibold text-base-content/30 mt-1 uppercase tracking-tighter">{u}</div>
+                <div className="text-xs font-mono font-bold text-base-content/65 mt-1 uppercase tracking-tighter">{u}</div>
               </button>
             ))}
           </div>
         </div>
 
-        <p className="text-xs font-semibold text-center mt-6 text-base-content/40 uppercase tracking-wider">
+        <p className="text-xs font-bold text-center mt-6 text-base-content/65 uppercase tracking-wider">
           NCAL MONITORING FRAMEWORK © 2026<br />V 5.0.0 ENTERPRISE EDITION
         </p>
       </div>

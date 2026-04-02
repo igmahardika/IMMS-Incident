@@ -157,7 +157,7 @@ export default function EscalationSettingsPage() {
             <div className="p-4 md:p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Integration Platform</span></label>
+                  <label className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Integration Platform</span></label>
                   <select className="select border-none bg-base-200 w-full font-semibold text-sm tracking-tight h-10 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
                     <option value="telegram">Telegram Protocol</option>
                     <option value="whatsapp">WhatsApp Business API</option>
@@ -165,7 +165,7 @@ export default function EscalationSettingsPage() {
                   </select>
                 </div>
                 <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Service Enforcement</span></label>
+                  <label className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Service Enforcement</span></label>
                   <div className="flex items-center h-12">
                     <label className="label cursor-pointer justify-start gap-4 p-0">
                       <input
@@ -174,7 +174,7 @@ export default function EscalationSettingsPage() {
                         checked={!!cfg.is_active}
                         onChange={e => setF('is_active', e.target.checked)}
                       />
-                      <span className="label-text text-sm font-semibold tracking-tight text-base-content/70">Enable automated event pushing</span>
+                      <span className="label-text text-sm font-bold tracking-tight text-base-content/85">Enable automated event pushing</span>
                     </label>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export default function EscalationSettingsPage() {
 
               <div className="form-control w-full">
                 <label className="label pb-1">
-                  <span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+                  <span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">
                     {cfg.type === 'telegram' ? 'Internal Coordination Endpoint' : 'Internal Webhook Resource'}
                   </span>
                 </label>
@@ -197,7 +197,7 @@ export default function EscalationSettingsPage() {
 
               <div className="form-control w-full">
                 <label className="label pb-1">
-                  <span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">
+                  <span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">
                     {cfg.type === 'telegram' ? 'Vendor / Operation Endpoint' : 'External Webhook Resource'}
                   </span>
                 </label>
@@ -216,7 +216,7 @@ export default function EscalationSettingsPage() {
           <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5 mt-6">
             <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
               <h3 className="text-base font-bold">Message Templates</h3>
-              <p className="text-xs opacity-60">OPEN & CLOSE message templates per NCAL segment</p>
+              <p className="text-xs font-bold text-base-content/65">OPEN & CLOSE message templates per NCAL segment</p>
             </div>
             <div className="p-0">
               {/* Tab bar */}
@@ -226,8 +226,8 @@ export default function EscalationSettingsPage() {
                     key={seg}
                     className={`px-4 py-2 text-xs font-semibold tracking-wider uppercase transition-all rounded-md ${
                       previewNcal === seg 
-                        ? 'bg-base-100 shadow-sm text-base-content/80' 
-                        : 'text-base-content/40 hover:bg-base-200 hover:text-base-content/60'
+                        ? 'bg-base-100 shadow-sm text-base-content font-bold' 
+                        : 'text-base-content/65 font-bold hover:bg-base-200 hover:text-base-content/80'
                     }`}
                     onClick={() => setPreviewNcal(seg)}
                   >
@@ -240,11 +240,11 @@ export default function EscalationSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-4 bg-primary rounded-full" />
-                    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Deployment Template — {previewNcal}</span>
+                    <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Deployment Template — {previewNcal}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Internal Coordination Payload</span></div>
+                      <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Internal Coordination Payload</span></div>
                       <textarea
                         className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                         rows={6}
@@ -255,7 +255,7 @@ export default function EscalationSettingsPage() {
                     </label>
                     {previewNcal === 'YELLOW' && (
                       <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Vendor / MO Protocol</span></div>
+                        <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Vendor / MO Protocol</span></div>
                         <textarea
                           className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                           rows={6}
@@ -273,11 +273,11 @@ export default function EscalationSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-4 bg-success rounded-full" />
-                    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Resolution Template — {previewNcal}</span>
+                    <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Resolution Template — {previewNcal}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Internal Resolution Payload</span></div>
+                      <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Internal Resolution Payload</span></div>
                       <textarea
                         className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                         rows={6}
@@ -288,7 +288,7 @@ export default function EscalationSettingsPage() {
                     </label>
                     {previewNcal === 'YELLOW' && (
                       <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Vendor Clearance Protocol</span></div>
+                        <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Vendor Clearance Protocol</span></div>
                         <textarea
                           className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                           rows={6}
@@ -379,7 +379,7 @@ export default function EscalationSettingsPage() {
                   ].map(([v, d]) => (
                     <div key={v} className="flex justify-between items-center py-1.5 last:border-0">
                       <span className="font-mono text-primary bg-primary/10 px-1.5 rounded">{v}</span>
-                      <span className="text-base-content/30 uppercase tracking-wider text-xs font-semibold">{d}</span>
+                      <span className="text-base-content/65 uppercase tracking-wider text-xs font-bold">{d}</span>
                     </div>
                   ))}
                 </div>
