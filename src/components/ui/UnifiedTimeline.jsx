@@ -112,21 +112,21 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical', is
               <div className={`flex justify-between items-start gap-3 ${isCompact ? 'mb-2' : 'mb-3'}`}>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`${isCompact ? 'text-[11px]' : 'text-[13.5px]'} font-bold tracking-tight text-base-content leading-none`}>
+                    <span className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold tracking-tight text-base-content leading-none`}>
                       {getActionLabel()}
                     </span>
                     {item.user_name && (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200/50 rounded-full text-[9px] font-bold text-base-content/70 uppercase tracking-[0.15em] leading-none">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200/50 rounded-full text-xs font-medium text-base-content/70 uppercase tracking-wider leading-none">
                         <User size={8} /> {item.user_name}
                       </span>
                     )}
                   </div>
-                  <div className={`${isCompact ? 'text-[9px]' : 'text-[10px]'} font-mono font-bold text-base-content/40 mt-1 uppercase tracking-wider`}>
+                  <div className={`${isCompact ? 'text-xs' : 'text-xs'} font-mono font-bold text-base-content/40 mt-1 uppercase tracking-wider`}>
                     {formatDateTime(timestamp)}
                   </div>
                 </div>
                 {item.segment_duration != null && item.segment_duration > 0 && filterType === 'technical' && (
-                  <div className="badge badge-primary badge-soft badge-xs font-bold text-[9px] px-1.5 h-5 rounded uppercase tracking-[0.15em] flex-shrink-0">
+                  <div className="badge badge-primary badge-soft badge-xs font-semibold text-xs px-1.5 h-5 rounded uppercase tracking-wider flex-shrink-0">
                     {formatDuration(item.segment_duration)}
                   </div>
                 )}
@@ -138,14 +138,14 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical', is
                   <div className={`grid grid-cols-1 ${ (cause && actionTxt && !isCompact) ? 'md:grid-cols-2' : ''} gap-2`}>
                     {cause && (
                       <div className="p-3 bg-error/5 rounded-xl">
-                        <div className="text-[9px] font-bold text-error/80 uppercase tracking-[0.15em] mb-1">Root Cause</div>
-                        <div className={`${isCompact ? 'text-[11px]' : 'text-[13.5px]'} font-bold text-base-content/80 leading-relaxed`}>{cause}</div>
+                        <div className="text-xs font-medium text-error/80 uppercase tracking-wider mb-1">Root Cause</div>
+                        <div className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold text-base-content/80 leading-relaxed`}>{cause}</div>
                       </div>
                     )}
                     {actionTxt && (
                       <div className="p-3 bg-success/5 rounded-xl">
-                        <div className="text-[9px] font-bold text-success/80 uppercase tracking-[0.15em] mb-1">Action Taken</div>
-                        <div className={`${isCompact ? 'text-[11px]' : 'text-[13.5px]'} font-bold text-base-content/80 leading-relaxed`}>{actionTxt}</div>
+                        <div className="text-xs font-medium text-success/80 uppercase tracking-wider mb-1">Action Taken</div>
+                        <div className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold text-base-content/80 leading-relaxed`}>{actionTxt}</div>
                       </div>
                     )}
                   </div>
@@ -154,7 +154,7 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical', is
                 {filterType === 'system' && others.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {others.map((o, offsetIdx) => (
-                      <span key={offsetIdx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-base-200/50 rounded-lg text-[10px] font-bold text-base-content/70">
+                      <span key={offsetIdx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-base-200/50 rounded-lg text-xs font-semibold text-base-content/70">
                         <div className="w-1 h-1 rounded-full bg-primary/40" />
                         {o}
                       </span>
@@ -164,13 +164,13 @@ export default function UnifiedTimeline({ timeline, filterType = 'technical', is
 
                 {/* Lifecycle Messages */}
                 {((filterType === 'technical' && !cause && !actionTxt && action !== 'UPDATE') || (filterType === 'system' && action === 'CREATE')) && (
-                   <div className={`p-3 bg-base-200/40 rounded-xl ${isCompact ? 'text-[11px]' : 'text-[13px]'} italic font-bold text-base-content/60 leading-relaxed`}>
+                   <div className={`p-3 bg-base-200/40 rounded-xl ${isCompact ? 'text-xs' : 'text-sm'} italic font-bold text-base-content/60 leading-relaxed`}>
                      {action === 'CREATE' ? 'Initial entry: Incident established in the monitoring system.' : (item.details || item.reason || getActionLabel())}
                    </div>
                 )}
 
                 {isPause && item.pause_end && filterType === 'technical' && (
-                  <div className={`flex items-center gap-2 mt-2 px-2 py-1 bg-success/10 rounded-lg w-fit ${isCompact ? 'text-[9px]' : 'text-[10px]'} font-bold text-success uppercase tracking-[0.15em]`}>
+                  <div className={`flex items-center gap-2 mt-2 px-2 py-1 bg-success/10 rounded-lg w-fit ${isCompact ? 'text-xs' : 'text-xs'} font-bold text-success uppercase tracking-wider`}>
                     <Play size={10} fill="currentColor" /> Resumed at {formatDateTime(item.pause_end)}
                   </div>
                 )}

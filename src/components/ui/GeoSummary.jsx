@@ -42,9 +42,9 @@ export default function GeoSummary({ customers }) {
             <Users size={24} />
           </div>
           <div className="z-10">
-            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Total Infrastructure</div>
+            <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Total Infrastructure</div>
             <div className="text-2xl font-bold tracking-tight">
-              {stats.totalMapped.toLocaleString()} <span className="text-[10px] font-bold text-base-content/40 ml-1 uppercase tracking-[0.15em]">Mapped Nodes</span>
+              {stats.totalMapped.toLocaleString()} <span className="text-xs font-semibold text-base-content/40 ml-1 uppercase tracking-wider">Mapped Nodes</span>
             </div>
           </div>
         </div>
@@ -57,9 +57,9 @@ export default function GeoSummary({ customers }) {
             <TrendingUp size={24} />
           </div>
           <div className="z-10">
-            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Network Coverage</div>
+            <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Network Coverage</div>
             <div className="text-2xl font-bold tracking-tight">
-              {stats.sorted.length} <span className="text-[10px] font-bold text-base-content/40 ml-1 uppercase tracking-[0.15em]">Cities & Regencies</span>
+              {stats.sorted.length} <span className="text-xs font-semibold text-base-content/40 ml-1 uppercase tracking-wider">Cities & Regencies</span>
             </div>
           </div>
         </div>
@@ -73,8 +73,8 @@ export default function GeoSummary({ customers }) {
               <MapPin size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-tight text-base-content/80">Geographical Distribution</h3>
-              <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5">Updated real-time from geocoding task</p>
+              <h3 className="text-sm font-semibold uppercase tracking-tight text-base-content/80">Geographical Distribution</h3>
+              <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-0.5">Updated real-time from geocoding task</p>
             </div>
           </div>
         </header>
@@ -88,15 +88,15 @@ export default function GeoSummary({ customers }) {
                 className="group p-5 bg-base-100 border border-base-200 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30 relative overflow-hidden flex flex-col justify-between"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div className="font-bold text-sm tracking-tight text-base-content group-hover:text-primary transition-colors">{city}</div>
-                  <div className="badge badge-primary badge-outline font-bold text-[9px] px-1.5 py-0.5 h-auto">
+                  <div className="font-semibold text-sm tracking-tight text-base-content group-hover:text-primary transition-colors">{city}</div>
+                  <div className="badge badge-primary badge-outline font-semibold text-xs px-1.5 py-0.5 h-auto">
                     {percentage}%
                   </div>
                 </div>
 
                 <div className="flex items-baseline gap-1.5 mb-4">
                   <span className="text-2xl font-bold tracking-tighter text-base-content">{count}</span>
-                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">sites</span>
+                  <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">sites</span>
                 </div>
 
                 {/* Progress Mini Bar */}

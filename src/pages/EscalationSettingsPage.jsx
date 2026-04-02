@@ -87,8 +87,8 @@ export default function EscalationSettingsPage() {
       ncal: label, case_no: 'C260313-1234', company: 'PT Sample Customer',
       brand: 'BRAND SITE A', root_cause: 'Fiber Cut', problem: 'LOS / High Attenuation',
       action: 'Splicing core #5', duration: '01:23:45',
-      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
       address: '123 Business St, Landmark Sq', koordinat: '-6.9823, 110.4231',
       odp: infraMock, odc: infraMock, bts: infraMock, pop: infraMock,
       osc: infraMock, radio: infraMock, power_rx: '-28.5 dBm',
@@ -121,7 +121,7 @@ export default function EscalationSettingsPage() {
             <Settings size={18} />
             Escalation Settings
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Configure automated notifications via Webhook endpoints</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Configure automated notifications via Webhook endpoints</div>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <button className="btn btn-ghost btn-sm flex-1 md:flex-none" onClick={handleTest} disabled={testing || !cfg.webhook_url}>
@@ -143,12 +143,12 @@ export default function EscalationSettingsPage() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="text-lg font-bold tracking-tight text-base-content">Core Configuration</h1>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 mt-1">Notification endpoints & Global Status</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-base-content/30 mt-1">Notification endpoints & Global Status</p>
                 </div>
                 {/* Active status indicator */}
                 <div className={`flex items-center self-start md:self-auto gap-2 px-3 py-1.5 rounded-full transition-all ${cfg.is_active ? 'bg-success/10 text-success' : 'bg-base-300/30 text-base-content/30'}`}>
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.is_active ? 'bg-success animate-pulse' : 'bg-base-content/10'}`} />
-                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">
+                  <span className="text-xs font-semibold tracking-wider uppercase">
                     {cfg.is_active ? 'Live' : 'Offline'}
                   </span>
                 </div>
@@ -157,15 +157,15 @@ export default function EscalationSettingsPage() {
             <div className="p-4 md:p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Integration Platform</span></label>
-                  <select className="select border-none bg-base-200 w-full font-semibold text-[13px] tracking-tight h-10 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
+                  <label className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Integration Platform</span></label>
+                  <select className="select border-none bg-base-200 w-full font-semibold text-sm tracking-tight h-10 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
                     <option value="telegram">Telegram Protocol</option>
                     <option value="whatsapp">WhatsApp Business API</option>
                     <option value="custom">Standard Webhook (JSON)</option>
                   </select>
                 </div>
                 <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Service Enforcement</span></label>
+                  <label className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Service Enforcement</span></label>
                   <div className="flex items-center h-12">
                     <label className="label cursor-pointer justify-start gap-4 p-0">
                       <input
@@ -174,7 +174,7 @@ export default function EscalationSettingsPage() {
                         checked={!!cfg.is_active}
                         onChange={e => setF('is_active', e.target.checked)}
                       />
-                      <span className="label-text text-[13.5px] font-bold tracking-tight text-base-content/70">Enable automated event pushing</span>
+                      <span className="label-text text-sm font-semibold tracking-tight text-base-content/70">Enable automated event pushing</span>
                     </label>
                   </div>
                 </div>
@@ -182,13 +182,13 @@ export default function EscalationSettingsPage() {
 
               <div className="form-control w-full">
                 <label className="label pb-1">
-                  <span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+                  <span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">
                     {cfg.type === 'telegram' ? 'Internal Coordination Endpoint' : 'Internal Webhook Resource'}
                   </span>
                 </label>
                 <input
                   type="url" 
-                  className="input border-none w-full font-mono font-medium text-[12px] h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
+                  className="input border-none w-full font-mono font-medium text-sm h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
                   value={cfg.webhook_url || ''}
                   onChange={e => setF('webhook_url', e.target.value)}
                   placeholder="https://core-api.v1/..."
@@ -197,13 +197,13 @@ export default function EscalationSettingsPage() {
 
               <div className="form-control w-full">
                 <label className="label pb-1">
-                  <span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+                  <span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">
                     {cfg.type === 'telegram' ? 'Vendor / Operation Endpoint' : 'External Webhook Resource'}
                   </span>
                 </label>
                 <input
                   type="url" 
-                  className="input border-none w-full font-mono font-medium text-[12px] h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
+                  className="input border-none w-full font-mono font-medium text-sm h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
                   value={cfg.webhook_url_vendor || ''}
                   onChange={e => setF('webhook_url_vendor', e.target.value)}
                   placeholder="https://vendor-api.v1/..."
@@ -224,7 +224,7 @@ export default function EscalationSettingsPage() {
                 {segments.map(seg => (
                   <button
                     key={seg}
-                    className={`px-4 py-2 text-[10px] font-bold tracking-[0.15em] uppercase transition-all rounded-md ${
+                    className={`px-4 py-2 text-xs font-semibold tracking-wider uppercase transition-all rounded-md ${
                       previewNcal === seg 
                         ? 'bg-base-100 shadow-sm text-base-content/80' 
                         : 'text-base-content/40 hover:bg-base-200 hover:text-base-content/60'
@@ -240,13 +240,13 @@ export default function EscalationSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-4 bg-primary rounded-full" />
-                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Deployment Template — {previewNcal}</span>
+                    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Deployment Template — {previewNcal}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Internal Coordination Payload</span></div>
+                      <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Internal Coordination Payload</span></div>
                       <textarea
-                        className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
+                        className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                         rows={6}
                         value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
                         onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -255,9 +255,9 @@ export default function EscalationSettingsPage() {
                     </label>
                     {previewNcal === 'YELLOW' && (
                       <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Vendor / MO Protocol</span></div>
+                        <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Vendor / MO Protocol</span></div>
                         <textarea
-                          className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
+                          className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                           rows={6}
                           value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
                           onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -273,13 +273,13 @@ export default function EscalationSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-4 bg-success rounded-full" />
-                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Resolution Template — {previewNcal}</span>
+                    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Resolution Template — {previewNcal}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Internal Resolution Payload</span></div>
+                      <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Internal Resolution Payload</span></div>
                       <textarea
-                        className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
+                        className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                         rows={6}
                         value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
                         onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -288,9 +288,9 @@ export default function EscalationSettingsPage() {
                     </label>
                     {previewNcal === 'YELLOW' && (
                       <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Vendor Clearance Protocol</span></div>
+                        <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Vendor Clearance Protocol</span></div>
                         <textarea
-                          className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
+                          className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                           rows={6}
                           value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
                           onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -323,7 +323,7 @@ export default function EscalationSettingsPage() {
                     <button
                       key={t}
                       onClick={() => setPreviewType(t)}
-                      className={`btn btn-xs join-item border-none text-[9px] uppercase tracking-[0.1em] px-3 ${previewType === t ? 'bg-base-100 text-base-content/80 shadow-sm' : 'bg-transparent text-base-content/40 hover:text-base-content/70'}`}
+                      className={`btn btn-xs join-item border-none text-xs uppercase tracking-wide px-3 ${previewType === t ? 'bg-base-100 text-base-content/80 shadow-sm' : 'bg-transparent text-base-content/40 hover:text-base-content/70'}`}
                     >
                       {t}
                     </button>
@@ -338,14 +338,14 @@ export default function EscalationSettingsPage() {
                   const ncalColorsMap = { BLACK: 'text-base-content', RED: 'text-error', ORANGE: 'text-orange-500', YELLOW: 'text-warning', BLUE: 'text-info' };
                   const colorClass = previewType === 'close' ? 'text-success' : (ncalColorsMap[previewNcal] || 'text-base-content');
                   return (
-                    <div className={`text-[10px] font-bold ${colorClass} uppercase tracking-[0.15em] flex items-center gap-1.5`}>
+                    <div className={`text-xs font-semibold ${colorClass} uppercase tracking-wider flex items-center gap-1.5`}>
                       {previewType === 'close' ? <CheckCircle2 size={12} strokeWidth={3} /> : <Circle size={12} fill="currentColor" className="opacity-90" />} 
                       <span>{previewType === 'close' ? 'RESOLVED' : 'INTERNAL ALERT'}</span>
                     </div>
                   );
                 })()}
 
-                <div className="bg-base-200/50 rounded-lg p-4 font-mono text-[11px] leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-base-content/80 shadow-inner">
+                <div className="bg-base-200/50 rounded-lg p-4 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-base-content/80 shadow-inner">
                   {renderPreview(getActiveTemplate(previewType, 'internal'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
                 </div>
               </div>
@@ -353,11 +353,11 @@ export default function EscalationSettingsPage() {
               {/* Vendor preview (Yellow only or if template exists) */}
               {(previewNcal === 'YELLOW' || getActiveTemplate(previewType, 'vendor')) && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="text-[10px] font-bold text-warning uppercase tracking-[0.15em] flex items-center gap-1.5">
+                  <div className="text-xs font-semibold text-warning uppercase tracking-wider flex items-center gap-1.5">
                     <Circle size={12} fill="currentColor" className="opacity-90" />
                     VENDOR ESCALATION
                   </div>
-                  <div className="bg-warning/5 rounded-lg p-4 font-mono text-[11px] leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-warning/80 shadow-inner">
+                  <div className="bg-warning/5 rounded-lg p-4 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-warning/80 shadow-inner">
                     {renderPreview(getActiveTemplate(previewType, 'vendor'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
                   </div>
                 </div>
@@ -365,10 +365,10 @@ export default function EscalationSettingsPage() {
 
               {/* Variable Glossary */}
                <div className="bg-primary/5 rounded-lg p-6">
-                <div className="text-[10px] font-bold text-primary uppercase tracking-[0.15em] flex items-center gap-2 mb-4">
+                <div className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
                   <Info size={14} /> Data Directives
                 </div>
-                <div className="grid grid-cols-1 gap-2 text-[11px] font-bold">
+                <div className="grid grid-cols-1 gap-2 text-sm font-medium">
                   {[
                     ['{ncal}', 'Segment Icon'],
                     ['{level}', 'Service Prio'],
@@ -379,7 +379,7 @@ export default function EscalationSettingsPage() {
                   ].map(([v, d]) => (
                     <div key={v} className="flex justify-between items-center py-1.5 last:border-0">
                       <span className="font-mono text-primary bg-primary/10 px-1.5 rounded">{v}</span>
-                      <span className="text-base-content/30 uppercase tracking-[0.15em] text-[10px] font-bold">{d}</span>
+                      <span className="text-base-content/30 uppercase tracking-wider text-xs font-semibold">{d}</span>
                     </div>
                   ))}
                 </div>

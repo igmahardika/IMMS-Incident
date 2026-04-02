@@ -15,7 +15,7 @@ const CustomLabel = ({ cx, cy, midAngle, outerRadius, name, percent }) => {
   const r = outerRadius + 20;
   const x = cx + r * Math.cos(-midAngle * RADIAN);
   const y = cy + r * Math.sin(-midAngle * RADIAN);
-  return <text x={x} y={y} className="fill-base-content/40 font-bold" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{`${(percent * 100).toFixed(0)}%`}</text>;
+  return <text x={x} y={y} className="fill-base-content/40 font-medium" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>{`${(percent * 100).toFixed(0)}%`}</text>;
 };
 
 export default function RootCausePage() {
@@ -51,21 +51,21 @@ export default function RootCausePage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <div className="text-2xl font-bold tracking-tight">Root Cause Analysis</div>
-        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Historical statistics of incident classifications</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Historical statistics of incident classifications</div>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 bg-base-100 p-4 py-3 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
+        <div className="flex items-center gap-2 text-xs font-semibold text-base-content/40 uppercase tracking-wider">
           <Filter size={14} /> Filter Analysis
         </div>
-        <select className="select select-sm w-32 font-bold text-[13.5px] bg-base-200/50" value={filters.year} onChange={e => setF('year', e.target.value)}>
+        <select className="select select-sm w-32 font-semibold text-sm bg-base-200/50" value={filters.year} onChange={e => setF('year', e.target.value)}>
           {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-        <select className="select select-sm w-40 font-bold text-[13.5px] bg-base-200/50" value={filters.month} onChange={e => setF('month', e.target.value)}>
+        <select className="select select-sm w-40 font-semibold text-sm bg-base-200/50" value={filters.month} onChange={e => setF('month', e.target.value)}>
           <option value="">All Months</option>
           {MONTH_NAMES.map((m, i) => <option key={i+1} value={String(i+1).padStart(2,'0')}>{m}</option>)}
         </select>
-        <select className="select select-sm w-40 font-bold text-[13.5px] bg-base-200/50" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
+        <select className="select select-sm w-40 font-semibold text-sm bg-base-200/50" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
           <option value="">All NCAL</option>
           {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
         </select>
@@ -76,8 +76,8 @@ export default function RootCausePage() {
           {/* Pie Chart */}
           <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
             <div className="p-6">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Classification Distribution</h3>
-              <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Total: {total} incidents</p>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Classification Distribution</h3>
+              <p className="text-sm font-medium text-base-content/70 mt-1 uppercase tracking-tight">Total: {total} incidents</p>
             </div>
             <div className="p-6 overflow-visible">
               <ChartContainer config={rootCauseConfig} className="h-[250px] md:h-[280px]">
@@ -105,8 +105,8 @@ export default function RootCausePage() {
           {/* Bar Chart */}
           <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
             <div className="p-6">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Frequency per Classification</h3>
-              <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Sorted by frequency</p>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Frequency per Classification</h3>
+              <p className="text-sm font-medium text-base-content/70 mt-1 uppercase tracking-tight">Sorted by frequency</p>
             </div>
             <div className="p-6 overflow-visible">
               <ChartContainer config={rootCauseConfig} className="h-[300px] md:h-[340px]">
@@ -114,7 +114,7 @@ export default function RootCausePage() {
                   <BarChart data={data.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 40, top: 8, bottom: 8 }}>
                     <CartesianGrid vertical={false} horizontal={false} />
                     <XAxis type="number" hide />
-                    <YAxis type="category" dataKey="classification" width={160} tick={{ className: "fill-base-content/40 font-bold", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="classification" width={160} tick={{ className: "fill-base-content/60 font-medium", fontSize: 12 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
                     <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
                       {data.slice(0, 10).map((entry, i) => {
@@ -137,11 +137,11 @@ export default function RootCausePage() {
               <table className="table table-sm table-pin-rows table-stacked w-full">
                 <thead>
                   <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                    <th className="bg-base-100/90 backdrop-blur-md w-16 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">#</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Classification</th>
-                    <th className="bg-base-100/90 backdrop-blur-md w-32 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Count</th>
-                    <th className="bg-base-100/90 backdrop-blur-md w-32 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Percentage</th>
-                    <th className="bg-base-100/90 backdrop-blur-md min-w-[200px] text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Distribution</th>
+                    <th className="bg-base-100/90 backdrop-blur-md w-16 text-center uppercase tracking-wider text-xs text-base-content/50 py-3">#</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-wider text-xs text-base-content/50 py-3">Classification</th>
+                    <th className="bg-base-100/90 backdrop-blur-md min-w-[150px] text-center uppercase tracking-wider text-xs text-base-content/50 py-3">Count</th>
+                    <th className="bg-base-100/90 backdrop-blur-md min-w-[150px] text-center uppercase tracking-wider text-xs text-base-content/50 py-3">Percentage</th>
+                    <th className="bg-base-100/90 backdrop-blur-md min-w-[200px] text-left uppercase tracking-wider text-xs text-base-content/50 py-3">Distribution</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,11 +150,11 @@ export default function RootCausePage() {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (
                       <tr key={row.classification} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                        <td data-label="RANK" className="text-center font-mono opacity-50 text-[12px] md:py-3">#{i + 1}</td>
-                        <td data-label="CLASSIFICATION" className="font-semibold text-[12px] md:py-3">{row.classification}</td>
-                        <td data-label="COUNT" className="text-center font-mono font-bold text-[12px] md:py-3">{row.count}</td>
+                        <td data-label="RANK" className="text-center font-mono opacity-50 text-sm md:py-3">#{i + 1}</td>
+                        <td data-label="CLASSIFICATION" className="font-semibold text-sm md:py-3">{row.classification}</td>
+                        <td data-label="COUNT" className="text-center font-mono font-semibold text-sm md:py-3">{row.count}</td>
                         <td data-label="PERCENTAGE" className="text-center font-mono md:py-3">
-                          <span className="badge badge-sm font-bold text-[10px] uppercase tracking-wider" style={{ backgroundColor: `${PIE_COLORS[i % PIE_COLORS.length]}15`, color: PIE_COLORS[i % PIE_COLORS.length] }}>
+                          <span className="badge badge-sm font-semibold text-xs uppercase tracking-wider" style={{ backgroundColor: `${PIE_COLORS[i % PIE_COLORS.length]}15`, color: PIE_COLORS[i % PIE_COLORS.length] }}>
                             {pct}%
                           </span>
                         </td>

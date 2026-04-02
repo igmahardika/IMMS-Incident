@@ -122,11 +122,11 @@ export default function NotificationBell() {
         {/* Header */}
         <div className="flex items-center justify-between w-full px-5 py-4 border-b border-base-content/5 bg-base-100/50 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
-            <span className="font-bold text-[10px] tracking-[0.15em] text-base-content/40 uppercase">
+            <span className="font-semibold text-xs tracking-wider text-base-content/40 uppercase">
               Recent Updates
             </span>
             {unread > 0 && (
-              <span className="badge badge-primary badge-sm font-bold text-[9px] h-5 rounded-md px-1.5 animate-pulse">
+              <span className="badge badge-primary badge-sm font-semibold text-xs h-5 rounded-md px-1.5 animate-pulse">
                 {unread} NEW
               </span>
             )}
@@ -135,7 +135,7 @@ export default function NotificationBell() {
             {unread > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="btn btn-ghost btn-xs text-[9px] font-bold uppercase tracking-[0.15em] gap-1.5 text-primary hover:bg-primary/10 rounded-md"
+                className="btn btn-ghost btn-xs text-xs font-medium uppercase tracking-wider gap-1.5 text-primary hover:bg-primary/10 rounded-md"
                 title="Mark all as read"
               >
                 <CheckCheck size={12} />
@@ -153,8 +153,8 @@ export default function NotificationBell() {
                 <Bell size={32} strokeWidth={1} />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-base-content/60">No Updates</span>
-                <span className="text-[10px] font-medium opacity-50">Operational logs are up to date</span>
+                <span className="text-sm font-medium uppercase tracking-widest text-base-content/60">No Updates</span>
+                <span className="text-xs font-medium opacity-50">Operational logs are up to date</span>
               </div>
             </div>
           ) : (
@@ -187,24 +187,24 @@ export default function NotificationBell() {
                         {/* Enriched Details */}
                         <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                           <div className="flex justify-between items-center">
-                            <span className={`card-title text-[13px] leading-none ${n.is_read ? 'text-base-content/60' : 'text-primary'}`}>
+                            <span className={`card-title text-sm leading-none ${n.is_read ? 'text-base-content/60' : 'text-primary'}`}>
                               {parsed.user}
                             </span>
-                            <span className="text-[9px] font-mono font-bold opacity-30 tracking-tight shrink-0 uppercase">
+                            <span className="text-xs font-mono font-semibold opacity-30 tracking-tight shrink-0 uppercase">
                                {formatDateTime(n.created_at).split(',')[1]?.trim() || '—'}
                             </span>
                           </div>
 
-                          <p className={`text-[12px] leading-tight line-clamp-2 ${n.is_read ? 'text-base-content/40' : 'text-base-content/80 font-medium'}`}>
-                            {parsed.caseId && <span className="font-bold mr-1.5 text-[11px] opacity-70">#{parsed.caseId}</span>}
+                          <p className={`text-sm leading-tight line-clamp-2 ${n.is_read ? 'text-base-content/40' : 'text-base-content/80 font-medium'}`}>
+                            {parsed.caseId && <span className="font-bold mr-1.5 text-xs opacity-70">#{parsed.caseId}</span>}
                             {parsed.detail}
                           </p>
 
                           <div className={`flex items-center justify-between pt-1 opacity-0 group-hover:opacity-100 transition-opacity ${!n.is_read ? 'opacity-100' : ''}`}>
-                             <span className="text-[9px] font-bold text-primary uppercase tracking-[0.1em] flex items-center gap-1 hover:underline">
+                             <span className="text-xs font-medium text-primary uppercase tracking-wide flex items-center gap-1 hover:underline">
                                 Details <ExternalLink size={10} />
                              </span>
-                             {!n.is_read && <span className="badge badge-primary badge-xs font-bold text-[8px] h-4 rounded-sm animate-pulse-slow">Unread</span>}
+                             {!n.is_read && <span className="badge badge-primary badge-xs font-semibold text-xs h-4 rounded-sm animate-pulse-slow">Unread</span>}
                           </div>
                         </div>
                       </div>
@@ -219,7 +219,7 @@ export default function NotificationBell() {
         {/* Footer */}
         {notifications.length > 0 && (
           <div className="px-5 py-3 bg-base-200/30 text-center">
-            <span className="text-[10px] font-bold text-base-content/30 tracking-[0.15em] uppercase">
+            <span className="text-xs font-semibold text-base-content/30 tracking-wider uppercase">
               End of notifications
             </span>
           </div>

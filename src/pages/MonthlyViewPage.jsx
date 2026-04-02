@@ -32,20 +32,29 @@ export default function MonthlyViewPage() {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
   const MetricCell = ({ count, nett, gross }) => {
-    if (!count) return <div className="text-base-content/20 text-[10px] font-bold uppercase tracking-[0.15em]">Empty</div>;
+    if (!count) return (
+      <div className="flex flex-col items-center justify-center h-full opacity-10">
+        <div className="w-8 h-px bg-base-content/20" />
+      </div>
+    );
+    
+    // Calculate Averages
+    const avgNett = Math.round(nett / count);
+    const avgGross = Math.round(gross / count);
+    
     return (
-      <div className="flex flex-col gap-0.5 py-1">
-        <div className="text-[13.5px] font-bold text-base-content flex items-baseline gap-1 tracking-tight">
-          {count} <span className="text-[10px] text-base-content/30 font-bold uppercase tracking-wider">cases</span>
-        </div>
-        <div className="flex flex-col gap-px">
-          <div className="text-[10px] text-base-content/50 font-bold flex items-center gap-1.5">
-            <Clock size={10} strokeWidth={1.5} className="opacity-30" />
-            <span className="font-mono tabular-nums">{gross ? formatDuration(Math.round(gross)) : '0s'}</span>
+      <div className="flex flex-col gap-0.5 group/cell">
+        <div className="flex items-start justify-between">
+          <div className="text-sm font-bold text-base-content font-mono tracking-tighter leading-none">
+            {formatDuration(avgNett)}
           </div>
-          <div className="text-[10px] text-primary font-bold flex items-center gap-1.5">
-            <Zap size={10} strokeWidth={1.5} className="opacity-50" />
-            <span className="font-mono tabular-nums">{nett ? formatDuration(Math.round(nett)) : '0s'}</span>
+          <div className="badge badge-sm badge-ghost font-bold text-[10px] opacity-60 px-1 h-3.5 border-none min-w-[20px]">
+            {count}
+          </div>
+        </div>
+        <div className="flex flex-col border-l border-base-content/10 pl-1.5">
+          <div className="text-xs text-base-content/40 font-bold flex items-center gap-1 uppercase tracking-tighter leading-none scale-90 origin-left">
+            <span className="font-mono text-base-content/50">{formatDuration(avgGross)}</span>
           </div>
         </div>
       </div>
@@ -55,7 +64,10 @@ export default function MonthlyViewPage() {
   // Yearly Stats
   const yearlyCount = history.length;
   const yearlyNett = history.reduce((s, i) => s + (i.duration_nett_seconds || 0), 0);
+  const yearlyGross = history.reduce((s, i) => s + (i.duration_gross_seconds || 0), 0);
   const avgYearlyNett = yearlyCount ? Math.round(yearlyNett / yearlyCount) : 0;
+  const avgYearlyGross = yearlyCount ? Math.round(yearlyGross / yearlyCount) : 0;
+  const efficiencyRatio = yearlyGross ? Math.round((yearlyNett / yearlyGross) * 100) : 0;
 
   const busyMonthIdx = Object.keys(grouped).reduce((a, b) => {
     const countA = Object.values(grouped[a] || {}).reduce((s, n) => s + n.count, 0);
@@ -64,17 +76,17 @@ export default function MonthlyViewPage() {
   }, Object.keys(grouped)[0] || 1);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <div className="text-2xl font-bold tracking-tight">Monthly Analysis</div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Performance patterns and handling duration by category</div>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4 py-1">
+        <div className="flex items-baseline gap-3">
+          <div className="text-xl font-bold tracking-tight">Monthly Analysis</div>
+          <div className="hidden md:block text-xs font-semibold uppercase tracking-wider text-base-content/30">Performance patterns by category</div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-[10px] font-bold opacity-40 uppercase tracking-[0.15em]">
-            <Calendar size={14} /> Year:
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold opacity-30 uppercase tracking-widest">
+            <Calendar size={12} /> Year
           </div>
-          <select className="select select-bordered select-sm w-32 font-bold" value={year} onChange={e => setYear(e.target.value)}>
+          <select className="select select-bordered select-xs w-24 font-bold h-7 min-h-0" value={year} onChange={e => setYear(e.target.value)}>
             {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
@@ -85,79 +97,89 @@ export default function MonthlyViewPage() {
       ) : (
         <>
           {/* KPI Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <div className="bg-base-100 shadow-sm rounded-xl overflow-hidden border border-base-content/5">
-              <div className="p-4 md:p-6 flex flex-row items-center gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                  <BarChart2 size={20} className="md:w-6 md:h-6" />
-                </div>
-                <div>
-                  <div className="text-[9px] md:text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Total Incidents</div>
-                  <div className="text-xl md:text-2xl font-bold font-mono tracking-tighter text-base-content">{yearlyCount} <span className="text-[9px] md:text-[10px] font-bold text-base-content/20">CASES</span></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <BarChart2 size={18} />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-base-content/30 uppercase tracking-tighter leading-none scale-90 origin-left">Total Case</div>
+                <div className="text-lg font-bold font-mono tracking-tighter text-base-content mt-0.5 leading-none">{yearlyCount}</div>
+              </div>
+            </div>
+            
+            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success border border-success/20">
+                <Clock size={18} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest leading-none">Avg Nett</div>
+                <div className="text-lg font-bold font-mono tracking-tighter text-success mt-0.5">{formatDuration(avgYearlyNett)}</div>
+              </div>
+            </div>
+
+            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-base-content/5 flex items-center justify-center text-base-content/60 border border-base-content/10">
+                <Calendar size={18} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest leading-none">Peak Month</div>
+                <div className="text-lg font-bold tracking-tighter text-base-content mt-0.5 truncate max-w-[100px]">
+                  {MONTH_NAMES[busyMonthIdx - 1] || '—'}
                 </div>
               </div>
             </div>
-            <div className="bg-base-100 shadow-sm rounded-xl overflow-hidden border border-base-content/5">
-              <div className="p-4 md:p-6 flex flex-row items-center gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-success/10 flex items-center justify-center text-success shadow-inner">
-                  <TrendingUp size={20} className="md:w-6 md:h-6" />
-                </div>
-                <div>
-                  <div className="text-[9px] md:text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Avg Nett Duration</div>
-                  <div className="text-xl md:text-2xl font-bold font-mono tracking-tighter text-success">{formatDuration(avgYearlyNett)}</div>
-                </div>
+
+            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center text-warning border border-warning/20">
+                <Zap size={18} />
               </div>
-            </div>
-            <div className="bg-base-100 shadow-sm rounded-xl overflow-hidden border border-base-content/5">
-              <div className="p-4 md:p-6 flex flex-row items-center gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-warning/10 flex items-center justify-center text-warning shadow-inner">
-                  <Calendar size={20} className="md:w-6 md:h-6" />
-                </div>
-                <div>
-                  <div className="text-[9px] md:text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Busiest Month</div>
-                  <div className="text-xl md:text-2xl font-bold tracking-tighter text-base-content truncate max-w-[120px]">{MONTH_NAMES[busyMonthIdx - 1] || '—'}</div>
-                </div>
+              <div>
+                <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest leading-none">Efficiency</div>
+                <div className="text-lg font-bold font-mono tracking-tighter text-warning mt-0.5">{efficiencyRatio}%</div>
               </div>
             </div>
           </div>
 
           {/* Main Table */}
-          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
+          <div className="bg-base-100 shadow-sm border border-base-content/5 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="table table-sm w-full">
+              <table className="table table-bordered w-full border-separate border-spacing-0">
                 <thead>
-                  <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                    <th className="sticky left-0 bg-base-100/90 backdrop-blur-md z-30 w-40 min-w-[120px] border-r border-base-content/5 uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Period</th>
+                  <tr className="bg-base-200/50 backdrop-blur-md">
+                    <th className="sticky left-0 bg-base-200/80 z-30 min-w-[140px] border-r border-base-content/5 uppercase tracking-tighter text-xs text-base-content/40 py-2 font-bold">Period</th>
                     {NCAL_ORDER.map(n => (
-                      <th key={n} className="text-center min-w-[140px] md:min-w-[160px] bg-transparent">
-                        <div className="flex flex-col items-center gap-2">
+                      <th key={n} className="text-center min-w-[110px] md:min-w-[130px] pb-1.5 bg-transparent border-r border-base-content/5">
+                        <div className="flex flex-col items-center gap-1.5">
                           <NcalBadge value={n} />
-                          <div className="text-[8px] md:text-[9px] font-bold opacity-30 uppercase tracking-[0.15em]">CASES · GROSS · NETT</div>
                         </div>
                       </th>
                     ))}
-                    <th className="sticky right-0 bg-base-100/90 backdrop-blur-md z-30 text-center w-40 md:w-48 uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3 border-l border-base-content/5">MONTHLY SUMMARY</th>
+                    <th className="sticky right-0 bg-base-200/80 z-30 text-center min-w-[140px] md:min-w-[160px] uppercase tracking-widest text-[10px] text-base-content/40 py-2.5 border-l border-base-content/5 font-bold">Performance</th>
                   </tr>
                 </thead>
-                <tbody className="">
+                <tbody className="divide-y divide-base-content/5">
                   {months.map(mo => {
                     const monthData = grouped[mo] || {};
                     const totalCount = NCAL_ORDER.reduce((s, n) => s + (monthData[n]?.count || 0), 0);
                     const totalNett = NCAL_ORDER.reduce((s, n) => s + (monthData[n]?.totalNett || 0), 0);
+                    const totalGross = NCAL_ORDER.reduce((s, n) => s + (monthData[n]?.totalGross || 0), 0);
+                    const avgNett = totalCount ? Math.round(totalNett / totalCount) : 0;
+                    const eff = totalGross ? Math.round((totalNett / totalGross) * 100) : 0;
 
                     return (
-                      <tr key={mo} className="hover:bg-base-200/50 transition-colors group">
-                        <td className="sticky left-0 bg-base-100 group-hover:bg-base-200/50 z-10 transition-colors border-r border-base-content/5">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-1 h-8 rounded-full transition-colors ${totalCount > 0 ? 'bg-primary' : 'bg-base-300/30'}`} />
+                      <tr key={mo} className="hover:bg-primary/5 transition-all group border-b border-base-content/5">
+                        <td className="sticky left-0 bg-base-100 group-hover:bg-base-100 z-10 transition-colors border-r border-base-content/10">
+                          <div className="flex items-center gap-3 px-1">
+                            <div className={`w-1 h-7 rounded-full transition-all duration-300 ${totalCount > 0 ? 'bg-primary' : 'bg-base-300/20'}`} />
                             <div className="flex flex-col">
-                              <span className="font-bold text-xs md:text-sm tracking-tight">{MONTH_NAMES[mo - 1]}</span>
-                              <span className="text-[9px] md:text-[10px] font-bold opacity-40 uppercase tracking-[0.15em]">{year}</span>
+                              <span className="font-bold text-xs tracking-tight">{MONTH_NAMES[mo - 1]}</span>
+                              <span className="text-[10px] font-bold opacity-20 uppercase tracking-widest leading-none">{year}</span>
                             </div>
                           </div>
                         </td>
                         {NCAL_ORDER.map(n => (
-                          <td key={n} className="text-center p-4">
+                          <td key={n} className="py-1 px-3 border-r border-base-content/5">
                             <MetricCell
                               count={monthData[n]?.count}
                               nett={monthData[n]?.totalNett}
@@ -165,16 +187,14 @@ export default function MonthlyViewPage() {
                             />
                           </td>
                         ))}
-                        <td className="sticky right-0 bg-base-100 group-hover:bg-base-200/50 z-10 transition-colors text-center border-l border-base-content/5 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
-                          <div className="flex flex-col gap-1 items-center">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-base md:text-lg font-bold font-mono tracking-tighter">{totalCount || 0}</span>
-                              <span className="text-[8px] md:text-[10px] font-bold opacity-40 uppercase">CASES</span>
+                        <td className="sticky right-0 bg-base-100 group-hover:bg-base-100 z-10 text-center border-l border-base-content/10">
+                          <div className="flex flex-col gap-0 items-center px-2">
+                            <div className="flex items-center gap-1.5">
+                               <span className="text-base font-bold font-mono tracking-tighter text-primary">{totalCount || 0}</span>
+                               <span className="badge badge-sm font-bold opacity-30 uppercase h-3.5 px-0.5 text-xs scale-75 origin-right border-none">{eff}%</span>
                             </div>
-                            <div className="text-[8px] md:text-[10px] font-bold flex items-center gap-1 opacity-60">
-                              AVG: <span className="font-mono text-primary font-bold">
-                                {totalCount ? formatDuration(Math.round(totalNett / totalCount)) : '—'}
-                              </span>
+                            <div className="text-xs font-bold text-base-content/30 flex items-center gap-1 uppercase tracking-tighter leading-none scale-90 origin-right">
+                               <span className="font-mono text-base-content/60">{formatDuration(avgNett)}</span>
                             </div>
                           </div>
                         </td>
@@ -183,28 +203,28 @@ export default function MonthlyViewPage() {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-base-200/30">
-                    <td className="sticky left-0 bg-base-200/50 z-20">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary px-3">YEARLY TOTAL</span>
+                  <tr className="bg-base-content/5">
+                    <td className="sticky left-0 bg-base-300 z-20 border-r border-base-content/10 py-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-base-content/50 px-3">Yearly Profile</span>
                     </td>
                     {NCAL_ORDER.map(n => {
                       const cnt = Object.values(grouped).reduce((s, m) => s + (m[n]?.count || 0), 0);
                       const nt = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalNett || 0), 0);
                       const gr = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalGross || 0), 0);
                       return (
-                        <td key={n} className="text-center p-4">
+                        <td key={n} className="py-1 px-3 border-r border-base-content/5">
                           <MetricCell count={cnt} nett={nt} gross={gr} />
                         </td>
                       );
                     })}
-                    <td className="bg-primary/5 text-center">
-                      <div className="flex flex-col gap-1 items-center py-2">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold font-mono tracking-tighter text-primary">{yearlyCount}</span>
-                          <span className="text-[10px] font-bold opacity-40 uppercase tracking-[0.1em]">TOTAL</span>
+                    <td className="bg-primary z-20 text-center py-1.5">
+                      <div className="flex flex-col gap-0 items-center">
+                        <div className="flex items-baseline gap-1 focus-within:outline-none">
+                          <span className="text-base font-bold font-mono tracking-tighter text-primary-content">{yearlyCount}</span>
+                          <span className="text-[10px] font-bold text-primary-content/30 uppercase tracking-widest">Total</span>
                         </div>
-                        <div className="text-[10px] font-bold opacity-60">
-                          Grand Avg: <span className="font-mono text-primary font-bold">{formatDuration(avgYearlyNett)}</span>
+                        <div className="text-[10px] font-bold text-primary-content/60 leading-none">
+                          <span className="font-mono">{formatDuration(avgYearlyNett)}</span>
                         </div>
                       </div>
                     </td>

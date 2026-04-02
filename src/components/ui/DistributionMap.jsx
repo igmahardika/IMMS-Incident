@@ -132,14 +132,14 @@ export default function DistributionMap({ data, onRefresh }) {
       <header className="flex items-center justify-between flex-wrap gap-4 px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md z-50">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
-            <h3 className="text-sm font-bold uppercase tracking-tight text-base-content/80">Network Segments Map</h3>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5 whitespace-nowrap">Active Infrastructure Nodes</p>
+            <h3 className="text-sm font-semibold uppercase tracking-tight text-base-content/80">Network Segments Map</h3>
+            <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-0.5 whitespace-nowrap">Active Infrastructure Nodes</p>
           </div>
           
           {(isProcessing || geocodingStatus.active) && (
             <div className="flex items-center gap-2.5 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
               <span className="loading loading-spinner loading-xs text-primary"></span>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">
                 {geocodingStatus.active 
                    ? `Syncing: ${geocodingStatus.current}/${geocodingStatus.total}`
                    : `Loading Map...`
@@ -170,14 +170,14 @@ export default function DistributionMap({ data, onRefresh }) {
               <Calendar size={12} className="text-base-content/40" />
               <input 
                 type="date" 
-                className="bg-transparent border-none text-[11px] font-bold text-base-content focus:outline-none w-24"
+                className="bg-transparent border-none text-sm font-medium text-base-content focus:outline-none w-24"
                 value={startDate} 
                 onChange={e => setStartDate(e.target.value)} 
               />
               <span className="text-base-content/20 text-xs">—</span>
               <input 
                 type="date" 
-                className="bg-transparent border-none text-[11px] font-bold text-base-content focus:outline-none w-24"
+                className="bg-transparent border-none text-sm font-medium text-base-content focus:outline-none w-24"
                 value={endDate} 
                 onChange={e => setEndDate(e.target.value)} 
               />
@@ -235,22 +235,22 @@ export default function DistributionMap({ data, onRefresh }) {
                         {p.type === 'Fiber Optic' ? <Database size={16} /> : <Network size={16} />}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold tracking-tight text-base-content leading-none">{p.level_4 || p.level_2 || 'Node'}</span>
-                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-1">{p.type}</span>
+                        <span className="text-sm font-semibold tracking-tight text-base-content leading-none">{p.level_4 || p.level_2 || 'Node'}</span>
+                        <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-1">{p.type}</span>
                       </div>
                     </div>
                     
                     <div className="bg-base-200/50 rounded-xl p-3 border border-base-300 flex flex-col gap-2">
                         {p.type === 'Fiber Optic' ? (
                           <>
-                            <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">POP</span> <strong className="text-base-content">{p.level_1}</strong></div>
-                            <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">OSC</span> <strong className="text-base-content">{p.level_2}</strong></div>
-                            <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">ODC</span> <strong className="text-base-content">{p.level_3}</strong></div>
+                            <div className="flex justify-between items-center text-xs"><span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">POP</span> <strong className="text-base-content">{p.level_1}</strong></div>
+                            <div className="flex justify-between items-center text-xs"><span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">OSC</span> <strong className="text-base-content">{p.level_2}</strong></div>
+                            <div className="flex justify-between items-center text-xs"><span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">ODC</span> <strong className="text-base-content">{p.level_3}</strong></div>
                           </>
                         ) : (
-                          <div className="flex justify-between items-center text-[11px]"><span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">BTS Site</span> <strong className="text-base-content">{p.level_1}</strong></div>
+                          <div className="flex justify-between items-center text-xs"><span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">BTS Site</span> <strong className="text-base-content">{p.level_1}</strong></div>
                         )}
-                        <div className="border-t border-base-300 pt-2 mt-1 text-[9px] font-mono font-medium text-base-content/40 text-right">
+                        <div className="border-t border-base-300 pt-2 mt-1 text-xs font-mono font-medium text-base-content/40 text-right">
                           {Number(p.latitude).toFixed(5)}, {Number(p.longitude).toFixed(5)}
                         </div>
                     </div>
@@ -283,18 +283,18 @@ export default function DistributionMap({ data, onRefresh }) {
                           <AlertTriangle size={20} />
                         </div>
                         <div>
-                          <div className="text-sm font-bold tracking-tight text-base-content">{p.level_4 || p.level_2}</div>
-                          <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5">Infrastructure Trouble</div>
+                          <div className="text-sm font-semibold tracking-tight text-base-content">{p.level_4 || p.level_2}</div>
+                          <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-0.5">Infrastructure Trouble</div>
                         </div>
                       </div>
 
                       <div className="bg-base-200/50 rounded-xl p-3.5 border border-base-300 flex flex-col gap-3">
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Frekunsi</span>
-                          <span className={`text-sm font-bold ${variantClass.split(' ')[0]}`}>{p.incident_count}x</span>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">Frekunsi</span>
+                          <span className={`text-sm font-semibold ${variantClass.split(' ')[0]}`}>{p.incident_count}x</span>
                         </div>
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Last Incident</span>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">Last Incident</span>
                           <span className="font-bold text-base-content">{formatDateTime(p.last_incident_at)}</span>
                         </div>
                       </div>
@@ -310,33 +310,33 @@ export default function DistributionMap({ data, onRefresh }) {
         <div className="absolute bottom-6 left-6 z-[1000] bg-base-100/80 backdrop-blur-md p-4 rounded-2xl border border-base-300 shadow-xl flex flex-col gap-2.5 min-w-[160px]">
           {viewMode === 'normal' ? (
             <>
-              <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Infrastructure</div>
+              <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Infrastructure</div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-primary ring-4 ring-primary/10"></div>
-                <span className="text-xs font-bold text-base-content/70">Fiber Optic (ODP)</span>
+                <span className="text-xs font-semibold text-base-content/70">Fiber Optic (ODP)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-warning ring-4 ring-warning/10"></div>
-                <span className="text-xs font-bold text-base-content/70">Wireless (Node)</span>
+                <span className="text-xs font-semibold text-base-content/70">Wireless (Node)</span>
               </div>
-              <div className="mt-2 pt-2.5 border-t border-base-300 text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em] text-center">
+              <div className="mt-2 pt-2.5 border-t border-base-300 text-xs font-semibold text-base-content/30 uppercase tracking-wider text-center">
                 {points.length} Active Nodes
               </div>
             </>
           ) : (
             <>
-              <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1 text-error">Trouble Intensity</div>
+              <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1 text-error">Trouble Intensity</div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-error ring-4 ring-error/10"></div>
-                <span className="text-xs font-bold text-base-content/70">High (&gt;5 Events)</span>
+                <span className="text-xs font-semibold text-base-content/70">High (&gt;5 Events)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-warning ring-4 ring-warning/10"></div>
-                <span className="text-xs font-bold text-base-content/70">Medium (3-5)</span>
+                <span className="text-xs font-semibold text-base-content/70">Medium (3-5)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-accent ring-4 ring-accent/10"></div>
-                <span className="text-xs font-bold text-base-content/70">Low (1-2)</span>
+                <span className="text-xs font-semibold text-base-content/70">Low (1-2)</span>
               </div>
             </>
           )}

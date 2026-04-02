@@ -52,8 +52,8 @@ export function ToastProvider({ children }) {
           >
             <div className="flex items-center gap-3 w-full">
               <span className="font-bold text-lg shrink-0">{TOAST_ICONS[t.type] || 'ℹ'}</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em] flex-1">{t.message}</span>
-              <span className="opacity-30 hover:opacity-100 transition-opacity text-sm font-bold" aria-label="Dismiss">✕</span>
+              <span className="text-xs font-semibold uppercase tracking-wider flex-1">{t.message}</span>
+              <span className="opacity-30 hover:opacity-100 transition-opacity text-sm font-semibold" aria-label="Dismiss">✕</span>
             </div>
           </div>
         ))}

@@ -67,8 +67,8 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Dashboard</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 leading-relaxed">System Health & Incident Monitoring</p>
+          <h1 className="text-xl font-semibold tracking-tight text-base-content uppercase">Dashboard</h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40 leading-relaxed">System Health & Incident Monitoring</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}>
@@ -82,18 +82,18 @@ export default function DashboardPage() {
         <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
           <div className="stat p-4">
             <div className="stat-figure text-error/20"><AlertTriangle size={24} /></div>
-            <div className="stat-title uppercase tracking-[0.15em] text-[10px] font-bold text-base-content/40">Active Cases</div>
+            <div className="stat-title uppercase tracking-wider text-xs font-semibold text-base-content/40">Active Cases</div>
             <div className="stat-value text-error text-xl font-bold">{data?.totalActive || 0}</div>
-            <div className="stat-desc text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/20 mt-1">Incident Queue</div>
+            <div className="stat-desc text-xs font-medium uppercase tracking-wider text-base-content/20 mt-1">Incident Queue</div>
           </div>
         </div>
 
         <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
           <div className="stat p-4">
             <div className="stat-figure text-success/20"><CheckCircle size={24} /></div>
-            <div className="stat-title uppercase tracking-[0.15em] text-[10px] font-bold text-base-content/40">Resolutions</div>
+            <div className="stat-title uppercase tracking-wider text-xs font-semibold text-base-content/40">Resolutions</div>
             <div className="stat-value text-success text-xl font-bold">{data?.totalDone || 0}</div>
-            <div className="stat-desc text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/20 mt-1">Total History</div>
+            <div className="stat-desc text-xs font-medium uppercase tracking-wider text-base-content/20 mt-1">Total History</div>
           </div>
         </div>
         
@@ -127,8 +127,8 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={duration} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-5" />
-                <XAxis dataKey="month" tick={{ className: "fill-base-content/40 font-bold", fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} />
-                <YAxis tick={{ className: "fill-base-content/40 font-bold", fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={12} width={40} />
+                <XAxis dataKey="month" tick={{ className: "fill-base-content/40 font-medium", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} />
+                <YAxis tick={{ className: "fill-base-content/40 font-medium", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} width={40} />
                 <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
                 <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={40} wrapperStyle={{ paddingTop: '20px' }} />
                 {NCAL_ORDER.map(ncal => (
@@ -146,11 +146,11 @@ export default function DashboardPage() {
               <table className="table table-zebra table-sm">
                 <thead>
                 <tr className="bg-base-200/50">
-                  <th className="w-1/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">NCAL</th>
-                  <th className="w-2/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">CASES</th>
-                  <th className="w-4/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">AVG DURATION</th>
-                  <th className="w-3/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">SLA MET</th>
-                  <th className="w-1/12 text-center text-[10px] uppercase tracking-[0.15em] font-bold text-base-content/40 py-3">%</th>
+                  <th className="w-1/12 text-center text-xs uppercase tracking-wider font-semibold text-base-content/40 py-3">NCAL</th>
+                  <th className="w-2/12 text-center text-xs uppercase tracking-wider font-semibold text-base-content/40 py-3">CASES</th>
+                  <th className="w-4/12 text-center text-xs uppercase tracking-wider font-semibold text-base-content/40 py-3">AVG DURATION</th>
+                  <th className="w-3/12 text-center text-xs uppercase tracking-wider font-semibold text-base-content/40 py-3">SLA MET</th>
+                  <th className="w-1/12 text-center text-xs uppercase tracking-wider font-semibold text-base-content/40 py-3">%</th>
                 </tr>
               </thead>
               <tbody>
@@ -162,11 +162,11 @@ export default function DashboardPage() {
                   return (
                     <tr key={row.ncal} className="hover:bg-base-200 transition-colors">
                       <td className="text-center"><NcalBadge value={row.ncal} /></td>
-                      <td className="text-center font-bold text-[12px]">{row.total_cases}</td>
-                      <td className="text-center font-mono text-[12px] opacity-70 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                      <td className="text-center text-[12px] font-medium text-primary/80">{row.sla_met || 0}</td>
+                      <td className="text-center font-semibold text-sm">{row.total_cases}</td>
+                      <td className="text-center font-mono text-sm opacity-70 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                      <td className="text-center text-sm font-medium text-primary/80">{row.sla_met || 0}</td>
                       <td className="text-center">
-                        <span className={`font-bold text-[12px] tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
+                        <span className={`font-semibold text-sm tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
                           {pct}%
                         </span>
                       </td>
@@ -184,25 +184,25 @@ export default function DashboardPage() {
             <table className="table table-sm table-stacked w-full">
               <thead>
                 <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                  <th className="bg-base-100/90 backdrop-blur-md w-2/12 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">NCAL</th>
-                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">INCIDENT</th>
-                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-right uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">DETAILS</th>
+                  <th className="bg-base-100/90 backdrop-blur-md w-2/12 text-center uppercase tracking-wider text-xs text-base-content/50 py-3">NCAL</th>
+                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-left uppercase tracking-wider text-xs text-base-content/50 py-3">INCIDENT</th>
+                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-right uppercase tracking-wider text-xs text-base-content/50 py-3">DETAILS</th>
                 </tr>
               </thead>
               <tbody>
                 {(data?.recentClosed || []).length === 0 && (
-                  <tr><td colSpan={3} className="text-center text-base-content/20 py-8 px-4 text-[12px]">No recently closed incidents</td></tr>
+                  <tr><td colSpan={3} className="text-center text-base-content/20 py-8 px-4 text-sm">No recently closed incidents</td></tr>
                 )}
                 {(data?.recentClosed || []).map(inc => (
                   <tr key={inc.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5 cursor-pointer" onClick={() => navigate(`/incidents/${inc.id}`)}>
                     <td className="text-center md:py-3"><NcalBadge value={inc.ncal} /></td>
                     <td className="text-left md:py-3">
-                      <div className="font-mono text-[12px] font-bold text-primary mb-0.5 tracking-tighter">{inc.case_no}</div>
-                      <div className="truncate text-[12px] font-medium text-base-content/70">{inc.site_name_manual || '—'}</div>
+                      <div className="font-mono text-sm font-medium text-primary mb-0.5 tracking-tighter">{inc.case_no}</div>
+                      <div className="truncate text-sm font-medium text-base-content/70">{inc.site_name_manual || '—'}</div>
                     </td>
                     <td className="text-right md:py-3">
-                      <div className="font-mono text-[12px] font-bold text-base-content/90 mb-0.5">{formatDuration(inc.duration_nett_seconds)}</div>
-                      <div className="truncate text-[12px] font-medium text-base-content/40 uppercase tracking-[0.15em]">{inc.technician_name || '—'}</div>
+                      <div className="font-mono text-sm font-medium text-base-content/90 mb-0.5">{formatDuration(inc.duration_nett_seconds)}</div>
+                      <div className="truncate text-sm font-medium text-base-content/40 uppercase tracking-wider">{inc.technician_name || '—'}</div>
                     </td>
                   </tr>
                 ))}

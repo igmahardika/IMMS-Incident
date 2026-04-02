@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { api } from '../../utils/api';
+import { api, formatDateTime, formatDate } from '../../utils/api';
 
 // Province colors - Refined for premium look
 const PROVINCE_COLORS = {
@@ -176,14 +176,14 @@ export default function CustomerMap({
       <header className="flex items-center justify-between flex-wrap gap-4 px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md z-50">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
-            <h3 className="text-sm font-bold uppercase tracking-tight text-base-content/80">Customer Density Map</h3>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-0.5 whitespace-nowrap">Service Locations & Analytics</p>
+            <h3 className="text-sm font-semibold uppercase tracking-tight text-base-content/80">Customer Density Map</h3>
+            <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-0.5 whitespace-nowrap">Service Locations & Analytics</p>
           </div>
           
           {(isProcessing || geocodingStatus.active || isTroubleLoading) && (
             <div className="flex items-center gap-2.5 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
               <span className="loading loading-spinner loading-xs text-primary"></span>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">
                 {geocodingStatus.active 
                    ? `Syncing: ${geocodingStatus.current}/${geocodingStatus.total}`
                    : isTroubleLoading ? 'Analyzing Patterns...' : `Loading Nodes...`
@@ -274,29 +274,29 @@ export default function CustomerMap({
                 <Popup className="premium-popup">
                   <div className="min-w-[220px] p-1">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-bold tracking-[0.15em] uppercase opacity-40">
+                      <span className="text-xs font-semibold tracking-wider uppercase opacity-40">
                         {c.service_id}
                       </span>
-                      <div className="badge badge-neutral badge-outline font-bold text-[9px] px-1.5 py-0.5 h-auto rounded-md">
+                      <div className="badge badge-neutral badge-outline font-semibold text-xs px-1.5 py-0.5 h-auto rounded-md">
                         {c.grade}
                       </div>
                     </div>
                     
-                    <h4 className="text-sm font-bold tracking-tight text-base-content mb-0.5">{c.brand_site}</h4>
-                    <p className="text-[11px] font-medium text-base-content/60 mb-3">{c.company_name}</p>
+                    <h4 className="text-sm font-semibold tracking-tight text-base-content mb-0.5">{c.brand_site}</h4>
+                    <p className="text-xs font-medium text-base-content/60 mb-3">{c.company_name}</p>
                     
                     <div className="bg-base-200/50 border border-base-300 rounded-xl p-3 flex flex-col gap-2 mb-3">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold text-base-content/40 uppercase tracking-wider">Location</span>
-                        <div className="text-[11px] font-bold text-base-content">{c.city || 'N/A'}</div>
+                        <span className="text-xs font-medium text-base-content/40 uppercase tracking-wider">Location</span>
+                        <div className="text-sm font-medium text-base-content">{c.city || 'N/A'}</div>
                       </div>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold text-base-content/40 uppercase tracking-wider">Type</span>
-                        <div className="text-[11px] font-bold text-base-content">{c.service_type}</div>
+                        <span className="text-xs font-medium text-base-content/40 uppercase tracking-wider">Type</span>
+                        <div className="text-sm font-medium text-base-content">{c.service_type}</div>
                       </div>
                     </div>
                     
-                    <div className="text-[10px] font-medium text-base-content/40 leading-relaxed italic border-t border-base-200 pt-2">
+                    <div className="text-xs font-medium text-base-content/40 leading-relaxed italic border-t border-base-200 pt-2">
                       {c.address}
                     </div>
                   </div>
@@ -321,22 +321,22 @@ export default function CustomerMap({
                 <Popup className="premium-popup">
                   <div className="min-w-[220px] p-1">
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-[10px] font-bold tracking-[0.15em] text-error uppercase">💥 Area Pattern</span>
-                      <div className="badge badge-error font-bold text-[9px] px-2 py-0.5 h-auto rounded-full">
+                      <span className="text-xs font-semibold tracking-wider text-error uppercase">💥 Area Pattern</span>
+                      <div className="badge badge-error font-semibold text-xs px-2 py-0.5 h-auto rounded-full">
                         {t.incident_count} Cases
                       </div>
                     </div>
-                    <h4 className="text-sm font-bold tracking-tight text-base-content mb-0.5">{t.brand_site}</h4>
-                    <p className="text-[11px] font-medium text-base-content/60 mb-3">{t.company_name}</p>
+                    <h4 className="text-sm font-semibold tracking-tight text-base-content mb-0.5">{t.brand_site}</h4>
+                    <p className="text-xs font-medium text-base-content/60 mb-3">{t.company_name}</p>
                     
                     <div className="bg-base-200/50 border border-base-300 rounded-xl p-3.5 flex flex-col gap-3">
-                      <div className="flex justify-between items-center text-[11px]">
-                         <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Analysis Period</span>
-                         <span className="font-bold text-base-content text-right">{startDate.split(' ')[0]} to {endDate.split(' ')[0]}</span>
+                      <div className="flex justify-between items-center text-xs">
+                         <span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">Analysis Period</span>
+                         <span className="font-bold text-base-content text-right">{formatDate(startDate)} to {formatDate(endDate)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[11px]">
-                         <span className="font-bold text-base-content/40 uppercase tracking-[0.15em] text-[9px]">Last Incident</span>
-                         <span className="font-bold text-base-content">{t.last_incident_at ? new Date(t.last_incident_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
+                      <div className="flex justify-between items-center text-xs">
+                         <span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">Last Incident</span>
+                         <span className="font-bold text-base-content">{t.last_incident_at ? formatDateTime(t.last_incident_at) : 'N/A'}</span>
                       </div>
                     </div>
                   </div>

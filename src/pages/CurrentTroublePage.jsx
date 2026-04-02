@@ -12,17 +12,17 @@ function PauseModal({ open, onClose, onConfirm }) {
     <Modal open={open} onClose={onClose} title="Pause Incident"
       footer={
         <>
-          <button className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={onClose}>Cancel</button>
-          <button className="btn btn-warning font-bold uppercase tracking-[0.15em] text-[10px] px-6" onClick={() => { onConfirm(reason); setReason(''); }}>Confirm Pause</button>
+          <button className="btn btn-ghost font-semibold uppercase tracking-wider text-xs" onClick={onClose}>Cancel</button>
+          <button className="btn btn-warning font-semibold uppercase tracking-wider text-xs px-6" onClick={() => { onConfirm(reason); setReason(''); }}>Confirm Pause</button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
         <label className="form-control w-full">
-          <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Reason for Halt *</span></div>
-          <textarea className="textarea w-full font-bold text-[13.5px] bg-base-200/80" placeholder="e.g., Awaiting materials, weather conditions, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
+          <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Reason for Halt *</span></div>
+          <textarea className="textarea w-full font-semibold text-sm bg-base-200/80" placeholder="e.g., Awaiting materials, weather conditions, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
         </label>
-        <div className="p-4 bg-warning/5 rounded-xl text-[11px] font-bold text-warning leading-relaxed">
+        <div className="p-4 bg-warning/5 rounded-xl text-sm font-medium text-warning leading-relaxed">
           PAUSE: This will stop the active timer. Ensure the reason is documented as it will be logged in the handling history.
         </div>
       </div>
@@ -85,8 +85,8 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
     <Modal open={open} onClose={onClose} title={`Update Incident — ${incident.case_no}`} size="xl"
       footer={
         <>
-          <button className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary px-8 font-bold uppercase tracking-[0.15em] text-[10px] shadow-lg shadow-primary/20" onClick={handleSave}>Save Changes</button>
+          <button className="btn btn-ghost font-semibold uppercase tracking-wider text-xs" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary px-8 font-semibold uppercase tracking-wider text-xs shadow-lg shadow-primary/20" onClick={handleSave}>Save Changes</button>
         </>
       }
     >
@@ -95,17 +95,17 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
         {/* Main Column: Update Form */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="flex flex-col gap-1.5">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">Active Resolution Logs</h3>
-            <p className="text-[11px] font-bold text-base-content/60 leading-relaxed italic">Document the latest technical progress and root cause findings.</p>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">Active Resolution Logs</h3>
+            <p className="text-sm font-medium text-base-content/60 leading-relaxed italic">Document the latest technical progress and root cause findings.</p>
           </div>
 
           <div className="flex flex-col gap-6 p-6 bg-base-200/30 rounded-2xl">
             {user?.role && user.role !== 'technician' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Field Technician</span></div>
+                  <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Field Technician</span></div>
                   <select 
-                    className="select w-full font-bold text-[13.5px] bg-base-200/80" 
+                    className="select w-full font-semibold text-sm bg-base-200/80" 
                     value={form.technician_id} 
                     onChange={e => setForm(p => ({ ...p, technician_id: e.target.value }))}
                   >
@@ -119,24 +119,24 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
             )}
 
             <label className="form-control w-full">
-              <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Root Cause Update</span></div>
-              <input type="text" className="input w-full font-bold text-[13.5px] bg-base-200/80" value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Brief summary of root cause..." />
+              <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Root Cause Update</span></div>
+              <input type="text" className="input w-full font-semibold text-sm bg-base-200/80" value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Brief summary of root cause..." />
             </label>
 
             <label className="form-control w-full">
-              <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Technical Handling Notes</span></div>
-              <textarea className="textarea w-full font-bold text-[13.5px] leading-relaxed bg-base-200/80" rows={5} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Document resolution steps or field progress update..." />
+              <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Technical Handling Notes</span></div>
+              <textarea className="textarea w-full font-semibold text-sm leading-relaxed bg-base-200/80" rows={5} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Document resolution steps or field progress update..." />
             </label>
 
             {user?.role && user.role !== 'technician' && incident?.ncal === 'YELLOW' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-2">
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Optical RX (INI)</span></div>
-                  <input type="text" className="input w-full font-mono font-bold text-[13.5px] bg-base-200/80" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-00.00 dBm" />
+                  <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Optical RX (INI)</span></div>
+                  <input type="text" className="input w-full font-mono font-semibold text-sm bg-base-200/80" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-00.00 dBm" />
                 </label>
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Optical RX (CUR)</span></div>
-                  <input type="text" className="input w-full font-mono font-bold text-[13.5px] bg-base-200/80" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-00.00 dBm" />
+                  <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Optical RX (CUR)</span></div>
+                  <input type="text" className="input w-full font-mono font-semibold text-sm bg-base-200/80" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-00.00 dBm" />
                 </label>
               </div>
             )}
@@ -149,13 +149,13 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
           {/* Compact Info Summary */}
           <div className="flex flex-col gap-6 p-6 bg-base-200/50 rounded-2xl">
             <div className="flex flex-col gap-2">
-                 <div className="text-[13.5px] font-bold tracking-tight leading-snug text-base-content">
+                 <div className="text-sm font-semibold tracking-tight leading-snug text-base-content">
                  {['ORANGE', 'RED', 'BLACK'].includes(iData.ncal) ? (iData.odp_bts || iData.site_name_manual || '—') : (iData.site_name_manual || iData.company_name || '—')}
                </div>
             </div>
 
             <div className="flex flex-col gap-3">
-               <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] leading-none">SLA Progress</span>
+               <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider leading-none">SLA Progress</span>
                <div className="flex flex-col gap-2.5">
                  <div className="flex items-center justify-between">
                     <LevelBadge level={calculateIncidentLevel(iData.start_time)} targetHours={getSLATarget(iData.ncal) / 3600} />
@@ -172,7 +172,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                         <div className="w-full h-1.5 bg-base-content/5 rounded-full overflow-hidden">
                            <div className={`h-full transition-all duration-1000 ${isDanger ? 'bg-error shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
                         </div>
-                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.15em]">
+                        <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider">
                            <span className={isDanger ? 'text-error animate-pulse' : 'text-primary'}>{Math.round(pct)}% Used</span>
                            <span className="opacity-40">{Math.round(target / 3600)}h Target</span>
                         </div>
@@ -184,7 +184,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
 
             <div className="flex flex-col gap-2.5 pt-4">
                 <div className="flex items-center justify-between">
-                   <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Nett Duration</span>
+                   <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Nett Duration</span>
                    <StatusPill status={iData.status} />
                 </div>
                 <div className="text-2xl font-bold font-mono tracking-tighter text-primary">
@@ -198,8 +198,8 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
             </div>
 
             <div className="flex flex-col gap-2 pt-4">
-               <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Reported Problem</span>
-               <div className="text-[11px] font-bold text-base-content/80 leading-relaxed italic">
+               <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Reported Problem</span>
+               <div className="text-sm font-medium text-base-content/80 leading-relaxed italic">
                  "{iData.initial_problem || 'No description provided'}"
                </div>
             </div>
@@ -208,7 +208,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
           {/* Activity Logs */}
           <div className="flex flex-col gap-8 mt-2">
             <div className="flex flex-col gap-4">
-               <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary/80 mb-1">Handling History</h3>
+               <h3 className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">Handling History</h3>
                <div className="max-h-[300px] overflow-y-auto custom-scrollbar-slim rounded-xl bg-base-200/20">
                  <UnifiedTimeline 
                    timeline={processTimeline(iData)} 
@@ -219,7 +219,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
             </div>
 
             <div className="flex flex-col gap-4">
-               <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mb-1">System Activity Log</h3>
+               <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">System Activity Log</h3>
                <div className="max-h-[200px] overflow-y-auto custom-scrollbar-slim rounded-xl bg-base-200/20">
                  <UnifiedTimeline 
                    timeline={processTimeline(iData)} 
@@ -338,8 +338,8 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     <Modal open={open} onClose={onClose} title="Close Incident" size="lg"
       footer={
         <>
-          <button className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={onClose}>Cancel</button>
-          <button className="btn btn-danger font-bold uppercase tracking-[0.15em] text-[10px]" onClick={handleClose}><XIcon size={14} /> Close Incident</button>
+          <button className="btn btn-ghost font-semibold uppercase tracking-wider text-xs" onClick={onClose}>Cancel</button>
+          <button className="btn btn-danger font-semibold uppercase tracking-wider text-xs" onClick={handleClose}><XIcon size={14} /> Close Incident</button>
         </>
       }
     >
@@ -347,21 +347,21 @@ function CloseModal({ open, onClose, incident, onClosed }) {
         <div className="p-5 bg-base-200/50 rounded-lg flex flex-col gap-4">
           <div className="flex items-center justify-between">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Active Case</span>
-                <span className="text-sm font-bold font-mono text-primary">{incident.case_no}</span>
+                <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Active Case</span>
+                <span className="text-sm font-semibold font-mono text-primary">{incident.case_no}</span>
              </div>
              <NcalBadge value={incident.ncal} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Infrastructure</span>
-            <span className="text-[13.5px] font-bold text-base-content/80 tracking-tight">{incident.site_name_manual || incident.company_name || '—'}</span>
+            <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Infrastructure</span>
+            <span className="text-sm font-semibold text-base-content/80 tracking-tight">{incident.site_name_manual || incident.company_name || '—'}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Reported Problem</span>
-            <span className="text-[11px] font-bold text-base-content/80 leading-relaxed italic">"{incident.initial_problem || '—'}"</span>
+            <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Reported Problem</span>
+            <span className="text-sm font-medium text-base-content/80 leading-relaxed italic">"{incident.initial_problem || '—'}"</span>
           </div>
           {incident.recurring_count > 0 && (
-            <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-error/10 text-error text-[10px] font-bold uppercase tracking-[0.15em]">
+            <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-error/10 text-error text-xs font-semibold uppercase tracking-wider">
               <AlertTriangle size={14} /> 
               Recurring Issue ({incident.recurring_count}X in 24h)
             </div>
@@ -370,15 +370,15 @@ function CloseModal({ open, onClose, incident, onClosed }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <label className="form-control w-full">
-            <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Root Category *</span></div>
-            <select className="select w-full font-bold text-[13.5px] bg-base-200/80" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
+            <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Root Category *</span></div>
+            <select className="select w-full font-semibold text-sm bg-base-200/80" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
               <option value="">— Select Category —</option>
               {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </label>
           <label className="form-control w-full">
-            <div className="label"><span className="label-text font-bold text-base-content/40 uppercase tracking-[0.15em] text-[10px]">Sub-Classification *</span></div>
-            <select className="select w-full font-bold text-[13.5px] bg-base-200/80" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
+            <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Sub-Classification *</span></div>
+            <select className="select w-full font-semibold text-sm bg-base-200/80" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
               <option value="">— Select Detail —</option>
               {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
             </select>
@@ -390,16 +390,16 @@ function CloseModal({ open, onClose, incident, onClosed }) {
             <table className="table table-xs border-separate border-spacing-0 w-full">
               <thead>
                 <tr className="bg-base-200/50">
-                  <th className="text-center py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">#</th>
-                  <th className="text-left py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Timestamp</th>
-                  <th className="text-left py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Root Cause</th>
-                  <th className="text-left py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Action</th>
-                  <th className="text-center py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/40">Status</th>
+                  <th className="text-center py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">#</th>
+                  <th className="text-left py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Timestamp</th>
+                  <th className="text-left py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Root Cause</th>
+                  <th className="text-left py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Action</th>
+                  <th className="text-center py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {history.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-10 text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/20">No update history available</td></tr>
+                  <tr><td colSpan={5} className="text-center py-10 text-xs font-semibold uppercase tracking-wider text-base-content/20">No update history available</td></tr>
                 ) : [...history].reverse().map((item, idx) => {
                   const parts = (item.details || '').split(' | ');
                   let cause = '-';
@@ -415,10 +415,10 @@ function CloseModal({ open, onClose, incident, onClosed }) {
                   const isSelected = rootCause === cause && actionTaken === action;
                   return (
                     <tr key={item.id} className={`hover:bg-base-300 transition-all cursor-pointer group ${isSelected ? 'bg-primary/10' : ''}`} onClick={() => selectFromHistory(item)}>
-                      <td className="text-center font-mono font-bold text-[12px] text-base-content/20">{idx + 1}</td>
-                      <td className="text-left font-mono text-[12px] font-bold text-base-content/40 whitespace-nowrap">{formatDateTime(item.timestamp)}</td>
-                      <td className="text-left font-semibold text-[12px] text-base-content/70 leading-snug line-clamp-1">{cause}</td>
-                      <td className="text-left font-semibold text-[12px] text-base-content/70 leading-snug line-clamp-1">{action}</td>
+                      <td className="text-center font-mono font-semibold text-sm text-base-content/20">{idx + 1}</td>
+                      <td className="text-left font-mono text-sm font-medium text-base-content/40 whitespace-nowrap">{formatDateTime(item.timestamp)}</td>
+                      <td className="text-left font-semibold text-sm text-base-content/70 leading-snug line-clamp-1">{cause}</td>
+                      <td className="text-left font-semibold text-sm text-base-content/70 leading-snug line-clamp-1">{action}</td>
                       <td className="text-center">
                         <div className={`w-2 h-2 rounded-full mx-auto ${isSelected ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-base-content/10 group-hover:bg-base-content/20'}`} />
                       </td>
@@ -501,14 +501,14 @@ export default function CurrentTroublePage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Active Troubles</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 leading-relaxed">
+          <h1 className="text-xl font-semibold tracking-tight text-base-content uppercase">Active Troubles</h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40 leading-relaxed">
             Monitoring <span className="text-primary">{incidents.length}</span> live incidents
           </p>
         </div>
         <div className="flex items-center gap-3">
           {user?.role !== 'technician' && (
-            <button className="btn btn-primary btn-sm px-6 font-bold uppercase tracking-[0.15em] text-[11px] shadow-lg shadow-primary/20" onClick={() => navigate('/incidents/create')}>
+            <button className="btn btn-primary btn-sm px-6 font-semibold uppercase tracking-wider text-xs shadow-lg shadow-primary/20" onClick={() => navigate('/incidents/create')}>
               <Plus size={16} /> Create Incident
             </button>
           )}
@@ -528,14 +528,14 @@ export default function CurrentTroublePage() {
             <table className="table table-sm table-pin-rows table-stacked w-full">
               <thead>
                 <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-20 uppercase tracking-[0.15em] text-[10px] text-base-content/50">NCAL</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-left w-48 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Incident</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-16 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Lv</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50">Infrastructure</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50">Current Logs</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-24 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Prio</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-40 whitespace-nowrap uppercase tracking-[0.15em] text-[10px] text-base-content/50">Downtime</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-right w-32 pr-4 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Action</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[100px] uppercase tracking-wider text-xs text-base-content/50">NCAL</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-left min-w-[220px] uppercase tracking-wider text-xs text-base-content/50">Incident</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[80px] uppercase tracking-wider text-xs text-base-content/50">Lv</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-left min-w-[280px] uppercase tracking-wider text-xs text-base-content/50">Infrastructure</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-left min-w-[320px] uppercase tracking-wider text-xs text-base-content/50">Current Logs</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[120px] uppercase tracking-wider text-xs text-base-content/50">Prio</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[180px] whitespace-nowrap uppercase tracking-wider text-xs text-base-content/50">Downtime</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-right min-w-[150px] pr-4 uppercase tracking-wider text-xs text-base-content/50">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -563,7 +563,7 @@ export default function CurrentTroublePage() {
                       <td className="text-left md:py-3" data-label="Incident">
                         <div className="flex flex-col gap-1">
                           <button 
-                            className="text-[12.5px] font-bold font-mono tracking-tighter text-primary hover:underline text-left leading-none" 
+                            className="text-sm font-semibold font-mono tracking-tighter text-primary hover:underline text-left leading-none" 
                             onClick={() => navigate(`/incidents/${inc.id}`)}
                           >
                             {inc.case_no}
@@ -583,19 +583,19 @@ export default function CurrentTroublePage() {
                       </td>
                       <td className="text-left md:py-3" data-label="Infrastructure">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[12.5px] font-semibold tracking-tight text-base-content/90 leading-snug">
+                          <span className="text-sm font-semibold tracking-tight text-base-content/90 leading-snug">
                             {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
                           </span>
-                          <span className="text-[10px] font-mono font-bold text-base-content/40 uppercase tracking-[0.1em]">
+                          <span className="text-xs font-mono font-semibold text-base-content/40 uppercase tracking-wide">
                             {inc.odp_bts || inc.service_id || '—'}
                           </span>
                         </div>
                       </td>
                       <td className="text-left md:py-3" data-label="Logs">
                         <div className="flex flex-col gap-1.5 max-w-xs md:max-w-md">
-                          <span className="text-[12px] font-medium text-base-content/70 leading-snug line-clamp-1">{inc.initial_problem || '—'}</span>
+                          <span className="text-sm font-normal text-base-content/70 leading-relaxed line-clamp-1">{inc.initial_problem || '—'}</span>
                           {inc.last_action && (
-                            <div className="text-[11px] flex items-center gap-1 font-semibold tracking-tight text-base-content/50">
+                            <div className="text-xs flex items-center gap-1 font-normal tracking-tight text-base-content/50">
                               <Activity size={10} className="text-primary/60" /> <span className="line-clamp-1">{inc.last_action}</span>
                             </div>
                           )}
@@ -608,7 +608,7 @@ export default function CurrentTroublePage() {
                       </td>
                       <td className="text-center md:py-3" data-label="Downtime">
                         <div className="flex flex-col gap-1">
-                          <div className="text-sm font-bold font-mono tracking-tighter text-primary leading-none">
+                          <div className="text-sm font-semibold font-mono tracking-tighter text-primary leading-none">
                             <LiveTimer 
                               startIso={inc.start_time} 
                               pausedSec={inc.total_pause_duration_seconds} 
@@ -616,8 +616,8 @@ export default function CurrentTroublePage() {
                               target={getSLATarget(inc.ncal)}
                             />
                           </div>
-                          <div className="text-[9px] font-mono font-bold text-base-content/30 uppercase tracking-[0.15em] leading-none">
-                            SINCE {new Date(inc.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          <div className="text-xs font-mono font-semibold text-base-content/30 uppercase tracking-wider leading-none">
+                            SINCE {formatDateTime(inc.start_time)}
                           </div>
                         </div>
                       </td>

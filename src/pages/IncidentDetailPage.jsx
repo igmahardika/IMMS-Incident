@@ -19,10 +19,10 @@ export default function IncidentDetailPage() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 gap-4">
       <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
-      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Loading Incident Details</span>
+      <span className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Loading Incident Details</span>
     </div>
   );
-  if (!incident) return <div className="p-12 text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Incident Record Not Found.</div>;
+  if (!incident) return <div className="p-12 text-center text-xs font-semibold uppercase tracking-wider text-base-content/40">Incident Record Not Found.</div>;
 
   const isDistribsi = ['ORANGE', 'RED', 'BLACK'].includes(incident.ncal);
 
@@ -53,7 +53,7 @@ export default function IncidentDetailPage() {
         <div className="lg:col-span-2 flex flex-col gap-5">
           {/* Basic Info */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 pb-2">Basic Information</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40 pb-2">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 [isDistribsi ? 'DISTRIBUTION' : 'SITE', (isDistribsi ? (incident.odp_bts || incident.site_name_manual) : (incident.site_name_manual || incident.company_name)) || '—'],
@@ -62,36 +62,36 @@ export default function IncidentDetailPage() {
                 ['PIC / TECHNICIAN', incident.pic || incident.technician_name || incident.technician_name_manual || '—'],
               ].map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">{k}</span>
-                  <span className="text-[13.5px] font-semibold tracking-tight text-base-content/80 leading-none">{v}</span>
+                  <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">{k}</span>
+                  <span className="text-sm font-semibold tracking-tight text-base-content/80 leading-none">{v}</span>
                 </div>
               ))}
 
                 {incident.address && (
                   <div className="md:col-span-2 flex flex-col gap-1.5">
-                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">SITE ADDRESS</span>
-                    <span className="text-[11px] text-base-content/80 font-bold leading-relaxed">{incident.address}</span>
+                    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">SITE ADDRESS</span>
+                    <span className="text-xs text-base-content/80 font-bold leading-relaxed">{incident.address}</span>
                   </div>
                 )}
 
               {incident.koordinat && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">COORDINATES</span>
+                    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">COORDINATES</span>
                     <span className="text-xs font-mono font-bold text-secondary tracking-tighter">{incident.koordinat}</span>
                   </div>
               )}
               
               <div className="md:col-span-2 flex flex-col gap-2 mt-2">
-                <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">INITIAL PROBLEM</span>
-                <div className="bg-base-200/40 p-3.5 rounded-xl text-[13.5px] leading-relaxed font-semibold text-base-content/70 italic">
+                <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">INITIAL PROBLEM</span>
+                <div className="bg-base-200/40 p-3.5 rounded-xl text-sm leading-relaxed font-semibold text-base-content/70 italic">
                   "{incident.initial_problem || '—'}"
                 </div>
               </div>
 
               {incident.indikasi && (
                 <div className="md:col-span-2 flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">INDICATION / SYMPTOMS</span>
-                  <div className="bg-base-200/40 p-3.5 rounded-xl text-[13.5px] leading-relaxed font-bold text-base-content/80">
+                  <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">INDICATION / SYMPTOMS</span>
+                  <div className="bg-base-200/40 p-3.5 rounded-xl text-sm leading-relaxed font-bold text-base-content/80">
                     {incident.indikasi}
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export default function IncidentDetailPage() {
 
             {incident.ncal === 'YELLOW' && (
               <div className="mt-4 p-4 bg-warning/5 rounded-lg">
-                <div className="text-[10px] font-bold text-warning uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+                <div className="text-xs font-semibold text-warning uppercase tracking-wider mb-4 flex items-center gap-2">
                   <Activity size={12} /> Maintenance Order Data
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -132,19 +132,19 @@ export default function IncidentDetailPage() {
 
           {/* Timeline & Durations */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 pb-2">Timeline & Durations</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40 pb-2">Timeline & Durations</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 bg-base-200/50 p-4 rounded-xl">
               {[
                 ['REPORTED TIME', <span className="font-mono tracking-tighter font-bold text-base-content/80">{formatDateTime(incident.start_time)}</span>],
-                ['START ACTION', <span className="font-mono tracking-tighter font-bold text-base-content/80 text-[11px] md:text-[12px]">{formatDateTime(incident.start_action_time)}</span>],
-                ['RESOLUTION TIME', <span className="font-mono tracking-tighter font-bold text-base-content/80 text-[11px] md:text-[12px]">{formatDateTime(incident.end_time)}</span>],
+                ['START ACTION', <span className="font-mono tracking-tighter font-bold text-base-content/80 text-xs md:text-sm">{formatDateTime(incident.start_action_time)}</span>],
+                ['RESOLUTION TIME', <span className="font-mono tracking-tighter font-bold text-base-content/80 text-xs md:text-sm">{formatDateTime(incident.end_time)}</span>],
                 ['TOTAL PAUSE', <DurationBadge key="p" seconds={incident.total_pause_duration_seconds} />],
                 ['GROSS DURATION', <DurationBadge key="g" seconds={incident.duration_gross_seconds} />],
                 ['NETT DURATION', <DurationBadge key="n" seconds={incident.duration_nett_seconds} target={getSLATarget(incident.ncal)} />],
               ].map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1.5">
-                  <span className="text-[9px] md:text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">{k}</span>
-                  <div className="text-[11px] md:text-[12px] font-bold text-base-content/80 tracking-tight">{v}</div>
+                  <span className="text-xs md:text-xs font-semibold text-base-content/40 uppercase tracking-wider">{k}</span>
+                  <div className="text-xs md:text-sm font-medium text-base-content/80 tracking-tight">{v}</div>
                 </div>
               ))}
             </div>
@@ -152,12 +152,12 @@ export default function IncidentDetailPage() {
 
           {/* Activity Logs (Unified Timeline) */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 pb-2">Handling History</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40 pb-2">Handling History</h3>
             <UnifiedTimeline timeline={processTimeline(incident)} filterType="technical" />
           </div>
 
           <div className="flex flex-col gap-4">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 pb-2">System Activity Log</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40 pb-2">System Activity Log</h3>
             <UnifiedTimeline timeline={processTimeline(incident)} filterType="system" />
           </div>
         </div>
@@ -165,42 +165,42 @@ export default function IncidentDetailPage() {
         {/* Sidebar / Aside Column */}
         <div className="flex flex-col gap-4 sticky top-6">
           <div className="bg-base-100 p-4 rounded-xl shadow-sm">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 pb-3 mb-4">Technical Details</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40 pb-3 mb-4">Technical Details</h3>
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">ROOT CAUSE</span>
-                <div className="bg-base-200/50 p-3.5 rounded-xl text-[13.5px] leading-relaxed font-bold text-base-content/80">
+                <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">ROOT CAUSE</span>
+                <div className="bg-base-200/50 p-3.5 rounded-xl text-sm leading-relaxed font-bold text-base-content/80">
                   {incident.root_cause || '—'}
                 </div>
               </div>
               
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">LAST ACTION</span>
-                <div className="bg-base-200/50 p-3.5 rounded-xl text-[13.5px] leading-relaxed font-bold text-base-content/80">
+                <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">LAST ACTION</span>
+                <div className="bg-base-200/50 p-3.5 rounded-xl text-sm leading-relaxed font-bold text-base-content/80">
                   {incident.last_action || '—'}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">RX POWER (INI)</span>
+                  <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">RX POWER (INI)</span>
                   <span className="text-xs font-mono font-bold tracking-tighter text-primary">{incident.power_before || '—'}</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">RX POWER (FIN)</span>
+                  <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">RX POWER (FIN)</span>
                   <span className="text-xs font-mono font-bold tracking-tighter text-success">{incident.power_after || '—'}</span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5 pt-4">
-                <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">CLASSIFICATION</span>
+                <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">CLASSIFICATION</span>
                 <div className="flex flex-col gap-1 mt-1">
                   {incident.klasifikasi ? (
                     <>
-                      <span className="text-[10px] text-base-content/40 font-mono font-bold tracking-[0.15em] uppercase">{incident.klasifikasi}</span>
-                      <span className="text-sm font-bold text-primary tracking-tight">{incident.sub_klasifikasi}</span>
+                      <span className="text-xs text-base-content/40 font-mono font-semibold tracking-wider uppercase">{incident.klasifikasi}</span>
+                      <span className="text-sm font-semibold text-primary tracking-tight">{incident.sub_klasifikasi}</span>
                     </>
-                  ) : <span className="text-sm font-bold opacity-20 tracking-tight">{incident.classification_manual || '—'}</span>}
+                  ) : <span className="text-sm font-semibold opacity-20 tracking-tight">{incident.classification_manual || '—'}</span>}
                 </div>
               </div>
             </div>

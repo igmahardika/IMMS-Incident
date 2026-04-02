@@ -116,7 +116,7 @@
 @layer components {
   /* Semantic Banner Patterns */
   .info-banner {
-    @apply p-4 rounded-2xl border text-[10px] font-bold uppercase tracking-[0.15em] leading-relaxed flex items-center gap-3;
+    @apply p-4 rounded-2xl border text-xs font-semibold uppercase tracking-wider leading-relaxed flex items-center gap-3;
   }
   .info-banner-warning {
     @apply bg-warning/5 border-warning/20 text-warning;
@@ -142,11 +142,11 @@
   }
   
   .table-imms thead th {
-    @apply text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 py-3 px-4 transition-colors;
+    @apply text-xs font-semibold uppercase tracking-wider text-base-content/40 py-3 px-4 transition-colors;
   }
   
   .table-imms tbody td {
-    @apply text-[12px] font-medium leading-relaxed py-2.5 px-4 text-base-content/80 border-b border-base-content/5 transition-colors;
+    @apply text-sm font-normal leading-relaxed py-3 px-4 text-base-content/80 border-b border-base-content/5 transition-colors;
   }
   
   .table-imms tbody tr:hover td {
@@ -154,7 +154,7 @@
   }
 
   .table-imms .font-mono {
-    @apply text-[12px] tracking-tight tabular-nums;
+    @apply text-sm tracking-tight tabular-nums;
   }
 
   /* STACKED TABLE PATTERN (MOBILE) */

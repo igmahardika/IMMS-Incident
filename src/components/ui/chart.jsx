@@ -37,7 +37,7 @@ export function ChartTooltip({ active, payload, label, config = {}, valueFormatt
 
   return (
     <div className="bg-base-100 border border-base-300 shadow-2xl rounded-xl p-4 min-w-[140px] backdrop-blur-md">
-      <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mb-3 border-b border-base-200 pb-2">{label}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-3 border-b border-base-200 pb-2">{label}</div>
       <div className="flex flex-col gap-2.5">
         {payload.map((item, idx) => {
           const cfg = config[item.dataKey] || config[item.name] || {};
@@ -45,10 +45,10 @@ export function ChartTooltip({ active, payload, label, config = {}, valueFormatt
           const color = cfg.color || item.color || item.fill;
 
           return (
-            <div key={idx} className="flex items-center justify-between gap-6 text-[11px] font-bold">
+            <div key={idx} className="flex items-center justify-between gap-6 text-sm font-medium">
               <div className="flex items-center gap-2.5">
                 <div className="w-1.5 h-1.5 rounded-sm shrink-0 shadow-sm" style={{ background: color }} />
-                <span className="text-base-content/40 uppercase tracking-[0.15em]">{lbl}</span>
+                <span className="text-base-content/40 uppercase tracking-wider">{lbl}</span>
               </div>
               <span className="font-mono text-base-content">
                 {valueFormatter
@@ -71,7 +71,7 @@ export function ChartLegend({ payload, config = {} }) {
   if (!payload || !payload.length) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-5 text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mt-4 px-4 py-2 bg-base-200/30 rounded-xl border border-base-200">
+    <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-semibold uppercase tracking-wider text-base-content/40 mt-4 px-4 py-2 bg-base-200/30 rounded-xl border border-base-200">
       {payload.map((entry, idx) => {
         const key = entry.dataKey || entry.value;
         const cfg = config[key] || {};

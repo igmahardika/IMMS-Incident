@@ -50,7 +50,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-base-content">IMMS</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 mt-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mt-2">
             Incident & Maintenance Management System
           </p>
         </div>
@@ -59,19 +59,19 @@ export default function LoginPage() {
         <div className="bg-base-100 shadow-2xl rounded-lg overflow-hidden">
           <div className="p-10">
             <h2 className="text-2xl font-bold tracking-tight text-base-content">Security Access</h2>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-8">
+            <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-8">
               Authenticate to access the monitoring core
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <label className="form-control w-full">
-                <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Operator Identity</span></div>
+                <div className="label pt-0"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Operator Identity</span></div>
                 <div className="relative flex items-center">
                   <User size={16} className="absolute left-4 text-base-content/20 pointer-events-none" />
                   <input
                     id="login-username"
                     type="text"
-                    className="input input-bordered w-full pl-12 font-bold text-[13.5px] tracking-tight h-12 rounded-lg focus:bg-base-200/50 transition-all"
+                    className="input input-bordered w-full pl-12 font-semibold text-sm tracking-tight h-12 rounded-lg focus:bg-base-200/50 transition-all"
                     placeholder="Enter username"
                     value={form.username}
                     onChange={(e) => setForm(p => ({ ...p, username: e.target.value }))}
@@ -83,13 +83,13 @@ export default function LoginPage() {
               </label>
 
               <label className="form-control w-full">
-                <div className="label pt-2"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Access Key</span></div>
+                <div className="label pt-2"><span className="label-text text-xs font-semibold text-base-content/40 uppercase tracking-wider">Access Key</span></div>
                 <div className="relative flex items-center">
                   <Lock size={16} className="absolute left-4 text-base-content/20 pointer-events-none" />
                   <input
                     id="login-password"
                     type={showPw ? 'text' : 'password'}
-                    className="input input-bordered w-full pl-12 pr-12 font-bold text-[13.5px] tracking-tight h-12 rounded-lg focus:bg-base-200/50 transition-all"
+                    className="input input-bordered w-full pl-12 pr-12 font-semibold text-sm tracking-tight h-12 rounded-lg focus:bg-base-200/50 transition-all"
                     placeholder="Enter password"
                     value={form.password}
                     onChange={(e) => setForm(p => ({ ...p, password: e.target.value }))}
@@ -108,7 +108,7 @@ export default function LoginPage() {
                 </div>
               </label>
 
-              <button type="submit" className="btn btn-primary w-full mt-6 h-12 font-bold uppercase tracking-[0.15em] text-[10px] shadow-xl shadow-primary/20 rounded-lg" disabled={loading}>
+              <button type="submit" className="btn btn-primary w-full mt-6 h-12 font-semibold uppercase tracking-wider text-xs shadow-xl shadow-primary/20 rounded-lg" disabled={loading}>
                 {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Initialize Session'}
               </button>
             </form>
@@ -117,7 +117,7 @@ export default function LoginPage() {
 
         {/* Quick login */}
         <div className="mt-8 bg-base-100 rounded-lg p-6 shadow-sm">
-          <div className="text-[9px] font-bold text-base-content/20 uppercase tracking-[0.15em] mb-4 text-center">
+          <div className="text-xs font-medium text-base-content/20 uppercase tracking-wider mb-4 text-center">
             Development Quick Access
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -127,14 +127,14 @@ export default function LoginPage() {
                 onClick={() => setForm({ username: u, password: p })}
                 className="flex flex-col items-center justify-center p-4 bg-base-200 hover:bg-primary/5 rounded-lg transition-all text-center group active:scale-95"
               >
-                <div className="text-[10px] font-bold text-primary uppercase tracking-[0.15em] group-hover:scale-110 transition-transform">{role}</div>
-                <div className="text-[9px] font-mono font-bold text-base-content/30 mt-1 uppercase tracking-tighter">{u}</div>
+                <div className="text-xs font-semibold text-primary uppercase tracking-wider group-hover:scale-110 transition-transform">{role}</div>
+                <div className="text-xs font-mono font-semibold text-base-content/30 mt-1 uppercase tracking-tighter">{u}</div>
               </button>
             ))}
           </div>
         </div>
 
-        <p className="text-[10px] font-bold text-center mt-6 text-base-content/40 uppercase tracking-[0.15em]">
+        <p className="text-xs font-semibold text-center mt-6 text-base-content/40 uppercase tracking-wider">
           NCAL MONITORING FRAMEWORK © 2026<br />V 5.0.0 ENTERPRISE EDITION
         </p>
       </div>

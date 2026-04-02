@@ -29,8 +29,8 @@ function LiveClock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="font-mono tracking-tighter text-base-content/40 font-bold uppercase text-[10px]">
-      {time.toLocaleString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
+    <span className="font-mono tracking-tighter text-base-content/40 font-semibold uppercase text-xs">
+      {time.toLocaleDateString('en-GB', { weekday: 'short' })}, {String(time.getDate()).padStart(2, '0')}/{String(time.getMonth() + 1).padStart(2, '0')}/{time.getFullYear()} {String(time.getHours()).padStart(2, '0')}:{String(time.getMinutes()).padStart(2, '0')} WIB
     </span>
   );
 }
@@ -48,18 +48,18 @@ export default function Topbar() {
         <label htmlFor="main-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost lg:hidden mr-2">
           <Menu size={20} />
         </label>
-        <div className="breadcrumbs text-[10px] hidden sm:block">
+        <div className="breadcrumbs text-xs hidden sm:block">
           <ul>
-            <li><span className="text-base-content/40 tracking-[0.15em] font-bold uppercase">IMMS</span></li>
+            <li><span className="text-base-content/40 tracking-wider font-semibold uppercase">IMMS</span></li>
             {parts.map((p, i) => (
               <li key={i}>
                 {i === parts.length - 1
-                  ? <span className="font-bold text-base-content uppercase tracking-tight">{TITLES[location.pathname] || p}</span>
+                  ? <span className="font-semibold text-base-content uppercase tracking-tight">{TITLES[location.pathname] || p}</span>
                   : <span className="capitalize font-medium opacity-40">{p}</span>
                 }
               </li>
             ))}
-            {parts.length === 0 && <li><span className="font-bold text-base-content uppercase tracking-tight">Dashboard</span></li>}
+            {parts.length === 0 && <li><span className="font-semibold text-base-content uppercase tracking-tight">Dashboard</span></li>}
           </ul>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function Topbar() {
         
         <NotificationBell />
 
-        <div className="badge badge-primary badge-soft badge-xs font-bold tracking-[0.15em] gap-1.5 uppercase rounded h-6 px-2.5">
+        <div className="badge badge-primary badge-soft badge-xs font-semibold tracking-wider gap-1.5 uppercase rounded h-6 px-2.5">
           <Shield size={10} />
           {user?.role}
         </div>

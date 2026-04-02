@@ -13,7 +13,7 @@ const NCAL_DOT_COLORS = {
 export function NcalBadge({ value }) {
   const badgeClass = getNcalBadgeClass(value);
   return (
-    <span className={`badge ${badgeClass} badge-soft text-[10px] h-5 px-2 border-none rounded-md font-bold uppercase tracking-[0.15em]`} aria-label={`NCAL ${value}`}>
+    <span className={`badge ${badgeClass} badge-soft text-xs h-5 px-2 border-none rounded-md font-bold uppercase tracking-wider`} aria-label={`NCAL ${value}`}>
       <span className="inline-block w-1 h-1 rounded-full bg-current shrink-0 align-middle -mt-0.5 mr-1.5" />
       {value}
     </span>
@@ -24,7 +24,7 @@ export function StatusPill({ status }) {
   const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
   const badgeMap = { open: 'badge-info', progress: 'badge-success', pending: 'badge-warning', done: 'badge-ghost' };
   return (
-    <span className={`badge ${badgeMap[status] || 'badge-ghost'} badge-soft text-[10px] h-5 px-2 border-none rounded-md font-bold uppercase tracking-[0.15em]`}>
+    <span className={`badge ${badgeMap[status] || 'badge-ghost'} badge-soft text-xs h-5 px-2 border-none rounded-md font-bold uppercase tracking-wider`}>
       {labels[status] || status}
     </span>
   );
@@ -107,10 +107,10 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
   const state = paused ? 'paused' : (isExceeded || isUrgent) ? 'danger' : isWarning ? 'warning' : 'success';
 
   return (
-    <span className={`font-mono text-xs font-bold inline-flex items-center gap-1.5 ${statusClasses[state].split(' ')[0]}`}>
+    <span className={`font-mono text-xs font-semibold inline-flex items-center gap-1.5 ${statusClasses[state].split(' ')[0]}`}>
       <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${statusClasses[state].split(' ')[1]} ${!paused && (isUrgent || isExceeded) ? 'shadow-[0_0_8px_rgba(var(--color-error),0.5)]' : ''}`} />
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
-      {paused && <span className="text-[9px] font-bold tracking-[0.15em] opacity-60 ml-0.5 uppercase">PAUSED</span>}
+      {paused && <span className="text-xs font-medium tracking-wider opacity-60 ml-0.5 uppercase">PAUSED</span>}
     </span>
   );
 }
@@ -140,7 +140,7 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
     <dialog className="modal modal-open" open>
       <div className={`modal-box p-0 flex flex-col shadow-2xl overflow-hidden rounded-xl ${sizeMap[size] || 'max-w-lg'}`}>
         <div className="flex justify-between items-center px-4 py-3.5 bg-base-100">
-          <h3 className="font-bold text-[10px] uppercase tracking-[0.15em] text-base-content/70 leading-none">{title}</h3>
+          <h3 className="font-semibold text-xs uppercase tracking-wider text-base-content/70 leading-none">{title}</h3>
           <button className="btn btn-xs btn-circle btn-ghost opacity-40 hover:opacity-100" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className="px-4 py-4 overflow-y-auto max-h-[75vh]">
@@ -182,8 +182,8 @@ export function SectionCard({ title, subtitle, footer, children, className = '',
         {(title || headerAction) && (
           <div className="flex items-center justify-between mb-4 px-0.5">
             <div>
-              {title && <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">{title}</h2>}
-              {subtitle && <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mt-1 leading-relaxed opacity-60">{subtitle}</p>}
+              {title && <h2 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">{title}</h2>}
+              {subtitle && <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-1 leading-relaxed opacity-60">{subtitle}</p>}
             </div>
             {headerAction}
           </div>
@@ -217,7 +217,7 @@ export function LevelBadge({ level, targetHours }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded-lg w-16 justify-center ${
+      className={`inline-flex items-center gap-1 font-mono text-xs font-semibold px-2 py-0.5 rounded-lg w-16 justify-center ${
         isExceeded ? 'bg-error/10 text-error'
         : isSafe ? 'bg-success/10 text-success'
         : 'bg-base-content/10 text-base-content/50'
@@ -260,11 +260,11 @@ export function Input({ label, error, type = 'text', className = '', ...props })
   return (
     <label className="form-control w-full gap-1.5">
       {label && (
-        <div className="label p-0 min-h-0"><span className="label-text font-bold text-[10px] uppercase tracking-[0.15em] text-base-content/40">{label}</span></div>
+        <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">{label}</span></div>
       )}
-      <input type={type} className={`input input-md w-full focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-bold text-[13.5px] bg-base-200/50 ${error ? 'input-error' : ''} ${className}`} {...props} />
+      <input type={type} className={`input input-md w-full focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-semibold text-sm bg-base-200/50 ${error ? 'input-error' : ''} ${className}`} {...props} />
       {error && (
-        <div className="label pb-0 pt-1 min-h-0"><span className="label-text-alt text-error font-bold text-[10px]">{error}</span></div>
+        <div className="label pb-0 pt-1 min-h-0"><span className="label-text-alt text-error font-semibold text-xs">{error}</span></div>
       )}
     </label>
   );
