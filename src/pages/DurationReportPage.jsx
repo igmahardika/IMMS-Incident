@@ -89,16 +89,16 @@ export default function DurationReportPage() {
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">SLA Summary per NCAL</h3>
                 <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
               </div>
-              <div className="overflow-x-auto">
-                <table className="table-imms table-stacked">
+              <div className="overflow-auto max-h-[50vh] custom-scrollbar w-full p-0">
+                <table className="table table-sm table-pin-rows table-stacked w-full">
                   <thead>
-                    <tr>
-                      <th className="w-20 text-center">NCAL</th>
-                      <th className="text-center">Total</th>
-                      <th className="text-center">Avg Nett</th>
-                      <th className="text-center">SLA Met</th>
-                      <th className="text-center whitespace-nowrap">SLA Target</th>
-                      <th className="text-center">%</th>
+                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                      <th className="bg-base-100/90 backdrop-blur-md w-20 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">NCAL</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Total</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Avg Nett</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">SLA Met</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center whitespace-nowrap uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">SLA Target</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">%</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -106,13 +106,13 @@ export default function DurationReportPage() {
                     {sla.map(row => {
                       const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                       return (
-                        <tr key={row.ncal} className="hover:bg-base-200 transition-colors">
-                          <td data-label="NCAL" className="text-center"><NcalBadge value={row.ncal} /></td>
-                          <td data-label="TOTAL" className="text-center font-bold text-[12px]">{row.total_cases}</td>
-                          <td data-label="AVG NETT" className="text-center font-mono font-bold text-[12px] opacity-70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td data-label="SLA MET" className="text-center font-medium text-primary text-[12px]">{row.sla_met || 0}</td>
-                          <td data-label="SLA TARGET" className="text-center opacity-50 text-[10px] uppercase font-bold tracking-tighter">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
-                          <td data-label="PERCENTAGE" className="text-center">
+                        <tr key={row.ncal} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
+                          <td data-label="NCAL" className="text-center md:py-3"><NcalBadge value={row.ncal} /></td>
+                          <td data-label="TOTAL" className="text-center font-bold text-[12px] md:py-3">{row.total_cases}</td>
+                          <td data-label="AVG NETT" className="text-center font-mono font-bold text-[12px] opacity-70 md:py-3">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td data-label="SLA MET" className="text-center font-medium text-primary text-[12px] md:py-3">{row.sla_met || 0}</td>
+                          <td data-label="SLA TARGET" className="text-center opacity-50 text-[10px] uppercase font-bold tracking-tighter md:py-3">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
+                          <td data-label="PERCENTAGE" className="text-center md:py-3">
                             <span className={`font-bold tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
                               {pct}%
                             </span>
@@ -131,26 +131,26 @@ export default function DurationReportPage() {
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Technician Performance</h3>
                 <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
               </div>
-              <div className="overflow-x-auto">
-                <table className="table-imms table-stacked">
+              <div className="overflow-auto max-h-[50vh] custom-scrollbar w-full p-0">
+                <table className="table table-sm table-pin-rows table-stacked w-full">
                   <thead>
-                    <tr>
-                      <th className="text-left py-3">Technician</th>
-                      <th className="text-center py-3">Total</th>
-                      <th className="text-center py-3">Avg</th>
-                      <th className="text-center py-3 text-success/80">Min</th>
-                      <th className="text-center py-3 text-error/80">Max</th>
+                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                      <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Technician</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Total</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Avg</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-success/70 py-3">Min</th>
+                      <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-[0.15em] text-[10px] text-error/70 py-3">Max</th>
                     </tr>
                   </thead>
                   <tbody>
                     {techPerf.length === 0 && <tr><td colSpan={5} className="text-center py-10 opacity-50">No data available</td></tr>}
                     {techPerf.map(row => (
-                      <tr key={row.technician} className="hover:bg-base-200 transition-colors">
-                        <td data-label="TECHNICIAN" className="font-bold text-[12px] tracking-tight">{row.technician}</td>
-                        <td data-label="TOTAL" className="text-center font-mono font-bold text-[12px]">{row.total_handled}</td>
-                        <td data-label="AVG" className="text-center font-mono font-bold text-[12px] text-base-content/70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td data-label="MIN" className="text-center font-mono text-[12px] text-success">{formatDuration(row.min_nett)}</td>
-                        <td data-label="MAX" className="text-center font-mono text-[12px] text-error">{formatDuration(row.max_nett)}</td>
+                      <tr key={row.technician} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
+                        <td data-label="TECHNICIAN" className="font-bold text-[12px] tracking-tight md:py-3">{row.technician}</td>
+                        <td data-label="TOTAL" className="text-center font-mono font-bold text-[12px] md:py-3">{row.total_handled}</td>
+                        <td data-label="AVG" className="text-center font-mono font-bold text-[12px] text-base-content/70 md:py-3">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td data-label="MIN" className="text-center font-mono text-[12px] text-success md:py-3">{formatDuration(row.min_nett)}</td>
+                        <td data-label="MAX" className="text-center font-mono text-[12px] text-error md:py-3">{formatDuration(row.max_nett)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -133,15 +133,15 @@ export default function RootCausePage() {
             <div className="p-6">
               <h3 className="text-base font-bold">Classification Breakdown</h3>
             </div>
-            <div className="overflow-x-auto">
-              <table className="table-imms table-stacked">
+            <div className="overflow-auto max-h-[60vh] custom-scrollbar w-full p-0">
+              <table className="table table-sm table-pin-rows table-stacked w-full">
                 <thead>
-                  <tr>
-                    <th className="w-16 text-center">#</th>
-                    <th className="text-left">Classification</th>
-                    <th className="w-32 text-center">Count</th>
-                    <th className="w-32 text-center">Percentage</th>
-                    <th className="min-w-[200px] text-left">Distribution</th>
+                  <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                    <th className="bg-base-100/90 backdrop-blur-md w-16 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">#</th>
+                    <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Classification</th>
+                    <th className="bg-base-100/90 backdrop-blur-md w-32 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Count</th>
+                    <th className="bg-base-100/90 backdrop-blur-md w-32 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Percentage</th>
+                    <th className="bg-base-100/90 backdrop-blur-md min-w-[200px] text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Distribution</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,16 +149,16 @@ export default function RootCausePage() {
                   {data.map((row, i) => {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (
-                      <tr key={row.classification} className="hover:bg-base-200 transition-colors">
-                        <td data-label="RANK" className="text-center font-mono opacity-50 text-[12px]">#{i + 1}</td>
-                        <td data-label="CLASSIFICATION" className="font-semibold text-[12px]">{row.classification}</td>
-                        <td data-label="COUNT" className="text-center font-mono font-bold text-[12px]">{row.count}</td>
-                        <td data-label="PERCENTAGE" className="text-center font-mono">
+                      <tr key={row.classification} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
+                        <td data-label="RANK" className="text-center font-mono opacity-50 text-[12px] md:py-3">#{i + 1}</td>
+                        <td data-label="CLASSIFICATION" className="font-semibold text-[12px] md:py-3">{row.classification}</td>
+                        <td data-label="COUNT" className="text-center font-mono font-bold text-[12px] md:py-3">{row.count}</td>
+                        <td data-label="PERCENTAGE" className="text-center font-mono md:py-3">
                           <span className="badge badge-sm font-bold text-[10px] uppercase tracking-wider" style={{ backgroundColor: `${PIE_COLORS[i % PIE_COLORS.length]}15`, color: PIE_COLORS[i % PIE_COLORS.length] }}>
                             {pct}%
                           </span>
                         </td>
-                        <td data-label="DISTRIBUTION">
+                        <td data-label="DISTRIBUTION" className="md:py-3">
                           <div className="w-full bg-base-200 rounded-full h-1.5 overflow-hidden">
                             <div 
                               className="h-full rounded-full transition-all duration-1000" 

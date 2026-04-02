@@ -124,19 +124,19 @@ export default function MonthlyViewPage() {
           {/* Main Table */}
           <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="table-imms">
+              <table className="table table-sm w-full">
                 <thead>
-                  <tr>
-                    <th className="sticky left-0 bg-base-200/90 backdrop-blur z-30 w-40 min-w-[120px] border-r border-base-content/5">Period</th>
+                  <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                    <th className="sticky left-0 bg-base-100/90 backdrop-blur-md z-30 w-40 min-w-[120px] border-r border-base-content/5 uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">Period</th>
                     {NCAL_ORDER.map(n => (
-                      <th key={n} className="text-center min-w-[140px] md:min-w-[160px]">
+                      <th key={n} className="text-center min-w-[140px] md:min-w-[160px] bg-transparent">
                         <div className="flex flex-col items-center gap-2">
                           <NcalBadge value={n} />
                           <div className="text-[8px] md:text-[9px] font-bold opacity-30 uppercase tracking-[0.15em]">CASES · GROSS · NETT</div>
                         </div>
                       </th>
                     ))}
-                    <th className="sticky right-0 bg-base-200/90 backdrop-blur z-30 text-center w-40 md:w-48 font-bold text-base-content/40 text-[9px] md:text-[10px] uppercase tracking-[0.15em] border-l border-base-content/5">MONTHLY SUMMARY</th>
+                    <th className="sticky right-0 bg-base-100/90 backdrop-blur-md z-30 text-center w-40 md:w-48 uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3 border-l border-base-content/5">MONTHLY SUMMARY</th>
                   </tr>
                 </thead>
                 <tbody className="">

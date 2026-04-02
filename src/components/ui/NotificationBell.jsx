@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, X, ExternalLink, CheckCheck } from 'lucide-react';
+import { Bell, X, ExternalLink, CheckCheck, User, AlertCircle, CheckCircle2, History, Info } from 'lucide-react';
 import { api, formatDateTime } from '../../utils/api.js';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,27 @@ function playNotificationSound() {
     audio.play().catch(() => {}); // catch autoplay block silently
   } catch (_) {}
 }
+
+const NotificationIcon = ({ message }) => {
+  const msg = message.toLowerCase();
+  if (msg.includes('updated') || msg.includes('memperbarui')) return <History size={18} className="text-primary" />;
+  if (msg.includes('created') || msg.includes('baru')) return <AlertCircle size={18} className="text-warning" />;
+  if (msg.includes('closed') || msg.includes('selesai')) return <CheckCircle2 size={18} className="text-success" />;
+  return <Info size={18} className="text-base-content/40" />;
+};
+
+const parseNotification = (message) => {
+  const caseMatch = message.match(/#([CN]\d+)/);
+  const userMatch = message.match(/^(?:Technician|Teknisi|User)\s+([^\s]+ [^\s]+)/i);
+  const detailIndex = message.indexOf(':');
+  
+  return {
+    caseId: caseMatch ? caseMatch[1] : null,
+    user: userMatch ? userMatch[1] : 'System Update',
+    detail: detailIndex !== -1 ? message.substring(detailIndex + 1).trim() : message,
+    isTechAction: message.toLowerCase().includes('technician') || message.toLowerCase().includes('teknisi')
+  };
+};
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -75,13 +96,14 @@ export default function NotificationBell() {
     if (n.incident_id) navigate(`/incidents/${n.incident_id}`);
     fetchNotifications();
   };  return (
-    <div className="dropdown dropdown-end" ref={panelRef}>
+    <div className={`dropdown dropdown-end ${open ? 'dropdown-open' : ''}`} ref={panelRef}>
       {/* Bell Button */}
       <button
-        tabIndex={0}
-        className="btn btn-ghost btn-circle btn-sm relative"
+        type="button"
+        className="btn btn-ghost btn-circle btn-sm relative z-50 focus:outline-none"
         aria-label="Notifications"
         title="Notifications"
+        onClick={() => setOpen(!open)}
       >
         <Bell size={18} className={unread > 0 ? 'text-primary' : 'opacity-60'} />
         {unread > 0 && (
@@ -90,9 +112,15 @@ export default function NotificationBell() {
       </button>
 
       {/* Dropdown Panel */}
-      <div tabIndex={0} className="dropdown-content z-[2000] menu p-0 shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-base-100/95 backdrop-blur-xl rounded-2xl w-80 md:w-[400px] mt-3 overflow-hidden flex flex-col max-h-[520px]">
+      <div 
+        className={`dropdown-content z-[2000] p-0 shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-base-100/95 backdrop-blur-xl rounded-2xl w-80 md:w-[400px] max-w-[calc(100vw-32px)] mt-3 overflow-hidden flex flex-col max-h-[520px] border border-base-content/5 transition-all duration-200 ${
+          open 
+          ? 'opacity-100 translate-y-0 pointer-events-auto visible' 
+          : 'opacity-0 -translate-y-2 pointer-events-none invisible'
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 bg-base-100/50">
+        <div className="flex items-center justify-between w-full px-5 py-4 border-b border-base-content/5 bg-base-100/50 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
             <span className="font-bold text-[10px] tracking-[0.15em] text-base-content/40 uppercase">
               Recent Updates
@@ -120,47 +148,70 @@ export default function NotificationBell() {
         {/* List */}
         <div className="overflow-y-auto flex-1 custom-scrollbar">
           {notifications.length === 0 ? (
-            <div className="py-16 px-6 text-center opacity-30 flex flex-col items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-base-200 flex items-center justify-center">
-                <Bell size={24} />
+            <div className="py-24 px-8 text-center opacity-30 flex flex-col items-center gap-5">
+              <div className="w-16 h-16 rounded-[2rem] bg-base-200 flex items-center justify-center rotate-12 transition-transform hover:rotate-0">
+                <Bell size={32} strokeWidth={1} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em]">No notifications yet</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-base-content/60">No Updates</span>
+                <span className="text-[10px] font-medium opacity-50">Operational logs are up to date</span>
+              </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-1.5 p-3">
-              {notifications.map(n => (
-                <div
-                  key={n.id}
-                  onClick={() => handleClickNotif(n)}
-                  className={`group relative flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                    n.is_read 
-                    ? 'bg-transparent text-base-content/50 hover:bg-base-content/5' 
-                    : 'bg-primary/5 text-base-content shadow-sm hover:bg-primary/10'
-                  }`}
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <span className={`text-[13.5px] leading-relaxed tracking-tight ${n.is_read ? 'font-medium' : 'font-bold text-base-content'}`}>
-                      {n.message}
-                    </span>
-                    {n.incident_id && (
-                      <ExternalLink size={12} className="text-base-content/20 group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-mono font-bold text-base-content/30 uppercase tracking-[0.15em]">
-                        {formatDateTime(n.created_at)}
-                      </span>
-                    </div>
-                    {!n.is_read && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-bold text-primary uppercase tracking-[0.15em]">New</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]" />
+            <div className="flex flex-col p-2 space-y-2">
+              {notifications.map(n => {
+                const parsed = parseNotification(n.message);
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => handleClickNotif(n)}
+                    className={`card card-compact overflow-hidden border border-base-content/5 cursor-pointer transition-all duration-300 hover:shadow-md hover:bg-base-200/50 ${
+                      n.is_read 
+                      ? 'bg-base-100 opacity-70' 
+                      : 'bg-primary/5 shadow-sm border-primary/10'
+                    }`}
+                  >
+                    {/* Card Content */}
+                    <div className="card-body p-3 relative">
+                      {/* Unread indicator accent bar */}
+                      {!n.is_read && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary shadow-[0_0_8px_rgba(var(--p),0.3)]" />
+                      )}
+
+                      <div className="flex items-start gap-3">
+                        {/* Avatar-like Icon Area */}
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border border-base-content/5 ${!n.is_read ? 'bg-primary/10 text-primary' : 'bg-base-200 opacity-60'}`}>
+                          <NotificationIcon message={n.message} />
+                        </div>
+
+                        {/* Enriched Details */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                          <div className="flex justify-between items-center">
+                            <span className={`card-title text-[13px] leading-none ${n.is_read ? 'text-base-content/60' : 'text-primary'}`}>
+                              {parsed.user}
+                            </span>
+                            <span className="text-[9px] font-mono font-bold opacity-30 tracking-tight shrink-0 uppercase">
+                               {formatDateTime(n.created_at).split(',')[1]?.trim() || '—'}
+                            </span>
+                          </div>
+
+                          <p className={`text-[12px] leading-tight line-clamp-2 ${n.is_read ? 'text-base-content/40' : 'text-base-content/80 font-medium'}`}>
+                            {parsed.caseId && <span className="font-bold mr-1.5 text-[11px] opacity-70">#{parsed.caseId}</span>}
+                            {parsed.detail}
+                          </p>
+
+                          <div className={`flex items-center justify-between pt-1 opacity-0 group-hover:opacity-100 transition-opacity ${!n.is_read ? 'opacity-100' : ''}`}>
+                             <span className="text-[9px] font-bold text-primary uppercase tracking-[0.1em] flex items-center gap-1 hover:underline">
+                                Details <ExternalLink size={10} />
+                             </span>
+                             {!n.is_read && <span className="badge badge-primary badge-xs font-bold text-[8px] h-4 rounded-sm animate-pulse-slow">Unread</span>}
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

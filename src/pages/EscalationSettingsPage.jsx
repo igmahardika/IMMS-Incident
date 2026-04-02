@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../utils/api.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { PageSpinner, SectionCard } from '../components/ui/index.jsx';
-import { Save, Send, Settings, Smartphone, Info } from 'lucide-react';
+import { Save, Send, Settings, Smartphone, Info, Circle, CheckCircle2 } from 'lucide-react';
 
 export default function EscalationSettingsPage() {
   const segments_raw = ['blue', 'yellow', 'orange', 'red', 'black'];
@@ -70,12 +70,18 @@ export default function EscalationSettingsPage() {
 
   const renderPreview = (template, ncal, isClose = false) => {
     if (!template) return '—';
-    let label = ncal;
-    if (isClose) label = `🟢 ${ncal}`;
-    else {
-      const icons = { BLACK: '⚫', RED: '🔴', ORANGE: '🟠', YELLOW: '🟡', BLUE: '🔵' };
-      label = `${icons[ncal] || ''} ${ncal}`;
-    }
+    const ncalColors = { BLACK: 'text-base-content', RED: 'text-error', ORANGE: 'text-orange-500', YELLOW: 'text-warning', BLUE: 'text-info' };
+    const Icon = isClose ? CheckCircle2 : Circle;
+    const colorClass = isClose ? 'text-success' : (ncalColors[ncal] || 'text-base-content');
+    
+    let labelHTML = `<div class="flex items-center gap-1.5 ${colorClass}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${isClose ? 'none' : 'currentColor'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg> ${ncal}</div>`;
+    // We will inject labelHTML manually if needed, but since it's a textarea simulator string replacement, 
+    // let's just make the preview render the icon OUTSIDE the string, or just use text if inside.
+    // Actually, since the template uses `{ncal}` directly in the string, we can't easily inject React nodes.
+    // Let's strip `{ncal}` and put a nice header above the preview instead! 
+    // Wait, the template string might literally say "N-CAL  : {ncal}". Let's replace `{ncal}` with just the string `[${ncal}]` for text view.
+    let label = `[${ncal}]`;
+
     const infraMock = ncal === 'RED' ? 'ODC PELABUHAN' : ncal === 'BLACK' ? 'POP SEMARANG' : 'ODP-SMG-01';
     const mock = {
       ncal: label, case_no: 'C260313-1234', company: 'PT Sample Customer',
@@ -132,27 +138,27 @@ export default function EscalationSettingsPage() {
         {/* Left: config form */}
         <div className="flex flex-col gap-6">
           {/* Webhook config */}
-          <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">
-            <div className="p-4 md:p-8 bg-base-200/30">
+          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5">
+            <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-lg md:text-xl font-bold tracking-tight text-base-content">Core Configuration</h1>
-                  <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 mt-1">Notification endpoints & Global Status</p>
+                  <h1 className="text-lg font-bold tracking-tight text-base-content">Core Configuration</h1>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 mt-1">Notification endpoints & Global Status</p>
                 </div>
                 {/* Active status indicator */}
                 <div className={`flex items-center self-start md:self-auto gap-2 px-3 py-1.5 rounded-full transition-all ${cfg.is_active ? 'bg-success/10 text-success' : 'bg-base-300/30 text-base-content/30'}`}>
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.is_active ? 'bg-success animate-pulse' : 'bg-base-content/10'}`} />
-                  <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] uppercase">
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">
                     {cfg.is_active ? 'Live' : 'Offline'}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-4 md:p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Integration Platform</span></label>
-                  <select className="select select-bordered select-md w-full font-bold text-[13.5px] tracking-tight h-12 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
+                  <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] mb-1">Integration Platform</span></label>
+                  <select className="select border-none bg-base-200 w-full font-semibold text-[13px] tracking-tight h-10 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
                     <option value="telegram">Telegram Protocol</option>
                     <option value="whatsapp">WhatsApp Business API</option>
                     <option value="custom">Standard Webhook (JSON)</option>
@@ -175,14 +181,14 @@ export default function EscalationSettingsPage() {
               </div>
 
               <div className="form-control w-full">
-                <label className="label pb-2">
+                <label className="label pb-1">
                   <span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
                     {cfg.type === 'telegram' ? 'Internal Coordination Endpoint' : 'Internal Webhook Resource'}
                   </span>
                 </label>
                 <input
                   type="url" 
-                  className="input input-bordered input-md w-full font-mono font-bold text-[12px] h-12 rounded-lg bg-base-200/30 focus:bg-base-100 transition-all font-bold"
+                  className="input border-none w-full font-mono font-medium text-[12px] h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
                   value={cfg.webhook_url || ''}
                   onChange={e => setF('webhook_url', e.target.value)}
                   placeholder="https://core-api.v1/..."
@@ -190,14 +196,14 @@ export default function EscalationSettingsPage() {
               </div>
 
               <div className="form-control w-full">
-                <label className="label pb-2">
+                <label className="label pb-1">
                   <span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">
                     {cfg.type === 'telegram' ? 'Vendor / Operation Endpoint' : 'External Webhook Resource'}
                   </span>
                 </label>
                 <input
                   type="url" 
-                  className="input input-bordered input-md w-full font-mono font-bold text-[12px] h-12 rounded-lg bg-base-200/30 focus:bg-base-100 transition-all font-bold"
+                  className="input border-none w-full font-mono font-medium text-[12px] h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
                   value={cfg.webhook_url_vendor || ''}
                   onChange={e => setF('webhook_url_vendor', e.target.value)}
                   placeholder="https://vendor-api.v1/..."
@@ -207,21 +213,21 @@ export default function EscalationSettingsPage() {
           </div>
 
           {/* Template editing */}
-          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
-            <div className="p-6 bg-base-200/30">
+          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5 mt-6">
+            <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
               <h3 className="text-base font-bold">Message Templates</h3>
               <p className="text-xs opacity-60">OPEN & CLOSE message templates per NCAL segment</p>
             </div>
             <div className="p-0">
               {/* Tab bar */}
-              <div className="flex bg-base-200 p-2 gap-1 overflow-x-auto no-scrollbar">
+              <div className="flex bg-base-200/50 p-2 gap-1 overflow-x-auto no-scrollbar border-b border-base-content/5">
                 {segments.map(seg => (
                   <button
                     key={seg}
-                    className={`px-6 py-2.5 text-[10px] font-bold tracking-[0.15em] uppercase transition-all rounded-lg ${
+                    className={`px-4 py-2 text-[10px] font-bold tracking-[0.15em] uppercase transition-all rounded-md ${
                       previewNcal === seg 
-                        ? 'bg-primary text-primary-content shadow-lg shadow-primary/20' 
-                        : 'text-base-content/40 hover:bg-base-300 hover:text-base-content/60'
+                        ? 'bg-base-100 shadow-sm text-base-content/80' 
+                        : 'text-base-content/40 hover:bg-base-200 hover:text-base-content/60'
                     }`}
                     onClick={() => setPreviewNcal(seg)}
                   >
@@ -230,17 +236,17 @@ export default function EscalationSettingsPage() {
                 ))}
               </div>
 
-              <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-                <div className="space-y-6">
+              <div className="p-4 md:p-6 space-y-6">
+                <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <div className="w-1 h-4 bg-primary rounded-full" />
                     <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Deployment Template — {previewNcal}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Internal Coordination Payload</span></div>
+                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Internal Coordination Payload</span></div>
                       <textarea
-                        className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                        className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                         rows={6}
                         value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
                         onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -249,9 +255,9 @@ export default function EscalationSettingsPage() {
                     </label>
                     {previewNcal === 'YELLOW' && (
                       <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Vendor / MO Protocol</span></div>
+                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Vendor / MO Protocol</span></div>
                         <textarea
-                          className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                          className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                           rows={6}
                           value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
                           onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -264,16 +270,16 @@ export default function EscalationSettingsPage() {
 
                 <div className="divider opacity-10"></div>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-1 h-5 bg-success rounded-full" />
+                    <div className="w-1 h-4 bg-success rounded-full" />
                     <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Resolution Template — {previewNcal}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Internal Resolution Payload</span></div>
+                      <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Internal Resolution Payload</span></div>
                       <textarea
-                        className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                        className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                         rows={6}
                         value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
                         onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -282,9 +288,9 @@ export default function EscalationSettingsPage() {
                     </label>
                     {previewNcal === 'YELLOW' && (
                       <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/30 uppercase tracking-[0.15em]">Vendor Clearance Protocol</span></div>
+                        <div className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Vendor Clearance Protocol</span></div>
                         <textarea
-                          className="textarea textarea-bordered w-full font-mono font-bold text-[12px] leading-relaxed bg-base-200/30 focus:bg-base-100 transition-all rounded-lg" 
+                          className="textarea border-none w-full font-mono text-[12px] leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
                           rows={6}
                           value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
                           onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
@@ -306,20 +312,18 @@ export default function EscalationSettingsPage() {
 
         {/* Right: sticky preview */}
         <div className="lg:sticky lg:top-6 h-fit">
-          <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">
-            <div className="p-6 bg-base-200/30">
+          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5">
+            <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
                <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h3 className="card-title text-base font-bold flex items-center gap-2"><Smartphone size={18} className="text-primary" /> Preview</h3>
-                  <p className="text-xs opacity-60">Mobile notification view</p>
+                  <h3 className="card-title text-base font-bold flex items-center gap-2"><Smartphone size={16} className="text-primary" /> Device Preview</h3>
                 </div>
-                <div className="join bg-base-200/50 p-1 rounded-lg">
+                <div className="join bg-base-200 p-1 rounded-md">
                   {['open', 'close'].map(t => (
                     <button
                       key={t}
                       onClick={() => setPreviewType(t)}
-                      className={`btn btn-xs join-item border-none ${previewType === t ? 'btn-primary shadow-sm' : 'bg-transparent opacity-60'}`}
-                      
+                      className={`btn btn-xs join-item border-none text-[9px] uppercase tracking-[0.1em] px-3 ${previewType === t ? 'bg-base-100 text-base-content/80 shadow-sm' : 'bg-transparent text-base-content/40 hover:text-base-content/70'}`}
                     >
                       {t}
                     </button>
@@ -327,39 +331,33 @@ export default function EscalationSettingsPage() {
                 </div>
               </div>
             </div>
-            <div className="p-8 space-y-8">
-              {/* NCAL selector */}
-              <div className="flex flex-wrap gap-2">
-                {segments.map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setPreviewNcal(n)}
-                    className={`btn btn-xs rounded-lg border-none h-8 px-4 transition-all ${previewNcal === n ? 'btn-primary shadow-lg shadow-primary/20' : 'bg-base-300 text-base-content/40 hover:bg-base-content/10'} font-bold text-[10px] tracking-[0.15em]`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-
+            <div className="p-6 space-y-6">
               {/* Internal preview */}
-              <div className="space-y-3">
-                <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-primary" />
-                  Internal Simulation
-                </div>
-                <div className="bg-base-200/50 rounded-lg p-5 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-base-content/80 shadow-inner">
+              <div className="space-y-2">
+                {(() => {
+                  const ncalColorsMap = { BLACK: 'text-base-content', RED: 'text-error', ORANGE: 'text-orange-500', YELLOW: 'text-warning', BLUE: 'text-info' };
+                  const colorClass = previewType === 'close' ? 'text-success' : (ncalColorsMap[previewNcal] || 'text-base-content');
+                  return (
+                    <div className={`text-[10px] font-bold ${colorClass} uppercase tracking-[0.15em] flex items-center gap-1.5`}>
+                      {previewType === 'close' ? <CheckCircle2 size={12} strokeWidth={3} /> : <Circle size={12} fill="currentColor" className="opacity-90" />} 
+                      <span>{previewType === 'close' ? 'RESOLVED' : 'INTERNAL ALERT'}</span>
+                    </div>
+                  );
+                })()}
+
+                <div className="bg-base-200/50 rounded-lg p-4 font-mono text-[11px] leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-base-content/80 shadow-inner">
                   {renderPreview(getActiveTemplate(previewType, 'internal'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
                 </div>
               </div>
 
               {/* Vendor preview (Yellow only or if template exists) */}
               {(previewNcal === 'YELLOW' || getActiveTemplate(previewType, 'vendor')) && (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em] flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-warning" />
-                    Vendor Simulation
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="text-[10px] font-bold text-warning uppercase tracking-[0.15em] flex items-center gap-1.5">
+                    <Circle size={12} fill="currentColor" className="opacity-90" />
+                    VENDOR ESCALATION
                   </div>
-                  <div className="bg-warning/5 rounded-lg p-5 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-warning/80 shadow-inner">
+                  <div className="bg-warning/5 rounded-lg p-4 font-mono text-[11px] leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-warning/80 shadow-inner">
                     {renderPreview(getActiveTemplate(previewType, 'vendor'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
                   </div>
                 </div>

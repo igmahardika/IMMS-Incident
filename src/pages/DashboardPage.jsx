@@ -181,12 +181,12 @@ export default function DashboardPage() {
         {/* Recent Closed */}
         <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents" padding={0}>
           <div className="overflow-x-auto w-full">
-            <table className="table-imms">
+            <table className="table table-sm table-stacked w-full">
               <thead>
-                <tr>
-                  <th className="w-2/12 text-center">NCAL</th>
-                  <th className="w-5/12 text-left">INCIDENT</th>
-                  <th className="w-5/12 text-right">DETAILS</th>
+                <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                  <th className="bg-base-100/90 backdrop-blur-md w-2/12 text-center uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">NCAL</th>
+                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">INCIDENT</th>
+                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-right uppercase tracking-[0.15em] text-[10px] text-base-content/50 py-3">DETAILS</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,13 +194,13 @@ export default function DashboardPage() {
                   <tr><td colSpan={3} className="text-center text-base-content/20 py-8 px-4 text-[12px]">No recently closed incidents</td></tr>
                 )}
                 {(data?.recentClosed || []).map(inc => (
-                  <tr key={inc.id} className="hover:bg-base-200 cursor-pointer transition-colors" onClick={() => navigate(`/incidents/${inc.id}`)}>
-                    <td className="text-center"><NcalBadge value={inc.ncal} /></td>
-                    <td className="text-left">
+                  <tr key={inc.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5 cursor-pointer" onClick={() => navigate(`/incidents/${inc.id}`)}>
+                    <td className="text-center md:py-3"><NcalBadge value={inc.ncal} /></td>
+                    <td className="text-left md:py-3">
                       <div className="font-mono text-[12px] font-bold text-primary mb-0.5 tracking-tighter">{inc.case_no}</div>
                       <div className="truncate text-[12px] font-medium text-base-content/70">{inc.site_name_manual || '—'}</div>
                     </td>
-                    <td className="text-right">
+                    <td className="text-right md:py-3">
                       <div className="font-mono text-[12px] font-bold text-base-content/90 mb-0.5">{formatDuration(inc.duration_nett_seconds)}</div>
                       <div className="truncate text-[12px] font-medium text-base-content/40 uppercase tracking-[0.15em]">{inc.technician_name || '—'}</div>
                     </td>

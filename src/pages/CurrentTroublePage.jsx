@@ -524,46 +524,46 @@ export default function CurrentTroublePage() {
             action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={16} /> Create New Incident</button>}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table-imms table-stacked">
+          <div className="overflow-x-auto max-h-[70vh] custom-scrollbar border-t border-base-content/5">
+            <table className="table table-sm table-pin-rows table-stacked w-full">
               <thead>
-                <tr>
-                  <th className="text-center w-20">NCAL</th>
-                  <th className="text-left w-48">Incident</th>
-                  <th className="text-center w-16">Lv</th>
-                  <th className="text-left">Infrastructure</th>
-                  <th className="text-left">Current Logs</th>
-                  <th className="text-center w-24">Prio</th>
-                  <th className="text-center w-40 whitespace-nowrap">Downtime</th>
-                  <th className="text-right w-32 pr-4">Action</th>
+                <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-20 uppercase tracking-[0.15em] text-[10px] text-base-content/50">NCAL</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-left w-48 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Incident</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-16 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Lv</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50">Infrastructure</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-left uppercase tracking-[0.15em] text-[10px] text-base-content/50">Current Logs</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-24 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Prio</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-center w-40 whitespace-nowrap uppercase tracking-[0.15em] text-[10px] text-base-content/50">Downtime</th>
+                  <th className="bg-base-100/80 backdrop-blur-xl text-right w-32 pr-4 uppercase tracking-[0.15em] text-[10px] text-base-content/50">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {incidents.map(inc => {
                   const actions = [];
                   if (inc.status === 'open') {
-                    actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success' });
+                    actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success hover:bg-success/20' });
                   }
                   if (inc.status === 'progress' && ['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning' });
+                    actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning hover:bg-warning/20' });
                   }
                   if (inc.status === 'pending' && ['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success' });
+                    actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success hover:bg-success/20' });
                   }
-                  actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary' });
+                  actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary hover:bg-primary/20' });
                   if (['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error' });
+                    actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error hover:bg-error/20' });
                   }
 
                   return (
-                    <tr key={inc.id} className="hover:bg-base-200 transition-colors group">
-                      <td className="text-center" data-label="NCAL">
+                    <tr key={inc.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
+                      <td className="text-center md:py-3" data-label="NCAL">
                         <NcalBadge value={inc.ncal} />
                       </td>
-                      <td className="text-left" data-label="Incident">
-                        <div className="flex flex-col gap-0.5">
+                      <td className="text-left md:py-3" data-label="Incident">
+                        <div className="flex flex-col gap-1">
                           <button 
-                            className="text-[12px] font-bold font-mono tracking-tighter text-primary hover:underline text-left" 
+                            className="text-[12.5px] font-bold font-mono tracking-tighter text-primary hover:underline text-left leading-none" 
                             onClick={() => navigate(`/incidents/${inc.id}`)}
                           >
                             {inc.case_no}
@@ -571,44 +571,44 @@ export default function CurrentTroublePage() {
                           <div className="flex items-center gap-2">
                             <StatusPill status={inc.status} />
                             {inc.recurring_count > 0 && (
-                              <div className="tooltip tooltip-error" data-tip={`Recurring ${inc.recurring_count + 1}X`}>
-                                <AlertTriangle size={12} className="text-error" />
+                              <div className="tooltip tooltip-error tooltip-right" data-tip={`Recurring ${inc.recurring_count + 1}X`}>
+                                <div className="p-1 rounded-md bg-error/10 text-error"><AlertTriangle size={12} strokeWidth={2.5} /></div>
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="text-center" data-label="Lv">
+                      <td className="text-center md:py-3" data-label="Lv">
                         <LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} />
                       </td>
-                      <td className="text-left" data-label="Infrastructure">
+                      <td className="text-left md:py-3" data-label="Infrastructure">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[12px] font-semibold tracking-tight text-base-content/90">
+                          <span className="text-[12.5px] font-semibold tracking-tight text-base-content/90 leading-snug">
                             {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
                           </span>
-                          <span className="text-[11px] font-mono font-medium text-base-content/40 uppercase tracking-[0.05em]">
+                          <span className="text-[10px] font-mono font-bold text-base-content/40 uppercase tracking-[0.1em]">
                             {inc.odp_bts || inc.service_id || '—'}
                           </span>
                         </div>
                       </td>
-                      <td className="text-left" data-label="Logs">
-                        <div className="flex flex-col gap-1 max-w-xs md:max-w-md">
+                      <td className="text-left md:py-3" data-label="Logs">
+                        <div className="flex flex-col gap-1.5 max-w-xs md:max-w-md">
                           <span className="text-[12px] font-medium text-base-content/70 leading-snug line-clamp-1">{inc.initial_problem || '—'}</span>
                           {inc.last_action && (
-                            <div className="text-[11px] flex items-center gap-1 font-medium tracking-tight text-base-content/40">
-                              <Activity size={10} /> {inc.last_action}
+                            <div className="text-[11px] flex items-center gap-1 font-semibold tracking-tight text-base-content/50">
+                              <Activity size={10} className="text-primary/60" /> <span className="line-clamp-1">{inc.last_action}</span>
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="text-center" data-label="Prio">
+                      <td className="text-center md:py-3" data-label="Prio">
                         {inc.level_support ? (
-                          <span className="badge badge-sm badge-soft border-none rounded-lg font-mono font-bold opacity-70">P{inc.level_support}</span>
+                          <span className="badge badge-sm badge-soft border-none rounded-md font-mono font-bold opacity-70">P{inc.level_support}</span>
                         ) : <span className="opacity-20">—</span>}
                       </td>
-                      <td className="text-center" data-label="Downtime">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="text-sm font-bold font-mono tracking-tighter text-primary">
+                      <td className="text-center md:py-3" data-label="Downtime">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-sm font-bold font-mono tracking-tighter text-primary leading-none">
                             <LiveTimer 
                               startIso={inc.start_time} 
                               pausedSec={inc.total_pause_duration_seconds} 
@@ -616,18 +616,20 @@ export default function CurrentTroublePage() {
                               target={getSLATarget(inc.ncal)}
                             />
                           </div>
-                          <div className="text-[9px] font-mono font-bold text-base-content/20 uppercase tracking-tighter">SINCE {new Date(inc.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                          <div className="text-[9px] font-mono font-bold text-base-content/30 uppercase tracking-[0.15em] leading-none">
+                            SINCE {new Date(inc.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </div>
                         </div>
                       </td>
-                      <td className="text-right" data-label="Actions">
-                        <div className="flex items-center justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="text-right md:py-3" data-label="Actions">
+                        <div className="flex items-center justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
                           {actions.map(a => (
                             <div key={a.label} className="tooltip tooltip-top" data-tip={a.label}>
                               <button 
-                                className={`btn btn-ghost btn-circle btn-xs ${a.className}`} 
+                                className={`btn btn-ghost btn-circle btn-sm shadow-sm opacity-80 hover:opacity-100 ${a.className}`} 
                                 onClick={a.onClick}
                               >
-                                <a.icon size={14} />
+                                <a.icon size={15} />
                               </button>
                             </div>
                           ))}

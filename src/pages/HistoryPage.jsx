@@ -165,7 +165,7 @@ export default function HistoryPage() {
 
           {/* Table */}
           <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
-            <div className="overflow-x-auto w-full">
+            <div className="overflow-auto w-full max-h-[75vh] custom-scrollbar border-t border-base-content/5">
               {loading ? (
                 <div className="flex flex-col items-center justify-center p-20 gap-4">
                   <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
@@ -178,35 +178,35 @@ export default function HistoryPage() {
                   desc="Try adjusting your filters or search terms."
                 />
               ) : (
-                <table className="table-imms table-stacked lg:min-w-[2840px]">
+                <table className="table table-sm table-pin-rows table-stacked w-full lg:min-w-[2840px]">
                   <thead>
-                    <tr className="bg-base-200/50 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-                      <th className="w-[36px]" />
-                      <th className="w-[110px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">No Case</th>
-                      <th className="w-[175px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Site</th>
-                      <th className="w-[90px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">NCAL</th>
-                      <th className="w-[80px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Spt. Level</th>
-                      <th className="w-[72px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Status</th>
-                      <th className="w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Lv</th>
-                      <th className="w-[145px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Technician</th>
-                      <th className="w-[148px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Segment / ODP</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Start Open</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Start Esc.</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">End</th>
-                      <th className="w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Gross</th>
-                      <th className="w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Nett</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 1 Start</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 1 End</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 2 Start</th>
-                      <th className="w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pause 2 End</th>
-                      <th className="w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Tot. Pause</th>
-                      <th className="w-[200px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Problem</th>
-                      <th className="w-[160px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Penyebab</th>
-                      <th className="w-[160px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Action Terakhir</th>
-                      <th className="w-[120px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Klasifikasi</th>
-                      <th className="w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pwr↓</th>
-                      <th className="w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 py-3">Pwr↑</th>
-                      <th className="w-[40px]" />
+                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[36px]" />
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[110px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">No Case</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[175px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Site</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[90px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">NCAL</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[80px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Spt. Level</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[72px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Status</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Lv</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[145px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Technician</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[148px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Segment / ODP</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Start Open</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Start Esc.</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">End</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Gross</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Nett</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Pause 1 Start</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Pause 1 End</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Pause 2 Start</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[132px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Pause 2 End</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[82px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Tot. Pause</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[200px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Problem</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[160px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Penyebab</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[160px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Action Terakhir</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[120px] text-left text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Klasifikasi</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Pwr↓</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[62px] text-center text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/50 py-3">Pwr↑</th>
+                      <th className="bg-base-100/80 backdrop-blur-xl w-[40px]" />
                     </tr>
                   </thead>
 
@@ -236,7 +236,7 @@ export default function HistoryPage() {
                       const awrap = 'whitespace-normal font-sans text-[12px] leading-tight tracking-tight'; // Uniform 12px
 
                       return (
-                        <tr key={row.id} className={isSel ? 'sel' : ''} onClick={() => toggleRow(row.id)}>
+                        <tr key={row.id} className={`hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5 ${isSel ? 'bg-primary/5' : ''}`} onClick={() => toggleRow(row.id)}>
 
                           {/* Checkbox — hover-reveal */}
                           <td className="px-2 text-center" onClick={e => e.stopPropagation()} data-label="Select">
@@ -362,10 +362,12 @@ export default function HistoryPage() {
 
                           {/* Detail */}
                           <td className="text-center" onClick={e => e.stopPropagation()} data-label="Actions">
-                            <button className="btn btn-ghost btn-sm"
-                              onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
-                              <Eye size={16} className="text-accent" />
-                            </button>
+                            <div className="md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
+                              <button className="btn btn-ghost btn-circle btn-sm shadow-sm opacity-80 hover:opacity-100"
+                                onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
+                                <Eye size={15} className="text-accent" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
