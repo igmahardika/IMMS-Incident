@@ -117,12 +117,12 @@ export default function EscalationSettingsPage() {
           </div>
           <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Configure automated notifications via Webhook endpoints</div>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="btn btn-ghost btn-sm" onClick={handleTest} disabled={testing || !cfg.webhook_url}>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <button className="btn btn-ghost btn-sm flex-1 md:flex-none" onClick={handleTest} disabled={testing || !cfg.webhook_url}>
             <Send size={18} /> {testing ? 'Sending...' : 'Global Test'}
           </button>
-          <button className="btn btn-primary" onClick={handleSave}>
-            <Save size={18} /> Save Configuration
+          <button className="btn btn-primary btn-sm md:btn-md flex-1 md:flex-none" onClick={handleSave}>
+            <Save size={18} /> <span className="hidden md:inline">Save Configuration</span><span className="md:hidden">Save</span>
           </button>
         </div>
       </div>
@@ -133,22 +133,22 @@ export default function EscalationSettingsPage() {
         <div className="flex flex-col gap-6">
           {/* Webhook config */}
           <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">
-            <div className="p-8 bg-base-200/30">
+            <div className="p-4 md:p-8 bg-base-200/30">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-xl font-bold tracking-tight text-base-content">Core Configuration</h1>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 mt-1">Notification endpoints & Global Status</p>
+                  <h1 className="text-lg md:text-xl font-bold tracking-tight text-base-content">Core Configuration</h1>
+                  <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/30 mt-1">Notification endpoints & Global Status</p>
                 </div>
                 {/* Active status indicator */}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${cfg.is_active ? 'bg-success/10 text-success' : 'bg-base-300/30 text-base-content/30'}`}>
+                <div className={`flex items-center self-start md:self-auto gap-2 px-3 py-1.5 rounded-full transition-all ${cfg.is_active ? 'bg-success/10 text-success' : 'bg-base-300/30 text-base-content/30'}`}>
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.is_active ? 'bg-success animate-pulse' : 'bg-base-content/10'}`} />
-                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">
+                  <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] uppercase">
                     {cfg.is_active ? 'Live' : 'Offline'}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="p-8 space-y-8">
+            <div className="p-4 md:p-8 space-y-6 md:space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="form-control w-full">
                   <label className="label pt-0"><span className="label-text text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">Integration Platform</span></label>
@@ -230,7 +230,7 @@ export default function EscalationSettingsPage() {
                 ))}
               </div>
 
-              <div className="p-8 space-y-8">
+              <div className="p-4 md:p-8 space-y-6 md:space-y-8">
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-5 bg-primary rounded-full" />

@@ -78,37 +78,52 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="stats stats-vertical lg:stats-horizontal shadow-sm bg-base-100 rounded-lg w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
           <div className="stat p-4">
-            <div className="stat-figure text-error/20"><AlertTriangle size={28} /></div>
+            <div className="stat-figure text-error/20"><AlertTriangle size={24} /></div>
             <div className="stat-title uppercase tracking-[0.15em] text-[10px] font-bold text-base-content/40">Active Cases</div>
-            <div className="stat-value text-error text-2xl font-bold">{data?.totalActive || 0}</div>
-            <div className="stat-desc text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/20 text-right mt-1">NOC Incident Queue</div>
+            <div className="stat-value text-error text-xl font-bold">{data?.totalActive || 0}</div>
+            <div className="stat-desc text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/20 mt-1">Incident Queue</div>
           </div>
+        </div>
+
+        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
           <div className="stat p-4">
-            <div className="stat-figure text-success/20"><CheckCircle size={28} /></div>
+            <div className="stat-figure text-success/20"><CheckCircle size={24} /></div>
             <div className="stat-title uppercase tracking-[0.15em] text-[10px] font-bold text-base-content/40">Resolutions</div>
-            <div className="stat-value text-success text-2xl font-bold">{data?.totalDone || 0}</div>
-            <div className="stat-desc text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/20 text-right mt-1">Total History</div>
+            <div className="stat-value text-success text-xl font-bold">{data?.totalDone || 0}</div>
+            <div className="stat-desc text-[9px] font-bold uppercase tracking-[0.15em] text-base-content/20 mt-1">Total History</div>
           </div>
         </div>
         
-        <div className="stats stats-vertical lg:stats-horizontal shadow-sm bg-base-100 rounded-lg w-full">
-          {NCAL_ORDER.map((ncal) => (
-            <div className="stat px-4" key={ncal}>
-              <div className="stat-title mb-1.5"><NcalBadge value={ncal} /></div>
-              <div className="stat-value text-2xl font-bold tracking-tight" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
-              <div className="stat-desc text-[10px] font-bold uppercase opacity-20 tracking-[0.15em] mt-1">Running</div>
-            </div>
-          ))}
+        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
+          <div className="flex w-full divide-x divide-base-content/5">
+            {NCAL_ORDER.slice(0, 3).map((ncal) => (
+              <div className="stat px-3 py-4 flex-1" key={ncal}>
+                <div className="stat-title mb-1"><NcalBadge value={ncal} /></div>
+                <div className="stat-value text-lg font-bold tracking-tight" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
+          <div className="flex w-full divide-x divide-base-content/5">
+            {NCAL_ORDER.slice(3).map((ncal) => (
+              <div className="stat px-3 py-4 flex-1" key={ncal}>
+                <div className="stat-title mb-1"><NcalBadge value={ncal} /></div>
+                <div className="stat-value text-lg font-bold tracking-tight" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-4">
         {/* Duration Trend Chart */}
         <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`}>
-          <ChartContainer config={chartConfig} className="h-[400px]">
+          <ChartContainer config={chartConfig} className="h-[300px] md:h-[350px] lg:h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={duration} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-5" />

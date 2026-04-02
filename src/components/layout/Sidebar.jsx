@@ -102,10 +102,10 @@ export default function Sidebar({ mobileOpen, onClose }) {
                   <NavLink
                     to={item.to}
                     end={item.to === '/'}
-                    className={({ isActive }) => `text-[13.5px] font-semibold py-1.5 transition-colors ${isActive ? 'active bg-primary/10 text-primary' : 'text-base-content/80 hover:bg-base-200'}`}
+                    className={({ isActive }) => `text-[13.5px] font-semibold py-2.5 md:py-1.5 transition-colors ${isActive ? 'active bg-primary/10 text-primary' : 'text-base-content/80 hover:bg-base-200'}`}
                     onClick={mobileOpen ? onClose : undefined}
                   >
-                    <span className="flex items-center justify-center w-5 opacity-70"><item.icon size={16} strokeWidth={1.5} /></span>
+                    <span className="flex items-center justify-center w-5 opacity-70"><item.icon size={18} md:size={16} strokeWidth={1.5} /></span>
                     {item.label}
                   </NavLink>
                 </li>
@@ -118,21 +118,21 @@ export default function Sidebar({ mobileOpen, onClose }) {
       {/* Footer Profile section as a single list item */}
       <li className="mt-auto my-2 lg:block hidden"></li>
       <li className="mt-auto md:mt-2">
-        <div className="flex items-center gap-3 bg-transparent hover:bg-base-200 active:bg-base-200 pt-2 transition-colors">
+        <div className="flex items-center gap-3 bg-transparent hover:bg-base-200 active:bg-base-200 py-3 md:py-2 transition-colors">
           <div className="avatar placeholder">
-            <div className="bg-neutral text-neutral-content rounded-full w-9">
+            <div className="bg-neutral text-neutral-content rounded-full w-10 md:w-9">
               <span className="text-sm font-semibold">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
             </div>
           </div>
           <div className="flex-1 min-w-0">
-             <div className="font-semibold truncate text-[13px] text-base-content">{user?.name}</div>
-             <div className="text-[9px] text-base-content/40 uppercase tracking-[0.1em] font-bold">{user?.role}</div>
+             <div className="font-semibold truncate text-[14px] md:text-[13px] text-base-content">{user?.name}</div>
+             <div className="text-[10px] md:text-[9px] text-base-content/40 uppercase tracking-[0.15em] font-bold">{user?.role}</div>
           </div>
           <button 
              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLogout(); }}
-             className={`btn btn-sm btn-circle btn-ghost ${confirmLogout ? 'btn-error text-error-content hover:bg-error/90' : 'text-error'}`}
+             className={`btn btn-md md:btn-sm btn-circle btn-ghost ${confirmLogout ? 'btn-error text-error-content hover:bg-error/90' : 'text-error'}`}
           >
-             {confirmLogout ? <Check size={16} /> : <LogOut size={16} />}
+             {confirmLogout ? <Check size={18} /> : <LogOut size={18} />}
           </button>
         </div>
       </li>

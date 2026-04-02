@@ -80,7 +80,7 @@ export default function RootCausePage() {
               <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Total: {total} incidents</p>
             </div>
             <div className="p-6 overflow-visible">
-              <ChartContainer config={rootCauseConfig} className="h-[280px]">
+              <ChartContainer config={rootCauseConfig} className="h-[250px] md:h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
                     <Pie data={data} dataKey="count" nameKey="classification" cx="50%" cy="50%" outerRadius={95} strokeWidth={2} stroke="currentColor" className="text-base-100" labelLine={false} label={CustomLabel}>
@@ -109,7 +109,7 @@ export default function RootCausePage() {
               <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Sorted by frequency</p>
             </div>
             <div className="p-6 overflow-visible">
-              <ChartContainer config={rootCauseConfig} className="h-[340px]">
+              <ChartContainer config={rootCauseConfig} className="h-[300px] md:h-[340px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.slice(0, 10)} layout="vertical" margin={{ left: 10, right: 40, top: 8, bottom: 8 }}>
                     <CartesianGrid vertical={false} horizontal={false} />
@@ -134,7 +134,7 @@ export default function RootCausePage() {
               <h3 className="text-base font-bold">Classification Breakdown</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="table-imms">
+              <table className="table-imms table-stacked">
                 <thead>
                   <tr>
                     <th className="w-16 text-center">#</th>
@@ -150,15 +150,15 @@ export default function RootCausePage() {
                     const pct = total ? ((row.count / total) * 100).toFixed(1) : 0;
                     return (
                       <tr key={row.classification} className="hover:bg-base-200 transition-colors">
-                        <td className="text-center font-mono opacity-50 text-[12px]">#{i + 1}</td>
-                        <td className="font-semibold text-[12px]">{row.classification}</td>
-                        <td className="text-center font-mono font-bold text-[12px]">{row.count}</td>
-                        <td className="text-center font-mono">
+                        <td data-label="RANK" className="text-center font-mono opacity-50 text-[12px]">#{i + 1}</td>
+                        <td data-label="CLASSIFICATION" className="font-semibold text-[12px]">{row.classification}</td>
+                        <td data-label="COUNT" className="text-center font-mono font-bold text-[12px]">{row.count}</td>
+                        <td data-label="PERCENTAGE" className="text-center font-mono">
                           <span className="badge badge-sm font-bold text-[10px] uppercase tracking-wider" style={{ backgroundColor: `${PIE_COLORS[i % PIE_COLORS.length]}15`, color: PIE_COLORS[i % PIE_COLORS.length] }}>
                             {pct}%
                           </span>
                         </td>
-                        <td>
+                        <td data-label="DISTRIBUTION">
                           <div className="w-full bg-base-200 rounded-full h-1.5 overflow-hidden">
                             <div 
                               className="h-full rounded-full transition-all duration-1000" 

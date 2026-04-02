@@ -27,16 +27,18 @@ export default function IncidentDetailPage() {
   const isDistribsi = ['ORANGE', 'RED', 'BLACK'].includes(incident.ncal);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:gap-6 pb-20 md:pb-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <button className="btn btn-ghost btn-circle btn-sm" onClick={() => navigate(-1)}><ArrowLeft size={18} /></button>
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold tracking-tight font-mono text-primary">{incident.case_no}</h1>
-              <StatusPill status={incident.status} />
-              <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} />
-              <NcalBadge value={incident.ncal} />
+            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+              <h1 className="text-lg md:text-xl font-bold tracking-tight font-mono text-primary truncate max-w-[150px] md:max-w-none">{incident.case_no}</h1>
+              <div className="flex gap-1.5 flex-wrap">
+                <StatusPill status={incident.status} />
+                <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} />
+                <NcalBadge value={incident.ncal} />
+              </div>
             </div>
           </div>
         </div>
@@ -131,18 +133,18 @@ export default function IncidentDetailPage() {
           {/* Timeline & Durations */}
           <div className="flex flex-col gap-4">
             <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40 pb-2">Timeline & Durations</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 bg-base-200/50 p-4 rounded-xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 bg-base-200/50 p-4 rounded-xl">
               {[
                 ['REPORTED TIME', <span className="font-mono tracking-tighter font-bold text-base-content/80">{formatDateTime(incident.start_time)}</span>],
-                ['START ACTION', <span className="font-mono tracking-tighter font-bold text-base-content/80">{formatDateTime(incident.start_action_time)}</span>],
-                ['RESOLUTION TIME', <span className="font-mono tracking-tighter font-bold text-base-content/80">{formatDateTime(incident.end_time)}</span>],
+                ['START ACTION', <span className="font-mono tracking-tighter font-bold text-base-content/80 text-[11px] md:text-[12px]">{formatDateTime(incident.start_action_time)}</span>],
+                ['RESOLUTION TIME', <span className="font-mono tracking-tighter font-bold text-base-content/80 text-[11px] md:text-[12px]">{formatDateTime(incident.end_time)}</span>],
                 ['TOTAL PAUSE', <DurationBadge key="p" seconds={incident.total_pause_duration_seconds} />],
                 ['GROSS DURATION', <DurationBadge key="g" seconds={incident.duration_gross_seconds} />],
                 ['NETT DURATION', <DurationBadge key="n" seconds={incident.duration_nett_seconds} target={getSLATarget(incident.ncal)} />],
               ].map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">{k}</span>
-                  <div className="text-[12px] font-bold text-base-content/80 tracking-tight">{v}</div>
+                  <span className="text-[9px] md:text-[10px] font-bold text-base-content/40 uppercase tracking-[0.15em]">{k}</span>
+                  <div className="text-[11px] md:text-[12px] font-bold text-base-content/80 tracking-tight">{v}</div>
                 </div>
               ))}
             </div>

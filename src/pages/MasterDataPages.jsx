@@ -155,7 +155,7 @@ export function MasterCustomerPage() {
            return (
             <div className="flex flex-col h-full">
               <div className="overflow-x-auto">
-                <table className="table-imms">
+                <table className="table-imms table-stacked">
                   <thead>
                     <tr>
                       <th className="w-12 text-center whitespace-nowrap">#</th>
@@ -173,11 +173,11 @@ export function MasterCustomerPage() {
                   <tbody>
                     {paginated.map((c, i) => (
                       <tr key={c.id} className="hover:bg-base-200 transition-colors">
-                        <td className="text-center opacity-40 font-mono italic text-[12px]">{startIdx + i + 1}</td>
-                        <td className="font-mono text-[12px] font-bold text-primary tracking-tighter text-left">{c.customer_id}</td>
-                        <td className="font-mono text-[12px] font-medium text-secondary tracking-tighter text-left">{c.service_id}</td>
-                        <td className="text-left font-semibold text-[12px] tracking-tight">{c.company_name}</td>
-                        <td className="text-left text-[12px] opacity-70">
+                        <td className="text-center opacity-40 font-mono italic text-[12px]" data-label="#">{startIdx + i + 1}</td>
+                        <td className="font-mono text-[12px] font-bold text-primary tracking-tighter text-left" data-label="Cust ID">{c.customer_id}</td>
+                        <td className="font-mono text-[12px] font-medium text-secondary tracking-tighter text-left" data-label="Srv ID">{c.service_id}</td>
+                        <td className="text-left font-semibold text-[12px] tracking-tight" data-label="Company">{c.company_name}</td>
+                        <td className="text-left text-[12px] opacity-70" data-label="Site">
                           <div className="flex items-center gap-1.5">
                             {c.brand_site}
                             {(!c.latitude || !c.longitude) && (
@@ -187,11 +187,11 @@ export function MasterCustomerPage() {
                             )}
                           </div>
                         </td>
-                        <td className="text-center"><GradeBadge grade={c.grade} /></td>
-                        <td className="text-center"><AccentBadge text={c.support_level} /></td>
-                        <td className="text-center"><StatusBadge active={c.is_active} /></td>
-                        <td className="text-left text-[10px] font-bold uppercase opacity-60 tracking-wider font-mono">{c.service_type}</td>
-                        <td className="text-right pr-6">
+                        <td className="text-center" data-label="Grade"><GradeBadge grade={c.grade} /></td>
+                        <td className="text-center" data-label="Level"><AccentBadge text={c.support_level} /></td>
+                        <td className="text-center" data-label="Status"><StatusBadge active={c.is_active} /></td>
+                        <td className="text-left text-[10px] font-bold uppercase opacity-60 tracking-wider font-mono" data-label="Service">{c.service_type}</td>
+                        <td className="text-right pr-6" data-label="Actions">
                           <div className="flex justify-end gap-1">
                             <div className="tooltip" data-tip="Edit"><button className="btn btn-ghost btn-square btn-xs" onClick={() => openEdit(c)} aria-label="Edit"><Edit2 size={14} /></button></div>
                             <div className="tooltip" data-tip="Delete"><button className="btn btn-ghost btn-square btn-xs text-error hover:bg-error/10" onClick={() => handleDelete(c.id)} aria-label="Delete"><Trash2 size={14} /></button></div>
@@ -422,7 +422,7 @@ export function UserManagementPage() {
 
       <TableCard>
         {loading ? <TableSkeleton rows={4} /> : (
-          <table className="table-imms">
+          <table className="table-imms table-stacked">
             <thead>
               <tr>
                 <th className="w-20 text-center">ID</th>
@@ -437,17 +437,17 @@ export function UserManagementPage() {
             <tbody>
               {users.map(u => (
                 <tr key={u.id} className="hover:bg-base-200 transition-colors">
-                  <td className="text-center font-mono font-bold text-primary text-[12px]">{u.employee_id || '—'}</td>
-                  <td className="text-left font-mono font-medium opacity-70 tracking-tight text-[12px]">{u.username}</td>
-                  <td className="text-left font-semibold text-[12px] tracking-tight">{u.name}</td>
-                  <td className="text-left opacity-60 text-[12px] font-medium truncate max-w-[150px]">{u.email || '—'}</td>
-                  <td className="text-center"><RoleBadge role={u.role} /></td>
-                  <td className="text-center">
+                  <td className="text-center font-mono font-bold text-primary text-[12px]" data-label="ID">{u.employee_id || '—'}</td>
+                  <td className="text-left font-mono font-medium opacity-70 tracking-tight text-[12px]" data-label="User">{u.username}</td>
+                  <td className="text-left font-semibold text-[12px] tracking-tight" data-label="Name">{u.name}</td>
+                  <td className="text-left opacity-60 text-[12px] font-medium truncate max-w-[150px]" data-label="Email">{u.email || '—'}</td>
+                  <td className="text-center" data-label="Role"><RoleBadge role={u.role} /></td>
+                  <td className="text-center" data-label="Status">
                     <button onClick={() => handleToggle(u)} className="btn btn-ghost btn-xs p-0 m-0 hover:bg-transparent">
                       <StatusBadge active={u.is_active} />
                     </button>
                   </td>
-                  <td className="text-right">
+                  <td className="text-right" data-label="Edit">
                      <div className="tooltip" data-tip="Edit"><button className="btn btn-ghost btn-square btn-xs" onClick={() => openEdit(u)} aria-label="Edit"><Edit2 size={14} /></button></div>
                   </td>
                 </tr>
@@ -541,7 +541,7 @@ export function MasterTechnicalSupportPage() {
 
       <TableCard>
         {loading ? <TableSkeleton rows={4} /> : (
-          <table className="table-imms">
+          <table className="table-imms table-stacked">
             <thead><tr>
               <th className="w-12 text-center whitespace-nowrap">#</th>
               <th className="w-20 text-center whitespace-nowrap">No</th>
@@ -552,15 +552,15 @@ export function MasterTechnicalSupportPage() {
             <tbody>
               {data.map((item, i) => (
                 <tr key={item.id} className="hover:bg-base-200 transition-colors">
-                  <td className="text-center opacity-40 font-mono italic">{i + 1}</td>
-                  <td className="text-center font-mono font-medium opacity-60">{item.no || '—'}</td>
-                  <td className="text-left font-medium text-sm">{item.name}</td>
-                  <td className="text-left">
+                  <td className="text-center opacity-40 font-mono italic" data-label="#">{i + 1}</td>
+                  <td className="text-center font-mono font-medium opacity-60" data-label="No">{item.no || '—'}</td>
+                  <td className="text-left font-medium text-sm" data-label="Name">{item.name}</td>
+                  <td className="text-left" data-label="Unit">
                     <span className="badge badge-neutral badge-outline badge-xs px-2 py-2 font-medium opacity-70 tracking-wider">
                       {item.unit}
                     </span>
                   </td>
-                  <td className="text-right">
+                  <td className="text-right" data-label="Actions">
                     <div className="flex justify-end gap-1">
                       <div className="tooltip" data-tip="Edit"><button className="btn btn-ghost btn-square btn-xs" onClick={() => openEdit(item)} aria-label="Edit"><Edit2 size={14} /></button></div>
                       <div className="tooltip" data-tip="Delete"><button className="btn btn-ghost btn-square btn-xs text-error hover:bg-error/10" onClick={() => api.deleteTechnicalSupport(item.id).then(load)} aria-label="Delete"><Trash2 size={14} /></button></div>

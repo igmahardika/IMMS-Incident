@@ -178,7 +178,7 @@ export function EmptyState({ icon, title, desc, action }) {
 export function SectionCard({ title, subtitle, footer, children, className = '', headerAction, style, padding = true }) {
   return (
     <div className={`card bg-base-100 shadow-sm rounded-lg overflow-hidden ${className}`} style={style}>
-      <div className={`card-body ${padding ? 'p-4' : 'p-0'}`}>
+      <div className={`card-body ${padding ? 'p-3 md:p-4 lg:p-6' : 'p-0'}`}>
         {(title || headerAction) && (
           <div className="flex items-center justify-between mb-4 px-0.5">
             <div>
@@ -246,7 +246,7 @@ export function Button({ children, variant = 'primary', size = 'md', outline = f
   };
   const sizeMap = { sm: 'btn-sm', md: '', lg: 'btn-lg', xs: 'btn-xs' };
   
-  const baseClass = `btn ${variantMap[variant] || 'btn-primary'} ${sizeMap[size]} ${outline ? 'btn-outline' : ''} transition-all duration-300 ${className}`;
+  const baseClass = `btn ${variantMap[variant] || 'btn-primary'} ${sizeMap[size]} ${outline ? 'btn-outline' : ''} w-full md:w-auto transition-all duration-300 ${className}`;
   
   return (
     <button className={baseClass} disabled={isLoading || props.disabled} {...props}>

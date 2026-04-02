@@ -525,7 +525,7 @@ export default function CurrentTroublePage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="table-imms">
+            <table className="table-imms table-stacked">
               <thead>
                 <tr>
                   <th className="text-center w-20">NCAL</th>
@@ -557,10 +557,10 @@ export default function CurrentTroublePage() {
 
                   return (
                     <tr key={inc.id} className="hover:bg-base-200 transition-colors group">
-                      <td className="text-center">
+                      <td className="text-center" data-label="NCAL">
                         <NcalBadge value={inc.ncal} />
                       </td>
-                      <td className="text-left">
+                      <td className="text-left" data-label="Incident">
                         <div className="flex flex-col gap-0.5">
                           <button 
                             className="text-[12px] font-bold font-mono tracking-tighter text-primary hover:underline text-left" 
@@ -578,10 +578,10 @@ export default function CurrentTroublePage() {
                           </div>
                         </div>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-label="Lv">
                         <LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} />
                       </td>
-                      <td className="text-left">
+                      <td className="text-left" data-label="Infrastructure">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[12px] font-semibold tracking-tight text-base-content/90">
                             {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
@@ -591,7 +591,7 @@ export default function CurrentTroublePage() {
                           </span>
                         </div>
                       </td>
-                      <td className="text-left">
+                      <td className="text-left" data-label="Logs">
                         <div className="flex flex-col gap-1 max-w-xs md:max-w-md">
                           <span className="text-[12px] font-medium text-base-content/70 leading-snug line-clamp-1">{inc.initial_problem || '—'}</span>
                           {inc.last_action && (
@@ -601,12 +601,12 @@ export default function CurrentTroublePage() {
                           )}
                         </div>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-label="Prio">
                         {inc.level_support ? (
                           <span className="badge badge-sm badge-soft border-none rounded-lg font-mono font-bold opacity-70">P{inc.level_support}</span>
                         ) : <span className="opacity-20">—</span>}
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-label="Downtime">
                         <div className="flex flex-col gap-0.5">
                           <div className="text-sm font-bold font-mono tracking-tighter text-primary">
                             <LiveTimer 
@@ -619,8 +619,8 @@ export default function CurrentTroublePage() {
                           <div className="text-[9px] font-mono font-bold text-base-content/20 uppercase tracking-tighter">SINCE {new Date(inc.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
                       </td>
-                      <td className="text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="text-right" data-label="Actions">
+                        <div className="flex items-center justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           {actions.map(a => (
                             <div key={a.label} className="tooltip tooltip-top" data-tip={a.label}>
                               <button 

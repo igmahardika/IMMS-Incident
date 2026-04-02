@@ -178,7 +178,7 @@ export default function HistoryPage() {
                   desc="Try adjusting your filters or search terms."
                 />
               ) : (
-                <table className="table-imms" style={{ minWidth: '2840px' }}>
+                <table className="table-imms table-stacked lg:min-w-[2840px]">
                   <thead>
                     <tr className="bg-base-200/50 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                       <th className="w-[36px]" />
@@ -239,129 +239,129 @@ export default function HistoryPage() {
                         <tr key={row.id} className={isSel ? 'sel' : ''} onClick={() => toggleRow(row.id)}>
 
                           {/* Checkbox — hover-reveal */}
-                          <td className="px-2 text-center" onClick={e => e.stopPropagation()}>
+                          <td className="px-2 text-center" onClick={e => e.stopPropagation()} data-label="Select">
                             <input type="checkbox" className={`form-checkbox ht-cb`}
                               checked={isSel} onChange={() => toggleRow(row.id)} />
                           </td>
 
-                          <td>
+                          <td data-label="No Case">
                             <span className={`${nwrap} ${bold}`}>{row.case_no || '—'}</span>
                           </td>
 
                           {/* Site — wraps if long */}
-                          <td title={siteName}>
+                          <td title={siteName} data-label="Site">
                             <span className={`${awrap} ${bold}`}>{siteName}</span>
                           </td>
 
                           {/* NCAL */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="NCAL">
                             <NcalBadge value={row.ncal} />
                           </td>
 
                           {/* Support Level */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Spt. Level">
                             <span className={dim}>{sptLv}</span>
                           </td>
 
                           {/* Status */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Status">
                             <StatusPill status={row.status} />
                           </td>
 
                           {/* Level */}
-                          <td className="text-center text-[10px]">
+                          <td className="text-center text-[10px]" data-label="Lv">
                             <LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)}
                               targetHours={getSLATarget(row.ncal) / 3600} />
                           </td>
 
                           {/* Technician — wraps if long */}
-                          <td title={row.technician_name}>
+                          <td title={row.technician_name} data-label="Technician">
                             <span className={`${awrap} ${dim}`}>{row.technician_name || '—'}</span>
                           </td>
 
                           {/* Segment / ODP — wraps */}
-                          <td title={segOdp}>
+                          <td title={segOdp} data-label="Segment / ODP">
                             <span className={`${awrap} ${faint}`}>{segOdp}</span>
                           </td>
 
                           {/* Start Open — fixed format, nowrap */}
-                          <td>
+                          <td data-label="Start Open">
                             <span className={`${nwrap} ${dim}`}>{formatDateTime(row.start_time) || '—'}</span>
                           </td>
 
                           {/* Start Escalation */}
-                          <td>
+                          <td data-label="Start Esc.">
                             <span className={`${nwrap} ${faint}`}>{formatDateTime(row.escalation_time) || '—'}</span>
                           </td>
 
                           {/* End */}
-                          <td>
+                          <td data-label="End">
                             <span className={`${nwrap} ${dim}`}>{formatDateTime(row.end_time) || '—'}</span>
                           </td>
 
                           {/* Gross Duration */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Gross">
                             <span className={`${nwrap} ${faint}`}>{fmtDur(grossSec)}</span>
                           </td>
 
                           {/* Nett Duration — primary/bold */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Nett">
                             <span className={`${nwrap} ${bold}`}>{fmtDur(nettSec)}</span>
                           </td>
 
                           {/* Pause 1 Start */}
-                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_start) || '—'}</span></td>
+                          <td data-label="Pause 1 Start"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_start) || '—'}</span></td>
 
                           {/* Pause 1 End */}
-                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_end) || '—'}</span></td>
+                          <td data-label="Pause 1 End"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_end) || '—'}</span></td>
 
                           {/* Pause 2 Start */}
-                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_start) || '—'}</span></td>
+                          <td data-label="Pause 2 Start"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_start) || '—'}</span></td>
 
                           {/* Pause 2 End */}
-                          <td><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_end) || '—'}</span></td>
+                          <td data-label="Pause 2 End"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_end) || '—'}</span></td>
 
                           {/* Total Pause */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Tot. Pause">
                             <span className={`${nwrap} ${faint}`}>{fmtDur(pauseSec)}</span>
                           </td>
 
                           {/* Problem — wrap max 3 lines */}
-                          <td title={row.initial_problem}>
+                          <td title={row.initial_problem} data-label="Problem">
                             <span className={`${awrap} ${dim}`}>{row.initial_problem || ''}</span>
                           </td>
 
                           {/* Penyebab */}
-                          <td title={row.root_cause}>
+                          <td title={row.root_cause} data-label="Penyebab">
                             <span className={`${awrap} ${dim}`}>{row.root_cause || ''}</span>
                           </td>
 
                           {/* Action Terakhir */}
-                          <td title={row.last_action}>
+                          <td title={row.last_action} data-label="Action Terakhir">
                             <span className={`${awrap} ${dim}`}>{row.last_action || ''}</span>
                           </td>
 
                           {/* Klasifikasi — wraps */}
-                          <td title={row.classification_name || row.klasifikasi}>
+                          <td title={row.classification_name || row.klasifikasi} data-label="Klasifikasi">
                             <span className={`${awrap} ${dim}`}>{row.classification_name || row.klasifikasi || ''}</span>
                           </td>
 
                           {/* Power Before */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Pwr↓">
                             <span className={`${nwrap} text-info`}>
                               {row.power_before != null ? row.power_before : ''}
                             </span>
                           </td>
 
                           {/* Power After */}
-                          <td className="text-center">
+                          <td className="text-center" data-label="Pwr↑">
                             <span className={`${nwrap} text-success`}>
                               {row.power_after != null ? row.power_after : ''}
                             </span>
                           </td>
 
                           {/* Detail */}
-                          <td className="text-center" onClick={e => e.stopPropagation()}>
+                          <td className="text-center" onClick={e => e.stopPropagation()} data-label="Actions">
                             <button className="btn btn-ghost btn-sm"
                               onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
                               <Eye size={16} className="text-accent" />

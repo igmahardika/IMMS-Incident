@@ -149,7 +149,7 @@ export default function CreateIncidentPage() {
   ])].filter(Boolean).sort();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pb-24 md:pb-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <button className="btn btn-ghost btn-circle btn-sm" onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={18} /></button>
@@ -377,10 +377,10 @@ export default function CreateIncidentPage() {
             </div>
           </SectionCard>
           
-          <div className="flex items-center justify-end gap-3 pt-6">
-            <button type="button" className="btn btn-ghost font-bold uppercase tracking-[0.15em] text-[10px]" onClick={() => navigate(-1)}>Cancel</button>
-            <button type="submit" className="btn btn-primary btn-wide font-bold uppercase tracking-[0.15em] text-[11px] shadow-xl shadow-primary/20" disabled={loading}>
-              {loading ? <span className="loading loading-spinner loading-sm"></span> : <><Send size={16} /> Create Incident</>}
+          <div className="sticky-action-mobile mt-6">
+            <button type="button" className="btn btn-ghost flex-1 md:flex-none font-bold uppercase tracking-[0.15em] text-[10px]" onClick={() => navigate(-1)}>Cancel</button>
+            <button type="submit" className="btn btn-primary flex-1 md:btn-wide font-bold uppercase tracking-[0.15em] text-[11px] shadow-xl shadow-primary/20" disabled={loading}>
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : <><Send size={16} /> <span className="md:inline">Create Incident</span></>}
             </button>
           </div>
         </div>

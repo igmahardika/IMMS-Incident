@@ -10,7 +10,7 @@ export default function AppLayout({ children }) {
 
   return (
     <SidebarContext.Provider value={{ mobileOpen, setMobileOpen }}>
-      <div className="drawer lg:drawer-open h-screen w-full bg-base-100">
+      <div className="drawer lg:drawer-open h-dvh w-full bg-base-100">
         <input 
           id="main-drawer" 
           type="checkbox" 
@@ -24,7 +24,7 @@ export default function AppLayout({ children }) {
           <Topbar />
           
           {/* Page content */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-4 md:p-5 bg-base-200">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-3 md:p-4 lg:p-6 bg-base-200">
             {children}
           </main>
         </div> 

@@ -43,8 +43,8 @@ export default function DurationReportPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-bold tracking-tight uppercase">Duration Report</h1>
-        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Analysis of handling duration & SLA performance</p>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight uppercase">Duration Report</h1>
+        <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] text-base-content/40">Analysis of handling duration & SLA performance</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 bg-base-100 p-3 px-4 rounded-2xl shadow-sm">
@@ -65,7 +65,7 @@ export default function DurationReportPage() {
               <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Per NCAL — Year {year}</p>
             </div>
             <div className="p-6">
-              <ChartContainer config={chartConfig} className="h-[400px]">
+              <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -90,7 +90,7 @@ export default function DurationReportPage() {
                 <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
               </div>
               <div className="overflow-x-auto">
-                <table className="table-imms">
+                <table className="table-imms table-stacked">
                   <thead>
                     <tr>
                       <th className="w-20 text-center">NCAL</th>
@@ -107,12 +107,12 @@ export default function DurationReportPage() {
                       const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                       return (
                         <tr key={row.ncal} className="hover:bg-base-200 transition-colors">
-                          <td className="text-center"><NcalBadge value={row.ncal} /></td>
-                          <td className="text-center font-bold text-[12px]">{row.total_cases}</td>
-                          <td className="text-center font-mono font-bold text-[12px] opacity-70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td className="text-center font-medium text-primary text-[12px]">{row.sla_met || 0}</td>
-                          <td className="text-center opacity-50 text-[10px] uppercase font-bold tracking-tighter">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
-                          <td className="text-center">
+                          <td data-label="NCAL" className="text-center"><NcalBadge value={row.ncal} /></td>
+                          <td data-label="TOTAL" className="text-center font-bold text-[12px]">{row.total_cases}</td>
+                          <td data-label="AVG NETT" className="text-center font-mono font-bold text-[12px] opacity-70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td data-label="SLA MET" className="text-center font-medium text-primary text-[12px]">{row.sla_met || 0}</td>
+                          <td data-label="SLA TARGET" className="text-center opacity-50 text-[10px] uppercase font-bold tracking-tighter">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
+                          <td data-label="PERCENTAGE" className="text-center">
                             <span className={`font-bold tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
                               {pct}%
                             </span>
@@ -132,7 +132,7 @@ export default function DurationReportPage() {
                 <p className="text-[11px] font-bold text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
               </div>
               <div className="overflow-x-auto">
-                <table className="table-imms">
+                <table className="table-imms table-stacked">
                   <thead>
                     <tr>
                       <th className="text-left py-3">Technician</th>
@@ -146,11 +146,11 @@ export default function DurationReportPage() {
                     {techPerf.length === 0 && <tr><td colSpan={5} className="text-center py-10 opacity-50">No data available</td></tr>}
                     {techPerf.map(row => (
                       <tr key={row.technician} className="hover:bg-base-200 transition-colors">
-                        <td className="font-bold text-[12px] tracking-tight">{row.technician}</td>
-                        <td className="text-center font-mono font-bold text-[12px]">{row.total_handled}</td>
-                        <td className="text-center font-mono font-bold text-[12px] text-base-content/70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td className="text-center font-mono text-[12px] text-success">{formatDuration(row.min_nett)}</td>
-                        <td className="text-center font-mono text-[12px] text-error">{formatDuration(row.max_nett)}</td>
+                        <td data-label="TECHNICIAN" className="font-bold text-[12px] tracking-tight">{row.technician}</td>
+                        <td data-label="TOTAL" className="text-center font-mono font-bold text-[12px]">{row.total_handled}</td>
+                        <td data-label="AVG" className="text-center font-mono font-bold text-[12px] text-base-content/70">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td data-label="MIN" className="text-center font-mono text-[12px] text-success">{formatDuration(row.min_nett)}</td>
+                        <td data-label="MAX" className="text-center font-mono text-[12px] text-error">{formatDuration(row.max_nett)}</td>
                       </tr>
                     ))}
                   </tbody>

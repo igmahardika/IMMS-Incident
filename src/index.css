@@ -43,10 +43,19 @@
   --rounded-box: 0.25rem;
   --rounded-btn: 0.25rem;
   --rounded-badge: 0.25rem;
+  
+  /* Fluid Typography & Spacing Scale */
+  font-size: 14px; /* Base for 1366px and below */
+}
+
+@media (min-width: 1440px) {
+  :root {
+    font-size: 16px; /* Scale up for large monitors */
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   GLOBAL RESETS & ENHANCEMENTS
+   GLOBAL RESETS & ENCHANCEMENTS
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
@@ -61,7 +70,7 @@
   }
 
   body {
-    @apply bg-base-100 text-base-content font-sans antialiased min-h-screen selection:bg-primary/30 selection:text-primary-content;
+    @apply bg-base-100 text-base-content font-sans antialiased min-h-[100dvh] selection:bg-primary/30 selection:text-primary-content overflow-hidden;
     line-height: 1.6;
   }
 
@@ -95,10 +104,9 @@
     @apply border-none bg-base-200/50 focus:ring-2 focus:ring-primary/20 outline-none;
   }
 
-  /* Pastikan pemisah antar menu hilang */
-  .menu :where(li:not(:last-child)) {
-    border-bottom: none !important;
-  }
+  /* Fluid Text Utility */
+  h1 { font-size: clamp(1.25rem, 2vw + 1rem, 1.75rem); }
+  h2 { font-size: clamp(1rem, 1.5vw + 0.9rem, 1.25rem); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -123,7 +131,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════════
-     IMMS STANDARD TABLE SYSTEM (UNIFORM 12PX)
+     IMMS STANDARD TABLE SYSTEM (RESPONSIVE STACKED)
      ═══════════════════════════════════════════════════════════════════════════════ */
   .table-imms {
     @apply w-full border-separate border-spacing-0;
@@ -148,9 +156,82 @@
   .table-imms .font-mono {
     @apply text-[12px] tracking-tight tabular-nums;
   }
+
+  /* STACKED TABLE PATTERN (MOBILE) */
+  @media (max-width: 767px) {
+    .table-stacked, .table-stacked thead, .table-stacked tbody, .table-stacked th, .table-stacked td, .table-stacked tr {
+      display: block;
+    }
+    .table-stacked thead tr {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+    }
+    .table-stacked tr {
+      @apply mb-4 bg-base-100 rounded-xl shadow-sm overflow-hidden p-2 border border-base-content/5;
+    }
+    .table-stacked td {
+      border: none !important;
+      padding: 0.75rem 1rem 0.75rem 45% !important;
+      position: relative;
+      text-align: left;
+      min-height: 3rem;
+      display: block !important;
+      width: 100% !important;
+      border-bottom: 1px solid color-mix(in srgb, var(--color-base-content), transparent 95%) !important;
+    }
+
+    .table-stacked td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40%;
+      font-size: 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--color-base-content);
+      opacity: 0.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+
+    /* Wrap cell content in a div for better control if needed, but for now just ensure visibility */
+    .table-stacked td > * {
+      display: inline-block;
+      vertical-align: middle;
+      max-width: 100%;
+    }
+
+    .table-stacked td:first-child {
+      @apply bg-base-200/50 rounded-lg mb-2 font-bold;
+      justify-content: space-between;
+      display: flex !important;
+      padding-left: 1rem !important;
+    }
+
+    .table-stacked td:first-child::before {
+      content: none;
+    }
+  }
   
   /* Readability Opacity Overrides */
   .text-base-content\/20 { color: oklch(from var(--color-base-content) l c h / 0.5) !important; }
   .text-base-content\/30 { color: oklch(from var(--color-base-content) l c h / 0.6) !important; }
   .text-base-content\/40 { color: oklch(from var(--color-base-content) l c h / 0.7) !important; }
 }
+
+@layer utilities {
+  .h-dvh { height: 100dvh; }
+  .min-h-dvh { min-height: 100dvh; }
+  
+  /* Sticky Action Bar for Mobile Forms */
+  .sticky-action-mobile {
+    @apply fixed bottom-0 left-0 right-0 p-4 bg-base-100/80 backdrop-blur-md border-t border-base-content/5 md:relative md:p-0 md:bg-transparent md:border-t-0 z-50;
+  }
+}
+
