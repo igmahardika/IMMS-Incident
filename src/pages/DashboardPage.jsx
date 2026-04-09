@@ -157,9 +157,9 @@ export default function DashboardPage() {
                 <table className="w-full text-left border-collapse table-fixed">
                   <thead>
                     <tr className="bg-foreground/[0.02] border-y border-foreground/5">
-                      <th className="w-[80px] text-center">NCAL</th>
-                      <th className="min-w-[200px]">INCIDENT</th>
-                      <th className="w-[120px] text-right">DETAILS</th>
+                      <th className="w-[80px] px-3 py-2.5 text-center">NCAL</th>
+                      <th className="min-w-[200px] px-3 py-2.5">INCIDENT</th>
+                      <th className="w-[120px] px-3 py-2.5 text-right">DETAILS</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-foreground/5">
@@ -168,12 +168,12 @@ export default function DashboardPage() {
                     )}
                     {(data?.recentClosed || []).map(inc => (
                       <tr key={inc.id} className="hover:bg-foreground/[0.02] transition-colors duration-200 group cursor-pointer" onClick={() => navigate(`/incidents/${inc.id}`)}>
-                        <td className="text-center align-top"><div className="mt-1"><NcalBadge value={inc.ncal} /></div></td>
-                        <td className="align-top">
+                        <td className="px-3 py-2 text-center align-top"><div className="mt-1"><NcalBadge value={inc.ncal} /></div></td>
+                        <td className="px-3 py-2 align-top">
                           <div className="font-mono text-[11px] font-bold text-primary tracking-tight mb-1">{inc.case_no}</div>
                           <div className="text-[11px] font-semibold text-foreground/70 leading-snug line-clamp-2">{inc.site_name_manual || '—'}</div>
                         </td>
-                        <td className="text-right align-top">
+                        <td className="px-3 py-2 text-right align-top">
                           <div className="font-mono text-[11px] font-bold tabular-nums text-foreground/80 mb-1">{formatDuration(inc.duration_nett_seconds)}</div>
                           <div className="text-[10px] font-black uppercase tracking-widest text-foreground/50 truncate max-w-[120px] ml-auto">{inc.technician_name || '—'}</div>
                         </td>
@@ -211,10 +211,10 @@ export default function DashboardPage() {
                     const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                     return (
                       <tr key={row.ncal} className="hover:bg-foreground/[0.01] transition-colors">
-                        <td className="text-center"><NcalBadge value={row.ncal} /></td>
-                        <td className="text-center font-black text-[11px] tabular-nums text-foreground/70">{row.total_cases}</td>
-                        <td className="font-mono font-black text-[11px] text-foreground/60 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td className="text-center text-[11px] font-black text-primary tabular-nums">{row.sla_met || 0}</td>
+                        <td className="px-3 py-2 text-center"><NcalBadge value={row.ncal} /></td>
+                        <td className="px-3 py-2 text-center font-black text-[11px] tabular-nums text-foreground/70">{row.total_cases}</td>
+                        <td className="px-3 py-2 font-mono font-black text-[11px] text-foreground/60 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td className="px-3 py-2 text-center text-[11px] font-black text-primary tabular-nums">{row.sla_met || 0}</td>
                         <td className="text-center">
                           <div className="flex items-center justify-center gap-2">
                             <span className={cn(

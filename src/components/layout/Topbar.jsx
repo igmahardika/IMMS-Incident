@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ThemeContext } from '../../App.jsx';
 import { SidebarContext } from './AppLayout.jsx';
-import { Shield, Menu, Sun, Moon } from 'lucide-react';
+import { Shield, Menu, Sun, Moon, Clock } from 'lucide-react';
 import NotificationBell from '../ui/NotificationBell.jsx';
 import { cn } from '../../lib/utils.js';
 
@@ -20,6 +20,7 @@ const TITLES = {
   '/master/technical-support': 'Personnel Records',
   '/master/distribusi': 'Distribution Topology',
   '/master/users': 'User Management',
+  '/master/actions': 'Master Actions',
   '/settings/escalation': 'Escalation Settings',
 };
 
@@ -29,10 +30,21 @@ function LiveClock() {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
   return (
-    <span className="font-mono tabular-nums tracking-tighter text-foreground/60 font-medium uppercase text-[11px]">
-      {time.toLocaleDateString('en-GB', { weekday: 'short' })}, {String(time.getDate()).padStart(2, '0')}/{String(time.getMonth() + 1).padStart(2, '0')}/{time.getFullYear()} {String(time.getHours()).padStart(2, '0')}:{String(time.getMinutes()).padStart(2, '0')} WIB
-    </span>
+    <div className="hidden md:flex items-center gap-2 text-foreground/50">
+      <Clock size={12} strokeWidth={2} className="text-foreground/30" />
+      <span className="font-mono tabular-nums text-[11px] font-semibold tracking-wider">
+        {days[time.getDay()]}, {pad(time.getDate())}/{pad(time.getMonth() + 1)}/{time.getFullYear()}{' '}
+        <span className="text-foreground/70 font-bold">
+          {pad(time.getHours())}:{pad(time.getMinutes())}
+        </span>{' '}
+        <span className="text-[9px] font-black tracking-widest text-foreground/30">WIB</span>
+      </span>
+    </div>
   );
 }
 
@@ -43,69 +55,91 @@ export default function Topbar() {
   const location = useLocation();
   const parts = location.pathname.split('/').filter(Boolean);
 
+  const pageTitle = TITLES[location.pathname] || (parts.length > 0
+    ? parts[parts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : 'Dashboard'
+  );
+
+  const ROLE_COLORS = {
+    admin: 'bg-primary/10 text-primary border-primary/20',
+    manager: 'bg-secondary/10 text-secondary border-secondary/20',
+    noc: 'bg-success/10 text-success border-success/20',
+    technician: 'bg-warning/10 text-warning border-warning/20',
+  };
+
   return (
-    <header className="h-14 flex items-center justify-between px-4 border-b border-foreground/5 bg-background shrink-0 w-full relative z-30">
+    <header className="h-[56px] flex items-center justify-between px-4 border-b border-foreground/[0.06] bg-background shrink-0 w-full relative z-30">
+      
+      {/* ── Left: Mobile Toggle + Breadcrumbs ── */}
       <div className="flex items-center gap-3">
-        {/* Mobile Sidebar Toggle */}
-        <button 
-          className="lg:hidden p-1.5 -ml-1.5 rounded-md hover:bg-foreground/5 text-foreground/70 transition-colors"
+        {/* Mobile hamburger */}
+        <button
+          className="lg:hidden p-2 -ml-1 rounded-lg hover:bg-foreground/[0.05] text-foreground/60 transition-colors"
           onClick={() => setMobileOpen(true)}
           aria-label="Open sidebar menu"
-          title="Open menu"
         >
-          <Menu size={18} strokeWidth={2} />
+          <Menu size={17} strokeWidth={2} />
         </button>
 
-        {/* Global Breadcrumbs */}
-        <div className="hidden sm:flex items-center gap-2 text-[11px]">
-          <span className="text-foreground/40 font-bold uppercase tracking-widest">IMMS</span>
-          <span className="text-foreground/20 font-light">/</span>
+        {/* Desktop Breadcrumb */}
+        <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold">
+          <span className="text-foreground/30 uppercase tracking-[0.15em] font-bold text-[10px]">IMMS</span>
           {parts.length === 0 ? (
-            <span className="font-bold text-foreground">Dashboard</span>
+            <>
+              <span className="text-foreground/20 mx-0.5">›</span>
+              <span className="font-bold text-foreground">Dashboard</span>
+            </>
           ) : (
             parts.map((p, i) => (
               <React.Fragment key={i}>
-                {i > 0 && <span className="text-foreground/20 font-light">/</span>}
+                <span className="text-foreground/20 mx-0.5">›</span>
                 {i === parts.length - 1 ? (
-                  <span className="font-bold text-foreground">{TITLES[location.pathname] || p.replace(/-/g, ' ')}</span>
+                  <span className="font-bold text-foreground">{pageTitle}</span>
                 ) : (
-                  <span className="capitalize font-semibold text-foreground/60">{p.replace(/-/g, ' ')}</span>
+                  <span className="text-foreground/50 capitalize font-semibold tracking-wide">
+                    {p.replace(/-/g, ' ')}
+                  </span>
                 )}
               </React.Fragment>
             ))
           )}
         </div>
 
-        {/* Mobile Title */}
-        <div className="sm:hidden font-bold text-sm">
-           {TITLES[location.pathname] || (parts.length > 0 ? parts[parts.length - 1].replace(/-/g, ' ') : 'Dashboard')}
-        </div>
+        {/* Mobile: just show current page title */}
+        <div className="sm:hidden font-bold text-sm text-foreground">{pageTitle}</div>
       </div>
 
-      <div className="flex items-center gap-2 lg:gap-4">
+      {/* ── Right: Controls ── */}
+      <div className="flex items-center gap-1 lg:gap-3">
         {/* Live Clock */}
-        <div className="hidden md:block">
-          <LiveClock />
-        </div>
-        
-        {/* Theme Toggle Native */}
-        <button 
-          className="p-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors flex items-center justify-center relative w-7 h-7"
+        <LiveClock />
+
+        {/* Divider */}
+        <div className="hidden md:block w-px h-4 bg-foreground/10 mx-1" />
+
+        {/* Theme Toggle */}
+        <button
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05] transition-all"
           onClick={toggleTheme}
-          aria-label="Toggle theme"
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
-           <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
-             {theme === 'dark' ? <Moon size={15} /> : <Sun size={15} />}
-           </span>
+          {theme === 'dark'
+            ? <Moon size={14} strokeWidth={2} />
+            : <Sun size={15} strokeWidth={2} />
+          }
         </button>
-        
-        {/* Notification component (will be refactored next) */}
+
+        {/* Notifications */}
         <NotificationBell />
 
         {/* Role Badge */}
-        <div className="h-6 px-2 flex items-center gap-1.5 rounded-md bg-primary/10 text-primary border border-primary/20 ml-2">
-          <Shield size={11} strokeWidth={2.5} />
-          <span className="text-[10px] font-bold tracking-widest uppercase">{user?.role}</span>
+        <div className={cn(
+          "hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-lg border text-[10px] font-black tracking-widest uppercase ml-1",
+          ROLE_COLORS[user?.role] || 'bg-primary/10 text-primary border-primary/20'
+        )}>
+          <Shield size={10} strokeWidth={2.5} />
+          <span>{user?.role}</span>
         </div>
       </div>
     </header>

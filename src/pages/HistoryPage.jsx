@@ -92,7 +92,7 @@ export default function HistoryPage() {
           className="w-3 h-3 rounded border-foreground/20 text-primary"
         />
       ),
-      size: 40,
+      size: 50,
       meta: { className: 'text-center' },
     },
     {
@@ -109,28 +109,28 @@ export default function HistoryPage() {
         const val = row.original.brand_site || row.original.company_name || '—';
         return <span title={val} className="truncate block">{val}</span>;
       },
-      size: 250,
+      size: 280,
       meta: { flexible: true },
     },
     {
       accessorKey: 'ncal',
       header: 'NCAL',
       cell: ({ row }) => <NcalBadge value={row.original.ncal} />,
-      size: 80,
+      size: 85,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => <StatusPill status={row.original.status} />,
-      size: 90,
+      size: 100,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
       accessorKey: 'technician_name',
       header: 'Technician',
       cell: ({ row }) => <span className="text-foreground/70 truncate block">{row.original.technician_name || '—'}</span>,
-      size: 130,
+      size: 150,
       meta: { flexible: true },
     },
     {
@@ -144,7 +144,7 @@ export default function HistoryPage() {
       id: 'duration',
       header: 'Nett Time',
       cell: ({ row }) => <span className="font-mono text-primary tabular-nums font-bold">{fmtDur(row.original.duration_nett_seconds)}</span>,
-      size: 90,
+      size: 110,
       meta: { className: 'whitespace-nowrap' },
     },
     {
@@ -158,7 +158,7 @@ export default function HistoryPage() {
           <ChevronRight size={14} className="text-foreground/40" />
         </button>
       ),
-      size: 40,
+      size: 50,
       meta: { className: 'text-right' },
     }
   ], [navigate]);

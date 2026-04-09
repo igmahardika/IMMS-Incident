@@ -93,10 +93,10 @@
     @apply w-full border-collapse;
   }
   th {
-    @apply text-[10px] uppercase tracking-widest font-black text-foreground/40 py-1.5 px-3 border-b border-foreground/5 text-left;
+    @apply text-[10px] uppercase tracking-widest font-black text-foreground/40 text-left;
   }
   td {
-    @apply text-[11px] font-bold leading-tight py-1.5 px-3 border-b border-foreground/5 text-foreground/80;
+    @apply text-[11px] font-bold leading-tight text-foreground/80;
   }
   
   /* Optimasi Angka agar sejajar */

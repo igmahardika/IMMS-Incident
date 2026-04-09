@@ -509,7 +509,7 @@ export default function CurrentTroublePage() {
       accessorKey: 'ncal',
       header: 'NCAL',
       cell: ({ row }) => <NcalBadge value={row.original.ncal} />,
-      size: 70,
+      size: 85,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
@@ -525,9 +525,6 @@ export default function CurrentTroublePage() {
           </button>
           <div className="flex items-center gap-1.5 mt-0.5">
             <StatusPill status={row.original.status} />
-            {row.original.recurring_count > 0 && (
-              <div className="p-0.5 rounded bg-error/10 text-error flex"><AlertTriangle size={10} strokeWidth={2.5} /></div>
-            )}
           </div>
         </div>
       ),
@@ -536,9 +533,9 @@ export default function CurrentTroublePage() {
     },
     {
       id: 'level',
-      header: 'LV',
+      header: 'Level',
       cell: ({ row }) => <LevelBadge level={calculateIncidentLevel(row.original.start_time)} targetHours={getSLATarget(row.original.ncal) / 3600} />,
-      size: 45,
+      size: 85,
       meta: { className: 'text-center px-1' },
     },
     {
@@ -554,7 +551,7 @@ export default function CurrentTroublePage() {
           </div>
         );
       },
-      size: 200,
+      size: 280,
       meta: { flexible: true },
     },
     {
@@ -570,7 +567,7 @@ export default function CurrentTroublePage() {
           )}
         </div>
       ),
-      size: 250,
+      size: 320,
       meta: { flexible: true },
     },
     {

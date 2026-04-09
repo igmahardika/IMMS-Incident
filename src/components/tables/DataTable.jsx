@@ -49,32 +49,37 @@ export function DataTable({
           <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th 
-                    key={header.id}
-                    className={cn(
-                      "border-r border-foreground/5 bg-foreground/[0.02] last:border-r-0",
-                      header.column.columnDef.meta?.className
-                    )}
-                    style={{ width: header.column.columnDef.meta?.flexible ? 'auto' : `${header.getSize()}px` }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div 
-                        className={cn(
-                          "flex items-center gap-2 select-none",
-                          header.column.getCanSort() && "cursor-pointer hover:text-foreground/70"
-                        )}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <span className="truncate">
+                {headerGroup.headers.map(header => {
+                  const size = header.getSize();
+                  const isFlexible = header.column.columnDef.meta?.flexible;
+                  return (
+                    <th 
+                      key={header.id}
+                      className={cn(
+                        "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-r border-foreground/5 bg-foreground/[0.02] last:border-r-0",
+                        header.column.columnDef.meta?.className
+                      )}
+                      style={{ 
+                        width: isFlexible ? 'auto' : `${size}px`,
+                        minWidth: `${size}px`
+                      }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div 
+                          className={cn(
+                            "flex items-center gap-2 select-none whitespace-nowrap",
+                            header.column.getCanSort() && "cursor-pointer hover:text-foreground/70"
+                          )}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                        </span>
-                        {header.column.getIsSorted() === 'asc' && <ChevronUp size={12} className="shrink-0" />}
-                        {header.column.getIsSorted() === 'desc' && <ChevronDown size={12} className="shrink-0" />}
-                      </div>
-                    )}
-                  </th>
-                ))}
+                          {header.column.getIsSorted() === 'asc' && <ChevronUp size={12} className="shrink-0" />}
+                          {header.column.getIsSorted() === 'desc' && <ChevronDown size={12} className="shrink-0" />}
+                        </div>
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -88,18 +93,25 @@ export function DataTable({
                   key={row.id} 
                   className={cn("hover:bg-foreground/[0.02] transition-colors group", getRowClassName(row.original))}
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <td 
-                      key={cell.id}
-                      className={cn(
-                        "border-r border-foreground/5 last:border-r-0 truncate",
-                        cell.column.columnDef.meta?.className
-                      )}
-                      style={{ width: cell.column.columnDef.meta?.flexible ? 'auto' : `${cell.column.getSize()}px` }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map(cell => {
+                    const size = cell.column.getSize();
+                    const isFlexible = cell.column.columnDef.meta?.flexible;
+                    return (
+                      <td 
+                        key={cell.id}
+                        className={cn(
+                          "px-3 py-1.5 text-[11px] font-bold border-r border-foreground/5 last:border-r-0 truncate",
+                          cell.column.columnDef.meta?.className
+                        )}
+                        style={{ 
+                          width: isFlexible ? 'auto' : `${size}px`,
+                          minWidth: `${size}px`
+                        }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
                 </motion.tr>
               ))
             ) : (

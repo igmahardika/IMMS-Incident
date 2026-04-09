@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils.js';
 import {
   LayoutDashboard, AlertTriangle, PlusCircle, History, BarChart2,
   TrendingUp, Database, Tag, Users, UserCog, Settings,
-  Zap, ListChecks, Network, HardHat, LogOut, Check
+  Zap, ListChecks, Network, HardHat, LogOut, X
 } from 'lucide-react';
 
 const menuGroups = [
@@ -43,14 +43,14 @@ const menuGroups = [
       { to: '/master/classifications', icon: Tag, label: 'Classifications', roles: ['admin', 'manager'] },
       { to: '/master/technical-support', icon: HardHat, label: 'Personnel Records', roles: ['admin', 'manager'] },
       { to: '/master/distribusi', icon: Network, label: 'Distribution Topology', roles: ['admin', 'manager'] },
-      { to: '/master/actions', icon: ListChecks, label: 'Master Actions (Handling)', roles: ['admin', 'manager'] },
+      { to: '/master/actions', icon: ListChecks, label: 'Master Actions', roles: ['admin', 'manager'] },
       { to: '/master/users', icon: UserCog, label: 'User Accounts', roles: ['admin'] },
     ]
   },
   {
     label: 'Settings',
     items: [
-      { to: '/settings/escalation', icon: Settings, label: 'Escalation', roles: ['admin'] },
+      { to: '/settings/escalation', icon: Settings, label: 'Escalation Config', roles: ['admin'] },
     ]
   },
 ];
@@ -78,82 +78,120 @@ export default function Sidebar({ mobileOpen, onClose }) {
     .filter(group => group.items.length > 0);
 
   return (
-    <aside className="w-56 flex flex-col h-full bg-background border-r border-foreground/5 shrink-0 overflow-hidden">
-      {/* Header / Logo */}
-      <div className="h-14 flex items-center gap-3 px-4 shrink-0 border-b border-foreground/5 relative">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
-          <Zap size={15} strokeWidth={2} />
+    <aside className="w-60 flex flex-col h-full bg-background border-r border-foreground/[0.06] shrink-0 overflow-hidden">
+      
+      {/* ── Logo / Brand Header ── */}
+      <div className="h-[56px] flex items-center gap-3 px-4 shrink-0 border-b border-foreground/[0.06]">
+        <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 shrink-0">
+          <Zap size={16} strokeWidth={2.5} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-sm tracking-tight text-foreground leading-tight">IMMS</div>
-          <div className="text-[9px] text-foreground/50 uppercase tracking-widest font-black">Enterprise</div>
+          <div className="font-black text-[13px] tracking-tight text-foreground leading-none">IMMS</div>
+          <div className="text-[9px] text-foreground/40 uppercase tracking-[0.2em] font-bold mt-0.5">Enterprise NOC</div>
         </div>
         {mobileOpen && (
-          <button 
-            className="lg:hidden p-1.5 text-foreground/50 hover:text-foreground hover:bg-foreground/5 rounded-md" 
+          <button
+            className="lg:hidden p-1.5 text-foreground/40 hover:text-foreground hover:bg-foreground/5 rounded-lg transition-colors"
             onClick={onClose}
             aria-label="Close sidebar"
-            title="Close sidebar"
           >
-            <Check size={18} strokeWidth={2} />
+            <X size={16} strokeWidth={2} />
           </button>
         )}
       </div>
 
-      {/* Navigation Groups */}
-      <nav className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-5">
-        {filteredGroups.map((group) => (
-          <div key={group.label}>
-            <h4 className="px-2 mb-1.5 text-[9px] font-black uppercase tracking-widest text-foreground/40">
-              {group.label}
-            </h4>
-            <div className="space-y-0.5">
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/'}
-                  className={({ isActive }) => cn(
-                    "flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-all duration-200 group relative outline-none",
-                    isActive 
-                      ? "bg-primary/10 text-primary font-bold shadow-[inset_2px_0_0_0_var(--color-primary)]" 
-                      : "text-foreground/75 hover:bg-foreground/5 hover:text-foreground font-medium"
-                  )}
-                  onClick={mobileOpen ? onClose : undefined}
-                >
-                  <span className={cn(
-                    "flex items-center justify-center w-5 opacity-70 group-hover:opacity-100 transition-opacity",
-                    confirmLogout && item.to === '/' ? "" : ""
-                  )}>
-                    <item.icon size={15} strokeWidth={2} />
-                  </span>
-                  <span className="text-[11px] leading-tight flex-1 line-clamp-1">{item.label}</span>
-                </NavLink>
-              ))}
+      {/* ── Navigation Groups ── */}
+      <nav className="flex-1 overflow-y-auto custom-scrollbar py-3 px-2.5">
+        <div className="space-y-6">
+          {filteredGroups.map((group) => (
+            <div key={group.label}>
+              {/* Section Label */}
+              <div className="px-2.5 mb-1 flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 whitespace-nowrap">
+                  {group.label}
+                </span>
+                <div className="h-px flex-1 bg-foreground/[0.06]" />
+              </div>
+
+              {/* Nav Items */}
+              <div className="space-y-0.5">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/'}
+                    className={({ isActive }) => cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 group relative outline-none",
+                      isActive
+                        ? "bg-primary/10 text-primary font-bold"
+                        : "text-foreground/60 hover:bg-foreground/[0.05] hover:text-foreground/90 font-medium"
+                    )}
+                    onClick={mobileOpen ? onClose : undefined}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {/* Active left-bar indicator */}
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+                        )}
+
+                        {/* Icon */}
+                        <span className={cn(
+                          "flex items-center justify-center w-[18px] shrink-0 transition-all",
+                          isActive ? "text-primary" : "text-foreground/40 group-hover:text-foreground/70"
+                        )}>
+                          <item.icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                        </span>
+
+                        {/* Label */}
+                        <span className="text-[11px] leading-tight flex-1 truncate">
+                          {item.label}
+                        </span>
+
+                        {/* Active dot */}
+                        {isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </nav>
 
-      {/* Footer / Profile */}
-      <div className="p-3 shrink-0 border-t border-foreground/5 bg-muted/20 pb-3">
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); handleLogout(); }}>
-          <div className="w-8 h-8 rounded-full bg-foreground/10 text-foreground/70 flex items-center justify-center shrink-0 border border-border/50 shadow-sm">
-            <span className="text-[11px] font-bold">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+      {/* ── Footer / User Profile ── */}
+      <div className="shrink-0 border-t border-foreground/[0.06] p-2.5">
+        <div
+          className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg hover:bg-foreground/[0.04] transition-colors cursor-pointer group"
+          onClick={handleLogout}
+        >
+          {/* Avatar */}
+          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+            <span className="text-[12px] font-black">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
           </div>
+
+          {/* User Info */}
           <div className="flex-1 min-w-0">
-             <div className="text-xs font-bold text-foreground truncate leading-tight">{user?.name}</div>
-             <div className="text-[9px] font-bold text-foreground/50 uppercase tracking-wider truncate">{user?.role}</div>
+            <div className="text-[11px] font-bold text-foreground truncate leading-tight">{user?.name}</div>
+            <div className="text-[9px] font-black text-foreground/40 uppercase tracking-widest truncate mt-0.5">{user?.role}</div>
           </div>
-          <button 
-             className={cn(
-               "p-1.5 rounded-md transition-colors",
-               confirmLogout ? "text-error bg-error/10 hover:bg-error/20" : "text-foreground/40 hover:text-error hover:bg-error/10"
-             )}
-             aria-label={confirmLogout ? "Confirm Logout" : "Logout of system"}
-             title={confirmLogout ? "Confirm Logout" : "Logout"}
+
+          {/* Logout Icon */}
+          <button
+            className={cn(
+              "p-1.5 rounded-md transition-all shrink-0",
+              confirmLogout
+                ? "text-error bg-error/10 animate-pulse"
+                : "text-foreground/30 group-hover:text-error group-hover:bg-error/10"
+            )}
+            aria-label={confirmLogout ? "Confirm Logout" : "Logout"}
+            title={confirmLogout ? "Click again to confirm logout" : "Logout"}
+            onClick={(e) => { e.stopPropagation(); handleLogout(); }}
           >
-             {confirmLogout ? <Check size={14} strokeWidth={2.5} /> : <LogOut size={14} strokeWidth={2} />}
+            <LogOut size={13} strokeWidth={2} />
           </button>
         </div>
       </div>
