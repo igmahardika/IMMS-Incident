@@ -71,45 +71,45 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-6 pb-8">
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
-            <div className="bg-background border border-foreground/5 shadow-sm rounded-xl p-5 flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute -right-4 -top-4 text-error/[0.03] group-hover:text-error/10 transition-colors duration-300">
-                <AlertTriangle strokeWidth={1} size={100} />
+            <div className="bg-background border border-foreground/[0.06] shadow-sm rounded-xl p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -right-3 -top-3 text-error/[0.04] group-hover:text-error/[0.08] transition-colors duration-500">
+                <AlertTriangle strokeWidth={1} size={80} />
               </div>
               <div className="flex items-center gap-3 relative z-10">
-                <div className="w-10 h-10 rounded-lg bg-error/10 text-error flex items-center justify-center shrink-0">
-                  <AlertTriangle size={20} />
+                <div className="w-9 h-9 rounded-lg bg-error/10 text-error flex items-center justify-center shrink-0">
+                  <AlertTriangle size={17} strokeWidth={2} />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/50">Active Cases</span>
-                  <span className="text-[9px] font-bold tracking-widest text-foreground/40 mt-0.5 uppercase">Queue Size</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 leading-none">Active Cases</span>
+                  <span className="text-[9px] font-bold tracking-widest text-foreground/30 uppercase">Queue Size</span>
                 </div>
               </div>
-              <div className="text-4xl font-black text-error tracking-tighter mt-4 relative z-10 tabular-nums">
+              <div className="text-3xl font-black text-error tracking-tighter mt-4 relative z-10 tabular-nums font-mono">
                 {data?.totalActive || 0}
               </div>
             </div>
 
-            <div className="bg-background border border-foreground/5 shadow-sm rounded-xl p-5 flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute -right-4 -top-4 text-success/[0.03] group-hover:text-success/10 transition-colors duration-300">
-                <CheckCircle strokeWidth={1} size={100} />
+            <div className="bg-background border border-foreground/[0.06] shadow-sm rounded-xl p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute -right-3 -top-3 text-success/[0.04] group-hover:text-success/[0.08] transition-colors duration-500">
+                <CheckCircle strokeWidth={1} size={80} />
               </div>
               <div className="flex items-center gap-3 relative z-10">
-                <div className="w-10 h-10 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
-                  <CheckCircle size={20} />
+                <div className="w-9 h-9 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
+                  <CheckCircle size={17} strokeWidth={2} />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/50">Resolutions</span>
-                  <span className="text-[9px] font-bold tracking-widest text-foreground/40 mt-0.5 uppercase">History</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 leading-none">Resolutions</span>
+                  <span className="text-[9px] font-bold tracking-widest text-foreground/30 uppercase">History</span>
                 </div>
               </div>
-              <div className="text-4xl font-black text-success tracking-tighter mt-4 relative z-10 tabular-nums">
+              <div className="text-3xl font-black text-success tracking-tighter mt-4 relative z-10 tabular-nums font-mono">
                 {data?.totalDone || 0}
               </div>
             </div>
             
-            <div className="bg-background border border-foreground/5 shadow-sm rounded-xl flex items-stretch divide-x divide-foreground/5 overflow-hidden">
+            <div className="bg-background border border-foreground/[0.06] shadow-sm rounded-xl flex items-stretch divide-x divide-foreground/[0.06] overflow-hidden">
               {NCAL_ORDER.slice(0, 3).map((ncal) => (
-                <div className="flex-1 flex flex-col items-center justify-center p-4 gap-2 hover:bg-foreground/[0.01] transition-colors" key={ncal}>
+                <div className="flex-1 flex flex-col items-center justify-center p-3 gap-1.5 hover:bg-foreground/[0.02] transition-colors" key={ncal}>
                   <NcalBadge value={ncal} />
                   <div className={cn("text-2xl font-black tabular-nums font-mono tracking-tighter", NCAL_COLORS_KPI[ncal])}>
                     {byNcal[ncal] || 0}
@@ -118,9 +118,9 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            <div className="bg-background border border-foreground/5 shadow-sm rounded-xl flex items-stretch divide-x divide-foreground/5 overflow-hidden">
+            <div className="bg-background border border-foreground/[0.06] shadow-sm rounded-xl flex items-stretch divide-x divide-foreground/[0.06] overflow-hidden">
               {NCAL_ORDER.slice(3).map((ncal) => (
-                <div className="flex-1 flex flex-col items-center justify-center p-4 gap-2 hover:bg-foreground/[0.01] transition-colors" key={ncal}>
+                <div className="flex-1 flex flex-col items-center justify-center p-3 gap-1.5 hover:bg-foreground/[0.02] transition-colors" key={ncal}>
                   <NcalBadge value={ncal} />
                   <div className={cn("text-2xl font-black tabular-nums font-mono tracking-tighter", NCAL_COLORS_KPI[ncal])}>
                     {byNcal[ncal] || 0}

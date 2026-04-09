@@ -87,7 +87,7 @@ export default function MonthlyViewPage() {
     : 1;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden font-inter">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">Monthly Analysis</h1>

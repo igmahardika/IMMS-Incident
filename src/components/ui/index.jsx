@@ -228,11 +228,11 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
 
 export function EmptyState({ icon, title, desc, action }) {
   return (
-    <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-foreground/10 rounded-xl bg-foreground/[0.02] min-h-[300px]">
-      <div className="text-5xl opacity-30 mb-4">{icon || '📦'}</div>
-      <h2 className="text-sm font-bold uppercase tracking-wider text-foreground/70">{title}</h2>
-      {desc && <p className="mt-2 text-[11px] text-foreground/50 max-w-sm">{desc}</p>}
-      {action && <div className="mt-6">{action}</div>}
+    <div className="flex flex-col items-center justify-center p-12 text-center min-h-[280px] gap-3">
+      <div className="text-foreground/20 mb-1">{icon || '📦'}</div>
+      <h2 className="text-[11px] font-black uppercase tracking-widest text-foreground/50">{title}</h2>
+      {desc && <p className="text-[10px] font-medium text-foreground/35 max-w-xs leading-relaxed">{desc}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
@@ -241,13 +241,13 @@ export function EmptyState({ icon, title, desc, action }) {
 
 export function SectionCard({ title, subtitle, footer, children, className = '', headerAction, style, padding = true }) {
   return (
-    <div className={cn("bg-background border border-foreground/5 shadow-sm rounded-xl overflow-hidden flex flex-col", className)} style={style}>
-      <div className={cn("flex flex-col flex-1", padding ? "p-4 md:p-6" : "")}>
+    <div className={cn("bg-background border border-foreground/[0.06] shadow-sm rounded-xl overflow-hidden flex flex-col", className)} style={style}>
+      <div className={cn("flex flex-col flex-1", padding ? "p-4 md:p-5" : "")}>
         {(title || headerAction) && (
-          <div className={cn("flex items-center justify-between mb-5", !padding && "px-4 pt-4")}>
-            <div>
-              {title && <h2 className="text-[10px] font-black uppercase tracking-widest text-foreground/50">{title}</h2>}
-              {subtitle && <p className="text-[10px] font-semibold text-foreground/40 mt-0.5 leading-relaxed">{subtitle}</p>}
+          <div className={cn("flex items-center justify-between mb-4", !padding && "px-4 pt-4")}>
+            <div className="flex flex-col gap-0.5">
+              {title && <h2 className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 leading-none">{title}</h2>}
+              {subtitle && <p className="text-[10px] font-medium text-foreground/30 leading-snug">{subtitle}</p>}
             </div>
             {headerAction}
           </div>
@@ -315,7 +315,7 @@ export function Button({ children, variant = 'primary', size = 'md', outline = f
   const currentVariant = outline ? (outlineVariants[variant] || outlineVariants.primary) : (variants[variant] || variants.primary);
 
   return (
-    <button className={cn(baseClasses, currentVariant, sizes[size], "w-full md:w-auto", className)} disabled={isLoading || props.disabled} {...props}>
+    <button className={cn(baseClasses, currentVariant, sizes[size], "w-auto", className)} disabled={isLoading || props.disabled} {...props}>
       {isLoading ? <Loader2 className="animate-spin mr-2" size={14} /> : (icon && <span className="mr-2">{icon}</span>)}
       {children}
     </button>
@@ -348,16 +348,26 @@ export function Input({ label, error, type = 'text', className = '', ...props })
 
 // ─── Skeletons ────────────────────────────────────────────────────────────────
 
-export function TableSkeleton({ rows = 5 }) {
+export function TableSkeleton({ rows = 8 }) {
+  const cols = [60, 120, 200, 100, 80, 130];
   return (
-    <div className="w-full flex flex-col gap-4 p-4 border border-border/50 rounded-lg">
-      <div className="flex justify-between items-center mb-4 border-b border-border/50 pb-4">
-        <div className="h-6 w-1/3 bg-muted rounded animate-pulse"></div>
-        <div className="h-6 w-1/4 bg-muted rounded animate-pulse"></div>
+    <div className="w-full flex flex-col overflow-hidden">
+      {/* Header row */}
+      <div className="flex items-center gap-3 px-4 py-2.5 bg-foreground/[0.02] border-b border-foreground/5">
+        {cols.map((w, i) => (
+          <div key={i} className="h-3 bg-foreground/10 rounded animate-pulse" style={{ width: w, flexShrink: 0 }} />
+        ))}
       </div>
+      {/* Data rows */}
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4 items-center">
-          <div className="h-10 w-full bg-muted/60 rounded animate-pulse delay-[50ms]"></div>
+        <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-foreground/[0.04]" style={{ animationDelay: `${i * 40}ms` }}>
+          {cols.map((w, j) => (
+            <div
+              key={j}
+              className="h-4 bg-foreground/[0.06] rounded animate-pulse"
+              style={{ width: j === 2 ? w * (0.5 + Math.random() * 0.5) : w, flexShrink: 0, animationDelay: `${(i + j) * 30}ms` }}
+            />
+          ))}
         </div>
       ))}
     </div>

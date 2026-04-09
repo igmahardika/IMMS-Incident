@@ -103,16 +103,16 @@ export default function NotificationBell() {
         ref={buttonRef}
         type="button"
         className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center transition-colors relative",
-          open ? "bg-foreground/10 text-foreground" : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+          "w-8 h-8 rounded-lg flex items-center justify-center transition-all relative",
+          open ? "bg-foreground/[0.08] text-foreground" : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05]"
         )}
         aria-label="Notifications"
         title="Notifications"
         onClick={() => setOpen(!open)}
       >
-        <Bell size={16} className={unread > 0 ? 'text-primary' : ''} />
+        <Bell size={14} strokeWidth={2} className={unread > 0 ? 'text-primary' : ''} />
         {unread > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error border-2 border-background animate-pulse" />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-error border border-background" />
         )}
       </button>
 
@@ -120,10 +120,10 @@ export default function NotificationBell() {
       <div 
         ref={panelRef}
         className={cn(
-          "absolute right-0 top-full mt-2 z-[2000] shadow-[0_10px_40px_rgba(0,0,0,0.2)] bg-background/95 backdrop-blur-xl rounded-xl w-80 md:w-[380px] max-w-[calc(100vw-32px)] overflow-hidden flex flex-col max-h-[480px] border border-foreground/10 transition-all duration-200 origin-top-right",
+          "absolute right-0 top-full mt-2 z-[2000] shadow-[0_20px_60px_rgba(0,0,0,0.2)] bg-background/98 backdrop-blur-xl rounded-xl w-80 md:w-[360px] max-w-[calc(100vw-24px)] overflow-hidden flex flex-col max-h-[460px] border border-foreground/[0.08] transition-all duration-200 origin-top-right",
           open 
-            ? 'opacity-100 scale-y-100 pointer-events-auto visible' 
-            : 'opacity-0 scale-y-95 pointer-events-none hidden'
+            ? 'opacity-100 scale-100 pointer-events-auto visible' 
+            : 'opacity-0 scale-95 pointer-events-none hidden'
         )}
       >
         {/* Header */}
