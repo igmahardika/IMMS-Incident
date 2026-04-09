@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../utils/api.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { PageSpinner, SectionCard } from '../components/ui/index.jsx';
+import { PageSpinner, SectionCard, Button, Input, Spinner } from '../components/ui/index.jsx';
 import { Save, Send, Settings, Smartphone, Info, Circle, CheckCircle2 } from 'lucide-react';
+import { cn } from '../lib/utils.js';
+
+// Global icon stroke standard
+const ICON_ST = 2;
+const ICON_HD = 2.5;
 
 export default function EscalationSettingsPage() {
   const segments_raw = ['blue', 'yellow', 'orange', 'red', 'black'];
@@ -113,279 +118,273 @@ export default function EscalationSettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 h-full font-inter">
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <div className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Settings size={18} />
-            Escalation Settings
-          </div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Configure automated notifications via Webhook endpoints</div>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">Webhook Escalation</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">Automated incident broadcasting & response protocols</p>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <button className="btn btn-ghost btn-sm flex-1 md:flex-none" onClick={handleTest} disabled={testing || !cfg.webhook_url}>
-            <Send size={18} /> {testing ? 'Sending...' : 'Global Test'}
-          </button>
-          <button className="btn btn-primary btn-sm md:btn-md flex-1 md:flex-none" onClick={handleSave}>
-            <Save size={18} /> <span className="hidden md:inline">Save Configuration</span><span className="md:hidden">Save</span>
-          </button>
+          <Button variant="ghost" size="sm" onClick={handleTest} disabled={testing || !cfg.webhook_url} className="font-bold text-[9px] tracking-widest" aria-label="Send test notification" title="Send Test">
+            <Send size={12} strokeWidth={ICON_ST} /> {testing ? 'DISPATCHING...' : 'GLOBAL TEST'}
+          </Button>
+          <Button size="sm" onClick={handleSave} className="font-black text-[9px] tracking-widest px-6 shadow-xl shadow-primary/20" aria-label="Save escalation configuration" title="Save Configuration">
+            <Save size={12} strokeWidth={ICON_HD} /> SAVE CONFIGURATION
+          </Button>
         </div>
       </div>
 
       {/* Main layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start">
         {/* Left: config form */}
         <div className="flex flex-col gap-6">
-          {/* Webhook config */}
-          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5">
-            <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-lg font-bold tracking-tight text-base-content">Core Configuration</h1>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-base-content/30 mt-1">Notification endpoints & Global Status</p>
-                </div>
-                {/* Active status indicator */}
-                <div className={`flex items-center self-start md:self-auto gap-2 px-3 py-1.5 rounded-full transition-all ${cfg.is_active ? 'bg-success/10 text-success' : 'bg-base-300/30 text-base-content/30'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${cfg.is_active ? 'bg-success animate-pulse' : 'bg-base-content/10'}`} />
-                  <span className="text-xs font-semibold tracking-wider uppercase">
-                    {cfg.is_active ? 'Live' : 'Offline'}
-                  </span>
-                </div>
+          <SectionCard 
+            title="Core Integration" 
+            subtitle="Notification endpoints & lifecycle enforcement" 
+            icon={<Settings size={16} strokeWidth={ICON_HD} className="text-primary" />}
+            headerAction={
+              <div className={cn(
+                "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all",
+                cfg.is_active ? "bg-success/10 border-success/20 text-success" : "bg-foreground/5 border-foreground/10 text-foreground/30"
+              )}>
+                <div className={cn("w-1 h-1 rounded-full", cfg.is_active ? "bg-success animate-pulse" : "bg-foreground/20")} />
+                {cfg.is_active ? 'System Live' : 'Maintenance'}
               </div>
-            </div>
-            <div className="p-4 md:p-6 space-y-6">
+            }
+          >
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Integration Platform</span></label>
-                  <select className="select border-none bg-base-200 w-full font-semibold text-sm tracking-tight h-10 rounded-lg" value={cfg.type} onChange={e => setF('type', e.target.value)}>
-                    <option value="telegram">Telegram Protocol</option>
-                    <option value="whatsapp">WhatsApp Business API</option>
-                    <option value="custom">Standard Webhook (JSON)</option>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-black text-[10px] uppercase tracking-widest text-foreground/40 ml-1">Platform Architecture</label>
+                  <select 
+                    className="flex h-9 w-full rounded-md border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-primary transition-all uppercase tracking-tight" 
+                    value={cfg.type} 
+                    onChange={e => setF('type', e.target.value)}
+                  >
+                    <option value="telegram" className="bg-background">Telegram Bot API</option>
+                    <option value="whatsapp" className="bg-background">WhatsApp Business Protocol</option>
+                    <option value="custom" className="bg-background">Generic Webhook (JSON)</option>
                   </select>
                 </div>
-                <div className="form-control w-full">
-                  <label className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Service Enforcement</span></label>
-                  <div className="flex items-center h-12">
-                    <label className="label cursor-pointer justify-start gap-4 p-0">
-                      <input
-                        type="checkbox" 
-                        className="toggle toggle-primary toggle-sm"
-                        checked={!!cfg.is_active}
-                        onChange={e => setF('is_active', e.target.checked)}
-                      />
-                      <span className="label-text text-sm font-bold tracking-tight text-base-content/85">Enable automated event pushing</span>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-black text-[10px] uppercase tracking-widest text-foreground/40 ml-1">Traffic Routing</label>
+                  <div className="flex items-center h-9 bg-foreground/[0.02] border border-dashed border-foreground/10 rounded-md px-3">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div className="relative inline-flex h-4 w-8 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/20">
+                        <input
+                          type="checkbox" 
+                          id="broadcast-automation"
+                          className="peer sr-only"
+                          checked={!!cfg.is_active}
+                          onChange={e => setF('is_active', e.target.checked)}
+                        />
+                        <div className="h-4 w-8 rounded-full bg-foreground/10 transition-colors peer-checked:bg-primary shadow-[inset_0_1px_1px_rgba(0,0,0,0.1)]" />
+                        <div className="absolute left-0.5 h-3 w-3 rounded-full bg-white transition-all peer-checked:translate-x-4 shadow-sm" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 peer-checked:text-foreground transition-colors">Broadcast Automation</span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="form-control w-full">
-                <label className="label pb-1">
-                  <span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">
-                    {cfg.type === 'telegram' ? 'Internal Coordination Endpoint' : 'Internal Webhook Resource'}
-                  </span>
-                </label>
-                <input
-                  type="url" 
-                  className="input border-none w-full font-mono font-medium text-sm h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
-                  value={cfg.webhook_url || ''}
+              <div className="grid grid-cols-1 gap-6">
+                <Input 
+                  label={cfg.type === 'telegram' ? "Internal Group Endpoint (Bot API Token / Chat ID)" : "Production Webhook URL"} 
+                  value={cfg.webhook_url || ''} 
                   onChange={e => setF('webhook_url', e.target.value)}
-                  placeholder="https://core-api.v1/..."
+                  placeholder="https://api.telegram.org/bot..."
+                  className="font-mono text-[10px]"
                 />
-              </div>
-
-              <div className="form-control w-full">
-                <label className="label pb-1">
-                  <span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">
-                    {cfg.type === 'telegram' ? 'Vendor / Operation Endpoint' : 'External Webhook Resource'}
-                  </span>
-                </label>
-                <input
-                  type="url" 
-                  className="input border-none w-full font-mono font-medium text-sm h-10 rounded-lg bg-base-200 focus:bg-base-300/50 transition-all placeholder:font-sans"
-                  value={cfg.webhook_url_vendor || ''}
+                <Input 
+                  label={cfg.type === 'telegram' ? "Vendor / Field Force Endpoint" : "Deployment Webhook URL"} 
+                  value={cfg.webhook_url_vendor || ''} 
                   onChange={e => setF('webhook_url_vendor', e.target.value)}
-                  placeholder="https://vendor-api.v1/..."
+                  placeholder="https://field-ops.enterprise/..."
+                  className="font-mono text-[10px]"
                 />
               </div>
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Template editing */}
-          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5 mt-6">
-            <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
-              <h3 className="text-base font-bold">Message Templates</h3>
-              <p className="text-xs font-bold text-base-content/65">OPEN & CLOSE message templates per NCAL segment</p>
+          <SectionCard 
+            title="Message Blueprints" 
+            subtitle="Payload definitions per NCAL severitiy levels" 
+            padding={false}
+          >
+            {/* NCAL Tab Bar */}
+            <div className="flex bg-foreground/[0.03] p-1 gap-1 border-b border-foreground/5">
+              {segments.map(seg => (
+                <button
+                  key={seg}
+                  className={cn(
+                    "flex-1 px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all rounded-md",
+                    previewNcal === seg 
+                      ? "bg-background text-primary shadow-sm border border-foreground/5" 
+                      : "text-foreground/30 hover:text-foreground/50"
+                  )}
+                  onClick={() => setPreviewNcal(seg)}
+                  aria-label={`Preview ${seg} level templates`}
+                >
+                  {seg}
+                </button>
+              ))}
             </div>
-            <div className="p-0">
-              {/* Tab bar */}
-              <div className="flex bg-base-200/50 p-2 gap-1 overflow-x-auto no-scrollbar border-b border-base-content/5">
-                {segments.map(seg => (
+
+            <div className="p-6 space-y-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-3 rounded bg-primary" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60 italic">Opening Manifest — {previewNcal}</span>
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-black text-[9px] uppercase tracking-widest text-foreground/40 ml-1">Internal Channel Payload</label>
+                    <textarea
+                      className="flex w-full rounded-md border border-foreground/10 bg-foreground/[0.01] px-4 py-3 text-[11px] font-mono leading-relaxed shadow-sm focus:ring-1 focus:ring-primary min-h-[160px] custom-scrollbar" 
+                      value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
+                      onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
+                    />
+                  </div>
+                  {(previewNcal === 'YELLOW' || getActiveTemplate('open', 'vendor')) && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-black text-[9px] uppercase tracking-widest text-foreground/40 ml-1">Vendor / MO Protocol</label>
+                      <textarea
+                        className="flex w-full rounded-md border border-foreground/10 bg-warning/5 px-4 py-3 text-[11px] font-mono leading-relaxed shadow-sm focus:ring-1 focus:ring-warning min-h-[160px] custom-scrollbar" 
+                        value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
+                        onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="h-px bg-foreground/5 bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-3 rounded bg-success" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60 italic">Resolution Manifest — {previewNcal}</span>
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-black text-[9px] uppercase tracking-widest text-foreground/40 ml-1">Internal Resolution Payload</label>
+                    <textarea
+                      className="flex w-full rounded-md border border-foreground/10 bg-foreground/[0.01] px-4 py-3 text-[11px] font-mono leading-relaxed shadow-sm focus:ring-1 focus:ring-success min-h-[160px] custom-scrollbar" 
+                      value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
+                      onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
+                    />
+                  </div>
+                  {(previewNcal === 'YELLOW' || getActiveTemplate('close', 'vendor')) && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-black text-[9px] uppercase tracking-widest text-foreground/40 ml-1">Vendor Clearance Manifest</label>
+                      <textarea
+                        className="flex w-full rounded-md border border-foreground/10 bg-success/5 px-4 py-3 text-[11px] font-mono leading-relaxed shadow-sm focus:ring-1 focus:ring-success min-h-[160px] custom-scrollbar" 
+                        value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
+                        onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* Right: Simulation Engine */}
+        <div className="xl:sticky xl:top-6 flex flex-col gap-6">
+          <SectionCard 
+            title="Protocol Simulation" 
+            subtitle="Live mobile device visualization" 
+            icon={<Smartphone size={16} className="text-primary" />}
+            padding={false}
+          >
+            <div className="p-4 border-b border-foreground/5 bg-foreground/[0.02]">
+              <div className="flex bg-foreground/[0.05] p-0.5 rounded-md">
+                {['open', 'close'].map(t => (
                   <button
-                    key={seg}
-                    className={`px-4 py-2 text-xs font-semibold tracking-wider uppercase transition-all rounded-md ${
-                      previewNcal === seg 
-                        ? 'bg-base-100 shadow-sm text-base-content font-bold' 
-                        : 'text-base-content/65 font-bold hover:bg-base-200 hover:text-base-content/80'
-                    }`}
-                    onClick={() => setPreviewNcal(seg)}
+                    key={t}
+                    onClick={() => setPreviewType(t)}
+                    className={cn(
+                      "flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md transition-all",
+                      previewType === t ? "bg-background text-primary shadow-sm" : "text-foreground/40 hover:text-foreground/60"
+                    )}
+                    aria-label={`Toggle simulation to ${t}`}
                   >
-                    {seg}
+                    {t === 'open' ? 'Deployment' : 'Resolution'}
                   </button>
                 ))}
               </div>
-
-              <div className="p-4 md:p-6 space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-4 bg-primary rounded-full" />
-                    <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Deployment Template — {previewNcal}</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-6">
-                    <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Internal Coordination Payload</span></div>
-                      <textarea
-                        className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
-                        rows={6}
-                        value={cfg[`template_open_internal_${previewNcal.toLowerCase()}`] || cfg.template_open || ''}
-                        onChange={e => setF(`template_open_internal_${previewNcal.toLowerCase()}`, e.target.value)}
-                        placeholder="Define internal notification schema..."
-                      />
-                    </label>
-                    {previewNcal === 'YELLOW' && (
-                      <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Vendor / MO Protocol</span></div>
-                        <textarea
-                          className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
-                          rows={6}
-                          value={cfg[`template_open_vendor_${previewNcal.toLowerCase()}`] || cfg.template_open_vendor || ''}
-                          onChange={e => setF(`template_open_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
-                          placeholder="Define vendor maintenance order schema..."
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                <div className="divider opacity-10"></div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-4 bg-success rounded-full" />
-                    <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Resolution Template — {previewNcal}</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-6">
-                    <label className="form-control w-full">
-                      <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Internal Resolution Payload</span></div>
-                      <textarea
-                        className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
-                        rows={6}
-                        value={cfg[`template_close_internal_${previewNcal.toLowerCase()}`] || cfg.template_close || ''}
-                        onChange={e => setF(`template_close_internal_${previewNcal.toLowerCase()}`, e.target.value)}
-                        placeholder="Define internal resolution schema..."
-                      />
-                    </label>
-                    {previewNcal === 'YELLOW' && (
-                      <label className="form-control w-full">
-                        <div className="label pt-0"><span className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider">Vendor Clearance Protocol</span></div>
-                        <textarea
-                          className="textarea border-none w-full font-mono text-sm leading-relaxed bg-base-200 focus:bg-base-300/50 transition-all rounded-lg" 
-                          rows={6}
-                          value={cfg[`template_close_vendor_${previewNcal.toLowerCase()}`] || cfg.template_close_vendor || ''}
-                          onChange={e => setF(`template_close_vendor_${previewNcal.toLowerCase()}`, e.target.value)}
-                          placeholder="Define vendor clearance schema..."
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                <div className="alert alert-info bg-info/10 text-info-content rounded-lg p-3">
-                  <Info size={16} />
-                  <span className="text-xs font-medium">Empty fields will automatically fall back to the Global Template.</span>
-                </div>
-              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Right: sticky preview */}
-        <div className="lg:sticky lg:top-6 h-fit">
-          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5">
-            <div className="p-4 md:p-6 bg-base-200/30 border-b border-base-content/5">
-               <div className="flex items-center justify-between gap-2">
-                <div>
-                  <h3 className="card-title text-base font-bold flex items-center gap-2"><Smartphone size={16} className="text-primary" /> Device Preview</h3>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              {/* Internal Channel Mock */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2">
+                     <div className="w-1 h-3 rounded bg-primary/40" />
+                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic">Coordination Channel</span>
+                   </div>
+                   {(() => {
+                      const ncalColorsMap = { BLACK: 'text-foreground/80', RED: 'text-error', ORANGE: 'text-orange-500', YELLOW: 'text-warning', BLUE: 'text-info' };
+                      const colorClass = previewType === 'close' ? 'text-success' : (ncalColorsMap[previewNcal] || 'text-foreground/80');
+                      return (
+                        <div className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[8px] font-black uppercase tracking-widest", previewType === 'close' ? "bg-success/5 border-success/10 text-success" : "bg-foreground/5 border-foreground/10 " + colorClass)}>
+                          {previewType === 'close' ? <CheckCircle2 size={10} /> : <Circle size={10} fill="currentColor" />}
+                          {previewNcal}
+                        </div>
+                      );
+                   })()}
                 </div>
-                <div className="join bg-base-200 p-1 rounded-md">
-                  {['open', 'close'].map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setPreviewType(t)}
-                      className={`btn btn-xs join-item border-none text-xs uppercase tracking-wide px-3 ${previewType === t ? 'bg-base-100 text-base-content/80 shadow-sm' : 'bg-transparent text-base-content/40 hover:text-base-content/70'}`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
-              {/* Internal preview */}
-              <div className="space-y-2">
-                {(() => {
-                  const ncalColorsMap = { BLACK: 'text-base-content', RED: 'text-error', ORANGE: 'text-orange-500', YELLOW: 'text-warning', BLUE: 'text-info' };
-                  const colorClass = previewType === 'close' ? 'text-success' : (ncalColorsMap[previewNcal] || 'text-base-content');
-                  return (
-                    <div className={`text-xs font-semibold ${colorClass} uppercase tracking-wider flex items-center gap-1.5`}>
-                      {previewType === 'close' ? <CheckCircle2 size={12} strokeWidth={3} /> : <Circle size={12} fill="currentColor" className="opacity-90" />} 
-                      <span>{previewType === 'close' ? 'RESOLVED' : 'INTERNAL ALERT'}</span>
-                    </div>
-                  );
-                })()}
-
-                <div className="bg-base-200/50 rounded-lg p-4 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-base-content/80 shadow-inner">
-                  {renderPreview(getActiveTemplate(previewType, 'internal'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur" />
+                  <div className="relative bg-background border border-foreground/10 rounded-lg p-5 font-mono text-[10px] leading-relaxed whitespace-pre-wrap shadow-2xl">
+                    {renderPreview(getActiveTemplate(previewType, 'internal'), previewNcal, previewType === 'close') || <span className="text-foreground/20 italic font-sans">[ No Template Defined ]</span>}
+                  </div>
                 </div>
               </div>
 
-              {/* Vendor preview (Yellow only or if template exists) */}
+              {/* Vendor Channel Mock */}
               {(previewNcal === 'YELLOW' || getActiveTemplate(previewType, 'vendor')) && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="text-xs font-semibold text-warning uppercase tracking-wider flex items-center gap-1.5">
-                    <Circle size={12} fill="currentColor" className="opacity-90" />
-                    VENDOR ESCALATION
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-3 rounded bg-warning/40" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic">Vendor Field Protocol</span>
                   </div>
-                  <div className="bg-warning/5 rounded-lg p-4 font-mono text-xs leading-relaxed border-none whitespace-pre-wrap break-words min-h-[160px] text-warning/80 shadow-inner">
-                    {renderPreview(getActiveTemplate(previewType, 'vendor'), previewNcal, previewType === 'close') || <span className="opacity-20 italic">No template defined</span>}
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-warning/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur" />
+                    <div className="relative bg-warning/[0.03] border border-warning/10 rounded-lg p-5 font-mono text-[10px] leading-relaxed whitespace-pre-wrap shadow-xl text-warning/90">
+                      {renderPreview(getActiveTemplate(previewType, 'vendor'), previewNcal, previewType === 'close') || <span className="text-warning/20 italic font-sans">[ No Template Defined ]</span>}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Variable Glossary */}
-               <div className="bg-primary/5 rounded-lg p-6">
-                <div className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
-                  <Info size={14} /> Data Directives
+              {/* Data Directive Guide */}
+              <div className="pt-6 border-t border-foreground/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Info size={14} className="text-primary/60" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">Dynamic Directives</span>
                 </div>
-                <div className="grid grid-cols-1 gap-2 text-sm font-medium">
+                <div className="grid grid-cols-1 gap-1">
                   {[
-                    ['{ncal}', 'Segment Icon'],
-                    ['{level}', 'Service Prio'],
-                    ['{odp}', 'Infra ID'],
-                    ['{brand}', 'Site Name'],
-                    ['{duration}', 'Time Metric'],
-                    ['{time}', 'Local Time'],
+                    ['{ncal}', 'NCAL Status Icon'],
+                    ['{level}', 'Service Priority Level'],
+                    ['{case_no}', 'Incident Tracking Number'],
+                    ['{brand}', 'Customer Brand / Site Name'],
+                    ['{odp}', 'Infrastructure ID (ODP/ODC)'],
+                    ['{duration}', 'Elapsed Settlement Time'],
+                    ['{time}', 'Timestamp of Event Execution']
                   ].map(([v, d]) => (
-                    <div key={v} className="flex justify-between items-center py-1.5 last:border-0">
-                      <span className="font-mono text-primary bg-primary/10 px-1.5 rounded">{v}</span>
-                      <span className="text-base-content/65 uppercase tracking-wider text-xs font-bold">{d}</span>
+                    <div key={v} className="flex justify-between items-center py-2 px-3 rounded bg-foreground/[0.02] border border-foreground/[0.02] group hover:bg-foreground/[0.04] transition-colors">
+                      <code className="text-[10px] font-black text-primary font-mono">{v}</code>
+                      <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest group-hover:text-foreground/60 transition-colors">{d}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
+          </SectionCard>
         </div>
       </div>
     </div>

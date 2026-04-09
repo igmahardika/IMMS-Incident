@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api, MONTH_NAMES, formatDuration } from '../utils/api.js';
-import { NcalBadge, Spinner } from '../components/ui/index.jsx';
-import { Calendar, Clock, Zap, TrendingUp, BarChart2 } from 'lucide-react';
+import { NcalBadge, Spinner, SectionCard } from '../components/ui/index.jsx';
+import { Calendar, Clock, Zap, BarChart2 } from 'lucide-react';
+import { cn } from '../lib/utils.js';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
@@ -33,29 +34,32 @@ export default function MonthlyViewPage() {
 
   const MetricCell = ({ count, nett, gross }) => {
     if (!count) return (
-      <div className="flex flex-col items-center justify-center h-full opacity-10">
-        <div className="w-8 h-px bg-base-content/20" />
+      <div className="flex flex-col items-center justify-center p-3 opacity-5 overflow-hidden">
+        <div className="w-4 h-0.5 bg-foreground rounded-full rotate-45 transform translate-y-0.5" />
       </div>
     );
     
-    // Calculate Averages
     const avgNett = Math.round(nett / count);
     const avgGross = Math.round(gross / count);
     
     return (
-      <div className="flex flex-col gap-0.5 group/cell">
+      <div className="flex flex-col gap-1.5 py-2.5 px-3 group/cell hover:bg-foreground/[0.02] transition-colors">
         <div className="flex items-start justify-between">
-          <div className="text-sm font-bold text-base-content font-mono tracking-tighter leading-none">
+          <div className="text-[11px] font-black text-foreground tracking-tighter leading-none font-mono">
             {formatDuration(avgNett)}
           </div>
-          <div className="badge badge-sm badge-ghost font-bold text-[10px] opacity-60 px-1 h-3.5 border-none min-w-[20px]">
+          <div className="bg-primary/10 text-primary font-black text-[9px] px-1 rounded-sm h-3.5 flex items-center justify-center min-w-[18px] border border-primary/20">
             {count}
           </div>
         </div>
-        <div className="flex flex-col border-l border-base-content/10 pl-1.5">
-          <div className="text-xs text-base-content/65 font-bold flex items-center gap-1 uppercase tracking-tighter leading-none">
-            <span className="font-mono text-base-content/80 text-[11px]">{formatDuration(avgGross)}</span>
+        <div className="flex items-center gap-1.5">
+          <div className="h-1 flex-1 bg-foreground/5 rounded-full overflow-hidden">
+            <div 
+              className={cn("h-full rounded-full transition-all duration-500", avgNett < avgGross ? "bg-success" : "bg-warning")} 
+              style={{ width: `${Math.min(100, (avgNett / Math.max(1, avgGross)) * 100)}%` }} 
+            />
           </div>
+          <span className="text-[9px] font-black text-foreground/20 font-mono tracking-tighter">{formatDuration(avgGross)}</span>
         </div>
       </div>
     );
@@ -66,99 +70,85 @@ export default function MonthlyViewPage() {
   const yearlyNett = history.reduce((s, i) => s + (i.duration_nett_seconds || 0), 0);
   const yearlyGross = history.reduce((s, i) => s + (i.duration_gross_seconds || 0), 0);
   const avgYearlyNett = yearlyCount ? Math.round(yearlyNett / yearlyCount) : 0;
-  const avgYearlyGross = yearlyCount ? Math.round(yearlyGross / yearlyCount) : 0;
   const efficiencyRatio = yearlyGross ? Math.round((yearlyNett / yearlyGross) * 100) : 0;
 
-  const busyMonthIdx = Object.keys(grouped).reduce((a, b) => {
-    const countA = Object.values(grouped[a] || {}).reduce((s, n) => s + n.count, 0);
-    const countB = Object.values(grouped[b] || {}).reduce((s, n) => s + n.count, 0);
-    return countA > countB ? a : b;
-  }, Object.keys(grouped)[0] || 1);
+  const busyMonthIdx = Object.keys(grouped).length > 0
+    ? Object.keys(grouped).reduce((a, b) => {
+        const countA = Object.values(grouped[a] || {}).reduce((s, n) => s + n.count, 0);
+        const countB = Object.values(grouped[b] || {}).reduce((s, n) => s + n.count, 0);
+        return countA > countB ? a : b;
+      }, Object.keys(grouped)[0])
+    : 1;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4 py-1">
-        <div className="flex items-baseline gap-3">
-          <div className="text-xl font-bold tracking-tight">Monthly Analysis</div>
-          <div className="hidden md:block text-xs font-semibold uppercase tracking-wider text-base-content/50">Performance patterns by category</div>
+    <div className="flex flex-col gap-6 h-full font-inter">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">Monthly Analysis</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">Strategic performance & lifecycle trends</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-bold opacity-50 uppercase tracking-widest">
-            <Calendar size={12} /> Year
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9 shadow-[inset_0_1px_1px_rgba(0,0,0,0.02)]">
+            <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] flex items-center gap-1.5"><Calendar size={12} /> Temporal Filter</span>
+            <div className="w-px h-3 bg-foreground/10 mx-1" />
+            <select 
+              className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/70 uppercase tracking-widest outline-none cursor-pointer"
+              value={year} 
+              onChange={e => setYear(e.target.value)}
+            >
+              {YEAR_OPTIONS.map(y => <option key={y} value={y} className="bg-background">{y} CALENDAR</option>)}
+            </select>
           </div>
-          <select className="select select-bordered select-xs w-24 font-bold h-7 min-h-0 text-xs" value={year} onChange={e => setYear(e.target.value)}>
-            {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Spinner /></div>
+        <div className="flex justify-center py-20"><Spinner size="lg" /></div>
       ) : (
-        <>
-          {/* KPI Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                <BarChart2 size={18} />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-base-content/65 uppercase tracking-tighter leading-none">Total Case</div>
-                <div className="text-xl font-bold font-mono tracking-tighter text-base-content mt-1 leading-none">{yearlyCount}</div>
-              </div>
-            </div>
-            
-            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success border border-success/20">
-                <Clock size={18} />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest leading-none">Avg Nett</div>
-                <div className="text-lg font-bold font-mono tracking-tighter text-success mt-0.5">{formatDuration(avgYearlyNett)}</div>
-              </div>
-            </div>
-
-            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-base-content/5 flex items-center justify-center text-base-content/60 border border-base-content/10">
-                <Calendar size={18} />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest leading-none">Peak Month</div>
-                <div className="text-lg font-bold tracking-tighter text-base-content mt-0.5 truncate max-w-[100px]">
-                  {MONTH_NAMES[busyMonthIdx - 1] || '—'}
+        <div className="flex flex-col gap-6">
+          {/* KPI Analytics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[
+                { label: 'Yearly Aggregate', value: yearlyCount, sub: 'Total Cases', icon: BarChart2, color: 'text-primary', bg: 'bg-primary/5' },
+                { label: 'Resolution AVG', value: formatDuration(avgYearlyNett), sub: 'Nett Response', icon: Clock, color: 'text-success', bg: 'bg-success/5' },
+                { label: 'Temporal Peak', value: (MONTH_NAMES[busyMonthIdx - 1] || '—').toUpperCase(), sub: 'Volume Max', icon: Calendar, color: 'text-foreground/40', bg: 'bg-foreground/5' },
+                { label: 'Efficiency Ratio', value: `${efficiencyRatio}%`, sub: 'Nett/Gross', icon: Zap, color: 'text-warning', bg: 'bg-warning/5' }
+            ].map((kpi, i) => (
+                <div key={i} className="relative group overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.03] to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative bg-background border border-foreground/5 rounded-xl p-4 flex items-center gap-4 transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-xl group-hover:shadow-primary/5">
+                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-foreground/5 transition-transform duration-500 group-hover:rotate-6", kpi.bg, kpi.color)}>
+                            <kpi.icon size={18} />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] leading-none mb-1.5">{kpi.label}</span>
+                            <span className="text-xl font-black tracking-tighter text-foreground leading-none truncate font-mono">{kpi.value}</span>
+                            <div className="flex items-center gap-1.5 mt-2">
+                                <div className={cn("h-1 w-8 rounded-full", kpi.bg.replace('/5', '/20'))} />
+                                <span className="text-[8px] font-black tracking-[0.1em] text-foreground/20 uppercase whitespace-nowrap">{kpi.sub}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="bg-base-100 shadow-sm rounded-xl p-3 border border-base-content/5 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center text-warning border border-warning/20">
-                <Zap size={18} />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest leading-none">Efficiency</div>
-                <div className="text-lg font-bold font-mono tracking-tighter text-warning mt-0.5">{efficiencyRatio}%</div>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Main Table */}
-          <div className="bg-base-100 shadow-sm border border-base-content/5 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="table table-bordered w-full border-separate border-spacing-0">
+          <SectionCard padding={false} className="border-foreground/5 flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-auto custom-scrollbar w-full relative">
+              <table className="w-full text-left border-separate border-spacing-0 min-w-[1200px]">
                 <thead>
-                  <tr className="bg-base-200/50 backdrop-blur-md">
-                    <th className="sticky left-0 bg-base-200/80 z-30 min-w-[140px] border-r border-base-content/10 uppercase tracking-tighter text-xs text-base-content/65 py-2.5 font-bold">Period</th>
+                  <tr className="bg-foreground/[0.02]">
+                    <th className="sticky left-0 top-0 bg-background/95 backdrop-blur-md z-40 min-w-[180px] border-r border-b border-foreground/5 uppercase tracking-[0.2em] text-[10px] font-black text-foreground/30 py-4 px-5 shadow-[1px_1px_0_0_rgba(0,0,0,0.05)]">Temporal Period</th>
                     {NCAL_ORDER.map(n => (
-                      <th key={n} className="text-center min-w-[110px] md:min-w-[130px] pb-1.5 bg-transparent border-r border-base-content/5">
-                        <div className="flex flex-col items-center gap-1.5">
-                          <NcalBadge value={n} />
-                        </div>
+                      <th key={n} className="sticky top-0 bg-background/95 backdrop-blur-md z-30 text-center min-w-[140px] p-2 border-r border-b border-foreground/5">
+                        <NcalBadge value={n} />
                       </th>
                     ))}
-                    <th className="sticky right-0 bg-base-200/80 z-30 text-center min-w-[140px] md:min-w-[160px] uppercase tracking-tighter text-xs text-base-content/65 py-2.5 border-l border-base-content/10 font-bold">Performance</th>
+                    <th className="sticky right-0 top-0 bg-background/95 backdrop-blur-md z-40 text-center min-w-[180px] uppercase tracking-[0.2em] text-[10px] font-black text-foreground/30 py-4 border-l border-b border-foreground/5 shadow-[-1px_1px_0_0_rgba(0,0,0,0.05)]">Performance Delta</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-base-content/5">
+                <tbody className="divide-y divide-foreground/5">
                   {months.map(mo => {
                     const monthData = grouped[mo] || {};
                     const totalCount = NCAL_ORDER.reduce((s, n) => s + (monthData[n]?.count || 0), 0);
@@ -168,18 +158,19 @@ export default function MonthlyViewPage() {
                     const eff = totalGross ? Math.round((totalNett / totalGross) * 100) : 0;
 
                     return (
-                      <tr key={mo} className="hover:bg-primary/5 transition-all group border-b border-base-content/5">
-                        <td className="sticky left-0 bg-base-100 group-hover:bg-base-100 z-10 transition-colors border-r border-base-content/10">
-                          <div className="flex items-center gap-3 px-1">
-                            <div className={`w-1 h-7 rounded-full transition-all duration-300 ${totalCount > 0 ? 'bg-primary' : 'bg-base-300/20'}`} />
+                      <tr key={mo} className="hover:bg-foreground/[0.01] transition-colors group">
+                        <td className={cn("sticky left-0 z-10 transition-colors border-r border-foreground/5 px-5 py-4 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]", 
+                            totalCount > 0 ? "bg-background group-hover:bg-foreground/[0.01]" : "bg-foreground/[0.01] opacity-40")}>
+                          <div className="flex items-center gap-4">
+                            <div className={cn("w-1 h-7 rounded-full transition-all duration-500", totalCount > 0 ? 'bg-primary shadow-lg shadow-primary/20' : 'bg-foreground/5')} />
                             <div className="flex flex-col">
-                              <span className="font-bold text-xs tracking-tight">{MONTH_NAMES[mo - 1]}</span>
-                              <span className="text-[10px] font-bold opacity-20 uppercase tracking-widest leading-none">{year}</span>
+                              <span className="font-black text-[12px] tracking-tight text-foreground uppercase leading-none">{MONTH_NAMES[mo - 1]}</span>
+                              <span className="text-[9px] font-black text-foreground/30 uppercase tracking-widest mt-1.5">{year} PERIOD</span>
                             </div>
                           </div>
                         </td>
                         {NCAL_ORDER.map(n => (
-                          <td key={n} className="py-1 px-3 border-r border-base-content/5">
+                          <td key={n} className="p-0 border-r border-foreground/5 align-top">
                             <MetricCell
                               count={monthData[n]?.count}
                               nett={monthData[n]?.totalNett}
@@ -187,14 +178,17 @@ export default function MonthlyViewPage() {
                             />
                           </td>
                         ))}
-                        <td className="sticky right-0 bg-base-100 group-hover:bg-base-100 z-10 text-center border-l border-base-content/10">
-                          <div className="flex flex-col gap-0 items-center px-2">
-                            <div className="flex items-center gap-1.5">
-                               <span className="text-lg font-bold font-mono tracking-tighter text-primary">{totalCount || 0}</span>
-                               <span className="badge badge-sm font-bold opacity-65 uppercase h-4 px-1 text-xs border-none">{eff}%</span>
+                        <td className="sticky right-0 bg-background group-hover:bg-foreground/[0.01] z-10 text-center border-l border-foreground/5 px-5 py-4 shadow-[-1px_0_0_0_rgba(0,0,0,0.05)] transition-colors">
+                          <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center gap-3">
+                               <span className="text-2xl font-black font-mono tracking-tighter text-primary leading-none tabular-nums">{totalCount || 0}</span>
+                               <div className={cn(
+                                   "text-[9px] font-black px-1.5 py-0.5 rounded-sm flex items-center border",
+                                   eff >= 80 ? "bg-success/5 text-success border-success/20" : "bg-warning/5 text-warning border-warning/20"
+                               )}>{eff}%</div>
                             </div>
-                            <div className="text-xs font-bold text-base-content/65 flex items-center gap-1 uppercase tracking-tighter leading-none">
-                               <span className="font-mono text-base-content/85">{formatDuration(avgNett)}</span>
+                            <div className="text-[10px] font-black text-foreground/30 uppercase tracking-widest leading-none font-mono mt-1">
+                                {formatDuration(avgNett)} <span className="opacity-40">AVG</span>
                             </div>
                           </div>
                         </td>
@@ -202,29 +196,29 @@ export default function MonthlyViewPage() {
                     );
                   })}
                 </tbody>
-                <tfoot>
-                  <tr className="bg-base-content/5">
-                    <td className="sticky left-0 bg-base-300 z-20 border-r border-base-content/10 py-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-base-content/50 px-3">Yearly Profile</span>
+                <tfoot className="bg-foreground/[0.03]">
+                  <tr className="border-t border-foreground/10">
+                    <td className="sticky left-0 bg-foreground/[0.03] z-20 border-r border-foreground/5 py-5 px-5 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Temporal Sum</span>
                     </td>
                     {NCAL_ORDER.map(n => {
                       const cnt = Object.values(grouped).reduce((s, m) => s + (m[n]?.count || 0), 0);
                       const nt = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalNett || 0), 0);
                       const gr = Object.values(grouped).reduce((s, m) => s + (m[n]?.totalGross || 0), 0);
                       return (
-                        <td key={n} className="py-1 px-3 border-r border-base-content/5">
+                        <td key={n} className="p-0 border-r border-foreground/5">
                           <MetricCell count={cnt} nett={nt} gross={gr} />
                         </td>
                       );
                     })}
-                    <td className="bg-primary z-20 text-center py-1.5">
-                      <div className="flex flex-col gap-0 items-center">
-                        <div className="flex items-baseline gap-1 focus-within:outline-none">
-                          <span className="text-base font-bold font-mono tracking-tighter text-primary-content">{yearlyCount}</span>
-                          <span className="text-[10px] font-bold text-primary-content/30 uppercase tracking-widest">Total</span>
+                    <td className="sticky right-0 bg-primary/95 backdrop-blur-md z-40 text-center py-5 px-5 text-primary-foreground shadow-[-5px_0_20px_-5px_rgba(var(--color-primary),0.4)]">
+                      <div className="flex flex-col gap-1 items-center">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black font-mono tracking-tighter leading-none tabular-nums">{yearlyCount}</span>
+                          <span className="text-[9px] font-black opacity-50 uppercase tracking-widest tracking-[0.1em]">TOTAL</span>
                         </div>
-                        <div className="text-[10px] font-bold text-primary-content/60 leading-none">
-                          <span className="font-mono">{formatDuration(avgYearlyNett)}</span>
+                        <div className="text-[10px] font-black opacity-60 leading-none font-mono uppercase tracking-widest mt-1">
+                          {formatDuration(avgYearlyNett)} <span className="opacity-50">ANNUAL AVG</span>
                         </div>
                       </div>
                     </td>
@@ -232,8 +226,8 @@ export default function MonthlyViewPage() {
                 </tfoot>
               </table>
             </div>
-          </div>
-        </>
+          </SectionCard>
+        </div>
       )}
     </div>
   );

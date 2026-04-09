@@ -1,48 +1,46 @@
 import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar.jsx';
 import Topbar from './Topbar.jsx';
+import { cn } from '../../lib/utils.js';
 
 /**
  * MasterLayout: The unified shell for the IMMS platform.
- * Implements the Drawer component for responsive nav and a centralized bg-base-200 content area.
+ * Refactored to tailwind v4 native flexbox.
  */
 export default function MasterLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   return (
-    <div className="drawer lg:drawer-open font-sans antialiased">
-      <input 
-        id="sidebar-drawer" 
-        type="checkbox" 
-        className="drawer-toggle" 
-        checked={mobileOpen} 
-        onChange={(e) => setMobileOpen(e.target.checked)} 
-      />
+    <div className="flex h-dvh w-full overflow-hidden bg-background font-sans antialiased">
       
-      <div className="drawer-content flex flex-col min-h-screen bg-base-200 selection:bg-primary/20 selection:text-primary overflow-x-hidden">
-        {/* Global Navigation Bar */}
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity"
+          onClick={closeMobile}
+        />
+      )}
+
+      {/* Sidebar Area */}
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <Sidebar onClose={closeMobile} mobileOpen={mobileOpen} />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-muted/20 overflow-hidden">
         <Topbar />
         
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 md:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8">
           <div className="max-w-[1600px] mx-auto w-full transition-all duration-300">
             {children}
           </div>
         </main>
-
-        {/* Optional Global Footer could go here */}
       </div>
 
-      <div className="drawer-side z-50">
-        <label 
-          htmlFor="sidebar-drawer" 
-          aria-label="close sidebar" 
-          className="drawer-overlay" 
-          onClick={closeMobile}
-        ></label>
-        <Sidebar mobileOpen={mobileOpen} onClose={closeMobile} />
-      </div>
     </div>
   );
 }

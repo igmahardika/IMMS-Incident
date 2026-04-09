@@ -1,22 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDateTime, MONTH_NAMES, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
-import { NcalBadge, StatusPill, EmptyState, LevelBadge } from '../components/ui/index.jsx';
+import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton } from '../components/ui/index.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Search, Download, Eye, Trash2, LayoutList, Map as MapIcon } from 'lucide-react';
+import { Search, Download, Eye, Trash2, LayoutList, Map as MapIcon, ChevronRight, Calendar } from 'lucide-react';
 import CustomerMap from '../components/ui/CustomerMap.jsx';
+import { cn } from '../lib/utils.js';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
-
-// ─── Table CSS ────────────────────────────────────────────────────────────────
-// Key design decisions:
-//   • Single font: var(--font-main) everywhere — no mixed mono/sans
-//   • td has overflow:hidden so content NEVER bleeds into adjacent columns
-//   • Spans use white-space:normal → long text wraps within the column width
-//   • Only fixed-format values (timestamps, HH:MM:SS, case no) use nowrap
-  /* TABLE_CSS block intentionally removed for Tailwind classes */
 
 // Format seconds → HH:MM:SS
 function fmtDur(sec) {
@@ -67,7 +60,7 @@ export default function HistoryPage() {
       setSelectedIds([]);
     } catch (e) { addToast(e.message, 'error'); }
     finally { setLoading(false); }
-  }, [filters.month, filters.year, filters.ncal]);
+  }, [filters.month, filters.year, filters.ncal, addToast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -98,277 +91,178 @@ export default function HistoryPage() {
   const allSelected = filtered.length > 0 && selectedIds.length === filtered.length;
   const toggleRow = id => setSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
+  const faintHdr = "py-3 px-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 text-left bg-foreground/[0.02] border-b border-foreground/5";
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 h-full font-inter">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight uppercase">Incident History</h1>
-          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40">{filtered.length} records found</p>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">Incident Archive</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{filtered.length} verified historical records</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {selectedIds.length > 0 && (
-            <>
-              <button className="btn btn-ghost btn-sm"
-                onClick={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))}>
-                {allSelected ? 'Deselect All' : 'Select All'}
-              </button>
-              <button className="btn btn-danger btn-sm" onClick={handleDeleteSelected} disabled={deleting}>
-                <Trash2 size={12} /> {deleting ? 'Deleting...' : `Delete (${selectedIds.length})`}
-              </button>
-            </>
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
+              <Button variant="ghost" size="sm" className="text-[9px] font-black tracking-widest" onClick={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))}>
+                {allSelected ? 'DESELECT' : 'SELECT ALL'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleDeleteSelected} isLoading={deleting} className="text-error hover:bg-error/10 text-[9px] font-black tracking-widest">
+                <Trash2 size={12} /> DELETE ({selectedIds.length})
+              </Button>
+            </div>
           )}
-          <div className="join">
-            <button className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setViewMode('list')} title="List View"><LayoutList size={14} /></button>
-            <button className={`btn btn-sm join-item ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setViewMode('map')} title="Map View"><MapIcon size={14} /></button>
+          <div className="flex bg-foreground/[0.03] p-0.5 rounded-md border border-foreground/5 mr-2">
+            <button className={cn("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded transition-all", viewMode === 'list' ? "bg-background text-primary shadow-sm" : "text-foreground/40 hover:text-foreground/60")} onClick={() => setViewMode('list')}>
+              <LayoutList size={12} className="inline mr-1" /> List
+            </button>
+            <button className={cn("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded transition-all", viewMode === 'map' ? "bg-background text-primary shadow-sm" : "text-foreground/40 hover:text-foreground/60")} onClick={() => setViewMode('map')}>
+              <MapIcon size={12} className="inline mr-1" /> Map
+            </button>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => exportCSV(filtered)}>
-            <Download size={12} /> Export CSV
-          </button>
+          <Button variant="ghost" size="sm" onClick={() => exportCSV(filtered)} className="font-bold text-[9px] tracking-widest">
+            <Download size={12} /> EXPORT CSV
+          </Button>
         </div>
       </div>
 
       {viewMode === 'map' ? (
-        <CustomerMap customers={customers} onRefresh={() => api.getCustomers().then(setCustomers)}
-          initialMode="trouble" showTroubleMode hideCustomerPins
-          startDate={filters.month ? `${filters.year}-${filters.month}-01 00:00:00` : `${filters.year}-01-01 00:00:00`}
-          endDate={filters.month
-            ? `${filters.year}-${filters.month}-${new Date(+filters.year, +filters.month, 0).getDate()} 23:59:59`
-            : `${filters.year}-12-31 23:59:59`}
-        />
+        <SectionCard padding={false} className="min-h-[600px]">
+          <CustomerMap customers={customers} onRefresh={() => api.getCustomers().then(setCustomers)}
+            initialMode="trouble" showTroubleMode hideCustomerPins
+            startDate={filters.month ? `${filters.year}-${filters.month}-01 00:00:00` : `${filters.year}-01-01 00:00:00`}
+            endDate={filters.month
+              ? `${filters.year}-${filters.month}-${new Date(+filters.year, +filters.month, 0).getDate()} 23:59:59`
+              : `${filters.year}-12-31 23:59:59`}
+          />
+        </SectionCard>
       ) : (
         <>
-          {/* Filter bar */}
-          <div className="flex items-center gap-2 flex-wrap bg-base-100 p-3 rounded-xl shadow-sm">
-            <label className="input input-ghost input-md flex items-center gap-2 flex-1 min-w-[240px] bg-base-200/50">
-              <Search size={16} className="text-base-content/60" />
-              <input type="text" className="grow font-semibold text-sm"
-                placeholder="Search case, site, technician..."
-                value={filters.search} onChange={e => setF('search', e.target.value)} />
-            </label>
-            <select className="select select-ghost select-md w-[100px] font-semibold text-sm bg-base-200/50" value={filters.year}
-              onChange={e => setF('year', e.target.value)}>
-              {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <select className="select select-ghost select-md w-[140px] font-semibold text-sm bg-base-200/50" value={filters.month}
-              onChange={e => setF('month', e.target.value)}>
-              <option value="">All Months</option>
-              {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
-            </select>
-            <select className="select select-ghost select-md w-[140px] font-semibold text-sm bg-base-200/50" value={filters.ncal}
-              onChange={e => setF('ncal', e.target.value)}>
-              <option value="">All NCAL</option>
-              {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
+          {/* Filter system */}
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4">
+            <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
+              <Search size={14} className="text-foreground/30" />
+              <input 
+                type="text" 
+                className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full py-1 placeholder:text-foreground/20 uppercase tracking-widest" 
+                placeholder="Search Archive (Case, Site, Tech)..." 
+                value={filters.search} 
+                onChange={e => setF('search', e.target.value)} 
+              />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
+                <Calendar size={12} className="text-foreground/30" />
+                <select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[80px]" value={filters.year} onChange={e => setF('year', e.target.value)}>
+                  {YEAR_OPTIONS.map(y => <option key={y} value={y} className="bg-background">{y}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
+                <select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[120px]" value={filters.month} onChange={e => setF('month', e.target.value)}>
+                  <option value="" className="bg-background">Full Year</option>
+                  {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1).padStart(2, '0')} className="bg-background">{m.toUpperCase()}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
+                <select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[100px]" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
+                  <option value="" className="bg-background">ALL NCAL</option>
+                  {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n} className="bg-background">{n}</option>)}
+                </select>
+              </div>
+            </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
-            <div className="overflow-auto w-full max-h-[75vh] custom-scrollbar border-t border-base-content/5">
+          {/* Data grid */}
+          <SectionCard padding={false} className="border-foreground/5 min-h-0 flex-1">
+            <div className="overflow-auto w-full max-h-[70vh] custom-scrollbar">
               {loading ? (
-                <div className="flex flex-col items-center justify-center p-20 gap-4">
-                  <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/65">Syncing History Data</span>
-                </div>
+                <TableSkeleton rows={12} />
               ) : filtered.length === 0 ? (
                 <EmptyState
-                  icon={<Search size={48} className="opacity-20" />}
-                  title="No results found"
-                  desc="Try adjusting your filters or search terms."
+                  icon={<Search size={40} className="text-foreground/10" />}
+                  title="Archive Entry Not Found"
+                  desc="Try adjusting filters or search parameters."
                 />
               ) : (
-                <table className="table table-sm table-pin-rows table-stacked w-full lg:min-w-[2840px]">
+                <table className="w-full text-left border-separate border-spacing-0 min-w-[2800px]">
                   <thead>
-                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                      <th className="bg-base-100/80 backdrop-blur-xl w-[36px]" />
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[110px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">No Case</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[200px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Site</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">NCAL</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Spt. Level</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[80px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Status</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[60px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Lv</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[160px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Technician</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[160px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Segment / ODP</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Start Open</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Start Esc.</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">End</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Gross</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Nett</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 1 Start</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 1 End</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 2 Start</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[155px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pause 2 End</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[90px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Tot. Pause</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[240px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Problem</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[220px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Penyebab</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[220px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Action Terakhir</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[140px] text-left text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Klasifikasi</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[70px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pwr↓</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl min-w-[70px] text-center text-xs font-bold uppercase tracking-wider text-base-content/65 py-3">Pwr↑</th>
-                      <th className="bg-base-100/80 backdrop-blur-xl w-[40px]" />
+                    <tr className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
+                      <th className={cn(faintHdr, "w-10 text-center sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")} />
+                      <th className={cn(faintHdr, "w-32 sticky left-10 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")}>Ticket Hash</th>
+                      <th className={cn(faintHdr, "min-w-[300px] max-w-[300px] sticky left-[168px] z-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)] pr-8")}>Site Specification</th>
+                      <th className={cn(faintHdr, "w-32 text-center pl-6")}>Segment</th>
+                      <th className={cn(faintHdr, "w-24 text-center")}>Spt. Level</th>
+                      <th className={cn(faintHdr, "w-28 text-center")}>Lifecycle</th>
+                      <th className={cn(faintHdr, "w-16 text-center")}>Level</th>
+                      <th className={cn(faintHdr, "w-44")}>Field Engineer</th>
+                      <th className={cn(faintHdr, "w-44")}>Node Mapping</th>
+                      <th className={cn(faintHdr, "w-36")}>T0 (Discovery)</th>
+                      <th className={cn(faintHdr, "w-36")}>T1 (Dispatch)</th>
+                      <th className={cn(faintHdr, "w-36")}>T2 (Resolution)</th>
+                      <th className={cn(faintHdr, "w-24 text-center")}>Gross ΔT</th>
+                      <th className={cn(faintHdr, "w-24 text-center text-primary font-black bg-primary/[0.03]")}>Nett ΔT</th>
+                      <th className={cn(faintHdr, "w-36")}>Pause A Start</th>
+                      <th className={cn(faintHdr, "w-36")}>Pause A End</th>
+                      <th className={cn(faintHdr, "w-36")}>Pause B Start</th>
+                      <th className={cn(faintHdr, "w-36")}>Pause B End</th>
+                      <th className={cn(faintHdr, "w-24 text-center")}>Sum Pause</th>
+                      <th className={cn(faintHdr, "min-w-[280px]")}>Incident Manifest</th>
+                      <th className={cn(faintHdr, "min-w-[280px]")}>Root Cause Analysis</th>
+                      <th className={cn(faintHdr, "min-w-[280px]")}>Final Countermeasure</th>
+                      <th className={cn(faintHdr, "min-w-[180px]")}>Audit Class</th>
+                      <th className={cn(faintHdr, "w-20 text-center")}>Pwr₁</th>
+                      <th className={cn(faintHdr, "w-20 text-center")}>Pwr₂</th>
+                      <th className={cn(faintHdr, "w-12 sticky right-0 z-50 shadow-[-1px_0_0_0_rgba(0,0,0,0.05)]")} />
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <tbody className="divide-y divide-foreground/5 text-[11px] font-bold">
                     {filtered.map(row => {
                       const isSel = selectedIds.includes(row.id);
                       const grossSec = row.duration_gross_seconds ?? 0;
                       const nettSec  = row.duration_nett_seconds  ?? 0;
                       const pauseSec = row.total_pause_duration_seconds ?? Math.max(0, grossSec - nettSec);
-                      // Site: infra NCAL (BLACK/RED/ORANGE) may not have brand_site → fallback odp_bts
                       const siteName = ['BLACK', 'RED', 'ORANGE'].includes(row.ncal)
                         ? (row.brand_site || row.company_name || row.odp_bts || '—')
                         : (row.brand_site || row.company_name || '—');
-                      // Segment/ODP: BLUE is always empty
                       const segOdp = row.ncal === 'BLUE' ? '' : (row.odp_bts || '');
                       const sptLv  = row.level_support || row.cust_support_level || '—';
 
-                      // Style helpers — single font, only 3 variants:
-                      //   .dim   = muted secondary text
-                      //   .bold  = primary bold (case no, site, nett dur)
-                      //   .faint = very muted (pause, escalation)
-                      // Style helpers mapped to JetBrains Mono and Font-Medium
-                      const dim   = 'text-base-content/65 font-bold';
-                      const bold  = 'text-base-content/95 font-bold';
-                      const faint = 'text-base-content/45 font-bold';
-                      const reg   = 'text-base-content/85 font-medium'; // Higher contrast for body text
-                      const nwrap = 'font-mono whitespace-nowrap text-sm tracking-tight tabular-nums';
-                      const awrap = 'whitespace-normal font-sans text-sm leading-relaxed tracking-tight'; 
-
                       return (
-                        <tr key={row.id} className={`hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5 ${isSel ? 'bg-primary/5' : ''}`} onClick={() => toggleRow(row.id)}>
-
-                          {/* Checkbox — hover-reveal */}
-                          <td className="px-2 text-center" onClick={e => e.stopPropagation()} data-label="Select">
-                            <input type="checkbox" className={`form-checkbox ht-cb`}
-                              checked={isSel} onChange={() => toggleRow(row.id)} />
+                        <tr key={row.id} className={cn("transition-all duration-200 group cursor-pointer", isSel ? "bg-primary/[0.08]" : "hover:bg-foreground/[0.02]")} onClick={() => toggleRow(row.id)}>
+                          <td className={cn("px-4 py-2.5 text-center transition-colors sticky left-0 z-30 border-b border-foreground/5", isSel ? "bg-primary/5 shadow-[2px_0_4px_-2px_rgba(var(--color-primary),0.05)]" : "bg-background group-hover:bg-foreground/[0.01] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox" className="w-3.5 h-3.5 rounded border-foreground/20 text-primary transition-all focus:ring-primary focus:ring-offset-background bg-transparent" checked={isSel} onChange={() => toggleRow(row.id)} />
                           </td>
 
-                          <td data-label="No Case">
-                            <span className={`${nwrap} ${bold}`}>{row.case_no || '—'}</span>
-                          </td>
-
-                          {/* Site — wraps if long */}
-                          <td title={siteName} data-label="Site">
-                            <span className={`${awrap} ${bold}`}>{siteName}</span>
-                          </td>
-
-                          {/* NCAL */}
-                          <td className="text-center" data-label="NCAL">
-                            <NcalBadge value={row.ncal} />
-                          </td>
-
-                          {/* Support Level */}
-                          <td className="text-center" data-label="Spt. Level">
-                            <span className={dim}>{sptLv}</span>
-                          </td>
-
-                          {/* Status */}
-                          <td className="text-center" data-label="Status">
-                            <StatusPill status={row.status} />
-                          </td>
-
-                          {/* Level */}
-                          <td className="text-center text-xs" data-label="Lv">
-                            <LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)}
-                              targetHours={getSLATarget(row.ncal) / 3600} />
-                          </td>
-
-                          {/* Technician — wraps if long */}
-                          <td title={row.technician_name} data-label="Technician">
-                            <span className={`${awrap} ${dim}`}>{row.technician_name || '—'}</span>
-                          </td>
-
-                          {/* Segment / ODP — wraps */}
-                          <td title={segOdp} data-label="Segment / ODP">
-                            <span className={`${awrap} ${faint}`}>{segOdp}</span>
-                          </td>
-
-                          {/* Start Open — fixed format, nowrap */}
-                          <td data-label="Start Open">
-                            <span className={`${nwrap} ${dim}`}>{formatDateTime(row.start_time) || '—'}</span>
-                          </td>
-
-                          {/* Start Escalation */}
-                          <td data-label="Start Esc.">
-                            <span className={`${nwrap} ${faint}`}>{formatDateTime(row.escalation_time) || '—'}</span>
-                          </td>
-
-                          {/* End */}
-                          <td data-label="End">
-                            <span className={`${nwrap} ${dim}`}>{formatDateTime(row.end_time) || '—'}</span>
-                          </td>
-
-                          {/* Gross Duration */}
-                          <td className="text-center" data-label="Gross">
-                            <span className={`${nwrap} ${faint}`}>{fmtDur(grossSec)}</span>
-                          </td>
-
-                          {/* Nett Duration — primary/bold */}
-                          <td className="text-center" data-label="Nett">
-                            <span className={`${nwrap} ${bold}`}>{fmtDur(nettSec)}</span>
-                          </td>
-
-                          {/* Pause 1 Start */}
-                          <td data-label="Pause 1 Start"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_start) || '—'}</span></td>
-
-                          {/* Pause 1 End */}
-                          <td data-label="Pause 1 End"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause1_end) || '—'}</span></td>
-
-                          {/* Pause 2 Start */}
-                          <td data-label="Pause 2 Start"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_start) || '—'}</span></td>
-
-                          {/* Pause 2 End */}
-                          <td data-label="Pause 2 End"><span className={`${nwrap} ${faint}`}>{formatDateTime(row.pause2_end) || '—'}</span></td>
-
-                          {/* Total Pause */}
-                          <td className="text-center" data-label="Tot. Pause">
-                            <span className={`${nwrap} ${faint}`}>{fmtDur(pauseSec)}</span>
-                          </td>
-
-                          {/* Problem — wrap max 3 lines */}
-                          <td title={row.initial_problem} data-label="Problem">
-                            <span className={`${awrap} ${reg}`}>{row.initial_problem || ''}</span>
-                          </td>
-
-                          {/* Penyebab */}
-                          <td title={row.root_cause} data-label="Penyebab">
-                            <span className={`${awrap} ${reg}`}>{row.root_cause || ''}</span>
-                          </td>
-
-                          {/* Action Terakhir */}
-                          <td title={row.last_action} data-label="Action Terakhir">
-                            <span className={`${awrap} ${reg}`}>{row.last_action || ''}</span>
-                          </td>
-
-                          {/* Klasifikasi — wraps */}
-                          <td title={row.classification_name || row.klasifikasi} data-label="Klasifikasi">
-                            <span className={`${awrap} ${reg}`}>{row.classification_name || row.klasifikasi || ''}</span>
-                          </td>
-
-                          {/* Power Before */}
-                          <td className="text-center" data-label="Pwr↓">
-                            <span className={`${nwrap} text-info`}>
-                              {row.power_before != null ? row.power_before : ''}
-                            </span>
-                          </td>
-
-                          {/* Power After */}
-                          <td className="text-center" data-label="Pwr↑">
-                            <span className={`${nwrap} text-success`}>
-                              {row.power_after != null ? row.power_after : ''}
-                            </span>
-                          </td>
-
-                          {/* Detail */}
-                          <td className="text-center" onClick={e => e.stopPropagation()} data-label="Actions">
-                            <div className="md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
-                              <button className="btn btn-ghost btn-circle btn-sm shadow-sm opacity-80 hover:opacity-100"
-                                onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
-                                <Eye size={15} className="text-accent" />
-                              </button>
-                            </div>
+                          <td className={cn("px-3 py-2.5 sticky left-10 z-30 font-mono font-black text-[10px] text-primary tracking-tighter border-b border-r border-foreground/5", isSel ? "bg-primary/5 shadow-[2px_0_4px_-2px_rgba(var(--color-primary),0.05)]" : "bg-background group-hover:bg-foreground/[0.01] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")}>{row.case_no || '—'}</td>
+                          <td className={cn("px-4 py-2.5 sticky left-[168px] z-30 font-bold text-[11px] text-foreground tracking-tight truncate border-b border-r border-foreground/5 pr-8", isSel ? "bg-primary/5 shadow-[4px_0_12px_-4px_rgba(var(--color-primary),0.15)]" : "bg-background group-hover:bg-foreground/[0.01] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)]")} title={siteName}>{siteName}</td>
+                          
+                          <td className="px-3 py-2.5 text-center border-b border-r border-foreground/5 pl-6"><NcalBadge value={row.ncal} /></td>
+                          <td className="px-3 py-2.5 text-center font-bold text-[10px] text-foreground/40 uppercase tracking-widest border-b border-r border-foreground/5">{sptLv}</td>
+                          <td className="px-3 py-2.5 text-center border-b border-r border-foreground/5"><StatusPill status={row.status} /></td>
+                          <td className="px-3 py-2.5 text-center border-b border-r border-foreground/5"><LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} targetHours={getSLATarget(row.ncal) / 3600} /></td>
+                          <td className="px-3 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight border-b border-r border-foreground/5" title={row.technician_name}>{row.technician_name || '—'}</td>
+                          <td className="px-3 py-2.5 font-black text-[9px] text-foreground/20 uppercase tracking-widest truncate border-b border-r border-foreground/5" title={segOdp}>{segOdp || '—'}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/60 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.start_time).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.escalation_time).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/60 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.end_time).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 text-center font-mono font-bold text-[10px] text-foreground/40 tabular-nums italic border-b border-r border-foreground/5">{fmtDur(grossSec)}</td>
+                          <td className={cn("px-3 py-2.5 text-center font-mono font-black text-[11px] text-primary tabular-nums border-b border-r border-foreground/5", isSel ? "bg-primary/5" : "bg-primary/[0.02]")}>{fmtDur(nettSec)}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause1_start).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause1_end).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause2_start).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause2_end).replace(', ', '\n') || '—'}</td>
+                          <td className="px-3 py-2.5 text-center font-mono font-bold text-[10px] text-foreground/40 tabular-nums italic border-b border-r border-foreground/5">{fmtDur(pauseSec)}</td>
+                          <td className="px-4 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight leading-relaxed line-clamp-2 border-b border-r border-foreground/5" title={row.initial_problem}>{row.initial_problem || ''}</td>
+                          <td className="px-4 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight leading-relaxed line-clamp-2 border-b border-r border-foreground/5" title={row.root_cause}>{row.root_cause || ''}</td>
+                          <td className="px-4 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight leading-relaxed line-clamp-2 border-b border-r border-foreground/5" title={row.last_action}>{row.last_action || ''}</td>
+                          <td className="px-4 py-2.5 font-black text-[9px] text-foreground/20 uppercase tracking-widest border-b border-r border-foreground/5" title={row.classification_name || row.klasifikasi}>{row.classification_name || row.klasifikasi || '—'}</td>
+                          <td className="px-3 py-2.5 text-center font-mono font-black text-[10px] text-info/70 tabular-nums border-b border-r border-foreground/5">{row.power_before != null ? row.power_before : ''}</td>
+                          <td className="px-3 py-2.5 text-center font-mono font-black text-[10px] text-success/70 tabular-nums border-b border-foreground/5">{row.power_after != null ? row.power_after : ''}</td>
+                          
+                          <td className={cn("px-2 py-1.5 align-middle border-b sticky right-0 z-30 transition-colors shadow-[-1px_0_0_0_rgba(0,0,0,0.05)]", isSel ? "bg-primary/5" : "bg-background group-hover:bg-foreground/[0.01]")} onClick={e => e.stopPropagation()}>
+                            <button className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-foreground/5 transition-all active:scale-95 opacity-0 group-hover:opacity-100 mx-auto" onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
+                               <ChevronRight size={14} className="text-foreground/40" />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -377,7 +271,7 @@ export default function HistoryPage() {
                 </table>
               )}
             </div>
-          </div>
+          </SectionCard>
         </>
       )}
     </div>

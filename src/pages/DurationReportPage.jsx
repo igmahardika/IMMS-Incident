@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
 import { NcalBadge, SectionCard, Spinner, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Calendar } from 'lucide-react';
+import { cn } from '../lib/utils.js';
 
 const chartConfig = {
   BLACK: { label: 'BLACK', color: 'var(--ncal-black-text)' },
@@ -41,81 +43,116 @@ export default function DurationReportPage() {
   }, [year]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight uppercase">Duration Report</h1>
-        <p className="text-xs md:text-xs font-bold uppercase tracking-wider text-base-content/65">Analysis of handling duration & SLA performance</p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-4 bg-base-100 p-3 px-4 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-bold text-base-content/65 uppercase tracking-wider">
-          Filter Year:
+    <div className="flex flex-col gap-6 h-full">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Duration Report</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 leading-relaxed">Analysis of handling duration & SLA performance</p>
         </div>
-        <select className="select select-sm w-32 font-semibold text-sm h-9 bg-base-200/50" value={year} onChange={e => setYear(e.target.value)}>
-          {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
+        <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-background border border-foreground/5 rounded-md px-3 h-9 shadow-sm">
+                <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} /> Year</span>
+                <select 
+                    className="bg-transparent border-none focus:ring-0 text-[11px] font-black text-foreground outline-none cursor-pointer"
+                    value={year} 
+                    onChange={e => setYear(e.target.value)}
+                >
+                    {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+            </div>
+        </div>
       </div>
 
-      {loading ? <div className="flex justify-center pt-12"><Spinner /></div> : (
-        <div className="flex flex-col gap-4">
-          {/* Line Chart */}
-          <div className="bg-base-100 shadow-xl rounded-2xl overflow-visible">
-            <div className="p-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/65">Avg Nett Duration Trend (Minutes)</h3>
-              <p className="text-sm font-bold text-base-content/85 mt-1 uppercase tracking-tight">Per NCAL — Year {year}</p>
-            </div>
+      {loading ? <div className="flex justify-center py-20"><Spinner size="lg" /></div> : (
+        <div className="flex flex-col gap-6">
+          {/* Trend Analysis */}
+          <SectionCard 
+            title="Statistical Momentum" 
+            subtitle="Avg Nett Duration Trend (Minutes) per NCAL" 
+            padding={false}
+          >
             <div className="p-6">
               <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={duration} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="month" tick={{ className: "fill-base-content/70 font-bold", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} />
-                    <YAxis tick={{ className: "fill-base-content/70 font-bold", fontSize: 12 }} unit=" min" axisLine={false} tickLine={false} tickMargin={12} />
-                    <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
-                    <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} />
+                  <LineChart data={duration} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-foreground)" opacity={0.05} />
+                    <XAxis 
+                        dataKey="month" 
+                        tick={{ fill: 'var(--color-foreground)', opacity: 0.4, fontWeight: 900, fontSize: 10 }} 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tickMargin={12} 
+                    />
+                    <YAxis 
+                        tick={{ fill: 'var(--color-foreground)', opacity: 0.4, fontWeight: 900, fontSize: 10 }} 
+                        unit="m" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tickMargin={12} 
+                    />
+                    <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => `${val} min`} />} />
+                    <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="top" align="right" height={40} />
                     {NCAL_ORDER.map(ncal => (
-                      <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, className: "stroke-base-100", strokeWidth: 2 }} connectNulls />
+                      <Line 
+                        key={ncal} 
+                        type="monotone" 
+                        dataKey={ncal} 
+                        stroke={chartConfig[ncal].color} 
+                        strokeWidth={4} 
+                        dot={{ r: 0 }} 
+                        activeDot={{ r: 6, strokeWidth: 4, stroke: 'var(--color-background)' }} 
+                        connectNulls 
+                        animationDuration={1500}
+                      />
                     ))}
                   </LineChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* SLA Table */}
-            <div className="bg-base-100 shadow-xl rounded-2xl overflow-hidden">
-              <div className="p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/65">SLA Summary per NCAL</h3>
-                <p className="text-sm font-bold text-base-content/85 mt-1 uppercase tracking-tight">Year {year}</p>
-              </div>
-              <div className="overflow-auto max-h-[50vh] custom-scrollbar w-full p-0">
-                <table className="table table-sm table-pin-rows table-stacked w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* SLA Summary Table */}
+            <SectionCard title="SLA Compliance" subtitle="Service Level performance by Category" padding={false} className="flex flex-col min-h-0">
+              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar w-full">
+                <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                    <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">NCAL</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Total</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Avg Nett</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">SLA Met</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">SLA Target</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">%</th>
+                    <tr className="bg-foreground/[0.02] border-b border-foreground/5">
+                        <th className="uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">NCAL Category</th>
+                        <th className="text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Total</th>
+                        <th className="text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Avg Nett</th>
+                        <th className="text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10 text-primary">Met</th>
+                        <th className="text-right uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Ratio</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {sla.length === 0 && <tr><td colSpan={6} className="text-center py-10 opacity-50">No data available</td></tr>}
+                  <tbody className="divide-y divide-foreground/5">
+                    {sla.length === 0 && (
+                        <tr><td colSpan={5} className="text-center py-20 opacity-20 font-black text-[10px] uppercase tracking-widest">No Intelligence Data</td></tr>
+                    )}
                     {sla.map(row => {
                       const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
                       return (
-                        <tr key={row.ncal} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                          <td data-label="NCAL" className="text-center md:py-3"><NcalBadge value={row.ncal} /></td>
-                          <td data-label="TOTAL" className="text-center font-semibold text-sm md:py-3">{row.total_cases}</td>
-                          <td data-label="AVG NETT" className="text-center font-mono font-bold text-sm text-base-content/85 md:py-3">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td data-label="SLA MET" className="text-center font-bold text-primary text-sm md:py-3">{row.sla_met || 0}</td>
-                          <td data-label="SLA TARGET" className="text-center text-base-content/65 text-xs uppercase font-bold tracking-tighter md:py-3">{row.sla_target_minutes ? `${row.sla_target_minutes}m` : '—'}</td>
-                          <td data-label="PERCENTAGE" className="text-center md:py-3">
-                            <span className={`font-bold tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
-                              {pct}%
-                            </span>
+                        <tr key={row.ncal} className="hover:bg-foreground/[0.01] transition-colors group">
+                          <td className="py-4 px-4"><NcalBadge value={row.ncal} /></td>
+                          <td className="text-center font-black text-[11px] text-foreground/80 tabular-nums">{row.total_cases}</td>
+                          <td className="text-center font-mono font-black text-[11px] text-foreground/60 tabular-nums">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                          <td className="text-center font-black text-[11px] text-primary tabular-nums">{row.sla_met || 0}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3 justify-end">
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className={cn(
+                                        "text-[11px] font-black tabular-nums",
+                                        pct >= 85 ? 'text-success' : pct >= 70 ? 'text-warning' : 'text-error'
+                                    )}>{pct}%</span>
+                                    <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">SLA {row.sla_target_minutes}m</span>
+                                </div>
+                                <div className="w-16 bg-foreground/5 h-1 rounded-full overflow-hidden">
+                                    <div className={cn(
+                                        "h-full rounded-full transition-all duration-1000",
+                                        pct >= 85 ? 'bg-success' : pct >= 70 ? 'bg-warning' : 'bg-error'
+                                    )} style={{ width: `${pct}%` }} />
+                                </div>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -123,40 +160,43 @@ export default function DurationReportPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </SectionCard>
 
-            {/* Technician Performance */}
-            <div className="bg-base-100 shadow-xl rounded-2xl overflow-hidden">
-              <div className="p-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Technician Performance</h3>
-                <p className="text-sm font-medium text-base-content/70 mt-1 uppercase tracking-tight">Year {year}</p>
-              </div>
-              <div className="overflow-auto max-h-[50vh] custom-scrollbar w-full p-0">
-                <table className="table table-sm table-pin-rows table-stacked w-full">
+            {/* Technician Performance Table */}
+            <SectionCard title="Field Intelligence" subtitle="Personnel Efficiency Benchmarks" padding={false} className="flex flex-col min-h-0">
+              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar w-full">
+                <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                    <th className="bg-base-100/90 backdrop-blur-md text-left min-w-[200px] uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Technician</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Total</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[120px] uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Avg</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-success py-3">Min</th>
-                    <th className="bg-base-100/90 backdrop-blur-md text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-error py-3">Max</th>
+                    <tr className="bg-foreground/[0.02] border-b border-foreground/5">
+                        <th className="uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Operator Segment</th>
+                        <th className="text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Volume</th>
+                        <th className="text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10 text-primary">Avg</th>
+                        <th className="text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10 text-success">Min</th>
+                        <th className="text-right uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10 text-error">Max</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {techPerf.length === 0 && <tr><td colSpan={5} className="text-center py-10 opacity-50">No data available</td></tr>}
+                  <tbody className="divide-y divide-foreground/5">
+                    {techPerf.length === 0 && (
+                        <tr><td colSpan={5} className="text-center py-20 opacity-20 font-black text-[10px] uppercase tracking-widest">No Intelligence Data</td></tr>
+                    )}
                     {techPerf.map(row => (
-                      <tr key={row.technician} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                        <td data-label="TECHNICIAN" className="font-semibold text-sm tracking-tight md:py-3">{row.technician}</td>
-                        <td data-label="TOTAL" className="text-center font-mono font-semibold text-sm md:py-3">{row.total_handled}</td>
-                        <td data-label="AVG" className="text-center font-mono font-semibold text-sm text-base-content/70 md:py-3">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                        <td data-label="MIN" className="text-center font-mono text-sm text-success md:py-3">{formatDuration(row.min_nett)}</td>
-                        <td data-label="MAX" className="text-center font-mono text-sm text-error md:py-3">{formatDuration(row.max_nett)}</td>
+                      <tr key={row.technician} className="hover:bg-foreground/[0.01] transition-colors group">
+                        <td className="py-4 px-4">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[11px] font-black text-foreground/80 uppercase tracking-tighter leading-none">{row.technician}</span>
+                            <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Technician</span>
+                          </div>
+                        </td>
+                        <td className="text-center font-black text-[11px] text-foreground/70 tabular-nums uppercase">{row.total_handled} cases</td>
+                        <td className="text-center font-mono font-black text-[11px] text-primary tabular-nums">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                        <td className="text-center font-mono font-black text-[11px] text-success/70 tabular-nums">{formatDuration(row.min_nett)}</td>
+                        <td className="text-right px-4 font-mono font-black text-[11px] text-error/70 tabular-nums">{formatDuration(row.max_nett)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </SectionCard>
           </div>
         </div>
       )}

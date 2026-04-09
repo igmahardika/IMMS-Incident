@@ -14,7 +14,7 @@ import DurationReportPage from './pages/DurationReportPage.jsx';
 import RootCausePage from './pages/RootCausePage.jsx';
 import { MasterCustomerPage, MasterClassificationPage, UserManagementPage, MasterTechnicalSupportPage, MasterDistribusiPage, MasterActionPage } from './pages/MasterDataPages.jsx';
 import EscalationSettingsPage from './pages/EscalationSettingsPage.jsx';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 
 // ─── Theme Context ────────────────────────────────────────────────────────────
 export const ThemeContext = React.createContext({ theme: 'dark', toggle: () => {} });
@@ -34,25 +34,25 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-base-100 flex flex-col items-center justify-center p-8 text-center gap-6">
+        <div className="min-h-dvh bg-background flex flex-col items-center justify-center p-8 text-center gap-6">
           <div className="w-16 h-16 rounded-3xl bg-error/10 flex items-center justify-center text-error animate-bounce">
             <AlertTriangle size={32} />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight text-base-content">System Exception Detected</h1>
-            <p className="text-sm font-medium text-base-content/50 max-w-md leading-relaxed mx-auto">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">System Exception Detected</h1>
+            <p className="text-sm font-medium text-foreground/50 max-w-md leading-relaxed mx-auto">
               {this.state.error?.message || 'An unexpected error occurred in the IMMS runtime environment.'}
             </p>
           </div>
           <div className="flex gap-4">
             <button
-              className="btn btn-primary font-bold px-8"
+              className="px-8 py-2 rounded-md bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-sm"
               onClick={() => { window.location.reload(); }}
             >
               Reload Interface
             </button>
             <button
-              className="btn btn-ghost font-bold"
+              className="px-6 py-2 rounded-md bg-transparent text-foreground/70 font-bold hover:bg-foreground/5 transition-colors"
               onClick={() => { this.setState({ hasError: false, error: null }); }}
             >
               Reset Session
@@ -87,8 +87,8 @@ function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
 
   if (loading) return (
-    <div className="min-h-screen bg-base-100 flex items-center justify-center">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
+    <div className="min-h-dvh bg-background flex items-center justify-center">
+      <Loader2 className="animate-spin text-primary w-8 h-8" />
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
@@ -109,6 +109,7 @@ export default function App() {
                 <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/incidents" element={<ProtectedRoute><CurrentTroublePage /></ProtectedRoute>} />
                 <Route path="/incidents/create" element={<ProtectedRoute allowedRoles={['admin', 'noc']}><CreateIncidentPage /></ProtectedRoute>} />
+                <Route path="/incidents/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'noc']}><CreateIncidentPage /></ProtectedRoute>} />
                 <Route path="/incidents/:id" element={<ProtectedRoute><IncidentDetailPage /></ProtectedRoute>} />
                 <Route path="/history" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><HistoryPage /></ProtectedRoute>} />
                 <Route path="/history/monthly" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><MonthlyViewPage /></ProtectedRoute>} />

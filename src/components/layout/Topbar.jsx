@@ -5,19 +5,20 @@ import { ThemeContext } from '../../App.jsx';
 import { SidebarContext } from './AppLayout.jsx';
 import { Shield, Menu, Sun, Moon } from 'lucide-react';
 import NotificationBell from '../ui/NotificationBell.jsx';
+import { cn } from '../../lib/utils.js';
 
 const TITLES = {
   '/': 'Dashboard',
-  '/incidents': 'Current Trouble',
+  '/incidents': 'Active Troubles',
   '/incidents/create': 'Create Incident',
-  '/history': 'Done Incidents',
-  '/history/monthly': 'Monthly View',
+  '/history': 'Resolved Incidents',
+  '/history/monthly': 'Monthly Analysis',
   '/analytics/duration': 'Duration Report',
   '/analytics/root-cause': 'Root Cause Analysis',
-  '/master/customers': 'Master Customer',
-  '/master/classifications': 'Klasifikasi',
-  '/master/technical-support': 'Personel Data',
-  '/master/distribusi': 'Distribusi Tree',
+  '/master/customers': 'Customer Master',
+  '/master/classifications': 'Classifications',
+  '/master/technical-support': 'Personnel Records',
+  '/master/distribusi': 'Distribution Topology',
   '/master/users': 'User Management',
   '/settings/escalation': 'Escalation Settings',
 };
@@ -29,7 +30,7 @@ function LiveClock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="font-mono tracking-tighter text-base-content/65 font-bold uppercase text-xs">
+    <span className="font-mono tabular-nums tracking-tighter text-foreground/60 font-medium uppercase text-[11px]">
       {time.toLocaleDateString('en-GB', { weekday: 'short' })}, {String(time.getDate()).padStart(2, '0')}/{String(time.getMonth() + 1).padStart(2, '0')}/{time.getFullYear()} {String(time.getHours()).padStart(2, '0')}:{String(time.getMinutes()).padStart(2, '0')} WIB
     </span>
   );
@@ -43,49 +44,70 @@ export default function Topbar() {
   const parts = location.pathname.split('/').filter(Boolean);
 
   return (
-    <div className="navbar bg-base-100 h-14 min-h-[3.5rem] sticky top-0 z-40 px-4 transition-colors">
-      <div className="navbar-start w-auto lg:w-1/2">
-        <label htmlFor="main-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost lg:hidden mr-2">
-          <Menu size={20} />
-        </label>
-        <div className="breadcrumbs text-xs hidden sm:block">
-          <ul>
-            <li><span className="text-base-content/65 tracking-wider font-bold uppercase">IMMS</span></li>
-            {parts.map((p, i) => (
-              <li key={i}>
-                {i === parts.length - 1
-                  ? <span className="font-semibold text-base-content uppercase tracking-tight">{TITLES[location.pathname] || p}</span>
-                  : <span className="capitalize font-bold text-base-content/65">{p}</span>
-                }
-              </li>
-            ))}
-            {parts.length === 0 && <li><span className="font-semibold text-base-content uppercase tracking-tight">Dashboard</span></li>}
-          </ul>
+    <header className="h-14 flex items-center justify-between px-4 border-b border-foreground/5 bg-background shrink-0 w-full relative z-30">
+      <div className="flex items-center gap-3">
+        {/* Mobile Sidebar Toggle */}
+        <button 
+          className="lg:hidden p-1.5 -ml-1.5 rounded-md hover:bg-foreground/5 text-foreground/70 transition-colors"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open sidebar menu"
+          title="Open menu"
+        >
+          <Menu size={18} strokeWidth={2} />
+        </button>
+
+        {/* Global Breadcrumbs */}
+        <div className="hidden sm:flex items-center gap-2 text-[11px]">
+          <span className="text-foreground/40 font-bold uppercase tracking-widest">IMMS</span>
+          <span className="text-foreground/20 font-light">/</span>
+          {parts.length === 0 ? (
+            <span className="font-bold text-foreground">Dashboard</span>
+          ) : (
+            parts.map((p, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="text-foreground/20 font-light">/</span>}
+                {i === parts.length - 1 ? (
+                  <span className="font-bold text-foreground">{TITLES[location.pathname] || p.replace(/-/g, ' ')}</span>
+                ) : (
+                  <span className="capitalize font-semibold text-foreground/60">{p.replace(/-/g, ' ')}</span>
+                )}
+              </React.Fragment>
+            ))
+          )}
+        </div>
+
+        {/* Mobile Title */}
+        <div className="sm:hidden font-bold text-sm">
+           {TITLES[location.pathname] || (parts.length > 0 ? parts[parts.length - 1].replace(/-/g, ' ') : 'Dashboard')}
         </div>
       </div>
 
-      <div className="navbar-center lg:hidden">
-        <span className="font-semibold">{TITLES[location.pathname] || parts[parts.length - 1] || 'Dashboard'}</span>
-      </div>
-
-      <div className="navbar-end w-full lg:w-1/2 gap-2">
-        <div className="hidden sm:flex items-center px-2">
+      <div className="flex items-center gap-2 lg:gap-4">
+        {/* Live Clock */}
+        <div className="hidden md:block">
           <LiveClock />
         </div>
         
-        <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm">
-          <input type="checkbox" onChange={toggleTheme} checked={theme === 'dark'} />
-          <Sun className="swap-on w-[18px] h-[18px]" />
-          <Moon className="swap-off w-[18px] h-[18px]" />
-        </label>
+        {/* Theme Toggle Native */}
+        <button 
+          className="p-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors flex items-center justify-center relative w-7 h-7"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+        >
+           <span className="absolute inset-0 flex items-center justify-center transition-all duration-300">
+             {theme === 'dark' ? <Moon size={15} /> : <Sun size={15} />}
+           </span>
+        </button>
         
+        {/* Notification component (will be refactored next) */}
         <NotificationBell />
 
-        <div className="badge badge-primary badge-soft badge-xs font-semibold tracking-wider gap-1.5 uppercase rounded h-6 px-2.5">
-          <Shield size={10} />
-          {user?.role}
+        {/* Role Badge */}
+        <div className="h-6 px-2 flex items-center gap-1.5 rounded-md bg-primary/10 text-primary border border-primary/20 ml-2">
+          <Shield size={11} strokeWidth={2.5} />
+          <span className="text-[10px] font-bold tracking-widest uppercase">{user?.role}</span>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

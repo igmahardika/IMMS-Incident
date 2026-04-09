@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api, formatDateTime } from '../utils/api.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { NcalBadge, Spinner, SectionCard } from '../components/ui/index.jsx';
-import { ArrowLeft, Send, Network } from 'lucide-react';
+import { NcalBadge, Spinner, SectionCard, Button, Input } from '../components/ui/index.jsx';
+import { ArrowLeft, Send, Network, Save, Loader2, ChevronRight, MapPin, Globe } from 'lucide-react';
+import { cn } from '../lib/utils.js';
 
 const NCAL_OPTIONS = ['BLUE', 'YELLOW', 'ORANGE', 'RED', 'BLACK'];
 const LEVEL_OPTIONS = [
@@ -14,13 +15,32 @@ const LEVEL_OPTIONS = [
 ];
 
 export default function CreateIncidentPage() {
+  const { id } = useParams();
+  const isEdit = !!id;
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+
   const [form, setForm] = useState({
-    case_no: '', start_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
-    customer_id: '', site_name_manual: '', ncal: 'YELLOW',
-    odp_bts: '', level_support: '2', sla: '',
-    initial_problem: '', indikasi: '', power_before: '', kabel: '', panjang_kabel: '', pic: '', customer_terdampak: '', koordinat: '', address_preview: '',
+    case_no: '', 
+    start_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
+    customer_id: '', 
+    site_name_manual: '', 
+    ncal: 'YELLOW',
+    odp_bts: '', 
+    level_support: '2', 
+    sla: '',
+    initial_problem: '', 
+    indikasi: '', 
+    power_before: '', 
+    kabel: '', 
+    panjang_kabel: '', 
+    pic: '', 
+    customer_terdampak: '', 
+    koordinat: '', 
+    address_preview: '',
     distribusi_manual: '',
   });
+
   const [customers, setCustomers] = useState([]);
   const [distribusi, setDistribusi] = useState([]);
   const [search, setSearch] = useState('');
@@ -31,13 +51,59 @@ export default function CreateIncidentPage() {
   const [showOdpDropdown, setShowOdpDropdown] = useState(false);
   const [odpSearch, setOdpSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const { addToast } = useToast();
-  const navigate = useNavigate();
+  const [loadingData, setLoadingData] = useState(isEdit);
 
+  // Load initial options & Draft
   useEffect(() => { 
-    api.getCustomers().then(setCustomers).catch(console.error); 
-    api.getDistribusi().then(setDistribusi).catch(console.error);
-  }, []);
+    const loadData = async () => {
+      try {
+        const [custRes, distRes] = await Promise.all([
+          api.getCustomers(),
+          api.getDistribusi()
+        ]);
+        setCustomers(custRes);
+        setDistribusi(distRes);
+
+        if (isEdit) {
+          const inc = await api.getIncident(id);
+          if (inc) {
+            setForm({
+              ...inc,
+              start_time: inc.start_time ? new Date(inc.start_time).toISOString().slice(0, 16) : ''
+            });
+            setSearch(inc.site_name_manual || '');
+            if (['ORANGE', 'RED', 'BLACK'].includes(inc.ncal)) {
+              setDistForm({ selectedItems: inc.odp_bts ? inc.odp_bts.split(', ') : [] });
+            }
+          }
+        } else {
+          // Check for draft
+          const draft = localStorage.getItem('imms_incident_draft');
+          if (draft) {
+             const { form: dForm, dist: dDist, search: dSearch } = JSON.parse(draft);
+             setForm(prev => ({ ...prev, ...dForm, start_time: prev.start_time })); // Keep fresh start time
+             setDistForm(dDist || { selectedItems: [] });
+             setSearch(dSearch || '');
+             addToast('Restored draft from your last session', 'info');
+          }
+        }
+      } catch (e) {
+        addToast(e.message, 'error');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    loadData();
+  }, [id, isEdit, addToast]);
+
+  // Save draft
+  useEffect(() => {
+    if (isEdit || loadingData) return;
+    const t = setTimeout(() => {
+      localStorage.setItem('imms_incident_draft', JSON.stringify({ form, dist: distForm, search }));
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [form, distForm, search, isEdit, loadingData]);
 
   // Click outside to close dropdowns
   useEffect(() => {
@@ -64,7 +130,7 @@ export default function CreateIncidentPage() {
       return addToast('Please select at least one infrastructure for ORANGE segment', 'warning');
     }
     if (!isDistribsi && !form.customer_id) {
-       return addToast('Please select a customer for LAN/Lastmile segment', 'warning');
+      return addToast('Please select a customer for LAN/Lastmile segment', 'warning');
     }
 
     setLoading(true);
@@ -78,11 +144,20 @@ export default function CreateIncidentPage() {
         payload.odp_bts = form.odp_bts === 'MANUAL_INPUT' ? form.distribusi_manual : form.odp_bts;
       }
 
-      const inc = await api.createIncident(payload);
-      addToast('Incident created successfully', 'success');
-      navigate('/incidents');
-    } catch (e) { addToast(e.message, 'error'); }
-    finally { setLoading(false); }
+      if (isEdit) {
+        await api.updateIncident(id, payload);
+        addToast('Incident updated successfully', 'success');
+      } else {
+        await api.createIncident(payload);
+        addToast('Incident created successfully', 'success');
+        localStorage.removeItem('imms_incident_draft');
+      }
+      navigate(isEdit ? `/incidents/${id}` : '/incidents');
+    } catch (e) { 
+      addToast(e.message, 'error'); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const isDistribsi = ['ORANGE', 'RED', 'BLACK'].includes(form.ncal);
@@ -101,7 +176,8 @@ export default function CreateIncidentPage() {
       address_preview: c.address || '',
       level_support: autoLevel
     }));
-    setSearch(c.brand_site); setShowDropdown(false); 
+    setSearch(c.brand_site); 
+    setShowDropdown(false); 
   };
 
   const toggleItem = (item) => {
@@ -148,44 +224,85 @@ export default function CreateIncidentPage() {
     ...distribusi.filter(d => d.type === 'Wireless').map(d => d.level_2)
   ])].filter(Boolean).sort();
 
+  if (loadingData) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="animate-spin text-primary w-8 h-8" />
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-4 pb-24 md:pb-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="flex flex-col gap-6 pb-24 md:pb-12">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
-          <button className="btn btn-ghost btn-circle btn-sm" onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={18} /></button>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-bold tracking-tight uppercase text-base-content">New Incident</h1>
-            <p className="text-xs font-semibold uppercase tracking-wider text-base-content/65">Create a new monitoring ticket</p>
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="rounded-full w-9 h-9 p-0 bg-foreground/5">
+            <ArrowLeft size={16} />
+          </Button>
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-xl font-black tracking-tight uppercase text-foreground/90">
+              {isEdit ? 'Edit Record' : 'New Incident'}
+            </h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">
+              {isEdit ? `Modifying ticket #${form.case_no}` : 'Initialize monitoring ticket'}
+            </p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+           <Button variant="ghost" onClick={() => navigate(-1)} className="font-bold text-[10px] tracking-widest uppercase">
+              Cancel
+           </Button>
+           <Button onClick={handleSubmit} isLoading={loading} icon={isEdit ? <Save size={14} /> : <Send size={14} />} className="font-black text-[10px] tracking-widest uppercase px-6">
+              {isEdit ? 'Save Changes' : 'Create Incident'}
+           </Button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-        <div className="lg:col-span-2 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          
           {/* Section 1: Basic Information */}
           <SectionCard title="General Information" className="overflow-visible z-30">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <label className="form-control w-full gap-1.5">
-                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Case Number *</span></div>
-                <input type="text" className="input input-md w-full font-mono font-semibold text-sm bg-base-200/50" placeholder="e.g., C240313-001" value={form.case_no} onChange={e => set('case_no', e.target.value)} required />
-              </label>
-              <label className="form-control w-full gap-1.5">
-                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Reported Time *</span></div>
-                <input type="datetime-local" className="input input-md w-full font-mono font-semibold text-sm bg-base-200/50 px-3" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
-              </label>
-              <label className="form-control w-full gap-1.5">
-                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">NCAL Segment *</span></div>
-                <select className="select select-md w-full font-semibold text-sm bg-base-200/50" value={form.ncal} onChange={e => {
-                  set('ncal', e.target.value);
-                  if (['ORANGE', 'RED', 'BLACK'].includes(e.target.value)) {
-                    set('customer_id', ''); set('site_name_manual', ''); set('sla', ''); setSearch('');
-                  } else {
-                    setDistForm({ selectedItems: [] });
-                  }
-                }} required>
+              <Input 
+                label="Case Number *" 
+                placeholder="e.g., C240313-001" 
+                value={form.case_no} 
+                onChange={e => set('case_no', e.target.value)} 
+                required 
+                className="font-mono font-bold"
+              />
+              <Input 
+                label="Reported Time *" 
+                type="datetime-local" 
+                value={form.start_time} 
+                onChange={e => set('start_time', e.target.value)} 
+                required 
+                className="font-mono font-bold"
+              />
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">NCAL Segment *</label>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring uppercase tracking-wider"
+                  value={form.ncal} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setForm(prev => {
+                      const upd = { ...prev, ncal: val };
+                      if (['ORANGE', 'RED', 'BLACK'].includes(val)) {
+                        upd.customer_id = ''; upd.site_name_manual = ''; upd.sla = '';
+                      }
+                      return upd;
+                    });
+                    setSearch('');
+                    if (!['ORANGE', 'RED', 'BLACK'].includes(val)) {
+                      setDistForm({ selectedItems: [] });
+                    }
+                  }} 
+                  required
+                >
                   {NCAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
-              </label>
+              </div>
             </div>
           </SectionCard>
 
@@ -193,124 +310,179 @@ export default function CreateIncidentPage() {
           <SectionCard title="Asset & Network Configuration" className="overflow-visible z-20">
             {!isDistribsi ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="form-control w-full relative gap-1.5 custom-dropdown-container">
-                  <div className="label p-0 min-h-0">
-                    <span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">{form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}</span>
+                <div className="flex flex-col relative gap-1.5 custom-dropdown-container">
+                  <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">
+                    {form.ncal === 'BLUE' ? 'Select Site *' : 'Select Customer *'}
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      placeholder="Search site or company name..." 
+                      value={search} 
+                      onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} 
+                      onFocus={() => setShowDropdown(true)} 
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
+                       <ChevronRight size={14} className="rotate-90" />
+                    </div>
                   </div>
-                  <input type="text" className="input input-md w-full font-semibold text-sm bg-base-200/50" placeholder="Search site or company name..." value={search} onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
+                  
                   {showDropdown && (
-                    <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-base-100 rounded-lg shadow-2xl max-h-80 overflow-y-auto z-[100] p-2 flex flex-col gap-1 backdrop-blur-md">
-                      {customers.filter(c => (c.brand_site || '').toLowerCase().includes(search.toLowerCase()) || (c.company_name || '').toLowerCase().includes(search.toLowerCase())).map(c => (
-                        <button key={c.id} type="button" className="flex flex-col p-3 hover:bg-base-200 rounded-lg text-left transition-all active:scale-[0.98]" onClick={() => handleCustomerSelect(c)}>
-                          <span className="font-semibold text-sm tracking-tight text-base-content">{c.brand_site}</span>
-                          <span className="text-xs text-base-content/40 font-semibold uppercase tracking-wide">{c.company_name} — SLA {c.grade}</span>
+                    <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-background/95 border border-border rounded-lg shadow-2xl max-h-80 overflow-y-auto z-[100] p-1.5 flex flex-col gap-0.5 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
+                      {customers.filter(c => 
+                        (c.brand_site || '').toLowerCase().includes(search.toLowerCase()) || 
+                        (c.company_name || '').toLowerCase().includes(search.toLowerCase())
+                      ).map(c => (
+                        <button key={c.id} type="button" className="flex flex-col px-3 py-2.5 hover:bg-foreground/5 rounded-md text-left transition-all active:scale-[0.98] group" onClick={() => handleCustomerSelect(c)}>
+                          <span className="font-bold text-[11px] tracking-tight text-foreground group-hover:text-primary transition-colors">{c.brand_site}</span>
+                          <span className="text-[9px] text-foreground/40 font-black uppercase tracking-widest mt-0.5">{c.company_name} — SLA {c.grade}</span>
                         </button>
                       ))}
+                      {customers.filter(c => (c.brand_site || '').toLowerCase().includes(search.toLowerCase()) || (c.company_name || '').toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                        <div className="py-8 text-center text-[10px] font-bold text-foreground/30 uppercase tracking-widest">No results found</div>
+                      )}
                     </div>
                   )}
                 </div>
+
                 {form.ncal !== 'BLUE' && (
-                  <div className="form-control w-full relative gap-1.5 custom-dropdown-container">
-                    <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">{form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}</span></div>
+                  <div className="flex flex-col relative gap-1.5 custom-dropdown-container">
+                    <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">
+                      {form.ncal === 'YELLOW' ? 'Distribution (ODP / BTS) *' : 'Link / ODP'}
+                    </label>
                     <div className="flex flex-col gap-2">
-                      <div className="input input-md w-full flex items-center justify-between cursor-pointer font-semibold text-sm bg-base-200/50" onClick={() => setShowOdpDropdown(!showOdpDropdown)}>
-                        <span>{form.odp_bts || '— Select Distribution —'}</span>
-                        <span className="text-base-content/50 text-xs">▼</span>
+                      <div 
+                        className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm items-center justify-between cursor-pointer transition-all hover:bg-foreground/[0.02]"
+                        onClick={() => setShowOdpDropdown(!showOdpDropdown)}
+                      >
+                        <span className={cn(!form.odp_bts && "text-muted-foreground font-medium")}>{form.odp_bts || '— Select Distribution —'}</span>
+                        <ChevronRight size={14} className={cn("rotate-90 opacity-40 transition-transform", showOdpDropdown && "rotate-[-90deg]")} />
                       </div>
                       
                       {showOdpDropdown && (
-                        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-base-100 rounded-lg shadow-2xl max-h-80 overflow-y-auto z-[100] p-2 flex flex-col gap-1 backdrop-blur-md">
-                          <div className="p-1 px-2 mb-1 pb-2">
-                             <input 
-                              type="text" 
-                              className="input input-xs input-ghost w-full font-semibold uppercase tracking-wider text-xs" 
-                              placeholder="Search ODP/Wireless..." 
-                              value={odpSearch} 
-                              onChange={e => setOdpSearch(e.target.value)}
-                              onClick={e => e.stopPropagation()} 
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            {[
-                              ...((form.ncal === 'YELLOW' && yellowDistOptions) || []),
-                              ...((!isDistribsi && customers.find(c => c.id === form.customer_id)?.link_coverage?.split('\n').filter(Boolean)) || [])
-                            ].filter(o => o.toLowerCase().includes(odpSearch.toLowerCase())).map(o => (
-                              <button key={o} type="button" className="p-3 hover:bg-base-200 rounded-xl text-left text-sm font-medium uppercase tracking-wider transition-all active:scale-[0.98]" onClick={() => { set('odp_bts', o); setShowOdpDropdown(false); }}>
-                                {o}
-                              </button>
-                            ))}
-                            <button type="button" className="p-3 hover:bg-primary/10 text-primary rounded-lg text-left text-sm font-medium uppercase tracking-wider transition-all mt-1 flex items-center justify-between" onClick={() => { set('odp_bts', 'MANUAL_INPUT'); setShowOdpDropdown(false); }}>
-                              <span>+ Manual Entry</span>
-                              <ArrowLeft size={12} className="rotate-180 opacity-60" />
+                        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-background/95 border border-border rounded-lg shadow-2xl max-h-80 overflow-y-auto z-[100] p-1.5 flex flex-col gap-0.5 backdrop-blur-md">
+                          <input 
+                            type="text" 
+                            className="bg-foreground/5 border-none w-full px-3 py-2 rounded-md font-bold text-[10px] uppercase tracking-widest placeholder:text-foreground/20 focus:ring-0 mb-1" 
+                            placeholder="Filter options..." 
+                            value={odpSearch} 
+                            onChange={e => setOdpSearch(e.target.value)}
+                            onClick={e => e.stopPropagation()} 
+                          />
+                          {[
+                            ...((form.ncal === 'YELLOW' && yellowDistOptions) || []),
+                            ...((!isDistribsi && customers.find(c => c.id === form.customer_id)?.link_coverage?.split('\n').filter(Boolean)) || [])
+                          ].filter(o => o.toLowerCase().includes(odpSearch.toLowerCase())).map(o => (
+                            <button key={o} type="button" className="px-3 py-2.5 hover:bg-foreground/5 rounded-md text-left text-[11px] font-bold uppercase tracking-wider transition-all" onClick={() => { set('odp_bts', o); setShowOdpDropdown(false); }}>
+                              {o}
                             </button>
-                          </div>
+                          ))}
+                          <button type="button" className="p-3 bg-primary/5 text-primary rounded-md text-left text-[10px] font-black uppercase tracking-widest transition-all mt-1 flex items-center justify-between hover:bg-primary/10" onClick={() => { set('odp_bts', 'MANUAL_INPUT'); setShowOdpDropdown(false); }}>
+                            <span>+ Manual Entry</span>
+                            <ChevronRight size={10} className="opacity-60" />
+                          </button>
                         </div>
                       )}
 
                       {form.odp_bts === 'MANUAL_INPUT' && (
-                        <input type="text" className="input w-full font-medium bg-base-200/80 animate-in slide-in-from-top-2 duration-200" placeholder="Enter manual name..." value={form.distribusi_manual} onChange={e => set('distribusi_manual', e.target.value)} />
+                        <input 
+                          type="text" 
+                          className="flex h-10 w-full rounded-md border border-input bg-foreground/[0.03] px-3 py-2 text-[11px] font-bold shadow-inner placeholder:text-muted-foreground animate-in slide-in-from-top-2 duration-200"
+                          placeholder="Type manual ODP/BTS name..." 
+                          value={form.distribusi_manual} 
+                          onChange={e => set('distribusi_manual', e.target.value)} 
+                        />
                       )}
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="form-control w-full relative gap-1.5 custom-dropdown-container">
-                <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Infrastructure Selection ({form.ncal} Segment) *</span></div>
-                <div className="input input-md w-full h-auto min-h-[44px] flex flex-wrap gap-2 items-center p-3 cursor-pointer transition-all bg-base-200/50 hover:bg-base-200" onClick={() => setShowDistDropdown(!showDistDropdown)}>
+              <div className="flex flex-col relative gap-1.5 custom-dropdown-container">
+                <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">
+                  Infrastructure Selection ({form.ncal} Segment) *
+                </label>
+                <div 
+                  className={cn(
+                    "flex flex-wrap gap-2 items-center p-2 rounded-md border border-input bg-background/50 min-h-[44px] cursor-pointer transition-all hover:bg-foreground/[0.02]",
+                    showDistDropdown && "ring-1 ring-ring border-ring"
+                  )} 
+                  onClick={() => setShowDistDropdown(!showDistDropdown)}
+                >
                   {distForm.selectedItems.length === 0 ? (
-                    <span className="text-base-content/50 text-sm font-medium uppercase tracking-wider pl-1">Search and select items...</span>
+                    <span className="text-muted-foreground text-[11px] font-medium pl-1 uppercase tracking-widest opacity-60">Search and select infrastructures...</span>
                   ) : distForm.selectedItems.map(item => (
-                    <div key={item} className="badge badge-primary badge-sm gap-1 pl-2.5 pr-1 py-3 font-semibold text-xs uppercase tracking-wider rounded-lg">
+                    <div key={item} className="inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary rounded text-[10px] font-black uppercase tracking-widest">
                       {item}
-                      <button type="button" onClick={(e) => { e.stopPropagation(); toggleItem(item); }} className="btn btn-ghost btn-xs btn-circle h-5 w-5 hover:bg-white/20">×</button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); toggleItem(item); }} className="hover:text-foreground p-0.5 leading-none">✕</button>
                     </div>
                   ))}
+                  <div className="ml-auto pr-1 opacity-20"><ChevronRight size={14} className="rotate-90" /></div>
                 </div>
+
                 {showDistDropdown && (
-                    <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-base-100 rounded-lg shadow-2xl max-h-80 overflow-y-auto z-[100] p-2 flex flex-col gap-1 backdrop-blur-md" onClick={e => e.stopPropagation()}>
-                      <div className="p-1 px-2 mb-1 pb-2">
-                        <input type="text" className="input input-xs input-ghost w-full font-semibold uppercase tracking-wider text-xs" placeholder="Filter infrastructure..." value={distSearch} onChange={e => setDistSearch(e.target.value)} onFocus={e => e.stopPropagation()} />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                          {combOptions.filter(o => !distForm.selectedItems.includes(o.value) && o.searchKey.toLowerCase().includes(distSearch.toLowerCase())).map(o => (
-                          <button key={o.value} type="button" className="flex items-center gap-3 p-3 hover:bg-base-200 rounded-xl text-left transition-all active:scale-[0.98] group" onClick={() => toggleItem(o.value)}>
-                            <div className={`w-5 h-5 rounded-lg border-2 border-primary/20 flex items-center justify-center transition-all ${distForm.selectedItems.includes(o.value) ? 'bg-primary border-primary' : 'bg-base-200'}`}>
-                              {distForm.selectedItems.includes(o.value) && <span className="text-xs text-primary-content font-bold">✓</span>}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-sm tracking-tight text-base-content">{o.label}</span>
-                              <span className="text-xs text-base-content/60 font-semibold uppercase tracking-wider">{o.value.split(':')[0]}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-background/95 border border-border rounded-lg shadow-2xl max-h-80 overflow-y-auto z-[100] p-1.5 flex flex-col gap-0.5 backdrop-blur-md" onClick={e => e.stopPropagation()}>
+                    <input 
+                      type="text" 
+                      className="bg-foreground/5 border-none w-full px-3 py-2 rounded-md font-bold text-[10px] uppercase tracking-widest placeholder:text-foreground/20 focus:ring-0 mb-1" 
+                      placeholder="Filter items..." 
+                      value={distSearch} 
+                      onChange={e => setDistSearch(e.target.value)} 
+                      onFocus={e => e.stopPropagation()} 
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      {combOptions.filter(o => !distForm.selectedItems.includes(o.value) && o.searchKey.toLowerCase().includes(distSearch.toLowerCase())).map(o => (
+                        <button key={o.value} type="button" className="flex items-center justify-between px-3 py-2.5 hover:bg-foreground/5 rounded-md text-left transition-all active:scale-[0.98] group" onClick={() => toggleItem(o.value)}>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[11px] tracking-tight text-foreground">{o.label}</span>
+                            <span className="text-[9px] text-foreground/40 font-black uppercase tracking-widest">{o.value.split(':')[0]}</span>
+                          </div>
+                          <div className="w-4 h-4 rounded border border-foreground/10 flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                            <Plus size={10} className="text-foreground/20 group-hover:text-primary transition-colors" />
+                          </div>
+                        </button>
+                      ))}
                     </div>
+                  </div>
                 )}
               </div>
             )}
           </SectionCard>
 
           {/* Section 3: Technical Details */}
-          <SectionCard title="Incident Details">
+          <SectionCard title="Incident Scope & Details">
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label className="form-control w-full gap-1.5">
-                  <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Initial Problem *</span></div>
-                  <textarea className="textarea w-full font-semibold text-sm bg-base-200/50 leading-relaxed" placeholder="Describe the detected issue..." value={form.initial_problem} onChange={e => set('initial_problem', e.target.value)} rows={3} required />
-                </label>
-                <label className="form-control w-full gap-1.5">
-                  <div className="label p-0 min-h-0"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Technical Indications</span></div>
-                  <textarea className="textarea w-full font-semibold text-sm text-base-content/80 bg-base-200/50 leading-relaxed" placeholder="Loss of signal, high attenuation, etc..." value={form.indikasi} onChange={e => set('indikasi', e.target.value)} rows={3} />
-                </label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Initial Problem *</label>
+                  <textarea 
+                    className="flex w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring leading-relaxed resize-none" 
+                    placeholder="Describe the detected issue in technical terms..." 
+                    value={form.initial_problem} 
+                    onChange={e => set('initial_problem', e.target.value)} 
+                    rows={4} 
+                    required 
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Technical Indications</label>
+                  <textarea 
+                    className="flex w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring leading-relaxed resize-none text-foreground/70" 
+                    placeholder="Loss of signal, high attenuation, port flap, etc..." 
+                    value={form.indikasi} 
+                    onChange={e => set('indikasi', e.target.value)} 
+                    rows={4} 
+                  />
+                </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-medium text-base-content/70">Priority *</span></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Service Priority *</label>
                   <div className="flex flex-col gap-2">
                     <select 
-                      className="select select-ghost bg-base-200/50 w-full font-semibold text-sm" 
+                      className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50" 
                       value={form.level_support} 
                       onChange={e => set('level_support', e.target.value)} 
                       required
@@ -321,108 +493,156 @@ export default function CreateIncidentPage() {
                       ))}
                     </select>
                     {!isDistribsi && form.customer_id && (
-                      <div className="flex items-center gap-2 px-1">
-                        <div className="badge badge-primary badge-sm text-xs font-medium tracking-wider">AUTO</div>
-                        <span className="text-xs font-semibold opacity-40 uppercase tracking-wider">Pulled from record</span>
+                      <div className="flex items-center gap-2 px-2 py-1 bg-primary/5 rounded border border-primary/10 self-start">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[9px] font-black tracking-widest text-primary uppercase">Synced via Customer Record</span>
                       </div>
                     )}
                   </div>
-                </label>
+                </div>
                 {!isDistribsi && (
-                  <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Assigned Technician / PIC</span></div>
-                    <input type="text" className="input input-ghost bg-base-200/50 w-full font-semibold text-sm" placeholder="Enter name or ID..." value={form.pic} onChange={e => set('pic', e.target.value)} />
-                  </label>
+                  <Input 
+                    label="Assigned Technician / PIC" 
+                    placeholder="Enter personnel name or ID..." 
+                    value={form.pic} 
+                    onChange={e => set('pic', e.target.value)} 
+                    className="font-bold"
+                  />
                 )}
               </div>
 
               {isDistribsi && (
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Impacted Customers</span></div>
-                  <textarea className="textarea textarea-ghost bg-base-200/50 w-full font-semibold text-sm" placeholder="List impacted sites/companies..." value={form.customer_terdampak} onChange={e => set('customer_terdampak', e.target.value)} rows={2} />
-                </label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Impacted Customers</label>
+                  <textarea 
+                    className="flex w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus-visible:ring-ring leading-relaxed resize-none h-16" 
+                    placeholder="List downstream sites or companies affected by this event..." 
+                    value={form.customer_terdampak} 
+                    onChange={e => set('customer_terdampak', e.target.value)} 
+                  />
+                </div>
               )}
 
               {form.ncal === 'YELLOW' && (
-                <div className="bg-warning/10 rounded-lg p-6 flex flex-col gap-6">
-                  <div className="text-xs font-semibold text-warning uppercase tracking-wider flex items-center gap-2">
-                    <Network size={12} /> Vendor Maintenance Order Details
+                <div className="bg-warning/[0.03] border border-warning/10 rounded-xl p-5 flex flex-col gap-5 mt-2 shadow-inner">
+                  <div className="text-[10px] font-black text-warning uppercase tracking-[0.2em] flex items-center gap-2 mb-1">
+                    <Network size={14} className="animate-pulse" /> Vendor Maintenance Order Details
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Original Address (Site)</span></div>
-                      <textarea className="textarea textarea-ghost bg-base-200 w-full opacity-60 text-xs font-semibold" rows={2} value={form.address_preview} disabled />
-                    </label>
-                    <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Coordinates (Override)</span></div>
-                      <input type="text" className="input input-ghost bg-base-200 w-full font-mono font-semibold text-sm" placeholder="GPS Lat, Long" value={form.koordinat} onChange={e => set('koordinat', e.target.value)} />
-                    </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-bold text-[10px] uppercase tracking-widest text-warning/50 ml-1">Original Address (Site)</label>
+                      <div className="bg-background/40 border border-border/50 rounded-md p-3 text-[10px] font-bold text-foreground/50 leading-relaxed min-h-[50px] shadow-sm select-none">
+                        {form.address_preview || 'No address data available'}
+                      </div>
+                    </div>
+                    <Input 
+                      label="Coordinates (GPS Override)" 
+                      placeholder="Lat, Long (e.g. -6.1, 106.8)" 
+                      value={form.koordinat} 
+                      onChange={e => set('koordinat', e.target.value)} 
+                      className="bg-background font-mono font-bold"
+                    />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">RX Power (Before)</span></div>
-                      <input type="text" className="input input-ghost bg-base-200 w-full font-mono font-semibold text-sm" placeholder="-20.5 dBm" value={form.power_before} onChange={e => set('power_before', e.target.value)} />
-                    </label>
-                    <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Cable Type</span></div>
-                      <input type="text" className="input input-ghost bg-base-200 w-full font-semibold text-sm" placeholder="Dropcore..." value={form.kabel} onChange={e => set('kabel', e.target.value)} />
-                    </label>
-                    <label className="form-control w-full">
-                      <div className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/65">Total Length</span></div>
-                      <input type="text" className="input input-ghost bg-base-200 w-full font-mono font-semibold text-sm" placeholder="Meters" value={form.panjang_kabel} onChange={e => set('panjang_kabel', e.target.value)} />
-                    </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <Input 
+                      label="RX Power (Before)" 
+                      placeholder="-20.5 dBm" 
+                      value={form.power_before} 
+                      onChange={e => set('power_before', e.target.value)} 
+                      className="bg-background font-mono font-bold"
+                    />
+                    <Input 
+                      label="Cable Type" 
+                      placeholder="e.g. Dropcore 12c" 
+                      value={form.kabel} 
+                      onChange={e => set('kabel', e.target.value)} 
+                      className="bg-background font-bold"
+                    />
+                    <Input 
+                      label="Total Length" 
+                      placeholder="Meters" 
+                      value={form.panjang_kabel} 
+                      onChange={e => set('panjang_kabel', e.target.value)} 
+                      className="bg-background font-mono font-bold"
+                    />
                   </div>
                 </div>
               )}
             </div>
           </SectionCard>
           
-          <div className="sticky-action-mobile mt-6">
-            <button type="button" className="btn btn-ghost flex-1 md:flex-none font-semibold uppercase tracking-wider text-xs" onClick={() => navigate(-1)}>Cancel</button>
-            <button type="submit" className="btn btn-primary flex-1 md:btn-wide font-semibold uppercase tracking-wider text-xs shadow-xl shadow-primary/20" disabled={loading}>
-              {loading ? <span className="loading loading-spinner loading-sm"></span> : <><Send size={16} /> <span className="md:inline">Create Incident</span></>}
-            </button>
-          </div>
         </div>
 
         {/* Sidebar / Preview Column */}
         <div className="flex flex-col gap-6 sticky top-6">
-          <SectionCard title="Ticket Preview" className="bg-base-100 shadow-xl overflow-hidden">
+          <SectionCard title="Live Ticket Preview" className="bg-background shadow-2xl overflow-hidden border-primary/10">
             <div className="flex flex-col gap-6">
-              <div className="p-5 bg-base-200 rounded-lg flex flex-col gap-6">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Impact Segment</span>
-                  <NcalBadge value={form.ncal} />
+              <div className="p-4 bg-foreground/[0.03] border border-foreground/5 rounded-xl flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em]">Impact Segment</span>
+                  <div className="flex"><NcalBadge value={form.ncal} /></div>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Infrastructures</span>
-                  <div className="font-bold text-sm tracking-tight leading-tight text-base-content">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em]">Infrastructure Scope</span>
+                  <div className="font-black text-xs tracking-tight leading-tight text-foreground/90 uppercase">
                     {isDistribsi 
-                      ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : 'None')
-                      : (form.site_name_manual || 'None')
+                      ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : <span className="opacity-20">No nodes selected</span>)
+                      : (form.site_name_manual || <span className="opacity-20">No asset selected</span>)
                     }
                   </div>
                   {!isDistribsi && form.sla && (
-                    <div className="flex items-center gap-2 mt-1">
-                       <span className="text-xs font-bold text-primary uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">Grade {form.sla}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                       <span className="text-[9px] font-black text-primary uppercase tracking-[0.1em] bg-primary/10 px-2 py-0.5 rounded border border-primary/20">Grade {form.sla}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 px-1">
-                <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Initial Issue</span>
-                <div className="text-sm font-semibold leading-relaxed text-base-content/85 italic">
-                  {form.initial_problem || <span className="opacity-20 text-xs">Awaiting input...</span>}
+                <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em]">Detected Issue</span>
+                <div className="text-[11px] font-bold leading-relaxed text-foreground/80 italic border-l-2 border-primary/20 pl-3">
+                  {form.initial_problem || <span className="opacity-20 text-[10px] font-medium not-italic">Awaiting problem description input...</span>}
                 </div>
               </div>
 
-              <div className="mt-2 p-3 bg-base-300/30 rounded-xl">
-                <div className="text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Ticket Metadata</div>
-                <div className="text-xs font-bold text-base-content/65 leading-relaxed">
-                  Log <span className="text-primary font-bold">#{form.case_no || 'TBD'}</span> at <span className="font-mono text-base-content/80">{formatDateTime(form.start_time)}</span>
+              <div className="mt-2 p-4 bg-foreground/[0.02] border border-dashed border-foreground/10 rounded-xl space-y-4">
+                <div className="flex items-start gap-3">
+                   <div className="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground/40 shrink-0">
+                      <MapPin size={14} />
+                   </div>
+                   <div className="flex flex-col gap-0.5 overflow-hidden">
+                      <span className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Geo Context</span>
+                      <span className="text-[10px] font-bold truncate text-foreground/60">{form.koordinat || 'No location set'}</span>
+                   </div>
+                </div>
+                <div className="flex items-start gap-3">
+                   <div className="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground/40 shrink-0">
+                      <Globe size={14} />
+                   </div>
+                   <div className="flex flex-col gap-0.5 overflow-hidden">
+                      <span className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Metadata Hash</span>
+                      <div className="text-[10px] font-bold text-foreground/60 uppercase">
+                        Log <span className="text-primary tracking-tighter">#{form.case_no || 'Pending'}</span> — <span className="font-mono text-[9px]">{formatDateTime(form.start_time).split(' ')[1]}</span>
+                      </div>
+                   </div>
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-8 pt-4 border-t border-foreground/5 flex flex-col gap-4">
+               <div className="flex items-center justify-between text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] px-2">
+                  <span>Author Roles</span>
+                  <span>Validation State</span>
+               </div>
+               <div className="flex items-center justify-between">
+                  <div className="flex -space-x-2">
+                     {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full bg-foreground/10 border-2 border-background" />)}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-success">
+                     <div className="w-1 h-1 rounded-full bg-success" />
+                     <span className="text-[10px] font-black tracking-widest uppercase">Draft Ready</span>
+                  </div>
+               </div>
             </div>
           </SectionCard>
         </div>

@@ -25,7 +25,12 @@ async function request(path, options = {}) {
   }
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  if (!res.ok) {
+    if (res.status >= 500) throw new Error('System infrastructure error. Please contact NOC support.');
+    if (res.status === 404) throw new Error('Requested resource not found.');
+    if (res.status === 403) throw new Error('Access denied. Insufficient permissions.');
+    throw new Error(data.error || `Error ${res.status}: Action could not be completed.`);
+  }
   return data;
 }
 

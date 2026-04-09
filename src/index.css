@@ -1,76 +1,73 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* 1. MAPPING WARNA IMMS KE SHADCN STANDAR */
 @theme {
-  /* Core Brand Tokens */
-  --color-primary: oklch(0.6 0.18 260); /* Indigo-ish */
-  --color-primary-content: oklch(0.1 0.02 260);
+  /* Warna Dasar (Background & Text) */
+  --color-background: var(--color-base-100);
+  --color-foreground: var(--color-base-content);
   
+  /* Warna Aksi (Border, Input, Hover) */
+  --color-border: oklch(0.9 0 0); /* Abu-abu sangat terang */
+  --color-input: oklch(0.95 0 0);
+  --color-ring: var(--color-primary);
+  
+  /* Brand Colors (Dari Audit) */
+  --color-primary: oklch(0.6 0.18 260);
+  --color-primary-foreground: oklch(0.98 0 0);
   --color-secondary: oklch(0.7 0.15 200);
-  --color-accent: oklch(0.65 0.25 310);
+  --color-secondary-foreground: oklch(0.1 0.02 260);
   
+  /* Status Colors */
   --color-success: oklch(0.65 0.25 150);
   --color-warning: oklch(0.75 0.2 80);
   --color-error: oklch(0.6 0.25 25);
   --color-info: oklch(0.7 0.15 230);
-
-  /* OLED Surface tokens mapped to DaisyUI Bases (Defaults) */
-  --color-base-100: oklch(1 0 0);
-  --color-base-200: oklch(0.98 0 0);
-  --color-base-300: oklch(0.95 0 0);
-  --color-base-content: oklch(0.2 0.02 260);
+  
+  /* NCAL Colors (Hardcoded HEX) */
+  --color-ncal-black: #475569;
+  --color-ncal-red: #ef4444;
+  --color-ncal-orange: #f59e0b;
+  --color-ncal-yellow: #eab308;
+  --color-ncal-blue: #3b82f6;
 
   /* Typography */
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Roboto Mono", monospace;
 
-  /* Geometry */
+  /* Radius (Sesuai Audit) */
   --radius-sm: 0.25rem;
   --radius-md: 0.25rem;
   --radius-lg: 0.25rem;
   --radius-xl: 0.25rem;
   --radius-2xl: 0.25rem;
   --radius-3xl: 0.25rem;
-  /* NCAL Semantic Colors (Theme-aware) */
-  --ncal-black-text: #475569;
-  --ncal-red-text: #ef4444;
-  --ncal-orange-text: #f59e0b;
-  --ncal-yellow-text: #eab308;
-  --ncal-blue-text: #3b82f6;
+  --radius: 0.25rem;
 }
 
-:root {
-  --rounded-box: 0.25rem;
-  --rounded-btn: 0.25rem;
-  --rounded-badge: 0.25rem;
-  
-  /* Fluid Typography & Spacing Scale */
-  font-size: 14px; /* Base for 1366px and below */
-}
-
-@media (min-width: 1440px) {
-  :root {
-    font-size: 16px; /* Scale up for large monitors */
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   GLOBAL RESETS & ENCHANCEMENTS
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
+/* 2. GLOBAL OVERRIDES & MICRO-TYPOGRAPHY */
 @layer base {
+  :root {
+    --color-base-100: oklch(1 0 0);
+    --color-base-content: oklch(0.2 0.02 260);
+    font-size: 14px;
+  }
+
+  @media (min-width: 1440px) {
+    :root {
+      font-size: 16px;
+    }
+  }
+
   :root[data-theme='dark'] {
-    --color-base-100: #000000;
-    --color-base-200: #09090b;
-    --color-base-300: #121212;
+    --color-base-100: #000000; /* OLED Black */
     --color-base-content: #ffffff;
-    
-    /* Dark Mode NCAL Overrides */
-    --ncal-black-text: #94a3b8;
+    --color-border: oklch(0.2 0 0);
+    --color-input: oklch(0.15 0 0);
   }
 
   body {
-    @apply bg-base-100 text-base-content font-sans antialiased min-h-[100dvh] selection:bg-primary/30 selection:text-primary-content overflow-hidden;
+    @apply bg-background text-foreground font-sans antialiased min-h-[100dvh] overflow-hidden selection:bg-primary/30 selection:text-primary-foreground;
     line-height: 1.6;
   }
 
@@ -89,19 +86,28 @@
     @apply bg-transparent; 
   }
   ::-webkit-scrollbar-thumb { 
-    @apply bg-base-content/10 rounded-full hover:bg-base-content/20 transition-colors; 
+    @apply bg-foreground/10 rounded-full hover:bg-foreground/20 transition-colors; 
+  }
+
+  /* Target Tipografi Ekstrem untuk Tabel (Bypass shadcn & daisyui default) */
+  table {
+    @apply w-full border-collapse;
+  }
+  th {
+    @apply text-[10px] uppercase tracking-widest font-bold text-foreground/50 py-2 px-3 border-b border-foreground/5 text-left;
+  }
+  td {
+    @apply text-[11px] font-medium leading-tight py-2 px-3 border-b border-foreground/5 text-foreground/80;
+  }
+  
+  /* Optimasi Angka agar sejajar */
+  .tabular-data {
+    @apply text-[11px] font-mono tabular-nums;
   }
 
   /* Smooth Transitions for Interactive Elements */
-  a, button, input, select, textarea {
+  a, button {
     @apply transition-all duration-200;
-  }
-
-  /* Borderless Input & Select Global Aesthetic */
-  input:not([type="checkbox"]):not([type="radio"]), 
-  select, 
-  textarea {
-    @apply border-none bg-base-200/50 focus:ring-2 focus:ring-primary/20 outline-none;
   }
 
   /* Fluid Text Utility */
@@ -109,129 +115,15 @@
   h2 { font-size: clamp(1rem, 1.5vw + 0.9rem, 1.25rem); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   ENTERPRISE COMPONENTS (PURGED & STANDARDIZED)
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-@layer components {
-  /* Semantic Banner Patterns */
-  .info-banner {
-    @apply p-4 rounded-2xl border text-xs font-semibold uppercase tracking-wider leading-relaxed flex items-center gap-3;
-  }
-  .info-banner-warning {
-    @apply bg-warning/5 border-warning/20 text-warning;
-  }
-  .info-banner-info {
-    @apply bg-info/5 border-info/20 text-info;
-  }
-
-  /* Glassmorphism Utilities */
-  .glass-card {
-    @apply bg-base-100/50 backdrop-blur-xl border border-base-content/5 shadow-sm;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════════════
-     IMMS STANDARD TABLE SYSTEM (RESPONSIVE STACKED)
-     ═══════════════════════════════════════════════════════════════════════════════ */
-  .table-imms {
-    @apply w-full border-separate border-spacing-0;
-  }
-  
-  .table-imms thead tr {
-    @apply bg-base-200/50 backdrop-blur-md sticky top-0 z-10 border-b border-base-content/5;
-  }
-  
-  .table-imms thead th {
-    @apply text-xs font-semibold uppercase tracking-wider text-base-content/40 py-3 px-4 transition-colors;
-  }
-  
-  .table-imms tbody td {
-    @apply text-sm font-normal leading-relaxed py-3 px-4 text-base-content/80 border-b border-base-content/5 transition-colors;
-  }
-  
-  .table-imms tbody tr:hover td {
-    @apply bg-base-200/50;
-  }
-
-  .table-imms .font-mono {
-    @apply text-sm tracking-tight tabular-nums;
-  }
-
-  /* STACKED TABLE PATTERN (MOBILE) */
-  @media (max-width: 767px) {
-    .table-stacked, .table-stacked thead, .table-stacked tbody, .table-stacked th, .table-stacked td, .table-stacked tr {
-      display: block;
-    }
-    .table-stacked thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
-    }
-    .table-stacked tr {
-      @apply mb-4 bg-base-100 rounded-xl shadow-sm overflow-hidden p-2 border border-base-content/5;
-    }
-    .table-stacked td {
-      border: none !important;
-      padding: 0.75rem 1rem 0.75rem 45% !important;
-      position: relative;
-      text-align: left;
-      min-height: 3rem;
-      display: block !important;
-      width: 100% !important;
-      border-bottom: 1px solid color-mix(in srgb, var(--color-base-content), transparent 95%) !important;
-    }
-
-    .table-stacked td::before {
-      content: attr(data-label);
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 40%;
-      font-size: 8px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--color-base-content);
-      opacity: 0.4;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      pointer-events: none;
-    }
-
-    /* Wrap cell content in a div for better control if needed, but for now just ensure visibility */
-    .table-stacked td > * {
-      display: inline-block;
-      vertical-align: middle;
-      max-width: 100%;
-    }
-
-    .table-stacked td:first-child {
-      @apply bg-base-200/50 rounded-lg mb-2 font-bold;
-      justify-content: space-between;
-      display: flex !important;
-      padding-left: 1rem !important;
-    }
-
-    .table-stacked td:first-child::before {
-      content: none;
-    }
-  }
-  
-  /* Readability Opacity Overrides */
-  .text-base-content\/20 { color: oklch(from var(--color-base-content) l c h / 0.5) !important; }
-  .text-base-content\/30 { color: oklch(from var(--color-base-content) l c h / 0.6) !important; }
-  .text-base-content\/40 { color: oklch(from var(--color-base-content) l c h / 0.7) !important; }
-}
-
 @layer utilities {
   .h-dvh { height: 100dvh; }
   .min-h-dvh { min-height: 100dvh; }
   
-  /* Sticky Action Bar for Mobile Forms */
-  .sticky-action-mobile {
-    @apply fixed bottom-0 left-0 right-0 p-4 bg-base-100/80 backdrop-blur-md border-t border-base-content/5 md:relative md:p-0 md:bg-transparent md:border-t-0 z-50;
-  }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: oklch(var(--color-foreground) / 0.1); border-radius: 9999px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: oklch(var(--color-foreground) / 0.2); }
+  
+  .custom-scrollbar-slim::-webkit-scrollbar { width: 2px; }
 }
 

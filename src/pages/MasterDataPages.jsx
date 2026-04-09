@@ -3,21 +3,26 @@ import { api } from '../utils/api.js';
 import { ROLE_COLORS, GRADE_COLORS } from '../utils/constants.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Modal, TableSkeleton, EmptyState, RoleBadge, StatusBadge, GradeBadge, AccentBadge } from '../components/ui/index.jsx';
+import { Modal, TableSkeleton, EmptyState, RoleBadge, StatusBadge, GradeBadge, AccentBadge, SectionCard, Button, Input, Spinner } from '../components/ui/index.jsx';
 import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Layout, Map as MapIcon, LayoutList, MapPinOff, Search, Tag, Router, Cable, RadioReceiver } from 'lucide-react';
 import DistributionMap from '../components/ui/DistributionMap.jsx';
 import CustomerMap from '../components/ui/CustomerMap.jsx';
 import GeoSummary from '../components/ui/GeoSummary.jsx';
+import { cn } from '../lib/utils.js';
+
+// Global icon stroke standard
+const ICON_ST = 2;
+const ICON_HD = 2.5;
 
 // ─── Component helpers ────────────────────────────────────────────────────────
 
-function TableCard({ children }) {
+function TableCard({ children, title, subtitle, footer, headerAction }) {
   return (
-    <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden">
-      <div className="overflow-auto max-h-[75vh] custom-scrollbar p-0">
+    <SectionCard title={title} subtitle={subtitle} footer={footer} headerAction={headerAction} padding={false} className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar relative">
         {children}
       </div>
-    </div>
+    </SectionCard>
   );
 }
 
@@ -86,190 +91,205 @@ export function MasterCustomerPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full min-h-0">
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight text-base-content uppercase">Customer Master</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 leading-relaxed">{customers.length} registered customers</p>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Customer Master</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{customers.length} registered customers</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
-          <div className="flex items-center gap-2 bg-base-200/50 rounded-full px-3 py-1 flex-1 max-w-[300px]">
-            <Search size={14} className="text-base-content/65" />
+          <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
+            <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
             <input 
               type="text" 
-              className="bg-transparent border-none focus:ring-0 text-sm font-bold w-full py-1 placeholder:text-base-content/40" 
+              className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full py-1 placeholder:text-foreground/20 uppercase tracking-wider h-full" 
               placeholder="Search Customer..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search customer database"
             />
           </div>
-          <div className="join shadow-sm bg-base-100 shrink-0">
+          <div className="flex items-center gap-1 bg-foreground/[0.03] border border-foreground/5 p-1 rounded-md shrink-0 h-8">
             <button 
-              className={`join-item btn btn-sm border-none ${viewMode === 'list' ? 'bg-base-200 text-base-content hover:bg-base-300' : 'bg-transparent text-base-content/40 hover:bg-base-200/50'}`} 
-              onClick={() => setViewMode('list')} title="List View"
-            ><LayoutList size={16} /></button>
+              className={cn(
+                "p-1 rounded-md transition-all",
+                viewMode === 'list' ? 'bg-background text-primary shadow-sm' : 'text-foreground/40 hover:text-foreground/60'
+              )} 
+              onClick={() => setViewMode('list')} aria-label="Toggle List View" title="List View"
+            ><LayoutList size={14} strokeWidth={ICON_ST} /></button>
             <button 
-              className={`join-item btn btn-sm border-none ${viewMode === 'map' ? 'bg-base-200 text-base-content hover:bg-base-300' : 'bg-transparent text-base-content/40 hover:bg-base-200/50'}`} 
-              onClick={() => setViewMode('map')} title="Map View"
-            ><MapIcon size={16} /></button>
+              className={cn(
+                "p-1 rounded-md transition-all",
+                viewMode === 'map' ? 'bg-background text-primary shadow-sm' : 'text-foreground/40 hover:text-foreground/60'
+              )} 
+              onClick={() => setViewMode('map')} aria-label="Toggle Map View" title="Map View"
+            ><MapIcon size={14} strokeWidth={ICON_ST} /></button>
           </div>
-          <div className="flex gap-2 shrink-0">
-            <button className="btn btn-ghost btn-sm bg-base-200/30 font-bold hover:bg-base-200/80 text-xs px-3" onClick={downloadTemplate}><Download size={14} /> Template</button>
-            <label className="btn btn-ghost btn-sm bg-base-200/30 font-bold hover:bg-base-200/80 text-xs px-3 cursor-pointer">
+          <div className="flex gap-1 shrink-0">
+            <Button variant="ghost" size="xs" onClick={downloadTemplate} className="font-bold text-[9px] tracking-widest px-2 h-8"><Download size={12} /> Template</Button>
+            <label className="cursor-pointer">
               <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
-              <Database size={14} /> Upload
+              <Button variant="ghost" size="xs" className="font-bold text-[9px] tracking-widest pointer-events-none px-2 h-8">
+                <Database size={12} /> Upload
+              </Button>
             </label>
-            <button className="btn btn-primary btn-sm px-4 shadow-sm" onClick={openCreate}><Plus size={14} /> Add Customer</button>
+            <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8" aria-label="Add new customer record"><Plus size={12} strokeWidth={ICON_HD} /> Add Customer</Button>
           </div>
         </div>
       </div>
 
-
-      {viewMode === 'map' ? (
-        <div className="flex flex-col gap-6">
-          <CustomerMap customers={customers} onRefresh={load} />
-          <GeoSummary customers={customers} />
-        </div>
-      ) : (
-        <TableCard>
-        {loading ? <TableSkeleton rows={5} /> :
-         (() => {
-           const filtered = customers.filter(c => 
-             (c.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-             (c.brand_site || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-             (c.service_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-             (c.customer_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-             (c.address || '').toLowerCase().includes(searchQuery.toLowerCase())
-           );
-           
-           if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="No data matches your search query" />;
-           
-           const totalPages = Math.ceil(filtered.length / rowsPerPage);
-           const startIdx = (currentPage - 1) * rowsPerPage;
-           const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
-           
-           return (
-            <div className="flex flex-col h-full">
-              <div className="overflow-x-auto">
-                <table className="table table-sm table-pin-rows table-stacked w-full">
-                  <thead>
-                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                      <th className="bg-base-100/90 backdrop-blur-md w-12 text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">#</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-left whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Cust ID</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-left whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Service ID</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Company Name</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[220px] text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Brand / Site</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Grade</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Level</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Status</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[150px] text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Service</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-right pr-4 uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginated.map((c, i) => (
-                      <tr key={c.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                        <td className="text-center text-base-content/40 font-mono font-bold italic text-sm md:py-3" data-label="#">{startIdx + i + 1}</td>
-                        <td className="font-mono text-sm font-medium text-primary tracking-tighter text-left md:py-3" data-label="Cust ID">{c.customer_id}</td>
-                        <td className="font-mono text-sm font-medium text-secondary tracking-tighter text-left md:py-3" data-label="Srv ID">{c.service_id}</td>
-                        <td className="text-left font-semibold text-sm tracking-tight md:py-3" data-label="Company">{c.company_name}</td>
-                        <td className="text-left text-sm opacity-70 md:py-3" data-label="Site">
-                          <div className="flex items-center gap-1.5">
-                            {c.brand_site}
-                            {(!c.latitude || !c.longitude) && (
-                              <span title="No coordinates found" className="text-error flex shrink-0">
-                                <MapPinOff size={11} strokeWidth={2.5} />
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="text-center md:py-3" data-label="Grade"><GradeBadge grade={c.grade} /></td>
-                        <td className="text-center md:py-3" data-label="Level"><AccentBadge text={c.support_level} /></td>
-                        <td className="text-center md:py-3" data-label="Status"><StatusBadge active={c.is_active} /></td>
-                        <td className="text-left text-xs font-bold uppercase text-base-content/70 tracking-wider font-mono md:py-3" data-label="Service">{c.service_type}</td>
-                        <td className="text-right pr-6 md:py-3" data-label="Actions">
-                          <div className="flex justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
-                            <div className="tooltip tooltip-left" data-tip="Edit"><button className="btn btn-ghost btn-circle btn-sm opacity-80 hover:opacity-100" onClick={() => openEdit(c)} aria-label="Edit"><Edit2 size={14} /></button></div>
-                            <div className="tooltip tooltip-left" data-tip="Delete"><button className="btn btn-ghost btn-circle btn-sm text-error opacity-80 hover:opacity-100 hover:bg-error/20" onClick={() => handleDelete(c.id)} aria-label="Delete"><Trash2 size={14} /></button></div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex flex-col sm:flex-row justify-between items-center p-3 sm:px-6 bg-base-100 gap-4 border-t border-base-content/5 mt-auto">
-                <div className="text-xs uppercase tracking-wider font-bold text-base-content/65">
-                  Showing <span className="text-base-content text-xs">{startIdx + 1}</span> to <span className="text-base-content text-xs">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-base-content text-xs">{filtered.length}</span> records
-                </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                     <span className="text-xs uppercase tracking-wider font-bold text-base-content/65 mt-0.5">Rows / Page</span>
-                    <select 
-                      className="select select-sm h-7 min-h-0 bg-base-200/50 text-sm font-medium border-none" 
-                      value={rowsPerPage} 
-                      onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                    >
-                      {[20, 50, 100, 200].map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button className="btn btn-ghost btn-square btn-sm hover:bg-base-200/50 text-base-content/70 disabled:opacity-20" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}><ChevronRight className="rotate-180" size={14} /></button>
-                    <div className="text-sm font-bold flex items-center gap-1.5 px-2">
-                       <span className="text-base-content/65">Pg</span>
-                       <span>{currentPage}</span>
-                       <span className="text-base-content/40 mx-0.5">/</span>
-                       <span className="text-base-content/85">{totalPages}</span>
-                    </div>
-                    <button className="btn btn-ghost btn-square btn-sm hover:bg-base-200/50 text-base-content/70 disabled:opacity-20" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}><ChevronRight size={14} /></button>
-                  </div>
-                </div>
-              </div>
+      <div className="flex-1 min-h-0 bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
+        {loading ? (
+            <TableSkeleton rows={15} />
+        ) : viewMode === 'map' ? (
+          <div className="h-full flex flex-col p-4 gap-4">
+            <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-foreground/5 shadow-inner">
+               <CustomerMap customers={customers} onRefresh={load} />
             </div>
-           );
-         })()
-        }
-      </TableCard>
-      )}
+            <GeoSummary customers={customers} />
+          </div>
+        ) : (
+          (() => {
+            const filtered = customers.filter(c => 
+              (c.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (c.brand_site || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (c.service_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (c.customer_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (c.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            
+            if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="Try adjusting your search query" />;
+            
+            const totalPages = Math.ceil(filtered.length / rowsPerPage);
+            const startIdx = (currentPage - 1) * rowsPerPage;
+            const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
+            
+            return (
+              <div className="flex flex-col h-full">
+                <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+                  <table className="w-full text-left border-separate border-spacing-0">
+                    <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
+                      <tr className="bg-foreground/[0.02]">
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[100px]">Cust ID</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[100px]">Service ID</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Company Name</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[180px]">Brand / Site</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Grade</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Level</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Status</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Service</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-foreground/5">
+                      {paginated.map((c, i) => (
+                        <tr key={c.id} className="hover:bg-foreground/[0.01] transition-colors group">
+                          <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{startIdx + i + 1}</td>
+                          <td className="px-4 py-2.5 text-[11px] font-bold text-primary font-mono tracking-tighter">{c.customer_id}</td>
+                          <td className="px-4 py-2.5 text-[11px] font-bold text-secondary font-mono tracking-tighter">{c.service_id}</td>
+                          <td className="px-4 py-2.5 text-[11px] font-bold text-foreground/80 tracking-tight">{c.company_name}</td>
+                          <td className="px-4 py-2.5 text-[11px] font-bold text-foreground/60 tracking-tight">
+                            <div className="flex items-center gap-1.5">
+                              {c.brand_site}
+                              {(!c.latitude || !c.longitude) && (
+                                <span title="No coordinates found" className="text-error flex shrink-0">
+                                  <MapPinOff size={10} strokeWidth={3} />
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5 text-center"><GradeBadge grade={c.grade} /></td>
+                          <td className="px-4 py-2.5 text-center"><AccentBadge text={c.support_level} /></td>
+                          <td className="px-4 py-2.5 text-center"><StatusBadge active={c.is_active} /></td>
+                          <td className="px-4 py-2.5 text-[10px] font-black text-foreground/40 uppercase tracking-widest font-mono">{c.service_type}</td>
+                          <td className="px-4 py-2.5 text-right pr-4">
+                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="xs" onClick={() => openEdit(c)} className="w-7 h-7 p-0" aria-label="Edit customer" title="Edit Customer"><Edit2 size={12} strokeWidth={ICON_ST} /></Button>
+                              <Button variant="ghost" size="xs" onClick={() => handleDelete(c.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10" aria-label="Deactivate customer" title="Deactivate Customer"><Trash2 size={12} strokeWidth={ICON_ST} /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-2 bg-foreground/[0.02] border-t border-foreground/5 gap-4 mt-auto">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                    Showing <span className="text-foreground/60">{startIdx + 1}</span> to <span className="text-foreground/60">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-foreground/60">{filtered.length}</span>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">Rows</span>
+                       <select 
+                        className="bg-transparent border-none text-[11px] font-bold focus:ring-0 p-0 h-auto cursor-pointer text-foreground/60 uppercase"
+                        value={rowsPerPage} 
+                        onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                      >
+                        {[20, 50, 100].map(v => <option key={v} value={v} className="bg-background">{v}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="xs" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 p-0"><ChevronRight className="rotate-180" size={12} /></Button>
+                      <div className="text-[10px] font-black flex items-center gap-1.5 px-3 uppercase tracking-widest">
+                         <span className="text-foreground/70">{currentPage}</span>
+                         <span className="text-foreground/20">/</span>
+                         <span className="text-foreground/50">{totalPages}</span>
+                      </div>
+                      <Button variant="ghost" size="xs" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 p-0"><ChevronRight size={12} /></Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        )}
+      </div>
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add New Customer' : 'Edit Customer'}
-        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary px-6" onClick={handleSave}>Save Changes</button></>}
+        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button><Button onClick={handleSave} className="px-6">Save Changes</Button></>}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Customer ID *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.customer_id} onChange={e => setF('customer_id', e.target.value)} required /></div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Service ID *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.service_id} onChange={e => setF('service_id', e.target.value)} required /></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Company Name *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.company_name} onChange={e => setF('company_name', e.target.value)} required /></div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Brand / Site *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.brand_site} onChange={e => setF('brand_site', e.target.value)} required /></div>
-        </div>
-        <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Address</label><textarea className="textarea textarea-sm border-none bg-base-200 font-bold text-sm" rows={2} value={form.address} onChange={e => setF('address', e.target.value)} /></div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Service Type</label>
-            <select className="select select-sm border-none bg-base-200 font-bold text-sm h-9" value={form.service_type} onChange={e => setF('service_type', e.target.value)}>
-              {['Internet Dedicated', 'Broadband', 'VPN IP', 'MPLS', 'Astinet', 'VSAT', 'Clear Channel'].map(o => <option key={o}>{o}</option>)}
-            </select>
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input label="Customer ID *" value={form.customer_id} onChange={e => setF('customer_id', e.target.value)} required />
+            <Input label="Service ID *" value={form.service_id} onChange={e => setF('service_id', e.target.value)} required />
           </div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">SLA Grade</label>
-            <select className="select select-sm border-none bg-base-200 font-bold text-sm h-9" value={form.grade} onChange={e => setF('grade', e.target.value)}>
-              {['VIP', 'Gold', 'Silver', 'Bronze'].map(o => <option key={o}>{o}</option>)}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input label="Company Name *" value={form.company_name} onChange={e => setF('company_name', e.target.value)} required />
+            <Input label="Brand / Site *" value={form.brand_site} onChange={e => setF('brand_site', e.target.value)} required />
           </div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Support Level</label>
-            <select className="select select-sm border-none bg-base-200 font-bold text-sm h-9" value={form.support_level} onChange={e => setF('support_level', e.target.value)}>
-              {['L1', 'L2', 'L3'].map(o => <option key={o}>{o}</option>)}
-            </select>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Address</label>
+            <textarea className="flex w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-ring min-h-[80px]" rows={2} value={form.address} onChange={e => setF('address', e.target.value)} />
           </div>
-        </div>
-        <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Link Coverage (Maps/NMS URL)</label><input type="url" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.link_coverage} onChange={e => setF('link_coverage', e.target.value)} /></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Latitude</label><input type="number" step="any" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" placeholder="-6.1234..." value={form.latitude} onChange={e => setF('latitude', e.target.value)} /></div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Longitude</label><input type="number" step="any" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" placeholder="110.1234..." value={form.longitude} onChange={e => setF('longitude', e.target.value)} /></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Service Type</label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-ring" value={form.service_type} onChange={e => setF('service_type', e.target.value)}>
+                {['Internet Dedicated', 'Broadband', 'VPN IP', 'MPLS', 'Astinet', 'VSAT', 'Clear Channel'].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">SLA Grade</label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-ring" value={form.grade} onChange={e => setF('grade', e.target.value)}>
+                {['VIP', 'Gold', 'Silver', 'Bronze'].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Support Level</label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-ring" value={form.support_level} onChange={e => setF('support_level', e.target.value)}>
+                {['L1', 'L2', 'L3'].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+          <Input label="Link Coverage (Maps/NMS URL)" type="url" value={form.link_coverage} onChange={e => setF('link_coverage', e.target.value)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input label="Latitude" type="number" step="any" placeholder="-6.1234..." value={form.latitude} onChange={e => setF('latitude', e.target.value)} />
+            <Input label="Longitude" type="number" step="any" placeholder="110.1234..." value={form.longitude} onChange={e => setF('longitude', e.target.value)} />
+          </div>
         </div>
       </Modal>
-
-
     </div>
   );
 }
@@ -288,7 +308,6 @@ export function MasterClassificationPage() {
   useEffect(() => { load(); }, []);
 
   const toggle = (k) => setExpanded(p => ({ ...p, [k]: !p[k] }));
-
   const openEdit = (c) => { setModal(c); setForm({ klasifikasi: c.klasifikasi, sub_klasifikasi: c.sub_klasifikasi || '' }); };
   const openCreate = () => { setModal('create'); setForm({ klasifikasi: '', sub_klasifikasi: '' }); };
   
@@ -306,7 +325,6 @@ export function MasterClassificationPage() {
     catch (e) { addToast(e.message, 'error'); }
   };
 
-  // Group classes by primary classification
   const grouped = classes.reduce((acc, c) => {
     if (!acc[c.klasifikasi]) acc[c.klasifikasi] = [];
     acc[c.klasifikasi].push(c);
@@ -314,67 +332,60 @@ export function MasterClassificationPage() {
   }, {});
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full min-h-0">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Classification Master</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 leading-relaxed">Incident categories hierarchy</p>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Classification Master</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">Hierarchy of incident categories</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button className="btn btn-primary" onClick={openCreate}><Plus size={18} /> Add Classification</button>
+        <div className="flex items-center gap-2">
+          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Add Category</Button>
         </div>
       </div>
 
-      {loading ? <TableSkeleton rows={3} /> : classes.length === 0 ? <EmptyState icon={<Tag size={40} />} title="No classifications found" /> : (
-        <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden py-2">
-          {Object.entries(grouped).map(([parent, children]) => (
-            <div key={parent} className="border-b border-base-content/5 last:border-0 border-dashed">
-              <button 
-                onClick={() => toggle(parent)}
-                className={`flex items-center gap-2 w-full px-5 py-3 text-left transition-colors hover:bg-base-200/50`}
-              >
-                <span className="w-5 shrink-0 text-base-content/65">
-                  {expanded[parent] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                </span>
-                <div className="font-bold flex items-center gap-3">
-                  <span className="badge bg-primary/10 text-primary border-none badge-sm px-2.5 h-6 rounded-md font-bold tracking-wider text-xs">{parent}</span>
-                  <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">{children.length} items</span>
-                </div>
-              </button>
-              
-              {expanded[parent] && (
-                <div className="pl-[38px] pr-5 pb-3">
-                  <div className="border-l-2 border-base-200 pl-3 flex flex-col gap-0.5">
-                    {children.map(c => (
-                      <div key={c.id} className="flex items-center justify-between p-2 pl-3 rounded-md hover:bg-base-200/50 transition-all group relative before:absolute before:content-[''] before:w-3 before:h-[2px] before:bg-base-200 before:left-[-12px] before:top-1/2">
-                        <div className="text-sm font-bold tracking-tight text-base-content/85">{c.sub_klasifikasi}</div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="tooltip" data-tip="Edit"><button className="btn btn-ghost btn-square btn-xs" onClick={() => openEdit(c)} aria-label="Edit"><Edit2 size={13} /></button></div>
-                          <div className="tooltip" data-tip="Delete"><button className="btn btn-ghost btn-square btn-xs text-error hover:bg-error/10" onClick={() => handleDelete(c.id)} aria-label="Delete"><Trash2 size={13} /></button></div>
-                        </div>
-                      </div>
-                    ))}
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-1">
+        {loading ? <TableSkeleton rows={6} /> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(grouped).map(([klasifikasi, items]) => (
+              <SectionCard 
+                key={klasifikasi}
+                title={klasifikasi.toUpperCase()}
+                subtitle={`${items.length} sub-categories defined`}
+                padding={false}
+                className="flex flex-col h-fit"
+                headerAction={
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="xs" onClick={() => toggle(klasifikasi)} className="w-7 h-7 p-0">
+                      {expanded[klasifikasi] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </Button>
                   </div>
+                }
+              >
+                <div className="divide-y divide-foreground/5 bg-foreground/[0.01]">
+                  {items.map(c => (
+                    <div key={c.id} className="group hover:bg-background transition-colors px-4 py-2 flex items-center justify-between gap-4 border-l-2 border-transparent hover:border-primary/40">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[11px] font-bold text-foreground/80 tracking-tight">{c.sub_klasifikasi || 'General / Root'}</span>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <Button variant="ghost" size="xs" onClick={() => openEdit(c)} className="w-6 h-6 p-0"><Edit2 size={11} strokeWidth={ICON_ST} /></Button>
+                        <Button variant="ghost" size="xs" onClick={() => handleDelete(c.id)} className="w-6 h-6 p-0 text-error hover:bg-error/10"><Trash2 size={11} strokeWidth={ICON_ST} /></Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              </SectionCard>
+            ))}
+          </div>
+        )}
+      </div>
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Classification' : 'Edit Classification'}
-        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary px-6" onClick={handleSave}>Save Changes</button></>}
+        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button><Button onClick={handleSave} className="px-6">Save Changes</Button></>}
       >
-        <div className="form-control">
-          <label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Classification (Parent) *</label>
-          <input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.klasifikasi} onChange={e => setF('klasifikasi', e.target.value)} placeholder="e.g., Cable Cut" list="parent-list" />
-          <datalist id="parent-list">
-            {Object.keys(grouped).map(k => <option key={k} value={k} />)}
-          </datalist>
-        </div>
-        <div className="form-control mt-2">
-          <label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Sub-Classification (Child) *</label>
-          <input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.sub_klasifikasi} onChange={e => setF('sub_klasifikasi', e.target.value)} placeholder="e.g., Tree Trimming" />
+        <div className="flex flex-col gap-6">
+          <Input label="Primary Classification *" value={form.klasifikasi} onChange={e => setF('klasifikasi', e.target.value)} required />
+          <Input label="Sub Classification" value={form.sub_klasifikasi} onChange={e => setF('sub_klasifikasi', e.target.value)} placeholder="Optional" />
         </div>
       </Modal>
     </div>
@@ -396,8 +407,10 @@ export function UserManagementPage() {
 
   const load = () => api.getUsers().then(setUsers).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
+
   const openEdit = (u) => { setModal(u); setForm({ employee_id: u.employee_id || '', username: u.username, password: '', role: u.role, name: u.name, email: u.email || '' }); };
   const openCreate = () => { setModal('create'); setForm({ employee_id: '', username: '', password: '', role: 'technician', name: '', email: '' }); };
+  
   const handleSave = async () => {
     try {
       if (modal === 'create') { await api.createUser(form); addToast('User created successfully', 'success'); }
@@ -405,35 +418,43 @@ export function UserManagementPage() {
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure?')) return;
+    try { await api.deleteUser(id); addToast('User removed', 'warning'); load(); }
+    catch (e) { addToast(e.message, 'error'); }
+  };
+
   const handleToggle = async (u) => {
     try { await api.updateUser(u.id, { is_active: u.is_active ? 0 : 1 }); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full min-h-0">
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">User Management</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 leading-relaxed">{users.length} registered accounts</p>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">User Accounts</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{users.length} registered access keys</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
-          <div className="flex items-center gap-2 bg-base-200/50 rounded-full px-3 py-1 flex-1 max-w-[300px]">
-            <Search size={14} className="text-base-content/65" />
+          <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
+            <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
             <input 
               type="text" 
-              className="bg-transparent border-none focus:ring-0 text-sm font-bold w-full py-1 placeholder:text-base-content/45" 
+              className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full py-1 placeholder:text-foreground/20 uppercase tracking-wider h-full" 
               placeholder="Search Username or Name..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search user accounts"
             />
           </div>
-          <button className="btn btn-primary btn-sm px-4 shadow-sm" onClick={openCreate}><Plus size={14} /> Add User</button>
+          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Create Account</Button>
         </div>
       </div>
 
-      <TableCard>
-        {loading ? <TableSkeleton rows={4} /> : (() => {
+      <div className="flex-1 min-h-0  bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
+        {loading ? <TableSkeleton rows={10} /> : (() => {
           const filtered = users.filter(u => 
             (u.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -448,97 +469,136 @@ export function UserManagementPage() {
 
           return (
             <div className="flex flex-col h-full">
-              <div className="overflow-x-auto">
-                <table className="table table-sm table-pin-rows table-stacked w-full">
-                  <thead>
-                    <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                      <th className="bg-base-100/90 backdrop-blur-md w-12 text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">#</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">ID</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[150px] text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Username</th>
-                      <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Name</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[220px] text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Email</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Role</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Status</th>
-                      <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-right pr-4 uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Actions</th>
+              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+                <table className="w-full text-left border-separate border-spacing-0">
+                  <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
+                    <tr className="bg-foreground/[0.02]">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[80px] text-center">Emp ID</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">User Identity</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[150px]">Email Access</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Permissions</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Account State</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">Management</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-foreground/5 text-[11px]">
                     {paginated.map((u, i) => (
-                      <tr key={u.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                        <td className="text-center opacity-40 font-mono italic text-sm md:py-3" data-label="#">{startIdx + i + 1}</td>
-                  <td className="text-center font-mono font-bold text-primary text-sm md:py-3" data-label="ID">{u.employee_id || '—'}</td>
-                  <td className="text-left font-mono font-bold text-base-content/75 tracking-tight text-sm md:py-3" data-label="User">{u.username}</td>
-                  <td className="text-left font-bold text-sm tracking-tight md:py-3" data-label="Name">{u.name}</td>
-                  <td className="text-left text-base-content/65 text-sm font-bold truncate max-w-[150px] md:py-3" data-label="Email">{u.email || '—'}</td>
-                  <td className="text-center md:py-3" data-label="Role"><RoleBadge role={u.role} /></td>
-                  <td className="text-center md:py-3" data-label="Status">
-                    <button onClick={() => handleToggle(u)} className="btn btn-ghost btn-xs p-0 m-0 hover:bg-transparent transition-transform hover:scale-105 active:scale-95">
-                      <StatusBadge active={u.is_active} />
-                    </button>
-                  </td>
-                  <td className="text-right pr-4 md:py-3" data-label="Edit">
-                     <div className="md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100 flex justify-end">
-                       <div className="tooltip tooltip-left" data-tip="Edit">
-                         <button className="btn btn-ghost btn-circle btn-sm shadow-sm opacity-80 hover:opacity-100" onClick={() => openEdit(u)} aria-label="Edit">
-                           <Edit2 size={14} />
-                         </button>
-                       </div>
-                     </div>
-                  </td>
-                </tr>
+                      <tr key={u.id} className="hover:bg-foreground/[0.01] transition-colors group">
+                        <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{startIdx + i + 1}</td>
+                        <td className="px-4 py-2.5 text-center font-mono font-bold text-primary/80 tracking-tighter">{u.employee_id || '—'}</td>
+                        <td className="px-4 py-2.5">
+                           <div className="flex flex-col gap-0.5">
+                              <span className="font-bold text-foreground/80 tracking-tight">{u.name}</span>
+                              <span className="text-[9px] font-black font-mono text-foreground/40 uppercase tracking-widest">@{u.username}</span>
+                           </div>
+                        </td>
+                        <td className="px-4 py-2.5 font-bold text-foreground/50 tracking-tight">{u.email || '—'}</td>
+                        <td className="px-4 py-2.5 text-center"><RoleBadge role={u.role} /></td>
+                        <td className="px-4 py-2.5 text-center">
+                          <button onClick={() => handleToggle(u)} className="transition-transform active:scale-95">
+                            <StatusBadge active={u.is_active} />
+                          </button>
+                        </td>
+                        <td className="px-4 py-2.5 text-right pr-4">
+                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
+                             <Button variant="ghost" size="xs" onClick={() => openEdit(u)} className="w-7 h-7 p-0" aria-label="Edit user account" title="Edit User"><Edit2 size={12} strokeWidth={ICON_ST} /></Button>
+                             <Button variant="ghost" size="xs" onClick={() => handleDelete(u.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10" aria-label="Delete user account" title="Delete User"><Trash2 size={12} strokeWidth={ICON_ST} /></Button>
+                           </div>
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="flex flex-col sm:flex-row justify-between items-center p-3 sm:px-6 bg-base-100 gap-4 border-t border-base-content/5 mt-auto">
-                <div className="text-xs uppercase tracking-wider font-bold text-base-content/65">
-                  Showing <span className="text-base-content text-xs">{startIdx + 1}</span> to <span className="text-base-content text-xs">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-base-content text-xs">{filtered.length}</span> records
+
+              <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-2 bg-foreground/[0.02] border-t border-foreground/5 gap-4 mt-auto">
+                <div className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                  Showing <span className="text-foreground/60">{startIdx + 1}</span> to <span className="text-foreground/60">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-foreground/60">{filtered.length}</span>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
-                     <span className="text-xs uppercase tracking-wider font-bold text-base-content/65 mt-0.5">Rows / Page</span>
-                    <select 
-                      className="select select-sm h-7 min-h-0 bg-base-200/50 text-sm font-medium border-none" 
+                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">Rows</span>
+                     <select 
+                      className="bg-transparent border-none text-[11px] font-bold focus:ring-0 p-0 h-auto cursor-pointer text-foreground/60 uppercase"
                       value={rowsPerPage} 
                       onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
                     >
-                      {[20, 50, 100, 200].map(v => <option key={v} value={v}>{v}</option>)}
+                      {[20, 50, 100].map(v => <option key={v} value={v} className="bg-background">{v}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button className="btn btn-ghost btn-square btn-sm hover:bg-base-200/50 text-base-content/70 disabled:opacity-20" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}><ChevronRight className="rotate-180" size={14} /></button>
-                    <div className="text-sm font-bold flex items-center gap-1.5 px-2">
-                       <span className="text-base-content/65">Pg</span>
-                       <span>{currentPage}</span>
-                       <span className="text-base-content/40 mx-0.5">/</span>
-                       <span className="text-base-content/85">{totalPages}</span>
+                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 p-0"><ChevronRight className="rotate-180" size={12} /></Button>
+                    <div className="text-[10px] font-black flex items-center gap-1.5 px-3 uppercase tracking-widest">
+                       <span className="text-foreground/70">{currentPage}</span>
+                       <span className="text-foreground/20">/</span>
+                       <span className="text-foreground/50">{totalPages}</span>
                     </div>
-                    <button className="btn btn-ghost btn-square btn-sm hover:bg-base-200/50 text-base-content/70 disabled:opacity-20" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}><ChevronRight size={14} /></button>
+                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 p-0"><ChevronRight size={12} /></Button>
                   </div>
                 </div>
               </div>
             </div>
           );
         })()}
-      </TableCard>
+      </div>
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add New User' : 'Edit User'}
-        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary px-6" onClick={handleSave}>Save Changes</button></>}
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Create New Account' : 'Edit Account Details'}
+        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button><Button onClick={handleSave} className="px-6">Save Account</Button></>}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Employee ID *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.employee_id} onChange={e => setF('employee_id', e.target.value)} placeholder="1001" maxLength={4} /></div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Username *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.username} onChange={e => setF('username', e.target.value)} placeholder="username" disabled={modal !== 'create'} /></div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Password {modal !== 'create' ? '(leave empty = no change)' : '*'}</label><input type="password" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.password} onChange={e => setF('password', e.target.value)} /></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Full Name *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.name} onChange={e => setF('name', e.target.value)} /></div>
-          <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Role</label>
-            <select className="select select-sm border-none bg-base-200 font-bold text-sm h-9" value={form.role} onChange={e => setF('role', e.target.value)}>
-              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Input 
+              label="Employee ID *" 
+              value={form.employee_id} 
+              onChange={e => setF('employee_id', e.target.value)} 
+              placeholder="e.g. 1001" 
+              maxLength={4} 
+              required
+            />
+            <Input 
+              label="Username *" 
+              value={form.username} 
+              onChange={e => setF('username', e.target.value)} 
+              placeholder="username" 
+              disabled={modal !== 'create'} 
+              required
+            />
+            <Input 
+              label={`Password ${modal !== 'create' ? '(Optional)' : '*'}`}
+              type="password" 
+              value={form.password} 
+              onChange={e => setF('password', e.target.value)} 
+              placeholder={modal !== 'create' ? '••••••••' : 'Password'}
+              required={modal === 'create'}
+            />
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input 
+              label="Full Name *" 
+              value={form.name} 
+              onChange={e => setF('name', e.target.value)} 
+              required
+            />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">System Role</label>
+              <select 
+                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-ring" 
+                value={form.role} 
+                onChange={e => setF('role', e.target.value)}
+              >
+                {ROLES.map(r => <option key={r} value={r} className="bg-background">{r.toUpperCase()}</option>)}
+              </select>
+            </div>
+          </div>
+          <Input 
+            label="Email Address" 
+            type="email" 
+            value={form.email} 
+            onChange={e => setF('email', e.target.value)} 
+            placeholder="user@example.com"
+          />
         </div>
-        <div className="form-control mt-2"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Email</label><input type="email" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.email} onChange={e => setF('email', e.target.value)} /></div>
       </Modal>
     </div>
   );
@@ -549,21 +609,25 @@ export function MasterTechnicalSupportPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({ no: '', name: '', unit: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const load = () => api.getTechnicalSupport().then(setData).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
+
   const openEdit = (item) => { setModal(item); setForm({ no: item.no || '', name: item.name, unit: item.unit }); };
   const openCreate = () => { setModal('create'); setForm({ no: '', name: '', unit: '' }); };
+  
   const handleSave = async () => {
     try {
-      if (modal === 'create') { await api.createTechnicalSupport(form); addToast('Data added successfully', 'success'); }
+      if (modal === 'create') { await api.createTechnicalSupport(form); addToast('Personnel added successfully', 'success'); }
       else { await api.updateTechnicalSupport(modal.id, form); addToast('Updated successfully', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -580,119 +644,145 @@ export function MasterTechnicalSupportPage() {
     } catch(err) { addToast(err.message, 'error'); setLoading(false); }
     finally { e.target.value = null; }
   };
+
   const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ No: '1', Name: 'John Doe', Unit: 'Maintenance' }]);
+    const ws = XLSX.utils.json_to_sheet([{ No: '1', Name: 'John Doe', Unit: 'Maintenance Area A' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
     XLSX.writeFile(wb, 'Template_Personel_Data.xlsx');
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full min-h-0">
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Technical Personnel</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 leading-relaxed">{data.length} registered personnel</p>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Personnel Records</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{data.length} registered field engineers</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button className="btn btn-ghost btn-sm bg-base-200/30 font-bold hover:bg-base-200/80 text-xs px-3" onClick={downloadTemplate}><Download size={14} /> Template</button>
-          <label className="btn btn-ghost btn-sm bg-base-200/30 font-bold hover:bg-base-200/80 text-xs px-3 cursor-pointer m-0">
+        <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
+          <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
+            <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
+            <input 
+              type="text" 
+              className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full py-1 placeholder:text-foreground/20 uppercase tracking-wider h-full" 
+              placeholder="Filter Technicians..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search personnel records"
+            />
+          </div>
+          <Button variant="ghost" size="xs" onClick={downloadTemplate} className="font-bold text-[9px] tracking-widest px-2 h-8"><Download size={12} strokeWidth={ICON_ST} /> Template</Button>
+          <label className="cursor-pointer">
             <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
-            <Database size={14} /> Upload
+            <Button variant="ghost" size="xs" className="font-bold text-[9px] tracking-widest h-8 pointer-events-none">
+              <Database size={12} strokeWidth={ICON_ST} /> Upload
+            </Button>
           </label>
-          <button className="btn btn-primary btn-sm px-4 shadow-sm" onClick={openCreate}><Plus size={14} /> Add Data</button>
+          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-6 h-8"><Plus size={12} /> Add Personnel</Button>
         </div>
       </div>
 
-      <TableCard>
-        {loading ? <TableSkeleton rows={4} /> : (
-          <table className="table table-sm table-pin-rows table-stacked w-full">
-            <thead>
-              <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                <th className="bg-base-100/90 backdrop-blur-md w-12 text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">#</th>
-                <th className="bg-base-100/90 backdrop-blur-md min-w-[100px] text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">No</th>
-                <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Name</th>
-                <th className="bg-base-100/90 backdrop-blur-md min-w-[220px] text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Unit</th>
-                <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-right pr-4 uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item, i) => (
-                <tr key={item.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                  <td className="text-center opacity-40 font-mono italic md:py-3" data-label="#">{i + 1}</td>
-                  <td className="text-center font-mono font-bold text-base-content/65 md:py-3" data-label="No">{item.no || '—'}</td>
-                  <td className="text-left font-medium text-sm md:py-3" data-label="Name">{item.name}</td>
-                  <td className="text-left md:py-3" data-label="Unit">
-                    <span className="badge border-none bg-base-200 text-base-content/80 badge-sm px-2 py-2 font-bold tracking-wider text-xs">
-                      {item.unit}
-                    </span>
-                  </td>
-                  <td className="text-right pr-4 md:py-3" data-label="Actions">
-                    <div className="flex justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
-                      <div className="tooltip tooltip-left" data-tip="Edit"><button className="btn btn-ghost btn-circle btn-sm opacity-80 hover:opacity-100" onClick={() => openEdit(item)} aria-label="Edit"><Edit2 size={14} /></button></div>
-                      <div className="tooltip tooltip-left" data-tip="Delete"><button className="btn btn-ghost btn-circle btn-sm text-error opacity-80 hover:opacity-100 hover:bg-error/20" onClick={() => api.deleteTechnicalSupport(item.id).then(load)} aria-label="Delete"><Trash2 size={14} /></button></div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </TableCard>
+      <div className="flex-1 min-h-0 bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
+        {loading ? <TableSkeleton rows={12} /> : (
+          (() => {
+            const filtered = data.filter(it => 
+              it.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              it.unit?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="No personnel match your search" />;
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Personnel' : 'Edit Personnel'}
-        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary px-6" onClick={handleSave}>Save Changes</button></>}
+            return (
+              <div className="flex flex-col h-full">
+                <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+                  <table className="w-full text-left border-separate border-spacing-0">
+                    <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
+                      <tr className="bg-foreground/[0.02]">
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-24 text-center">Assign No</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[200px]">Engineer Name</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Assignment / Unit</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Management</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-foreground/5 text-[11px]">
+                      {filtered.map((item, i) => (
+                        <tr key={item.id} className="hover:bg-foreground/[0.01] transition-colors group">
+                          <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{i + 1}</td>
+                          <td className="px-4 py-2.5 text-center font-mono font-bold text-foreground/40 tracking-tighter">{item.no || '—'}</td>
+                          <td className="px-4 py-2.5 font-bold text-foreground/80 tracking-tight">{item.name}</td>
+                          <td className="px-4 py-2.5">
+                             <span className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[9px] font-black uppercase tracking-wider border border-primary/10">
+                               {item.unit}
+                             </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-right pr-4">
+                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="xs" onClick={() => openEdit(item)} className="w-7 h-7 p-0" aria-label="Edit personnel record" title="Edit"><Edit2 size={12} strokeWidth={ICON_ST} /></Button>
+                              <Button variant="ghost" size="xs" onClick={() => api.deleteTechnicalSupport(item.id).then(load)} className="w-7 h-7 p-0 text-error hover:bg-error/10" aria-label="Delete personnel record" title="Delete"><Trash2 size={12} strokeWidth={ICON_ST} /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()
+        )}
+      </div>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Support Contact' : 'Edit Support Contact'}
+        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button><Button onClick={handleSave} className="px-6">Save Record</Button></>}
       >
-        <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">No</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.no} onChange={e => setF('no', e.target.value)} /></div>
-        <div className="form-control mt-2"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Name *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.name} onChange={e => setF('name', e.target.value)} required /></div>
-        <div className="form-control mt-2"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Unit *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9" value={form.unit} onChange={e => setF('unit', e.target.value)} required /></div>
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Input label="Assign No" value={form.no} onChange={e => setF('no', e.target.value)} placeholder="e.g. 1" />
+            <div className="md:col-span-3">
+              <Input label="Engineer Name *" value={form.name} onChange={e => setF('name', e.target.value)} required />
+            </div>
+          </div>
+          <Input label="Unit / Assignment *" value={form.unit} onChange={e => setF('unit', e.target.value)} placeholder="e.g. Area Jakarta Timur" required />
+        </div>
       </Modal>
     </div>
   );
 }
 
-// ─── Master Distribusi Page ───────────────────────────────────────────────────
+// ─── Master Distribusi Page ──────────────────────────────────────────────────
 export function MasterDistribusiPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState({});
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [viewMode, setViewMode] = useState('tree'); // 'tree' | 'map'
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
+  const [modal, setModal] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [form, setForm] = useState({ type: 'Fiber Optic', level_1: '', level_2: '', level_3: '', level_4: '', latitude: '', longitude: '' });
   const { addToast } = useToast();
+  const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const load = () => api.getDistribusi().then(setData).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
-  const toggle = (path) => setExpanded(p => ({ ...p, [path]: !p[path] }));
 
-  const tree = { 'Fiber Optic': {}, 'Wireless': {} };
-  data.forEach(d => {
-    if (!tree[d.type]) tree[d.type] = {};
-    if (d.type === 'Fiber Optic') {
-      const p = d.level_1;
-      if (!tree[d.type][p]) tree[d.type][p] = {};
-      const o = d.level_2;
-      if (o) {
-        if (!tree[d.type][p][o]) tree[d.type][p][o] = {};
-        const dc = d.level_3;
-        if (dc) {
-          if (!tree[d.type][p][o][dc]) tree[d.type][p][o][dc] = [];
-          const dp = d.level_4;
-          if (dp && Array.isArray(tree[d.type][p][o][dc]) && !tree[d.type][p][o][dc].includes(dp)) {
-            tree[d.type][p][o][dc].push(dp);
-          }
-        }
-      }
-    } else if (d.type === 'Wireless') {
-      const b = d.level_1;
-      if (!tree[d.type][b]) tree[d.type][b] = [];
-      const r = d.level_2;
-      if (r && Array.isArray(tree[d.type][b]) && !tree[d.type][b].includes(r)) {
-        tree[d.type][b].push(r);
-      }
-    }
-  });
+  const openEdit = (d) => { setModal(d); setForm({ ...d }); };
+  const openCreate = () => { setModal('create'); setForm({ type: 'Fiber Optic', level_1: '', level_2: '', level_3: '', level_4: '', latitude: '', longitude: '' }); };
+  
+  const handleSave = async () => {
+    try {
+      if (modal === 'create') { await api.createDistribusi(form); addToast('Distribution record added', 'success'); }
+      else { await api.updateDistribusi(modal.id, form); addToast('Updated successfully', 'success'); }
+      setModal(null); load();
+    } catch (e) { addToast(e.message, 'error'); }
+  };
 
-  const handleFileUpload = async (e, type) => {
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this record?')) return;
+    try { await api.deleteDistribusi(id); addToast('Deleted', 'warning'); load(); }
+    catch (e) { addToast(e.message, 'error'); }
+  };
+
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setLoading(true);
@@ -701,227 +791,244 @@ export function MasterDistribusiPage() {
       const workbook = XLSX.read(buf);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet);
-      const res = await api.uploadDistribusi(type, rows);
-      addToast(`Successfully uploaded ${res.count} ${type} records`, 'success');
+      
+      const fo = rows.filter(r => r['Type'] === 'Fiber Optic').map(r => ({
+        type: 'Fiber Optic',
+        level_1: r['POP'] || '',
+        level_2: r['OSC'] || '',
+        level_3: r['ODC'] || '',
+        level_4: r['ODP'] || '',
+        latitude: r['Latitude'],
+        longitude: r['Longitude']
+      }));
+      
+      const wireless = rows.filter(r => r['Type'] === 'Wireless').map(r => ({
+        type: 'Wireless',
+        level_1: r['BTS'] || '',
+        level_2: r['Radio'] || '',
+        latitude: r['Latitude'],
+        longitude: r['Longitude']
+      }));
+
+      if (fo.length) await api.uploadDistribusi('Fiber Optic', fo);
+      if (wireless.length) await api.uploadDistribusi('Wireless', wireless);
+      
+      addToast(`Uploaded ${fo.length + wireless.length} records`, 'success');
       load();
     } catch(err) { addToast(err.message, 'error'); setLoading(false); }
     finally { e.target.value = null; }
   };
 
-  const downloadTemplateFO = () => {
-    const ws = XLSX.utils.json_to_sheet([{ POP: 'PLB-1', OSC: 'OSC-A', ODC: 'ODC-1', ODP: 'ODP-001' }]);
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'FO');
-    XLSX.writeFile(wb, 'Template_Distribusi_FO.xlsx');
-    setShowDropdown(false);
-  };
-  const downloadTemplateWl = () => {
-    const ws = XLSX.utils.json_to_sheet([{ BTS: 'BTS-Palembang', RADIO: 'Radio-North' }]);
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'WL');
-    XLSX.writeFile(wb, 'Template_Distribusi_Wireless.xlsx');
-    setShowDropdown(false);
-  };
-
-  const TreeItem = ({ label, children, path, icon }) => {
-    const isExpanded = expanded[path];
-    const hasChildren = children && (Array.isArray(children) ? children.length > 0 : Object.keys(children).length > 0);
-    return (
-      <div className="relative group/tree">
-        <div
-          onClick={() => hasChildren && toggle(path)}
-          className={`flex items-center gap-2 py-1.5 rounded-md transition-all relative z-10 w-full pl-6 bg-base-100 hover:bg-base-200/50 ${
-            hasChildren ? 'cursor-pointer' : 'cursor-default'
-          }`}
-        >
-          <div className="absolute left-1.5 top-1/2 -mt-2 w-4 h-4 flex items-center justify-center text-base-content/65 bg-base-100">
-            {hasChildren ? (isExpanded ? <ChevronDown size={12} strokeWidth={3} /> : <ChevronRight size={12} strokeWidth={3} />) : <div className="w-1 h-1 rounded-full bg-base-content/20" />}
-          </div>
-          <div className="flex-shrink-0 text-base-content/85">
-            {icon || (hasChildren ? <Router size={13} /> : <Database size={13} />)}
-          </div>
-          <span className={`text-sm truncate ${icon ? 'font-bold text-base-content' : 'font-bold text-base-content/75'} tracking-tight`}>{label}</span>
-        </div>
-        {isExpanded && hasChildren && (
-          <div className="relative">
-            <div className="absolute left-3.5 top-0 bottom-3 w-px bg-base-300" />
-            <div className="pl-6 mt-0.5 space-y-0.5">
-              {Array.isArray(children)
-                ? children.map((c, i) => (
-                    <div key={path + c} className="relative">
-                      <div className="absolute left-[-9px] top-1/2 w-3 h-px bg-base-300" />
-                      <TreeItem label={c} path={`${path}/${c}`} />
-                    </div>
-                  ))
-                : Object.entries(children).map(([k, v], i) => (
-                    <div key={path + k} className="relative">
-                      <div className="absolute left-[-9px] top-4 w-3 h-px bg-base-300" />
-                      <TreeItem label={k} children={v} path={`${path}/${k}`} />
-                    </div>
-                  ))
-              }
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Network Distribution Tree</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 leading-relaxed">Fiber Optic & Wireless segmentation</p>
+    <div className="flex flex-col gap-4 h-full min-h-0">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Distribution Topology</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{data.length} registered distribution points</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="join">
-            <button className={`btn btn-sm join-item ${viewMode === 'tree' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('tree')}>
-              <Layout size={18} /> Tree
-            </button>
-            <button className={`btn btn-sm join-item ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('map')}>
-              <MapIcon size={18} /> Map
-            </button>
+        <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
+          <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
+            <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
+            <input 
+              type="text" 
+              className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full py-1 placeholder:text-foreground/20 uppercase tracking-wider h-full" 
+              placeholder="Search Topology..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-            <div className="relative">
-              <button className="btn btn-ghost btn-sm font-semibold uppercase tracking-wider text-xs" onClick={() => setShowDropdown(!showDropdown)}><Download size={14} /> Template</button>
-              {showDropdown && (
-                <div className="absolute top-[calc(100%+8px)] right-0 bg-base-100 rounded-lg z-[100] p-1.5 min-w-[180px] shadow-lg border border-base-content/5">
-                  <button className="btn btn-ghost btn-xs w-full justify-start font-bold py-3 text-base-content/70 hover:text-base-content" onClick={downloadTemplateFO}><Cable size={14} className="mr-2" /> Fiber Optic</button>
-                  <button className="btn btn-ghost btn-xs w-full justify-start font-bold py-3 text-base-content/70 hover:text-base-content" onClick={downloadTemplateWl}><RadioReceiver size={14} className="mr-2" /> Wireless</button>
-                </div>
-              )}
-            </div>
-            <label className="btn btn-ghost btn-sm cursor-pointer m-0">
-              <input type="file" accept=".xlsx" className="hidden" onChange={e => handleFileUpload(e, 'Fiber Optic')} />
-              Upload FO
+          <div className="flex items-center gap-1 bg-foreground/[0.03] border border-foreground/5 p-1 rounded-md shrink-0 h-8">
+            <button className={cn("p-1 rounded-md transition-all", viewMode === 'list' ? 'bg-background text-primary shadow-sm' : 'text-foreground/40')} onClick={() => setViewMode('list')}><LayoutList size={14} /></button>
+            <button className={cn("p-1 rounded-md transition-all", viewMode === 'map' ? 'bg-background text-primary shadow-sm' : 'text-foreground/40')} onClick={() => setViewMode('map')}><MapIcon size={14} /></button>
+          </div>
+          <div className="flex gap-1">
+            <label className="cursor-pointer">
+              <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+              <Button variant="ghost" size="xs" className="font-bold text-[9px] tracking-widest px-2 h-8 pointer-events-none"><Database size={12} /> Upload</Button>
             </label>
-            <label className="btn btn-ghost btn-sm cursor-pointer m-0 border-l border-base-content/10 rounded-none pl-3 ml-1">
-              <input type="file" accept=".xlsx" className="hidden" onChange={e => handleFileUpload(e, 'Wireless')} />
-              Upload Wireless
-            </label>
+            <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Add Point</Button>
           </div>
         </div>
+      </div>
 
-        {loading ? <TableSkeleton rows={6} /> : viewMode === 'map' ? (
-          <DistributionMap data={data} onRefresh={load} />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Fiber Optic Tree */}
-            <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5">
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-base-content/5">
-                  <Cable size={18} className="text-primary" />
-                  <h2 className="text-base-content font-bold text-xs uppercase tracking-wider">Fiber Optic Grid</h2>
-                </div>
-                {Object.keys(tree['Fiber Optic']).length === 0
-                  ? <div className="flex flex-col items-center gap-4 py-16 text-center">
-                      <div className="w-16 h-16 rounded-full bg-base-200/50 flex items-center justify-center text-base-content/30"><Network size={32} /></div>
-                      <div className="space-y-1">
-                        <div className="font-semibold text-xs text-base-content/60 uppercase tracking-wider">No Topology Detected</div>
-                        <div className="text-xs font-semibold text-base-content/30 uppercase tracking-wider">Upload Excel to populate FO tree</div>
-                      </div>
-                    </div>
-                  : <div className="space-y-1 pr-2 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                      {Object.entries(tree['Fiber Optic']).map(([pop, osc]) => (
-                        <TreeItem key={pop} label={pop} children={osc} path={`FO/${pop}`} icon={<Database size={13} className="text-primary" />} />
-                      ))}
-                    </div>
-                }
-              </div>
-            </div>
-
-            {/* Wireless Tree */}
-            <div className="bg-base-100 shadow-sm rounded-lg overflow-hidden border border-base-content/5">
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-base-content/5">
-                  <RadioReceiver size={18} className="text-warning" />
-                  <h2 className="text-base-content/80 font-semibold text-xs uppercase tracking-wider">Wireless Grid</h2>
-                </div>
-                {Object.keys(tree['Wireless']).length === 0
-                  ? <div className="flex flex-col items-center gap-4 py-16 text-center">
-                      <div className="w-16 h-16 rounded-full bg-base-200/50 flex items-center justify-center text-base-content/30"><Network size={32} /></div>
-                      <div className="space-y-1">
-                        <div className="font-semibold text-xs text-base-content/60 uppercase tracking-wider">Grid Empty</div>
-                        <div className="text-xs font-semibold text-base-content/30 uppercase tracking-wider">Upload Excel to populate Wireless grid</div>
-                      </div>
-                    </div>
-                  : <div className="space-y-1 pr-2 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                      {Object.entries(tree['Wireless']).map(([bts, radio]) => (
-                        <TreeItem key={bts} label={bts} children={radio} path={`WL/${bts}`} icon={<RadioReceiver size={13} className="text-warning" />} />
-                      ))}
-                    </div>
-                }
-              </div>
-            </div>
+      <div className="flex-1 min-h-0 bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
+        {loading ? <TableSkeleton rows={15} /> : viewMode === 'map' ? (
+          <div className="h-full p-4">
+             <DistributionMap data={data} onRefresh={load} />
           </div>
-        )}
+        ) : (() => {
+          const filtered = data.filter(d => 
+            (d.level_1 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (d.level_2 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (d.level_3 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (d.level_4 || '').toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          const totalPages = Math.ceil(filtered.length / rowsPerPage);
+          const startIdx = (currentPage - 1) * rowsPerPage;
+          const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
+
+          return (
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+                <table className="w-full text-left border-separate border-spacing-0">
+                  <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
+                    <tr className="bg-foreground/[0.02]">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Type</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 1</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 2</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 3 / Extra</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 4 / Extra</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-foreground/5 text-[11px]">
+                    {paginated.map((d, i) => (
+                      <tr key={d.id} className="hover:bg-foreground/[0.01] transition-colors group">
+                        <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{startIdx + i + 1}</td>
+                        <td className="px-4 py-2.5 font-black uppercase text-[10px] tracking-widest text-primary/70">{d.type}</td>
+                        <td className="px-4 py-2.5 font-bold text-foreground/80 tracking-tight">{d.level_1}</td>
+                        <td className="px-4 py-2.5 font-bold text-foreground/70 tracking-tight">{d.level_2}</td>
+                        <td className="px-4 py-2.5 font-bold text-foreground/60 tracking-tight">{d.level_3 || '—'}</td>
+                        <td className="px-4 py-2.5 font-bold text-foreground/60 tracking-tight">{d.level_4 || '—'}</td>
+                        <td className="px-4 py-2.5 text-right pr-4">
+                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
+                             <Button variant="ghost" size="xs" onClick={() => openEdit(d)} className="w-7 h-7 p-0"><Edit2 size={12} /></Button>
+                             <Button variant="ghost" size="xs" onClick={() => handleDelete(d.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10"><Trash2 size={12} /></Button>
+                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-2 bg-foreground/[0.02] border-t border-foreground/5 gap-4 mt-auto">
+                <div className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                  Showing <span className="text-foreground/60">{startIdx + 1}</span> to <span className="text-foreground/60">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-foreground/60">{filtered.length}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 p-0"><ChevronRight className="rotate-180" size={12} /></Button>
+                    <div className="text-[10px] font-black flex items-center gap-1.5 px-3 uppercase tracking-widest">
+                       <span className="text-foreground/70">{currentPage}</span>
+                       <span className="text-foreground/20">/</span>
+                       <span className="text-foreground/50">{totalPages}</span>
+                    </div>
+                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 p-0"><ChevronRight size={12} /></Button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Distribution Point' : 'Edit Distribution Point'}
+        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button><Button onClick={handleSave} className="px-6">Save</Button></>}
+      >
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1.5">
+            <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">Type</label>
+            <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm"
+              value={form.type} onChange={e => setF('type', e.target.value)}>
+              <option>Fiber Optic</option>
+              <option>Wireless</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <Input label={form.type === 'Fiber Optic' ? 'POP (Level 1) *' : 'BTS (Level 1) *'} value={form.level_1} onChange={e => setF('level_1', e.target.value)} required />
+            <Input label={form.type === 'Fiber Optic' ? 'OSC (Level 2) *' : 'Radio (Level 2) *'} value={form.level_2} onChange={e => setF('level_2', e.target.value)} required />
+          </div>
+          {form.type === 'Fiber Optic' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Input label="ODC (Level 3)" value={form.level_3} onChange={e => setF('level_3', e.target.value)} />
+              <Input label="ODP (Level 4)" value={form.level_4} onChange={e => setF('level_4', e.target.value)} />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-6">
+            <Input label="Latitude" type="number" step="any" value={form.latitude} onChange={e => setF('latitude', e.target.value)} />
+            <Input label="Longitude" type="number" step="any" value={form.longitude} onChange={e => setF('longitude', e.target.value)} />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
-// ─── Master Action (Handling) Page ────────────────────────────────────────────
+
+// ─── Master Action Page ───────────────────────────────────────────────────────
 export function MasterActionPage() {
-  const [data, setData] = useState([]);
+  const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({ name: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  const load = () => api.getActions().then(setData).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
+  const load = () => api.getActions().then(setActions).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
-  const openEdit = (item) => { setModal(item); setForm({ name: item.name }); };
+
+  const openEdit = (a) => { setModal(a); setForm({ name: a.name }); };
   const openCreate = () => { setModal('create'); setForm({ name: '' }); };
+
   const handleSave = async () => {
     try {
-      if (modal === 'create') { await api.createAction(form); addToast('Action added successfully', 'success'); }
-      else { await api.updateAction(modal.id, form); addToast('Updated successfully', 'success'); }
+      if (modal === 'create') { await api.createAction(form); addToast('Action added', 'success'); }
+      else { await api.updateAction(modal.id, form); addToast('Updated', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
 
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this action?')) return;
+    try { await api.deleteAction(id); addToast('Deleted', 'warning'); load(); }
+    catch (e) { addToast(e.message, 'error'); }
+  };
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Master Handling (Actions)</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-base-content/65 leading-relaxed">{data.length} predefined handling options</p>
+    <div className="flex flex-col gap-4 h-full min-h-0 max-w-2xl mx-auto w-full">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Response Actions</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{actions.length} preset incident actions</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button className="btn btn-primary" onClick={openCreate}><Plus size={18} /> Add Action</button>
-        </div>
+        <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Add Action</Button>
       </div>
 
-      <TableCard>
-        {loading ? <TableSkeleton rows={4} /> : (
-          <table className="table table-sm table-pin-rows table-stacked w-full">
-            <thead>
-              <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                <th className="bg-base-100/90 backdrop-blur-md w-12 text-center whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">#</th>
-                <th className="bg-base-100/90 backdrop-blur-md text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Handling Action Name</th>
-                <th className="bg-base-100/90 backdrop-blur-md min-w-[120px] text-right pr-4 uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item, i) => (
-                <tr key={item.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                  <td className="text-center opacity-40 font-mono italic text-xs md:py-3">{i + 1}</td>
-                  <td className="text-left font-semibold md:py-3">{item.name}</td>
-                  <td className="text-right pr-4 md:py-3">
-                    <div className="flex justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
-                      <div className="tooltip tooltip-left" data-tip="Edit"><button className="btn btn-ghost btn-circle btn-sm opacity-80 hover:opacity-100" onClick={() => openEdit(item)} aria-label="Edit"><Edit2 size={16} /></button></div>
-                      <div className="tooltip tooltip-left" data-tip="Delete"><button className="btn btn-ghost btn-circle btn-sm text-error opacity-80 hover:opacity-100 hover:bg-error/20" onClick={() => { if(confirm('Delete this action?')) api.deleteAction(item.id).then(load); }} aria-label="Delete"><Trash2 size={16} /></button></div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="flex-1 min-h-0 bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
+        {loading ? <TableSkeleton rows={8} /> : (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+              <table className="w-full text-left border-separate border-spacing-0">
+                <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
+                  <tr className="bg-foreground/[0.02]">
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Action Description</th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Management</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-foreground/5 text-[11px]">
+                  {actions.map((a, i) => (
+                    <tr key={a.id} className="hover:bg-foreground/[0.01] transition-colors group">
+                      <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{i + 1}</td>
+                      <td className="px-4 py-2.5 font-bold text-foreground/80 tracking-tight">{a.name}</td>
+                      <td className="px-4 py-2.5 text-right pr-4">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
+                          <Button variant="ghost" size="xs" onClick={() => openEdit(a)} className="w-7 h-7 p-0"><Edit2 size={12} /></Button>
+                          <Button variant="ghost" size="xs" onClick={() => handleDelete(a.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10"><Trash2 size={12} /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
-      </TableCard>
+      </div>
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Action' : 'Edit Action'}
-        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary px-6" onClick={handleSave}>Save Changes</button></>}
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Define New Action' : 'Modify Action'}
+        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button><Button onClick={handleSave} className="px-6">Save Changes</Button></>}
       >
-        <div className="form-control"><label className="label-text text-xs font-bold text-base-content/65 uppercase tracking-wider mb-1">Action Name *</label><input type="text" className="input input-sm border-none bg-base-200 font-bold text-sm h-9 w-full" value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g., Splicing FO" required /></div>
+        <Input label="Action Name / Description *" value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Restart OLT Port" required />
       </Modal>
     </div>
   );

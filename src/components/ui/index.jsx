@@ -1,20 +1,18 @@
-import React from 'react';
-import { NCAL_COLORS, STATUS_COLORS, ROLE_COLORS, GRADE_COLORS } from '../../utils/constants.js';
+import React, { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { getNcalBadgeClass } from '../../utils/themeMap.js';
+import { cn } from '../../lib/utils.js';
 
-const NCAL_DOT_COLORS = {
-  BLACK: '#a78bfa',  // purple — matches ncal-black-text token
-  RED:   '#fca5a5',  // matches ncal-red-text
-  ORANGE:'#fdba74',  // matches ncal-orange-text
-  YELLOW:'#fde68a',  // matches ncal-yellow-text
-  BLUE:  '#93c5fd',  // matches ncal-blue-text
-};
+// ─── Badges ───────────────────────────────────────────────────────────────────
 
 export function NcalBadge({ value }) {
-  const badgeClass = getNcalBadgeClass(value);
+  const styles = getNcalBadgeClass(value);
   return (
-    <span className={`badge ${badgeClass} badge-soft text-xs h-5 px-2 border-none rounded-md font-bold uppercase tracking-wider`} aria-label={`NCAL ${value}`}>
-      <span className="inline-block w-1 h-1 rounded-full bg-current shrink-0 align-middle -mt-0.5 mr-1.5" />
+    <span className={cn(
+      "inline-flex items-center text-[10px] h-5 px-2 rounded font-bold uppercase tracking-widest leading-none",
+      styles.bg, styles.text
+    )} aria-label={`NCAL ${value}`}>
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-current shrink-0 mr-1.5 opacity-80" />
       {value}
     </span>
   );
@@ -22,9 +20,17 @@ export function NcalBadge({ value }) {
 
 export function StatusPill({ status }) {
   const labels = { open: 'OPEN', progress: 'IN PROGRESS', pending: 'PAUSED', done: 'DONE' };
-  const badgeMap = { open: 'badge-info', progress: 'badge-success', pending: 'badge-warning', done: 'badge-ghost' };
+  const badgeMap = { 
+    open: 'bg-info/10 text-info', 
+    progress: 'bg-success/10 text-success', 
+    pending: 'bg-warning/10 text-warning', 
+    done: 'bg-foreground/10 text-foreground/60' 
+  };
   return (
-    <span className={`badge ${badgeMap[status] || 'badge-ghost'} badge-soft text-xs h-5 px-2 border-none rounded-md font-bold uppercase tracking-wider`}>
+    <span className={cn(
+      "inline-flex items-center text-[10px] h-5 px-2 rounded font-bold uppercase tracking-widest leading-none",
+      badgeMap[status] || 'bg-foreground/10 text-foreground/60'
+    )}>
       {labels[status] || status}
     </span>
   );
@@ -32,16 +38,24 @@ export function StatusPill({ status }) {
 
 export function RoleBadge({ role }) {
   return (
-    <span className="badge badge-soft badge-neutral badge-sm border-none rounded-lg font-semibold uppercase tracking-wider">
+    <span className="inline-flex items-center text-[10px] h-5 px-2 rounded bg-foreground/10 text-foreground/70 font-bold uppercase tracking-widest leading-none">
       {role}
     </span>
   );
 }
 
 export function GradeBadge({ grade }) {
-  const colorMap = { VIP: 'badge-primary', Gold: 'badge-warning', Silver: 'badge-neutral', Bronze: 'badge-ghost' };
+  const colorMap = { 
+    VIP: 'bg-primary/10 text-primary', 
+    Gold: 'bg-warning/10 text-warning', 
+    Silver: 'bg-foreground/10 text-foreground/70', 
+    Bronze: 'bg-foreground/5 text-foreground/60' 
+  };
   return (
-    <span className={`badge ${colorMap[grade] || 'badge-ghost'} badge-soft badge-sm border-none rounded-lg font-semibold`}>
+    <span className={cn(
+      "inline-flex items-center text-[10px] h-5 px-2 rounded font-bold tracking-widest leading-none",
+      colorMap[grade] || 'bg-foreground/5 text-foreground/60'
+    )}>
       {grade}
     </span>
   );
@@ -49,7 +63,11 @@ export function GradeBadge({ grade }) {
 
 export function StatusBadge({ active }) {
   return (
-    <span className={`badge ${active ? 'badge-success badge-soft' : 'badge-ghost'} badge-sm border-none rounded-lg font-semibold uppercase tracking-wider gap-1`}>
+    <span className={cn(
+      "inline-flex items-center justify-center text-[10px] h-5 px-2 rounded font-bold uppercase tracking-widest leading-none gap-1",
+      active ? 'bg-success/10 text-success' : 'bg-foreground/5 text-foreground/50'
+    )}>
+      <span className={cn("w-1.5 h-1.5 rounded-full", active ? "bg-success" : "bg-foreground/30")} />
       {active ? 'Active' : 'Inactive'}
     </span>
   );
@@ -57,18 +75,25 @@ export function StatusBadge({ active }) {
 
 export function AccentBadge({ text }) {
   return (
-    <span className="badge badge-primary badge-soft badge-sm border-none rounded-lg font-semibold">{text}</span>
+    <span className="inline-flex items-center justify-center text-[10px] h-5 px-2 rounded bg-primary/10 text-primary font-bold uppercase tracking-widest leading-none">
+      {text}
+    </span>
   );
 }
 
+// ─── Timers & Duration ────────────────────────────────────────────────────────
+
 export function DurationBadge({ seconds, target }) {
-  if (seconds == null) return <span className="text-[color:var(--text-muted)]">—</span>;
+  if (seconds == null) return <span className="text-muted-foreground">—</span>;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   const isExceeded = target && seconds > target;
   return (
-    <span className={`font-mono text-sm font-medium inline-flex items-center gap-1 ${isExceeded ? 'text-error' : 'text-base-content/70'}`}>
+    <span className={cn(
+      "font-mono text-[11px] tabular-nums font-bold inline-flex items-center gap-1",
+      isExceeded ? 'text-error' : 'text-foreground/70'
+    )}>
       {isExceeded && <span className="inline-block w-1.5 h-1.5 rounded-full bg-error animate-pulse" />}
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
     </span>
@@ -78,7 +103,7 @@ export function DurationBadge({ seconds, target }) {
 export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
   const [elapsed, setElapsed] = React.useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!startIso) return;
     const calc = () => {
       const base = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000) - pausedSec;
@@ -98,112 +123,29 @@ export function LiveTimer({ startIso, pausedSec = 0, paused = false, target }) {
   const isExceeded = target && elapsed > target;
   
   const statusClasses = {
-    success: 'text-success bg-success shadow-success/20',
-    warning: 'text-warning bg-warning shadow-warning/20',
-    danger:  'text-error bg-error shadow-error/40 animate-pulse',
-    paused:  'text-base-content/40 bg-base-content/40 shadow-none'
+    success: 'text-success/90',
+    warning: 'text-warning',
+    danger:  'text-error animate-pulse',
+    paused:  'text-foreground/40'
   };
 
   const state = paused ? 'paused' : (isExceeded || isUrgent) ? 'danger' : isWarning ? 'warning' : 'success';
 
   return (
-    <span className={`font-mono text-xs font-semibold inline-flex items-center gap-1.5 ${statusClasses[state].split(' ')[0]}`}>
-      <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${statusClasses[state].split(' ')[1]} ${!paused && (isUrgent || isExceeded) ? 'shadow-[0_0_8px_rgba(var(--color-error),0.5)]' : ''}`} />
+    <span className={cn(
+      "font-mono tabular-nums text-[11px] font-bold inline-flex items-center gap-1.5",
+      statusClasses[state]
+    )}>
+      <span className={cn(
+        "inline-block w-1.5 h-1.5 rounded-full shrink-0",
+        state === 'success' && 'bg-success/80',
+        state === 'warning' && 'bg-warning',
+        state === 'danger' && 'bg-error shadow-[0_0_8px_rgba(var(--color-error),0.5)]',
+        state === 'paused' && 'bg-foreground/30'
+      )} />
       {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
-      {paused && <span className="text-xs font-medium tracking-wider opacity-60 ml-0.5 uppercase">PAUSED</span>}
+      {paused && <span className="text-[9px] font-black tracking-widest opacity-60 ml-0.5 uppercase">PAUSED</span>}
     </span>
-  );
-}
-
-// ─── Spinner ──────────────────────────────────────────────────────────────────
-export function Spinner({ size = 'md', className = '' }) {
-  const sizes = { sm: 'loading-sm', md: 'loading-md', lg: 'loading-lg' };
-  return (
-    <div className="flex items-center justify-center p-4">
-      <span className={`loading loading-spinner text-primary ${sizes[size] || 'loading-md'} ${className}`}></span>
-    </div>
-  );
-}
-
-export function Modal({ open, onClose, title, children, footer, size = '' }) {
-  // Close on Escape key
-  React.useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onClose]);
-
-  if (!open) return null;
-  const sizeMap = { 'sm': 'max-w-sm', 'md': 'max-w-md', 'lg': 'max-w-lg', '2xl': 'max-w-2xl', '3xl': 'max-w-3xl', 'xl': 'max-w-5xl' };
-  return (
-    <dialog className="modal modal-open" open>
-      <div className={`modal-box p-0 flex flex-col shadow-2xl overflow-hidden rounded-xl ${sizeMap[size] || 'max-w-lg'}`}>
-        <div className="flex justify-between items-center px-4 py-3.5 bg-base-100">
-          <h3 className="font-semibold text-xs uppercase tracking-wider text-base-content/70 leading-none">{title}</h3>
-          <button className="btn btn-xs btn-circle btn-ghost opacity-40 hover:opacity-100" onClick={onClose} aria-label="Close">✕</button>
-        </div>
-        <div className="px-4 py-4 overflow-y-auto max-h-[75vh]">
-          {children}
-        </div>
-        {footer && (
-          <div className="px-4 py-4 m-0 flex justify-end gap-2 bg-base-100/30">
-            {footer}
-          </div>
-        )}
-      </div>
-      <div className="modal-backdrop bg-black/70 backdrop-blur-sm cursor-default" onClick={onClose}>
-        <button>close</button>
-      </div>
-    </dialog>
-  );
-}
-
-export function EmptyState({ icon, title, desc, action }) {
-  return (
-    <div className="hero bg-base-100 rounded-xl p-10 min-h-[300px]">
-      <div className="hero-content text-center flex-col">
-        <div className="text-5xl opacity-30 mb-2">{icon || '📦'}</div>
-        <div className="max-w-md">
-          <h2 className="text-xl font-bold">{title}</h2>
-          {desc && <p className="py-4 text-sm opacity-70">{desc}</p>}
-          {action && <div className="mt-2">{action}</div>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── SectionCard ──────────────────────────────────────────────────────────────
-export function SectionCard({ title, subtitle, footer, children, className = '', headerAction, style, padding = true }) {
-  return (
-    <div className={`card bg-base-100 shadow-sm rounded-lg overflow-hidden ${className}`} style={style}>
-      <div className={`card-body ${padding ? 'p-3 md:p-4 lg:p-6' : 'p-0'}`}>
-        {(title || headerAction) && (
-          <div className="flex items-center justify-between mb-4 px-0.5">
-            <div>
-              {title && <h2 className="text-xs font-semibold uppercase tracking-wider text-base-content/40">{title}</h2>}
-              {subtitle && <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-1 leading-relaxed opacity-60">{subtitle}</p>}
-            </div>
-            {headerAction}
-          </div>
-        )}
-        {children}
-        {footer && (
-          <div className="card-actions justify-end mt-4 pt-4">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export function PageSpinner() {
-  return (
-    <div className="flex items-center justify-center pt-16">
-      <Spinner />
-    </div>
   );
 }
 
@@ -211,46 +153,170 @@ export function LevelBadge({ level, targetHours }) {
   const isExceeded = targetHours != null && level > targetHours;
   const isSafe = targetHours != null && level <= targetHours;
 
-  let ncalClass = '';
-  if (isExceeded) ncalClass = 'ncal-DANGER';
-  else if (isSafe) ncalClass = 'ncal-SUCCESS';
-
   return (
     <span
-      className={`inline-flex items-center gap-1 font-mono text-xs font-semibold px-2 py-0.5 rounded-lg w-16 justify-center ${
+      className={cn(
+        "inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded w-12 justify-center leading-none tracking-tight",
         isExceeded ? 'bg-error/10 text-error'
         : isSafe ? 'bg-success/10 text-success'
-        : 'bg-base-content/10 text-base-content/50'
-      }`}
+        : 'bg-foreground/5 text-foreground/50'
+      )}
     >
-      <span className={`inline-block w-1.5 h-1.5 rounded-sm shrink-0 ${isExceeded ? 'bg-error' : isSafe ? 'bg-success' : 'bg-base-content/30'}`} />
+      <span className={cn(
+        "inline-block w-1 h-1 rounded-sm shrink-0",
+        isExceeded ? 'bg-error' : isSafe ? 'bg-success' : 'bg-foreground/30'
+      )} />
       L{level || 1}
     </span>
   );
 }
 
-export * from './chart.jsx';
-export { default as UnifiedTimeline } from './UnifiedTimeline.jsx';
+// ─── Modal & States ──────────────────────────────────────────────────────────
 
-// ─── Atomic UI Components & Skeletons ─────────────────────────────────────────
+export function Modal({ open, onClose, title, children, footer, size = '' }) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, onClose]);
 
-export function Button({ children, variant = 'primary', size = 'md', outline = false, icon, isLoading, className = '', ...props }) {
-  const variantMap = {
-    primary: 'btn-primary',
-    error: 'btn-error',
-    warning: 'btn-warning',
-    info: 'btn-info',
-    success: 'btn-success',
-    neutral: 'btn-neutral',
-    ghost: 'btn-ghost'
+  if (!open) return null;
+  const sizeMap = { 
+    'sm': 'max-w-sm', 'md': 'max-w-md', 'lg': 'max-w-lg', 
+    '2xl': 'max-w-2xl', '3xl': 'max-w-3xl', 'xl': 'max-w-5xl' 
   };
-  const sizeMap = { sm: 'btn-sm', md: '', lg: 'btn-lg', xs: 'btn-xs' };
-  
-  const baseClass = `btn ${variantMap[variant] || 'btn-primary'} ${sizeMap[size]} ${outline ? 'btn-outline' : ''} w-full md:w-auto transition-all duration-300 ${className}`;
   
   return (
-    <button className={baseClass} disabled={isLoading || props.disabled} {...props}>
-      {isLoading ? <span className="loading loading-spinner loading-xs"></span> : icon}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      {/* Dialog */}
+      <div className={cn(
+        "relative z-50 flex flex-col w-full max-h-[85vh] bg-background rounded-xl border border-border shadow-2xl overflow-hidden m-4 animate-in fade-in zoom-in-95 duration-200",
+        sizeMap[size] || 'max-w-lg'
+      )}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-foreground/[0.02]">
+          <h3 className="font-bold text-xs uppercase tracking-widest text-foreground/80 leading-none">{title}</h3>
+          <button 
+            className="p-1.5 rounded-md text-foreground/40 hover:text-foreground hover:bg-foreground/5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring" 
+            onClick={onClose} 
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="px-5 py-5 overflow-y-auto custom-scrollbar flex-1">
+          {children}
+        </div>
+        
+        {footer && (
+          <div className="px-5 py-4 border-t border-border bg-muted/40 flex justify-end gap-2.5">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function EmptyState({ icon, title, desc, action }) {
+  return (
+    <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-foreground/10 rounded-xl bg-foreground/[0.02] min-h-[300px]">
+      <div className="text-5xl opacity-30 mb-4">{icon || '📦'}</div>
+      <h2 className="text-sm font-bold uppercase tracking-wider text-foreground/70">{title}</h2>
+      {desc && <p className="mt-2 text-[11px] text-foreground/50 max-w-sm">{desc}</p>}
+      {action && <div className="mt-6">{action}</div>}
+    </div>
+  );
+}
+
+// ─── UI Components ────────────────────────────────────────────────────────────
+
+export function SectionCard({ title, subtitle, footer, children, className = '', headerAction, style, padding = true }) {
+  return (
+    <div className={cn("bg-background border border-foreground/5 shadow-sm rounded-xl overflow-hidden flex flex-col", className)} style={style}>
+      <div className={cn("flex flex-col flex-1", padding ? "p-4 md:p-6" : "")}>
+        {(title || headerAction) && (
+          <div className={cn("flex items-center justify-between mb-5", !padding && "px-4 pt-4")}>
+            <div>
+              {title && <h2 className="text-[10px] font-black uppercase tracking-widest text-foreground/50">{title}</h2>}
+              {subtitle && <p className="text-[10px] font-semibold text-foreground/40 mt-0.5 leading-relaxed">{subtitle}</p>}
+            </div>
+            {headerAction}
+          </div>
+        )}
+        {children}
+      </div>
+      {footer && (
+        <div className={cn(
+          "px-4 py-3 border-t border-foreground/5 bg-foreground/[0.02] mt-auto flex justify-end",
+          padding && "mx-4 mb-4 rounded-xl border border-transparent bg-muted/50"
+        )}>
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Spinner({ size = 'md', className = '' }) {
+  const sizeMap = { sm: 16, md: 24, lg: 32 };
+  return (
+    <div className="flex items-center justify-center p-4">
+      <Loader2 size={sizeMap[size] || 24} className={cn("animate-spin text-primary", className)} />
+    </div>
+  );
+}
+
+export function PageSpinner() {
+  return (
+    <div className="flex items-center justify-center h-[50vh]">
+      <Spinner size="lg" />
+    </div>
+  );
+}
+
+// ─── Forms & Buttons ──────────────────────────────────────────────────────────
+
+export function Button({ children, variant = 'primary', size = 'md', outline = false, icon, isLoading, className = '', ...props }) {
+  const baseClasses = "inline-flex items-center justify-center font-bold tracking-wider rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:pointer-events-none active:scale-95";
+  
+  const variants = {
+    primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary shadow-sm",
+    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary",
+    error: "bg-error text-white hover:bg-error/90 focus:ring-error shadow-sm",
+    warning: "bg-warning text-warning-foreground hover:bg-warning/90 focus:ring-warning shadow-sm",
+    info: "bg-info text-info-foreground hover:bg-info/90 focus:ring-info",
+    success: "bg-success text-white hover:bg-success/90 focus:ring-success shadow-sm",
+    neutral: "bg-foreground/10 text-foreground hover:bg-foreground/20 focus:ring-foreground/50",
+    ghost: "bg-transparent text-foreground/70 hover:bg-foreground/10 hover:text-foreground focus:ring-foreground/50",
+  };
+
+  const outlineVariants = {
+    primary: "border border-primary text-primary hover:bg-primary/10",
+    error: "border border-error text-error hover:bg-error/10",
+    neutral: "border border-border text-foreground hover:bg-muted",
+  };
+
+  const sizes = { 
+    xs: "h-6 px-2.5 text-[9px] uppercase", 
+    sm: "h-8 px-3 text-[10px] uppercase", 
+    md: "h-10 px-4 text-[11px] uppercase", 
+    lg: "h-12 px-6 text-xs uppercase" 
+  };
+  
+  const currentVariant = outline ? (outlineVariants[variant] || outlineVariants.primary) : (variants[variant] || variants.primary);
+
+  return (
+    <button className={cn(baseClasses, currentVariant, sizes[size], "w-full md:w-auto", className)} disabled={isLoading || props.disabled} {...props}>
+      {isLoading ? <Loader2 className="animate-spin mr-2" size={14} /> : (icon && <span className="mr-2">{icon}</span>)}
       {children}
     </button>
   );
@@ -258,28 +324,40 @@ export function Button({ children, variant = 'primary', size = 'md', outline = f
 
 export function Input({ label, error, type = 'text', className = '', ...props }) {
   return (
-    <label className="form-control w-full gap-1.5">
+    <div className="flex flex-col w-full gap-1.5">
       {label && (
-        <div className="label p-0 min-h-0"><span className="label-text font-semibold text-xs uppercase tracking-wider text-base-content/40">{label}</span></div>
+        <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">
+          {label}
+        </label>
       )}
-      <input type={type} className={`input input-md w-full focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-semibold text-sm bg-base-200/50 ${error ? 'input-error' : ''} ${className}`} {...props} />
+      <input 
+        type={type} 
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          error && "border-error focus-visible:ring-error",
+          className
+        )} 
+        {...props} 
+      />
       {error && (
-        <div className="label pb-0 pt-1 min-h-0"><span className="label-text-alt text-error font-semibold text-xs">{error}</span></div>
+        <span className="text-error font-bold text-[10px] ml-1 mt-0.5">{error}</span>
       )}
-    </label>
+    </div>
   );
 }
 
+// ─── Skeletons ────────────────────────────────────────────────────────────────
+
 export function TableSkeleton({ rows = 5 }) {
   return (
-    <div className="w-full flex flex-col gap-4 p-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="skeleton h-8 w-1/3"></div>
-        <div className="skeleton h-8 w-1/4"></div>
+    <div className="w-full flex flex-col gap-4 p-4 border border-border/50 rounded-lg">
+      <div className="flex justify-between items-center mb-4 border-b border-border/50 pb-4">
+        <div className="h-6 w-1/3 bg-muted rounded animate-pulse"></div>
+        <div className="h-6 w-1/4 bg-muted rounded animate-pulse"></div>
       </div>
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex gap-4 items-center">
-          <div className="skeleton h-12 w-full"></div>
+          <div className="h-10 w-full bg-muted/60 rounded animate-pulse delay-[50ms]"></div>
         </div>
       ))}
     </div>
@@ -288,14 +366,17 @@ export function TableSkeleton({ rows = 5 }) {
 
 export function CardSkeleton() {
   return (
-    <div className="card bg-base-100 shadow-sm p-6 w-full flex flex-col gap-4">
+    <div className="border border-border/50 rounded-xl p-6 w-full flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <div className="skeleton h-12 w-12 rounded-2xl"></div>
-        <div className="flex flex-col gap-2">
-          <div className="skeleton h-3 w-16"></div>
-          <div className="skeleton h-6 w-24"></div>
+        <div className="h-12 w-12 bg-muted rounded-xl animate-pulse"></div>
+        <div className="flex flex-col gap-2 flex-1">
+          <div className="h-3 w-16 bg-muted rounded animate-pulse"></div>
+          <div className="h-5 w-24 bg-muted/60 rounded animate-pulse delay-75"></div>
         </div>
       </div>
     </div>
   );
 }
+
+export * from './chart.jsx';
+export { default as UnifiedTimeline } from './UnifiedTimeline.jsx';

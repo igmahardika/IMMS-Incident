@@ -1,16 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDuration, NCAL_ORDER, MONTH_NAMES } from '../utils/api.js';
-import { NcalBadge, SectionCard, CardSkeleton, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer } from '../components/ui/index.jsx';
-import { AlertTriangle, CheckCircle, Activity, TrendingUp, Plus, Clock } from 'lucide-react';
+import { NcalBadge, SectionCard, CardSkeleton, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer, Button } from '../components/ui/index.jsx';
+import { AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { cn } from '../lib/utils.js';
 
 const chartConfig = {
-  BLACK: { label: 'BLACK', color: 'var(--ncal-black-text)' },
-  RED: { label: 'RED', color: 'var(--ncal-red-text)' },
-  ORANGE: { label: 'ORANGE', color: 'var(--ncal-orange-text)' },
-  YELLOW: { label: 'YELLOW', color: 'var(--ncal-yellow-text)' },
-  BLUE: { label: 'BLUE', color: 'var(--ncal-blue-text)' },
+  BLACK: { label: 'BLACK', color: 'var(--color-primary)' },
+  RED: { label: 'RED', color: 'var(--color-error)' },
+  ORANGE: { label: 'ORANGE', color: 'var(--color-warning)' },
+  YELLOW: { label: 'YELLOW', color: 'var(--color-info)' },
+  BLUE: { label: 'BLUE', color: 'var(--color-success)' },
 };
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -47,12 +48,12 @@ export default function DashboardPage() {
   }, [loadData]);
 
   if (loading) return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <CardSkeleton /> <CardSkeleton /> <CardSkeleton /> <CardSkeleton />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2"><CardSkeleton /></div>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2"><CardSkeleton /></div>
         <div><CardSkeleton /></div>
       </div>
     </div>
@@ -61,157 +62,190 @@ export default function DashboardPage() {
   const byNcal = {};
   (data?.activeByNcal || []).forEach(r => { byNcal[r.ncal] = r.count; });
 
-  const NCAL_COLORS_KPI = { BLACK: 'var(--color-neutral-content)', RED: 'var(--color-error)', ORANGE: 'var(--color-warning)', YELLOW: 'var(--color-info)', BLUE: 'var(--color-primary)' };
+  const NCAL_COLORS_KPI = { BLACK: 'text-foreground/70', RED: 'text-error', ORANGE: 'text-warning', YELLOW: 'text-info', BLUE: 'text-success' };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 bg-muted/10 min-h-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Dashboard</h1>
-          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/65 leading-relaxed">System Health & Incident Monitoring</p>
+          <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Dashboard</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 leading-relaxed">System Health & Incident Monitoring</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}>
-            <Plus size={16} strokeWidth={2} /> Create Incident
-          </button>
+          <Button variant="primary" icon={<Plus size={14} strokeWidth={2} />} onClick={() => navigate('/incidents/create')}>
+            Create Incident
+          </Button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
-          <div className="stat p-4">
-            <div className="stat-figure text-error/20"><AlertTriangle size={24} /></div>
-            <div className="stat-title uppercase tracking-wider text-xs font-bold text-base-content/65">Active Cases</div>
-            <div className="stat-value text-error text-2xl font-bold">{data?.totalActive || 0}</div>
-            <div className="stat-desc text-xs font-bold uppercase tracking-wider text-base-content/45 mt-1 leading-none">Incident Queue</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-background border border-foreground/5 shadow-sm rounded-xl p-5 flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 text-error/[0.03] group-hover:text-error/10 transition-colors duration-300">
+            <AlertTriangle strokeWidth={1} size={100} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-error/10 text-error flex items-center justify-center shrink-0">
+               <AlertTriangle size={20} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/50">Active Cases</span>
+              <span className="text-[9px] font-bold tracking-widest text-foreground/40 mt-0.5">QUEUE SIZE</span>
+            </div>
+          </div>
+          <div className="text-4xl font-black text-error tracking-tighter mt-4 relative z-10 tabular-nums">
+             {data?.totalActive || 0}
           </div>
         </div>
 
-        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
-          <div className="stat p-4">
-            <div className="stat-figure text-success/20"><CheckCircle size={24} /></div>
-            <div className="stat-title uppercase tracking-wider text-xs font-bold text-base-content/65">Resolutions</div>
-            <div className="stat-value text-success text-2xl font-bold">{data?.totalDone || 0}</div>
-            <div className="stat-desc text-xs font-bold uppercase tracking-wider text-base-content/45 mt-1 leading-none">Total History</div>
+        <div className="bg-background border border-foreground/5 shadow-sm rounded-xl p-5 flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 text-success/[0.03] group-hover:text-success/10 transition-colors duration-300">
+            <CheckCircle strokeWidth={1} size={100} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
+               <CheckCircle size={20} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/50">Resolutions</span>
+              <span className="text-[9px] font-bold tracking-widest text-foreground/40 mt-0.5">HISTORY</span>
+            </div>
+          </div>
+          <div className="text-4xl font-black text-success tracking-tighter mt-4 relative z-10 tabular-nums">
+             {data?.totalDone || 0}
           </div>
         </div>
         
-        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
-          <div className="flex w-full divide-x divide-base-content/5">
-            {NCAL_ORDER.slice(0, 3).map((ncal) => (
-              <div className="stat px-3 py-4 flex-1" key={ncal}>
-                <div className="stat-title mb-1"><NcalBadge value={ncal} /></div>
-                <div className="stat-value text-lg font-bold tracking-tight" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
+        {/* NCAL Stats Split 1 */}
+        <div className="bg-background border border-foreground/5 shadow-sm rounded-xl flex items-stretch divide-x divide-foreground/5">
+          {NCAL_ORDER.slice(0, 3).map((ncal) => (
+            <div className="flex-1 flex flex-col items-center justify-center p-4 gap-2" key={ncal}>
+              <NcalBadge value={ncal} />
+              <div className={cn("text-2xl font-black tabular-nums font-mono tracking-tighter", NCAL_COLORS_KPI[ncal])}>
+                {byNcal[ncal] || 0}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
-        <div className="stats shadow-sm bg-base-100 rounded-lg w-full">
-          <div className="flex w-full divide-x divide-base-content/5">
-            {NCAL_ORDER.slice(3).map((ncal) => (
-              <div className="stat px-3 py-4 flex-1" key={ncal}>
-                <div className="stat-title mb-1"><NcalBadge value={ncal} /></div>
-                <div className="stat-value text-lg font-bold tracking-tight" style={{ color: NCAL_COLORS_KPI[ncal] }}>{byNcal[ncal] || 0}</div>
+        {/* NCAL Stats Split 2 */}
+        <div className="bg-background border border-foreground/5 shadow-sm rounded-xl flex items-stretch divide-x divide-foreground/5">
+          {NCAL_ORDER.slice(3).map((ncal) => (
+            <div className="flex-1 flex flex-col items-center justify-center p-4 gap-2" key={ncal}>
+              <NcalBadge value={ncal} />
+              <div className={cn("text-2xl font-black tabular-nums font-mono tracking-tighter", NCAL_COLORS_KPI[ncal])}>
+                {byNcal[ncal] || 0}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
         {/* Duration Trend Chart */}
-        <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`}>
-          <ChartContainer config={chartConfig} className="h-[300px] md:h-[350px] lg:h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={duration} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-5" />
-                <XAxis dataKey="month" tick={{ className: "fill-base-content/65 font-medium", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} />
-                <YAxis tick={{ className: "fill-base-content/65 font-medium", fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={12} width={40} />
-                <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
-                <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={40} wrapperStyle={{ paddingTop: '20px' }} />
-                {NCAL_ORDER.map(ncal => (
-                  <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2} dot={{ r: 3, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 5, className: "stroke-base-100", strokeWidth: 2 }} connectNulls />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </SectionCard>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* SLA Table */}
-          <SectionCard title="SLA Summary This Year" subtitle="Based on NCAL segments" className="p-0">
-            <div className="overflow-x-auto w-full">
-              <table className="table table-zebra table-sm">
-                <thead>
-                <tr className="bg-base-200/50">
-                  <th className="w-1/12 text-center text-xs uppercase tracking-wider font-bold text-base-content/65 py-3">NCAL</th>
-                  <th className="w-2/12 text-center text-xs uppercase tracking-wider font-bold text-base-content/65 py-3">CASES</th>
-                  <th className="w-4/12 text-center text-xs uppercase tracking-wider font-bold text-base-content/65 py-3">AVG DURATION</th>
-                  <th className="w-3/12 text-center text-xs uppercase tracking-wider font-bold text-base-content/65 py-3">SLA MET</th>
-                  <th className="w-1/12 text-center text-xs uppercase tracking-wider font-bold text-base-content/65 py-3">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sla.length === 0 && (
-                  <tr><td colSpan={5} className="text-center text-base-content/50 py-8 px-4">No data available</td></tr>
-                )}
-                {sla.map(row => {
-                  const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
-                  return (
-                    <tr key={row.ncal} className="hover:bg-base-200 transition-colors">
-                      <td className="text-center"><NcalBadge value={row.ncal} /></td>
-                      <td className="text-center font-semibold text-sm">{row.total_cases}</td>
-                      <td className="text-center font-mono text-sm opacity-70 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                      <td className="text-center text-sm font-medium text-primary/80">{row.sla_met || 0}</td>
-                      <td className="text-center">
-                        <span className={`font-semibold text-sm tabular-nums ${pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'}`}>
-                          {pct}%
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <SectionCard title="Resolution Duration Trend (Minutes)" subtitle={`Year ${CURRENT_YEAR}`} padding={false} className="xl:col-span-1 2xl:col-span-2">
+           <div className="p-4 md:p-6 mb-2">
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={duration} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="fill-foreground/5 stroke-foreground/10" />
+                  <XAxis dataKey="month" tick={{ fill: "var(--color-foreground)", opacity: 0.5, fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} tickMargin={15} />
+                  <YAxis tick={{ fill: "var(--color-foreground)", opacity: 0.5, fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} tickMargin={10} width={45} />
+                  <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
+                  <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} wrapperStyle={{ paddingTop: '20px' }} />
+                  {NCAL_ORDER.map(ncal => (
+                    <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={2.5} dot={{ r: 4, fill: chartConfig[ncal].color, strokeWidth: 0 }} activeDot={{ r: 6, stroke: "var(--color-background)", strokeWidth: 2 }} connectNulls />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </SectionCard>
 
         {/* Recent Closed */}
-        <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents" padding={0}>
-          <div className="overflow-x-auto w-full">
-            <table className="table table-sm table-stacked w-full">
+        <SectionCard title="Recently Resolved" subtitle="Last 5 closed incidents" padding={false} className="xl:col-span-1 2xl:col-span-1">
+          <div className="overflow-x-auto w-full custom-scrollbar">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                  <th className="bg-base-100/90 backdrop-blur-md w-2/12 text-center uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">NCAL</th>
-                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-left uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">INCIDENT</th>
-                  <th className="bg-base-100/90 backdrop-blur-md w-5/12 text-right uppercase tracking-wider text-xs font-bold text-base-content/65 py-3">DETAILS</th>
+                <tr className="bg-foreground/[0.02] border-y border-foreground/5">
+                  <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[20%] text-center">NCAL</th>
+                  <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[40%]">INCIDENT</th>
+                  <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[40%] text-right">DETAILS</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-foreground/5">
                 {(data?.recentClosed || []).length === 0 && (
-                  <tr><td colSpan={3} className="text-center text-base-content/20 py-8 px-4 text-sm">No recently closed incidents</td></tr>
+                  <tr><td colSpan={3} className="text-center text-[11px] font-medium text-foreground/30 py-10 px-4">No recently closed incidents</td></tr>
                 )}
                 {(data?.recentClosed || []).map(inc => (
-                  <tr key={inc.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5 cursor-pointer" onClick={() => navigate(`/incidents/${inc.id}`)}>
-                    <td className="text-center md:py-3"><NcalBadge value={inc.ncal} /></td>
-                    <td className="text-left md:py-3">
-                      <div className="font-mono text-sm font-medium text-primary mb-0.5 tracking-tighter">{inc.case_no}</div>
-                      <div className="truncate text-sm font-medium text-base-content/70">{inc.site_name_manual || '—'}</div>
+                  <tr key={inc.id} className="hover:bg-foreground/[0.02] transition-colors duration-200 group cursor-pointer" onClick={() => navigate(`/incidents/${inc.id}`)}>
+                    <td className="py-3 px-4 text-center align-top"><div className="mt-1"><NcalBadge value={inc.ncal} /></div></td>
+                    <td className="py-3 px-4 align-top">
+                      <div className="font-mono text-[11px] font-bold text-primary tracking-tight mb-1">{inc.case_no}</div>
+                      <div className="text-[11px] font-semibold text-foreground/70 leading-snug line-clamp-2">{inc.site_name_manual || '—'}</div>
                     </td>
-                    <td className="text-right md:py-3">
-                      <div className="font-mono text-sm font-bold text-primary mb-0.5">{formatDuration(inc.duration_nett_seconds)}</div>
-                      <div className="truncate text-xs font-bold text-base-content/65 uppercase tracking-wider">{inc.technician_name || '—'}</div>
+                    <td className="py-3 px-4 text-right align-top">
+                      <div className="font-mono text-[11px] font-bold tabular-nums text-foreground/80 mb-1">{formatDuration(inc.duration_nett_seconds)}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 truncate max-w-[120px] ml-auto">{inc.technician_name || '—'}</div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {data?.recentClosed?.length > 0 && (
+            <div className="px-4 py-3 bg-muted/10 border-t border-foreground/5 text-center">
+               <button onClick={() => navigate('/history')} className="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/70 transition-colors">View Full History</button>
+            </div>
+          )}
         </SectionCard>
-        </div>
       </div>
+      
+       {/* SLA Table */}
+        <SectionCard title="SLA Summary This Year" subtitle="Based on NCAL segments" padding={false}>
+          <div className="overflow-x-auto w-full custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+              <tr className="bg-foreground/[0.02] border-y border-foreground/5">
+                <th className="py-3 px-4 text-center text-[10px] uppercase tracking-widest font-bold text-foreground/40 w-[10%]">NCAL</th>
+                <th className="py-3 px-4 text-center text-[10px] uppercase tracking-widest font-bold text-foreground/40 w-[15%]">CASES</th>
+                <th className="py-3 px-4 text-[10px] uppercase tracking-widest font-bold text-foreground/40 w-[45%]">AVG DURATION</th>
+                <th className="py-3 px-4 text-center text-[10px] uppercase tracking-widest font-bold text-foreground/40 w-[15%]">SLA MET</th>
+                <th className="py-3 px-4 text-center text-[10px] uppercase tracking-widest font-bold text-foreground/40 w-[15%]">SUCCESS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-foreground/5">
+              {sla.length === 0 && (
+                <tr><td colSpan={5} className="text-center text-[11px] font-medium text-foreground/30 py-10 px-4">No data available</td></tr>
+              )}
+              {sla.map(row => {
+                const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
+                return (
+                  <tr key={row.ncal} className="hover:bg-foreground/[0.02] transition-colors">
+                    <td className="py-3 px-4 text-center"><NcalBadge value={row.ncal} /></td>
+                    <td className="py-3 px-4 text-center font-bold text-[11px] tabular-nums">{row.total_cases}</td>
+                    <td className="py-3 px-4 font-mono text-[11px] text-foreground/70 tracking-tight">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
+                    <td className="py-3 px-4 text-center text-[11px] font-bold text-primary tabular-nums">{row.sla_met || 0}</td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className={cn(
+                          "font-bold text-[11px] tabular-nums tracking-widest w-10 text-right",
+                          pct >= 80 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-error'
+                        )}>
+                          {pct}%
+                        </span>
+                        <div className="w-16 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                           <div className={cn("h-full rounded-full", pct >= 80 ? 'bg-success' : pct >= 50 ? 'bg-warning' : 'bg-error')} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

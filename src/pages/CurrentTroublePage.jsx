@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { api, formatDateTime, processTimeline, formatDuration, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge } from '../components/ui/index.jsx';
+import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge, Button } from '../components/ui/index.jsx';
 import { Play, Pause, Square, Edit2, Plus, AlertTriangle, Activity, X as XIcon } from 'lucide-react';
+import { cn } from '../lib/utils.js';
 
 function PauseModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
@@ -12,17 +13,23 @@ function PauseModal({ open, onClose, onConfirm }) {
     <Modal open={open} onClose={onClose} title="Pause Incident"
       footer={
         <>
-          <button className="btn btn-ghost font-semibold uppercase tracking-wider text-xs" onClick={onClose}>Cancel</button>
-          <button className="btn btn-warning font-semibold uppercase tracking-wider text-xs px-6" onClick={() => { onConfirm(reason); setReason(''); }}>Confirm Pause</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="warning" size="sm" onClick={() => { onConfirm(reason); setReason(''); }}>Confirm Pause</Button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
-        <label className="form-control w-full">
-          <div className="label"><span className="label-text font-bold text-base-content/65 uppercase tracking-wider text-xs">Reason for Halt *</span></div>
-          <textarea className="textarea w-full font-semibold text-sm bg-base-200/80" placeholder="e.g., Awaiting materials, weather conditions, vendor coordination..." value={reason} onChange={e => setReason(e.target.value)} rows={3} />
-        </label>
-        <div className="p-4 bg-warning/5 rounded-xl text-sm font-medium text-warning leading-relaxed">
+        <div className="flex flex-col gap-1.5 w-full">
+          <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Reason for Halt *</label>
+          <textarea 
+            className="flex w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[80px]" 
+            placeholder="e.g., Awaiting materials, weather conditions, vendor coordination..." 
+            value={reason} 
+            onChange={e => setReason(e.target.value)} 
+            rows={3} 
+          />
+        </div>
+        <div className="p-4 bg-warning/10 rounded-xl text-sm font-medium text-warning leading-relaxed border border-warning/20">
           PAUSE: This will stop the active timer. Ensure the reason is documented as it will be logged in the handling history.
         </div>
       </div>
@@ -42,6 +49,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
   const [users, setUsers] = useState([]);
   const { addToast } = useToast();
   const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open || !incident) return;
@@ -62,20 +70,21 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
       }));
     });
 
-
     if (user?.role !== 'technician') {
       api.getUsers().then(setUsers).catch(e => {
         if (e.message !== 'Insufficient permissions') console.error(e);
       });
     }
-  }, [open, incident]);
+  }, [open, incident, user?.role]);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       await api.updateIncident(incident.id, form);
       addToast('Incident updated successfully', 'success');
       onSaved(); onClose();
     } catch (e) { addToast(e.message, 'error'); }
+    finally { setSaving(false); }
   };
 
   if (!incident) return null;
@@ -85,27 +94,26 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
     <Modal open={open} onClose={onClose} title={`Update Incident — ${incident.case_no}`} size="xl"
       footer={
         <>
-          <button className="btn btn-ghost font-semibold uppercase tracking-wider text-xs" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary px-8 font-semibold uppercase tracking-wider text-xs shadow-lg shadow-primary/20" onClick={handleSave}>Save Changes</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" size="sm" className="px-8 shadow-lg shadow-primary/20" onClick={handleSave} isLoading={saving}>Save Changes</Button>
         </>
       }
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-4 max-h-[75vh] overflow-y-auto pr-1">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Column: Update Form */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="flex flex-col gap-1.5">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-primary">Active Resolution Logs</h3>
-            <p className="text-sm font-semibold text-base-content/65 leading-relaxed italic">Document the latest technical progress and root cause findings.</p>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-primary">Active Resolution Logs</h3>
+            <p className="text-sm font-semibold text-foreground/65 leading-relaxed italic">Document the latest technical progress and root cause findings.</p>
           </div>
 
-          <div className="flex flex-col gap-6 p-6 bg-base-200/30 rounded-2xl">
+          <div className="flex flex-col gap-6 p-6 bg-foreground/[0.03] rounded-2xl border border-foreground/5">
             {user?.role && user.role !== 'technician' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-base-content/65 uppercase tracking-wider text-xs">Field Technician</span></div>
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Field Technician</label>
                   <select 
-                    className="select w-full font-semibold text-sm bg-base-200/80" 
+                    className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
                     value={form.technician_id} 
                     onChange={e => setForm(p => ({ ...p, technician_id: e.target.value }))}
                   >
@@ -114,30 +122,42 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                       <option key={u.id} value={u.id}>{u.name}</option>
                     ))}
                   </select>
-                </label>
+                </div>
               </div>
             )}
 
-            <label className="form-control w-full">
-              <div className="label"><span className="label-text font-bold text-base-content/65 uppercase tracking-wider text-xs">Root Cause Update</span></div>
-              <input type="text" className="input w-full font-semibold text-sm bg-base-200/80" value={form.root_cause} onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} placeholder="Brief summary of root cause..." />
-            </label>
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Root Cause Update</label>
+              <input 
+                type="text" 
+                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                value={form.root_cause} 
+                onChange={e => setForm(p => ({ ...p, root_cause: e.target.value }))} 
+                placeholder="Brief summary of root cause..." 
+              />
+            </div>
 
-            <label className="form-control w-full">
-              <div className="label"><span className="label-text font-bold text-base-content/65 uppercase tracking-wider text-xs">Technical Handling Notes</span></div>
-              <textarea className="textarea w-full font-semibold text-sm leading-relaxed bg-base-200/80" rows={5} value={form.last_action} onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} placeholder="Document resolution steps or field progress update..." />
-            </label>
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Technical Handling Notes</label>
+              <textarea 
+                className="flex w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[120px]" 
+                rows={5} 
+                value={form.last_action} 
+                onChange={e => setForm(p => ({ ...p, last_action: e.target.value }))} 
+                placeholder="Document resolution steps or field progress update..." 
+              />
+            </div>
 
             {user?.role && user.role !== 'technician' && incident?.ncal === 'YELLOW' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 mt-2">
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-base-content/65 uppercase tracking-wider text-xs">Optical RX (INI)</span></div>
-                  <input type="text" className="input w-full font-mono font-semibold text-sm bg-base-200/80" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-00.00 dBm" />
-                </label>
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-bold text-base-content/65 uppercase tracking-wider text-xs">Optical RX (CUR)</span></div>
-                  <input type="text" className="input w-full font-mono font-semibold text-sm bg-base-200/80" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-00.00 dBm" />
-                </label>
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Optical RX (INI)</label>
+                  <input type="text" className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-mono font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={form.power_before} onChange={e => setForm(p => ({ ...p, power_before: e.target.value }))} placeholder="-00.00 dBm" />
+                </div>
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Optical RX (CUR)</label>
+                  <input type="text" className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-mono font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={form.power_after} onChange={e => setForm(p => ({ ...p, power_after: e.target.value }))} placeholder="-00.00 dBm" />
+                </div>
               </div>
             )}
           </div>
@@ -145,17 +165,16 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
 
         {/* Sidebar: Compact Info & Handling History */}
         <div className="flex flex-col gap-6">
-          
           {/* Compact Info Summary */}
-          <div className="flex flex-col gap-6 p-6 bg-base-200/50 rounded-2xl">
+          <div className="flex flex-col gap-6 p-6 bg-foreground/[0.03] border border-foreground/5 rounded-2xl">
             <div className="flex flex-col gap-2">
-                 <div className="text-sm font-semibold tracking-tight leading-snug text-base-content">
+                 <div className="text-sm font-semibold tracking-tight leading-snug text-foreground">
                  {['ORANGE', 'RED', 'BLACK'].includes(iData.ncal) ? (iData.odp_bts || iData.site_name_manual || '—') : (iData.site_name_manual || iData.company_name || '—')}
                </div>
             </div>
 
             <div className="flex flex-col gap-3">
-               <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider leading-none">SLA Progress</span>
+               <span className="text-[10px] font-semibold text-foreground/40 uppercase tracking-widest leading-none">SLA Progress</span>
                <div className="flex flex-col gap-2.5">
                  <div className="flex items-center justify-between">
                     <LevelBadge level={calculateIncidentLevel(iData.start_time)} targetHours={getSLATarget(iData.ncal) / 3600} />
@@ -169,10 +188,10 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                     const isDanger = pct > 80;
                     return (
                       <div className="flex flex-col gap-2 mt-1">
-                        <div className="w-full h-1.5 bg-base-content/5 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-foreground/10 rounded-full overflow-hidden">
                            <div className={`h-full transition-all duration-1000 ${isDanger ? 'bg-error shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
                         </div>
-                        <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider">
+                        <div className="flex justify-between items-center text-[10px] font-semibold uppercase tracking-widest">
                            <span className={isDanger ? 'text-error animate-pulse' : 'text-primary'}>{Math.round(pct)}% Used</span>
                            <span className="opacity-40">{Math.round(target / 3600)}h Target</span>
                         </div>
@@ -184,10 +203,10 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
 
             <div className="flex flex-col gap-2.5 pt-4">
                 <div className="flex items-center justify-between">
-                   <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Nett Duration</span>
+                   <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">Nett Duration</span>
                    <StatusPill status={iData.status} />
                 </div>
-                <div className="text-2xl font-bold font-mono tracking-tighter text-primary">
+                <div className="text-2xl font-black font-mono tracking-tighter text-primary">
                   <LiveTimer 
                     startIso={iData.start_time} 
                     pausedSec={iData.total_pause_duration_seconds} 
@@ -198,34 +217,26 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
             </div>
 
             <div className="flex flex-col gap-2 pt-4">
-               <span className="text-xs font-bold text-base-content/65 uppercase tracking-wider">Reported Problem</span>
-               <div className="text-sm font-medium text-base-content/80 leading-relaxed italic">
+               <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">Reported Problem</span>
+               <div className="text-[11px] font-medium text-foreground/80 leading-relaxed italic border-l-2 border-primary/30 pl-3 py-1">
                  "{iData.initial_problem || 'No description provided'}"
                </div>
             </div>
           </div>
 
           {/* Activity Logs */}
-          <div className="flex flex-col gap-8 mt-2">
-            <div className="flex flex-col gap-4">
-               <h3 className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">Handling History</h3>
-               <div className="max-h-[300px] overflow-y-auto custom-scrollbar-slim rounded-xl bg-base-200/20">
-                 <UnifiedTimeline 
-                   timeline={processTimeline(iData)} 
-                   filterType="technical" 
-                   isCompact={true}
-                 />
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3">
+               <h3 className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">Handling History</h3>
+               <div className="max-h-[250px] overflow-y-auto custom-scrollbar rounded-xl bg-foreground/[0.02] border border-foreground/5 p-2">
+                 <UnifiedTimeline timeline={processTimeline(iData)} filterType="technical" isCompact={true} />
                </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-               <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/65 mb-1">System Activity Log</h3>
-               <div className="max-h-[200px] overflow-y-auto custom-scrollbar-slim rounded-xl bg-base-200/20">
-                 <UnifiedTimeline 
-                   timeline={processTimeline(iData)} 
-                   filterType="system" 
-                   isCompact={true}
-                 />
+            <div className="flex flex-col gap-3">
+               <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground/50">System Activity Log</h3>
+               <div className="max-h-[150px] overflow-y-auto custom-scrollbar rounded-xl bg-foreground/[0.02] border border-foreground/5 p-2">
+                 <UnifiedTimeline timeline={processTimeline(iData)} filterType="system" isCompact={true} />
                </div>
             </div>
           </div>
@@ -245,11 +256,11 @@ function CloseModal({ open, onClose, incident, onClosed }) {
   const [classificationId, setClassificationId] = useState('');
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open || !incident) return;
     
-    // Reset states
     setRootCause('');
     setActionTaken('');
     setHistory([]);
@@ -257,35 +268,28 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     setSelectedParent('');
     setLoadingHistory(true);
 
-    // Fetch classifications
     api.getClassifications().then(c => {
       setClasses(c);
-      // If incident has classification already, set parents
       if (incident.classification_id) {
         const cl = c.find(x => x.id === incident.classification_id);
         if (cl) setSelectedParent(cl.klasifikasi);
       }
     }).catch(e => console.error('Error fetching classifications:', e));
 
-    // Fetch incident details & history
     api.getIncident(incident.id).then(full => {
-      // Set initial values from latest data
       setRootCause(full.root_cause || '');
       setActionTaken(full.last_action || '');
       if (full.classification_id) {
         setClassificationId(full.classification_id);
       }
-      
-      // Process history logs
       const logs = full.audit_logs || [];
       const updates = logs.filter(l => l.action === 'UPDATE' && l.details);
       setHistory(updates);
     }).catch(e => console.error('Error fetching incident history:', e)).finally(() => setLoadingHistory(false));
 
-  }, [open, incident?.id]); // Depend on open and incident.id
+  }, [open, incident?.id]);
 
   const selectFromHistory = (item) => {
-    // Details pattern: "Penyebab: ... | Action Terakhir: ..."
     const parts = (item.details || '').split(' | ');
     let cause = '';
     let action = '';
@@ -303,25 +307,19 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     if (classIdPart) {
       const cid = classIdPart.replace('Klasifikasi ID:', '').trim();
       setClassificationId(cid);
-      // Also find and set parent for the select dropdown
       const cl = classes.find(x => x.id == cid);
       if (cl) setSelectedParent(cl.klasifikasi);
     }
-    addToast('Data selected from history', 'success');
   };
 
   const uniqueParents = [...new Set(classes.map(c => c.klasifikasi))];
 
   const handleClose = async () => {
     try {
-      if (!classificationId) {
-        addToast('Please select a classification first', 'warning');
-        return;
-      }
-      if (!actionTaken) {
-        addToast('Please select a handling action first', 'warning');
-        return;
-      }
+      if (!classificationId) { addToast('Please select a classification first', 'warning'); return; }
+      if (!actionTaken) { addToast('Please select a handling action first', 'warning'); return; }
+      
+      setSaving(true);
       await api.closeIncident(incident.id, { 
         waktu_online, 
         root_cause: rootCause, 
@@ -331,6 +329,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
       addToast('Incident successfully closed', 'success');
       onClosed(); onClose();
     } catch (e) { addToast(e.message, 'error'); }
+    finally { setSaving(false); }
   };
   
   if (!incident) return null;
@@ -338,68 +337,57 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     <Modal open={open} onClose={onClose} title="Close Incident" size="lg"
       footer={
         <>
-          <button className="btn btn-ghost font-semibold uppercase tracking-wider text-xs" onClick={onClose}>Cancel</button>
-          <button className="btn btn-danger font-semibold uppercase tracking-wider text-xs" onClick={handleClose}><XIcon size={14} /> Close Incident</button>
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="error" size="sm" onClick={handleClose} isLoading={saving} className="px-6"><XIcon size={14} className="mr-2" /> Close Incident</Button>
         </>
       }
     >
       <div className="flex flex-col gap-6">
-        <div className="p-5 bg-base-200/50 rounded-lg flex flex-col gap-4">
+        <div className="p-5 bg-foreground/[0.02] border border-foreground/5 rounded-xl flex flex-col gap-4">
           <div className="flex items-center justify-between">
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Active Case</span>
-                <span className="text-sm font-semibold font-mono text-primary">{incident.case_no}</span>
+                <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Active Case</span>
+                <span className="text-sm font-bold font-mono text-primary tracking-tight">{incident.case_no}</span>
              </div>
              <NcalBadge value={incident.ncal} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Infrastructure</span>
-            <span className="text-sm font-semibold text-base-content/80 tracking-tight">{incident.site_name_manual || incident.company_name || '—'}</span>
+            <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Infrastructure</span>
+            <span className="text-sm font-semibold text-foreground/80 tracking-tight">{incident.site_name_manual || incident.company_name || '—'}</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">Reported Problem</span>
-            <span className="text-sm font-medium text-base-content/80 leading-relaxed italic">"{incident.initial_problem || '—'}"</span>
-          </div>
-          {incident.recurring_count > 0 && (
-            <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-error/10 text-error text-xs font-semibold uppercase tracking-wider">
-              <AlertTriangle size={14} /> 
-              Recurring Issue ({incident.recurring_count}X in 24h)
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <label className="form-control w-full">
-            <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Root Category *</span></div>
-            <select className="select w-full font-semibold text-sm bg-base-200/80" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Root Category *</label>
+            <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
               <option value="">— Select Category —</option>
               {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-          </label>
-          <label className="form-control w-full">
-            <div className="label"><span className="label-text font-semibold text-base-content/40 uppercase tracking-wider text-xs">Sub-Classification *</span></div>
-            <select className="select w-full font-semibold text-sm bg-base-200/80" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
+          </div>
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Sub-Classification *</label>
+            <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
               <option value="">— Select Detail —</option>
               {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
             </select>
-          </label>
+          </div>
         </div>
 
-        <SectionCard title="Update & Handling History" className="bg-base-200/50">
-          <div className="overflow-x-auto -mx-6 -my-6">
-            <table className="table table-xs border-separate border-spacing-0 w-full">
+        <SectionCard title="Update & Handling History" padding={false}>
+          <div className="overflow-x-auto custom-scrollbar w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-base-200/50">
-                  <th className="text-center py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">#</th>
-                  <th className="text-left py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Timestamp</th>
-                  <th className="text-left py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Root Cause</th>
-                  <th className="text-left py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Action</th>
-                  <th className="text-center py-3 text-xs font-medium uppercase tracking-wider text-base-content/40">Status</th>
+                <tr className="bg-foreground/[0.02] border-y border-foreground/5">
+                  <th className="text-center py-2 px-3 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[10%]">#</th>
+                  <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[20%]">Time</th>
+                  <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[35%]">Cause</th>
+                  <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-widest text-foreground/40 w-[35%]">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-foreground/5">
                 {history.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-10 text-xs font-semibold uppercase tracking-wider text-base-content/20">No update history available</td></tr>
+                  <tr><td colSpan={4} className="text-center py-8 text-[10px] font-bold uppercase tracking-widest text-foreground/30">No update history available</td></tr>
                 ) : [...history].reverse().map((item, idx) => {
                   const parts = (item.details || '').split(' | ');
                   let cause = '-';
@@ -414,14 +402,11 @@ function CloseModal({ open, onClose, incident, onClosed }) {
                   });
                   const isSelected = rootCause === cause && actionTaken === action;
                   return (
-                    <tr key={item.id} className={`hover:bg-base-300 transition-all cursor-pointer group ${isSelected ? 'bg-primary/10' : ''}`} onClick={() => selectFromHistory(item)}>
-                      <td className="text-center font-mono font-semibold text-sm text-base-content/20">{idx + 1}</td>
-                      <td className="text-left font-mono text-sm font-medium text-base-content/40 whitespace-nowrap">{formatDateTime(item.timestamp)}</td>
-                      <td className="text-left font-semibold text-sm text-base-content/70 leading-snug line-clamp-1">{cause}</td>
-                      <td className="text-left font-semibold text-sm text-base-content/70 leading-snug line-clamp-1">{action}</td>
-                      <td className="text-center">
-                        <div className={`w-2 h-2 rounded-full mx-auto ${isSelected ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-base-content/10 group-hover:bg-base-content/20'}`} />
-                      </td>
+                    <tr key={item.id} className={cn("transition-all cursor-pointer group", isSelected ? 'bg-primary/5' : 'hover:bg-foreground/[0.02]')} onClick={() => selectFromHistory(item)}>
+                      <td className="text-center py-2 px-3 font-mono font-bold text-[10px] text-foreground/40">{idx + 1}</td>
+                      <td className="text-left py-2 px-3 font-mono text-[10px] font-medium text-foreground/50 whitespace-nowrap">{formatDateTime(item.timestamp).split(',')[1]}</td>
+                      <td className="text-left py-2 px-3 font-semibold text-[10px] text-foreground/80 leading-snug">{cause}</td>
+                      <td className="text-left py-2 px-3 font-semibold text-[10px] text-foreground/80 leading-snug">{action}</td>
                     </tr>
                   );
                 })}
@@ -431,12 +416,13 @@ function CloseModal({ open, onClose, incident, onClosed }) {
         </SectionCard>
 
 
-        <label className="form-control w-full mt-4">
-          <div className="label"><span className="label-text font-bold text-base-content/80">Waktu Up (Restore Time) *</span></div>
-          <input type="datetime-local" className="input w-full bg-base-200/80" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
-        </label>
-        <div className="info-banner info-banner-warning mt-4">
-          ⚠ The system will automatically calculate the downtime duration based on the Start time and this Up time.
+        <div className="flex flex-col gap-1.5 w-full mt-2">
+          <label className="text-[10px] font-bold text-foreground/80 uppercase tracking-widest ml-1">Waktu Up (Restore Time) *</label>
+          <input type="datetime-local" className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={waktu_online} onChange={e => setWaktuOnline(e.target.value)} required />
+        </div>
+        <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg text-[11px] font-medium text-warning mt-2 flex items-start gap-2">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+          The system will automatically calculate the downtime duration based on the Start time and this Up time.
         </div>
       </div>
     </Modal>
@@ -467,7 +453,7 @@ export default function CurrentTroublePage() {
 
   const [alertedIds, setAlertedIds] = useState(new Set());
 
-  // SLA Breach Detection (Simulation)
+  // SLA Breach Detection
   useEffect(() => {
     incidents.forEach(inc => {
       if (inc.status !== 'closed' && inc.status !== 'resolved') {
@@ -498,140 +484,146 @@ export default function CurrentTroublePage() {
   if (loading) return <PageSpinner />;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 bg-muted/10 min-h-full">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-base-content uppercase">Active Troubles</h1>
-          <p className="text-xs font-semibold uppercase tracking-wider text-base-content/65 leading-relaxed">
-            Monitoring <span className="text-primary font-bold">{incidents.length}</span> live incidents
+          <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Active Troubles</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 leading-relaxed">
+            Monitoring <span className="text-primary">{incidents.length}</span> live incidents
           </p>
         </div>
         <div className="flex items-center gap-3">
           {user?.role !== 'technician' && (
-            <button className="btn btn-primary btn-sm px-6 font-semibold uppercase tracking-wider text-xs shadow-lg shadow-primary/20" onClick={() => navigate('/incidents/create')}>
-              <Plus size={16} /> Create Incident
-            </button>
+            <Button variant="primary" icon={<Plus size={14} />} onClick={() => navigate('/incidents/create')}>
+              Create Incident
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="card bg-base-100 shadow-sm overflow-hidden">
+      <div className="bg-background border border-foreground/5 shadow-sm rounded-xl overflow-hidden flex flex-col">
         {incidents.length === 0 ? (
           <EmptyState
-            icon={<AlertTriangle size={48} className="opacity-20" />}
-            title="No active incidents"
-            desc="All networks are monitoring as normal."
-            action={['admin', 'noc'].includes(user?.role) && <button className="btn btn-primary" onClick={() => navigate('/incidents/create')}><Plus size={16} /> Create New Incident</button>}
+            icon={<CheckCircle size={48} className="text-success" />}
+            title="All Clear"
+            desc="No active incidents reported. The network is operating normally."
+            action={['admin', 'noc'].includes(user?.role) && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/incidents/create')} icon={<Plus size={14}/>}>
+                Create Incident Manually
+              </Button>
+            )}
           />
         ) : (
-          <div className="overflow-x-auto max-h-[70vh] custom-scrollbar border-t border-base-content/5">
-            <table className="table table-sm table-pin-rows table-stacked w-full">
+          <div className="overflow-x-auto custom-scrollbar w-full">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="shadow-[0_1px_0_rgba(var(--bc),0.05)]">
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[100px] uppercase tracking-wider text-xs font-bold text-base-content/65">NCAL</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-left min-w-[220px] uppercase tracking-wider text-xs font-bold text-base-content/65">Incident</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[80px] uppercase tracking-wider text-xs font-bold text-base-content/65">Lv</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-left min-w-[280px] uppercase tracking-wider text-xs font-bold text-base-content/65">Infrastructure</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-left min-w-[320px] uppercase tracking-wider text-xs font-bold text-base-content/65">Current Logs</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[120px] uppercase tracking-wider text-xs font-bold text-base-content/65">Prio</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-center min-w-[180px] whitespace-nowrap uppercase tracking-wider text-xs font-bold text-base-content/65">Downtime</th>
-                  <th className="bg-base-100/80 backdrop-blur-xl text-right min-w-[150px] pr-4 uppercase tracking-wider text-xs font-bold text-base-content/65">Action</th>
+                <tr className="bg-foreground/[0.02] border-b border-foreground/5 text-[10px] font-bold uppercase tracking-widest text-foreground/40">
+                  <th className="py-3 px-4 w-[8%] text-center">NCAL</th>
+                  <th className="py-3 px-4 w-[12%]">Incident</th>
+                  <th className="py-3 px-4 w-[5%] text-center line-clamp-1">LV</th>
+                  <th className="py-3 px-4 w-[25%]">Infrastructure</th>
+                  <th className="py-3 px-4 w-[25%]">Current Logs</th>
+                  <th className="py-3 px-4 w-[5%] text-center">Prio</th>
+                  <th className="py-3 px-4 w-[10%] text-center">Downtime</th>
+                  <th className="py-3 px-4 w-[10%] text-right bg-background sticky right-0 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.05)]">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-foreground/5">
                 {incidents.map(inc => {
                   const actions = [];
                   if (inc.status === 'open') {
-                    actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success hover:bg-success/20' });
+                    actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success hover:bg-success/10' });
                   }
                   if (inc.status === 'progress' && ['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning hover:bg-warning/20' });
+                    actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning hover:bg-warning/10' });
                   }
                   if (inc.status === 'pending' && ['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success hover:bg-success/20' });
+                    actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success hover:bg-success/10' });
                   }
-                  actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary hover:bg-primary/20' });
+                  actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary hover:bg-primary/10' });
                   if (['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error hover:bg-error/20' });
+                    actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error hover:bg-error/10' });
                   }
 
                   return (
-                    <tr key={inc.id} className="hover:bg-base-200/50 transition-colors duration-300 group border-b border-base-content/5">
-                      <td className="text-center md:py-3" data-label="NCAL">
-                        <NcalBadge value={inc.ncal} />
+                    <tr key={inc.id} className="hover:bg-foreground/[0.02] transition-colors duration-200 group">
+                      <td className="py-3 px-4 text-center align-top">
+                        <div className="mt-1"><NcalBadge value={inc.ncal} /></div>
                       </td>
-                      <td className="text-left md:py-3" data-label="Incident">
-                        <div className="flex flex-col gap-1">
+                      <td className="py-3 px-4 align-top">
+                        <div className="flex flex-col gap-1.5 items-start">
                           <button 
-                            className="text-sm font-semibold font-mono tracking-tighter text-primary hover:underline text-left leading-none" 
+                            className="text-[11px] font-bold font-mono tracking-tight text-primary hover:underline leading-none" 
                             onClick={() => navigate(`/incidents/${inc.id}`)}
                           >
                             {inc.case_no}
                           </button>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <StatusPill status={inc.status} />
                             {inc.recurring_count > 0 && (
-                              <div className="tooltip tooltip-error tooltip-right" data-tip={`Recurring ${inc.recurring_count + 1}X`}>
-                                <div className="p-1 rounded-md bg-error/10 text-error"><AlertTriangle size={12} strokeWidth={2.5} /></div>
+                              <div className="group/tooltip relative">
+                                <div className="p-0.5 rounded bg-error/10 text-error flex"><AlertTriangle size={12} strokeWidth={2.5} /></div>
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-[9px] font-bold rounded bg-foreground text-background whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none">Recurring {inc.recurring_count + 1}X</span>
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="text-center md:py-3" data-label="Lv">
-                        <LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} />
+                      <td className="py-3 px-4 text-center align-top">
+                         <div className="mt-1"><LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} /></div>
                       </td>
-                      <td className="text-left md:py-3" data-label="Infrastructure">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-bold tracking-tight text-base-content/90 leading-snug">
+                      <td className="py-3 px-4 align-top">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold tracking-tight text-foreground leading-snug">
                             {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
                           </span>
-                          <span className="text-[11px] font-mono font-bold text-base-content/65 uppercase tracking-wide">
+                          <span className="text-[10px] font-mono font-bold text-foreground/50 uppercase tracking-widest">
                             {inc.odp_bts || inc.service_id || '—'}
                           </span>
                         </div>
                       </td>
-                      <td className="text-left md:py-3" data-label="Logs">
-                        <div className="flex flex-col gap-1.5 max-w-xs md:max-w-md">
-                          <span className="text-sm font-normal text-base-content/70 leading-relaxed line-clamp-1">{inc.initial_problem || '—'}</span>
+                      <td className="py-3 px-4 align-top w-[25%]">
+                        <div className="flex flex-col gap-1.5 pr-4">
+                          <span className="text-[11px] font-medium text-foreground/70 leading-snug line-clamp-2">{inc.initial_problem || '—'}</span>
                           {inc.last_action && (
-                            <div className="text-xs flex items-center gap-1 font-normal tracking-tight text-base-content/50">
-                              <Activity size={10} className="text-primary/60" /> <span className="line-clamp-1">{inc.last_action}</span>
+                            <div className="text-[10px] flex items-start gap-1 font-semibold text-primary/70 bg-primary/5 rounded p-1">
+                              <Activity size={12} className="shrink-0 mt-0.5" /> <span className="line-clamp-2 leading-relaxed">{inc.last_action}</span>
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="text-center md:py-3" data-label="Prio">
-                        {inc.level_support ? (
-                          <span className="badge badge-sm badge-soft border-none rounded-md font-mono font-bold opacity-70">P{inc.level_support}</span>
-                        ) : <span className="opacity-20">—</span>}
+                      <td className="py-3 px-4 text-center align-top">
+                         <div className="mt-1">
+                          {inc.level_support ? (
+                            <span className="px-1.5 py-0.5 bg-foreground/[0.03] border border-foreground/10 rounded font-mono text-[10px] font-bold text-foreground/60">P{inc.level_support}</span>
+                          ) : <span className="opacity-30">—</span>}
+                        </div>
                       </td>
-                      <td className="text-center md:py-3" data-label="Downtime">
-                        <div className="flex flex-col gap-1">
-                          <div className="text-sm font-semibold font-mono tracking-tighter text-primary leading-none">
+                      <td className="py-3 px-4 text-center align-top">
+                        <div className="flex flex-col gap-1.5 justify-center mt-1">
                             <LiveTimer 
                               startIso={inc.start_time} 
                               pausedSec={inc.total_pause_duration_seconds} 
                               paused={inc.status === 'pending'} 
                               target={getSLATarget(inc.ncal)}
                             />
-                          </div>
-                          <div className="text-[11px] font-mono font-bold text-base-content/45 uppercase tracking-wider leading-none">
-                            SINCE {formatDateTime(inc.start_time)}
+                          <div className="text-[9px] font-mono font-bold text-foreground/40 uppercase tracking-widest leading-none whitespace-nowrap">
+                            SINCE {formatDateTime(inc.start_time).split(',')[1]}
                           </div>
                         </div>
                       </td>
-                      <td className="text-right md:py-3" data-label="Actions">
-                        <div className="flex items-center justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
+                      <td className="py-3 px-4 align-middle bg-background sticky right-0 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.05)] border-l border-foreground/5">
+                        <div className="flex items-center justify-end gap-1 px-1">
                           {actions.map(a => (
-                            <div key={a.label} className="tooltip tooltip-top" data-tip={a.label}>
-                              <button 
-                                className={`btn btn-ghost btn-circle btn-sm shadow-sm opacity-80 hover:opacity-100 ${a.className}`} 
+                             <button 
+                                key={a.label}
+                                className={cn("p-2 rounded-md transition-all active:scale-95 group/btn relative", a.className)} 
                                 onClick={a.onClick}
+                                aria-label={a.label}
                               >
                                 <a.icon size={15} />
+                                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-bold rounded bg-foreground text-background whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none">{a.label}</span>
                               </button>
-                            </div>
                           ))}
                         </div>
                       </td>
