@@ -180,13 +180,13 @@ export default function RootCausePage() {
             className="xl:col-span-7 flex flex-col min-h-0"
           >
             <div className="flex-1 min-h-0 overflow-auto custom-scrollbar w-full">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-foreground/[0.02] border-b border-foreground/5">
-                    <th className="w-14 text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">ID</th>
-                    <th className="text-left uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Classification Segment</th>
-                    <th className="w-24 text-center uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Volume</th>
-                    <th className="w-48 text-right uppercase tracking-widest text-[9px] font-black text-foreground/30 py-4 px-4 sticky top-0 bg-background/95 backdrop-blur-md z-10">Historical Share</th>
+                    <th className="w-[60px] text-center sticky top-0 bg-background/95 backdrop-blur-md z-10">ID</th>
+                    <th className="min-w-[200px] text-left sticky top-0 bg-background/95 backdrop-blur-md z-10">Classification Segment</th>
+                    <th className="w-[100px] text-center sticky top-0 bg-background/95 backdrop-blur-md z-10">Volume</th>
+                    <th className="w-[200px] text-right sticky top-0 bg-background/95 backdrop-blur-md z-10 font-bold">Historical Share</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-foreground/5">
@@ -205,19 +205,19 @@ export default function RootCausePage() {
                     const color = PIE_COLORS[i % PIE_COLORS.length];
                     return (
                       <tr key={row.classification} className="hover:bg-foreground/[0.01] transition-colors group">
-                        <td className="text-center font-mono font-black text-foreground/20 text-[10px] py-4">
+                        <td className="text-center font-mono font-black text-foreground/20 text-[10px]">
                           {String(i + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-4 px-4">
+                        <td>
                           <div className="flex items-center gap-3">
                             <div className="w-1 h-4 rounded-full" style={{ backgroundColor: color }} />
                             <span className="font-black text-[11px] tracking-tight text-foreground/80 uppercase leading-none">{row.classification}</span>
                           </div>
                         </td>
-                        <td className="text-center font-mono font-black text-[12px] py-4 text-primary tabular-nums">
+                        <td className="text-center font-mono font-black text-[12px] text-primary tabular-nums">
                           {row.count}
                         </td>
-                        <td className="py-4 pr-6">
+                        <td className="pr-6">
                           <div className="flex items-center gap-4 justify-end">
                             <span className="font-mono font-black text-[10px] w-12 text-right text-foreground/50 tabular-nums">{pct}%</span>
                             <div className="w-24 bg-foreground/5 rounded-full h-1 overflow-hidden">

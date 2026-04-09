@@ -1,10 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api, formatDateTime, processTimeline, formatDuration, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge, Button } from '../components/ui/index.jsx';
-import { Play, Pause, Square, Edit2, Plus, AlertTriangle, Activity, X as XIcon } from 'lucide-react';
+import { DataTable } from '../components/tables/DataTable.jsx';
+import { Play, Pause, Square, Edit2, Plus, AlertTriangle, Activity, X as XIcon, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 
 function PauseModal({ open, onClose, onConfirm }) {
@@ -430,8 +433,18 @@ function CloseModal({ open, onClose, incident, onClosed }) {
 }
 
 export default function CurrentTroublePage() {
-  const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: incidents = [], isLoading: loading, refetch: load } = useQuery({
+    queryKey: ['incidents'],
+    queryFn: async () => {
+      const res = await api.getIncidents();
+      return res;
+    }
+  });
+
+  const [alertedIds, setAlertedIds] = useState(new Set());
+  const [highlightedIds, setHighlightedIds] = useState(new Set());
+  const prevDataRef = useRef([]);
+
   const [pauseModal, setPauseModal] = useState(null);
   const [updateModal, setUpdateModal] = useState(null);
   const [closeModal, setCloseModal] = useState(null);
@@ -439,19 +452,29 @@ export default function CurrentTroublePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const load = useCallback(async () => {
-    try { const data = await api.getIncidents(); setIncidents(data); }
-    catch (e) { addToast(e.message, 'error'); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { 
-    load();
-    const t = setInterval(() => { load(); }, 10000); 
-    return () => clearInterval(t); 
-  }, [load]);
-
-  const [alertedIds, setAlertedIds] = useState(new Set());
+  // Detect changes for highlighting
+  useEffect(() => {
+    if (incidents.length > 0 && prevDataRef.current.length > 0) {
+      const changed = incidents.filter(inc => {
+        const prev = prevDataRef.current.find(p => p.id === inc.id);
+        if (!prev) return true; // New record
+        return prev.status !== inc.status || prev.last_action !== inc.last_action; // Status or log changed
+      });
+      
+      if (changed.length > 0) {
+        const ids = new Set(changed.map(c => c.id));
+        setHighlightedIds(prev => new Set([...prev, ...ids]));
+        setTimeout(() => {
+          setHighlightedIds(prev => {
+            const next = new Set(prev);
+            ids.forEach(id => next.delete(id));
+            return next;
+          });
+        }, 5000); // 5 seconds highlight for live updates
+      }
+    }
+    prevDataRef.current = incidents;
+  }, [incidents]);
 
   // SLA Breach Detection
   useEffect(() => {
@@ -481,11 +504,126 @@ export default function CurrentTroublePage() {
     catch (e) { addToast(e.message, 'error'); }
   };
 
-  if (loading) return <PageSpinner />;
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'ncal',
+      header: 'NCAL',
+      cell: ({ row }) => <NcalBadge value={row.original.ncal} />,
+      size: 70,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
+    {
+      accessorKey: 'case_no',
+      header: 'Incident',
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1 items-start">
+          <button 
+            className="text-[11px] font-bold font-mono tracking-tight text-primary hover:underline leading-none" 
+            onClick={() => navigate(`/incidents/${row.original.id}`)}
+          >
+            {row.original.case_no}
+          </button>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <StatusPill status={row.original.status} />
+            {row.original.recurring_count > 0 && (
+              <div className="p-0.5 rounded bg-error/10 text-error flex"><AlertTriangle size={10} strokeWidth={2.5} /></div>
+            )}
+          </div>
+        </div>
+      ),
+      size: 110,
+      meta: { className: 'whitespace-nowrap' },
+    },
+    {
+      id: 'level',
+      header: 'LV',
+      cell: ({ row }) => <LevelBadge level={calculateIncidentLevel(row.original.start_time)} targetHours={getSLATarget(row.original.ncal) / 3600} />,
+      size: 45,
+      meta: { className: 'text-center px-1' },
+    },
+    {
+      id: 'infrastructure',
+      header: 'Infrastructure',
+      cell: ({ row }) => {
+        const inc = row.original;
+        const name = ['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—');
+        return (
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-[11px] font-bold tracking-tight text-foreground leading-none truncate" title={name}>{name}</span>
+            <span className="text-[9px] font-mono font-bold text-foreground/40 uppercase tracking-widest truncate">{inc.odp_bts || inc.service_id || '—'}</span>
+          </div>
+        );
+      },
+      size: 200,
+      meta: { flexible: true },
+    },
+    {
+      id: 'logs',
+      header: 'Current Logs',
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-[11px] font-medium text-foreground/70 leading-snug line-clamp-1" title={row.original.initial_problem}>{row.original.initial_problem || '—'}</span>
+          {row.original.last_action && (
+            <div className="text-[9px] flex items-center gap-1 font-semibold text-primary/70 bg-primary/5 rounded px-1.5 py-0.5 w-fit max-w-full">
+              <Activity size={10} className="shrink-0" /> <span className="truncate">{row.original.last_action}</span>
+            </div>
+          )}
+        </div>
+      ),
+      size: 250,
+      meta: { flexible: true },
+    },
+    {
+      id: 'downtime',
+      header: 'Downtime',
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-0.5 justify-center">
+            <LiveTimer 
+              startIso={row.original.start_time} 
+              pausedSec={row.original.total_pause_duration_seconds} 
+              paused={row.original.status === 'pending'} 
+              target={getSLATarget(row.original.ncal)}
+            />
+          <div className="text-[9px] font-mono font-bold text-foreground/30 uppercase tracking-widest leading-none whitespace-nowrap">
+            {formatDateTime(row.original.start_time).split(',')[1]}
+          </div>
+        </div>
+      ),
+      size: 110,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => {
+        const inc = row.original;
+        const actions = [];
+        if (inc.status === 'open') actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success hover:bg-success/10' });
+        if (inc.status === 'progress' && ['admin', 'noc'].includes(user?.role)) actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning hover:bg-warning/10' });
+        if (inc.status === 'pending' && ['admin', 'noc'].includes(user?.role)) actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success hover:bg-success/10' });
+        actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary hover:bg-primary/10' });
+        if (['admin', 'noc'].includes(user?.role)) actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error hover:bg-error/10' });
 
+        return (
+          <div className="flex items-center justify-end gap-0.5">
+            {actions.map(a => (
+               <button key={a.label} className={cn("p-1.5 rounded transition-all active:scale-95", a.className)} onClick={a.onClick} title={a.label}>
+                  <a.icon size={13} />
+               </button>
+            ))}
+          </div>
+        );
+      },
+      size: 120,
+      meta: { className: 'text-right px-2' },
+    }
+  ], [user?.role, navigate, highlightedIds]);
+
+  if (loading) return <PageSpinner />;
+  
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 bg-muted/10 min-h-full">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Active Troubles</h1>
           <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 leading-relaxed">
@@ -501,138 +639,28 @@ export default function CurrentTroublePage() {
         </div>
       </div>
 
-      <div className="bg-background border border-foreground/5 shadow-sm rounded-xl overflow-hidden flex flex-col">
+      <div className="bg-background border border-foreground/5 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
         {incidents.length === 0 ? (
-          <EmptyState
-            icon={<CheckCircle size={48} className="text-success" />}
-            title="All Clear"
-            desc="No active incidents reported. The network is operating normally."
-            action={['admin', 'noc'].includes(user?.role) && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/incidents/create')} icon={<Plus size={14}/>}>
-                Create Incident Manually
-              </Button>
-            )}
-          />
-        ) : (
-          <div className="overflow-x-auto custom-scrollbar w-full">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
-              <thead>
-                <tr className="bg-foreground/[0.02] border-b border-foreground/5 text-[10px] font-bold uppercase tracking-widest text-foreground/40">
-                  <th className="py-3 px-4 w-[8%] text-center">NCAL</th>
-                  <th className="py-3 px-4 w-[12%]">Incident</th>
-                  <th className="py-3 px-4 w-[5%] text-center line-clamp-1">LV</th>
-                  <th className="py-3 px-4 w-[25%]">Infrastructure</th>
-                  <th className="py-3 px-4 w-[25%]">Current Logs</th>
-                  <th className="py-3 px-4 w-[5%] text-center">Prio</th>
-                  <th className="py-3 px-4 w-[10%] text-center">Downtime</th>
-                  <th className="py-3 px-4 w-[10%] text-right bg-background sticky right-0 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.05)]">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-foreground/5">
-                {incidents.map(inc => {
-                  const actions = [];
-                  if (inc.status === 'open') {
-                    actions.push({ label: 'Start', icon: Play, onClick: () => handleStart(inc.id), className: 'text-success hover:bg-success/10' });
-                  }
-                  if (inc.status === 'progress' && ['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Pause', icon: Pause, onClick: () => setPauseModal(inc), className: 'text-warning hover:bg-warning/10' });
-                  }
-                  if (inc.status === 'pending' && ['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Resume', icon: Play, onClick: () => handleResume(inc.id), className: 'text-success hover:bg-success/10' });
-                  }
-                  actions.push({ label: 'Update', icon: Edit2, onClick: () => setUpdateModal(inc), className: 'text-primary hover:bg-primary/10' });
-                  if (['admin', 'noc'].includes(user?.role)) {
-                    actions.push({ label: 'Close', icon: Square, onClick: () => setCloseModal(inc), className: 'text-error hover:bg-error/10' });
-                  }
-
-                  return (
-                    <tr key={inc.id} className="hover:bg-foreground/[0.02] transition-colors duration-200 group">
-                      <td className="py-3 px-4 text-center align-top">
-                        <div className="mt-1"><NcalBadge value={inc.ncal} /></div>
-                      </td>
-                      <td className="py-3 px-4 align-top">
-                        <div className="flex flex-col gap-1.5 items-start">
-                          <button 
-                            className="text-[11px] font-bold font-mono tracking-tight text-primary hover:underline leading-none" 
-                            onClick={() => navigate(`/incidents/${inc.id}`)}
-                          >
-                            {inc.case_no}
-                          </button>
-                          <div className="flex items-center gap-1.5">
-                            <StatusPill status={inc.status} />
-                            {inc.recurring_count > 0 && (
-                              <div className="group/tooltip relative">
-                                <div className="p-0.5 rounded bg-error/10 text-error flex"><AlertTriangle size={12} strokeWidth={2.5} /></div>
-                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-[9px] font-bold rounded bg-foreground text-background whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none">Recurring {inc.recurring_count + 1}X</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center align-top">
-                         <div className="mt-1"><LevelBadge level={calculateIncidentLevel(inc.start_time)} targetHours={getSLATarget(inc.ncal) / 3600} /></div>
-                      </td>
-                      <td className="py-3 px-4 align-top">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[11px] font-bold tracking-tight text-foreground leading-snug">
-                            {['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—')}
-                          </span>
-                          <span className="text-[10px] font-mono font-bold text-foreground/50 uppercase tracking-widest">
-                            {inc.odp_bts || inc.service_id || '—'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 align-top w-[25%]">
-                        <div className="flex flex-col gap-1.5 pr-4">
-                          <span className="text-[11px] font-medium text-foreground/70 leading-snug line-clamp-2">{inc.initial_problem || '—'}</span>
-                          {inc.last_action && (
-                            <div className="text-[10px] flex items-start gap-1 font-semibold text-primary/70 bg-primary/5 rounded p-1">
-                              <Activity size={12} className="shrink-0 mt-0.5" /> <span className="line-clamp-2 leading-relaxed">{inc.last_action}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center align-top">
-                         <div className="mt-1">
-                          {inc.level_support ? (
-                            <span className="px-1.5 py-0.5 bg-foreground/[0.03] border border-foreground/10 rounded font-mono text-[10px] font-bold text-foreground/60">P{inc.level_support}</span>
-                          ) : <span className="opacity-30">—</span>}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center align-top">
-                        <div className="flex flex-col gap-1.5 justify-center mt-1">
-                            <LiveTimer 
-                              startIso={inc.start_time} 
-                              pausedSec={inc.total_pause_duration_seconds} 
-                              paused={inc.status === 'pending'} 
-                              target={getSLATarget(inc.ncal)}
-                            />
-                          <div className="text-[9px] font-mono font-bold text-foreground/40 uppercase tracking-widest leading-none whitespace-nowrap">
-                            SINCE {formatDateTime(inc.start_time).split(',')[1]}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 align-middle bg-background sticky right-0 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.05)] border-l border-foreground/5">
-                        <div className="flex items-center justify-end gap-1 px-1">
-                          {actions.map(a => (
-                             <button 
-                                key={a.label}
-                                className={cn("p-2 rounded-md transition-all active:scale-95 group/btn relative", a.className)} 
-                                onClick={a.onClick}
-                                aria-label={a.label}
-                              >
-                                <a.icon size={15} />
-                                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-bold rounded bg-foreground text-background whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none">{a.label}</span>
-                              </button>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="flex-1 overflow-auto">
+            <EmptyState
+              icon={<CheckCircle size={48} className="text-success" />}
+              title="All Clear"
+              desc="No active incidents reported. The network is operating normally."
+              action={['admin', 'noc'].includes(user?.role) && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/incidents/create')} icon={<Plus size={14}/>}>
+                  Create Incident Manually
+                </Button>
+              )}
+            />
           </div>
+        ) : (
+          <DataTable 
+            columns={columns} 
+            data={incidents} 
+            className="flex-1"
+            pageSize={100}
+            getRowClassName={(row) => highlightedIds.has(row.id) ? "bg-primary/5 shadow-inner" : ""}
+          />
         )}
       </div>
 

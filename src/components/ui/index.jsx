@@ -277,7 +277,7 @@ export function Spinner({ size = 'md', className = '' }) {
 
 export function PageSpinner() {
   return (
-    <div className="flex items-center justify-center h-[50vh]">
+    <div className="flex-1 min-h-0 flex items-center justify-center">
       <Spinner size="lg" />
     </div>
   );

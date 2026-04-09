@@ -231,15 +231,15 @@ export default function CreateIncidentPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6 pb-24 md:pb-12">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="rounded-full w-9 h-9 p-0 bg-foreground/5">
             <ArrowLeft size={16} />
           </Button>
           <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl font-black tracking-tight uppercase text-foreground/90">
+            <h1 className="text-xl font-black tracking-tight uppercase text-foreground/90 leading-tight">
               {isEdit ? 'Edit Record' : 'New Incident'}
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">
@@ -257,7 +257,8 @@ export default function CreateIncidentPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-2 -mr-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start pb-12">
         <div className="lg:col-span-2 flex flex-col gap-6">
           
           {/* Section 1: Basic Information */}
@@ -646,7 +647,8 @@ export default function CreateIncidentPage() {
             </div>
           </SectionCard>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import express from 'express';
 import db from '../db.js';
 import { authenticate } from '../middleware/auth.js';
+import logger from '../utils/logger.js';
 import fs from 'fs';
 
 const router = express.Router();
@@ -135,7 +136,7 @@ router.get('/trouble-map', authenticate, (req, res) => {
   const start_date = qStart || '2026-01-01 00:00:00';
   const end_date = qEnd || '2026-12-31 23:59:59';
 
-  console.log('[API] /trouble-map date range:', { start_date, end_date });
+  logger.info(`[API] /trouble-map date range: ${JSON.stringify({ start_date, end_date })}`);
 
   const rows = db.prepare(`
     SELECT 
@@ -162,7 +163,7 @@ router.get('/trouble-map', authenticate, (req, res) => {
     fs.appendFileSync('/tmp/imms_trouble_map.log', `[${new Date().toISOString()}] Start: ${start_date}, End: ${end_date}, Found: ${rows.length}\n`);
   } catch(e) {}
   
-  console.log('[API] /trouble-map result rows:', rows.length);
+  logger.info(`[API] /trouble-map result rows: ${rows.length}`);
   res.json(rows);
 });
 
@@ -174,7 +175,7 @@ router.get('/distribution-trouble', authenticate, (req, res) => {
   const start_date = qStart || '2026-01-01 00:00:00';
   const end_date = qEnd || '2026-12-31 23:59:59';
 
-  console.log('[API] /distribution-trouble date range:', { start_date, end_date });
+  logger.info(`[API] /distribution-trouble date range: ${JSON.stringify({ start_date, end_date })}`);
 
   const rows = db.prepare(`
     SELECT 
@@ -200,7 +201,7 @@ router.get('/distribution-trouble', authenticate, (req, res) => {
     ORDER BY incident_count DESC
   `).all(start_date, end_date, start_date, end_date);
   
-  console.log('[API] /distribution-trouble result rows:', rows.length);
+  logger.info(`[API] /distribution-trouble result rows: ${rows.length}`);
   res.json(rows);
 });
 

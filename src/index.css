@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
 /* 1. MAPPING WARNA IMMS KE SHADCN STANDAR */
 @theme {
@@ -74,8 +73,8 @@
   /* Linear Grain Texture for OLED depth */
   body::after {
     content: "";
-    @apply fixed inset-0 opacity-[0.015] pointer-events-none z-[9999];
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    @apply fixed inset-0 opacity-[0.012] pointer-events-none z-[9999];
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PScwIDAgMjAwIDIwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48ZmlsdGVyIGlkPSdub2lzZUZpbHRlcic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzAuNjUnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjbm9pc2VGaWx0ZXIpJy8+PC9zdmc+");
   }
 
   /* Standard Scrollbar */
@@ -94,10 +93,10 @@
     @apply w-full border-collapse;
   }
   th {
-    @apply text-[10px] uppercase tracking-widest font-bold text-foreground/50 py-2 px-3 border-b border-foreground/5 text-left;
+    @apply text-[10px] uppercase tracking-widest font-black text-foreground/40 py-1.5 px-3 border-b border-foreground/5 text-left;
   }
   td {
-    @apply text-[11px] font-medium leading-tight py-2 px-3 border-b border-foreground/5 text-foreground/80;
+    @apply text-[11px] font-bold leading-tight py-1.5 px-3 border-b border-foreground/5 text-foreground/80;
   }
   
   /* Optimasi Angka agar sejajar */

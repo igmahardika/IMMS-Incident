@@ -10,6 +10,8 @@ import CustomerMap from '../components/ui/CustomerMap.jsx';
 import GeoSummary from '../components/ui/GeoSummary.jsx';
 import { cn } from '../lib/utils.js';
 
+import { DataTable } from '../components/tables/DataTable.jsx';
+
 // Global icon stroke standard
 const ICON_ST = 2;
 const ICON_HD = 2.5;
@@ -34,10 +36,104 @@ export function MasterCustomerPage() {
   const [modal, setModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
-  const [form, setForm] = useState({ customer_id: '', service_id: '', company_name: '', brand_site: '', address: '', service_type: 'Internet Dedicated', grade: 'Bronze', support_level: 'L1', link_coverage: '', latitude: '', longitude: '' });
+  const [form, setForm] = useState({ 
+    customer_id: '', service_id: '', company_name: '', brand_site: '', 
+    address: '', service_type: 'Internet Dedicated', grade: 'Bronze', 
+    support_level: 'L1', link_coverage: '', latitude: '', longitude: '' 
+  });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  // Column definitions for DataTable
+  const columns = React.useMemo(() => [
+    {
+      accessorFn: (_, i) => i + 1,
+      id: "index",
+      header: "#",
+      size: 40,
+      cell: info => <span className="text-foreground/30 font-mono italic">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "customer_id",
+      header: "Cust ID",
+      size: 70,
+      meta: { className: 'whitespace-nowrap font-mono' },
+      cell: info => <span className="text-primary font-mono tracking-tighter">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "service_id",
+      header: "Service ID",
+      size: 70,
+      meta: { className: 'whitespace-nowrap font-mono' },
+      cell: info => <span className="text-secondary font-mono tracking-tighter">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "company_name",
+      header: "Company Name",
+      size: 200,
+      meta: { className: 'truncate flex-1', flexible: true },
+      cell: info => <span className="text-foreground/80 tracking-tight font-bold">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "brand_site",
+      header: "Brand / Site",
+      size: 130,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => {
+        const c = info.row.original;
+        return (
+          <div className="flex items-center gap-1.5 text-foreground/60 tracking-tight">
+            <span className="truncate">{c.brand_site}</span>
+            {(!c.latitude || !c.longitude) && (
+              <span title="No coordinates found" className="text-error flex shrink-0">
+                <MapPinOff size={10} strokeWidth={3} />
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "grade",
+      header: "Grade",
+      size: 60,
+      meta: { className: 'text-center' },
+      cell: info => <GradeBadge grade={info.getValue()} />,
+    },
+    {
+      accessorKey: "support_level",
+      header: "Level",
+      size: 60,
+      meta: { className: 'text-center' },
+      cell: info => <AccentBadge text={info.getValue()} />,
+    },
+    {
+      accessorKey: "is_active",
+      header: "Status",
+      size: 60,
+      meta: { className: 'text-center' },
+      cell: info => <StatusBadge active={info.getValue()} />,
+    },
+    {
+      accessorKey: "service_type",
+      header: "Segment",
+      size: 90,
+      meta: { className: 'whitespace-nowrap px-1' },
+      cell: info => <span className="text-[10px] font-black uppercase text-foreground/40">{info.getValue()}</span>,
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 70,
+      meta: { className: 'text-right px-2' },
+      cell: info => (
+        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="xs" onClick={() => openEdit(info.row.original)} className="w-6 h-6 p-0"><Edit2 size={11} strokeWidth={ICON_ST} /></Button>
+          <Button variant="ghost" size="xs" onClick={() => handleDelete(info.row.original.id)} className="w-6 h-6 p-0 text-error hover:bg-error/10"><Trash2 size={11} strokeWidth={ICON_ST} /></Button>
+        </div>
+      ),
+    },
+  ], []);
 
   const load = () => api.getCustomers().then(setCustomers).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
@@ -91,13 +187,13 @@ export function MasterCustomerPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Customer Master</h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{customers.length} registered customers</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
             <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
             <input 
@@ -149,101 +245,13 @@ export function MasterCustomerPage() {
             <GeoSummary customers={customers} />
           </div>
         ) : (
-          (() => {
-            const filtered = customers.filter(c => 
-              (c.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (c.brand_site || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (c.service_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (c.customer_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (c.address || '').toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            
-            if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="Try adjusting your search query" />;
-            
-            const totalPages = Math.ceil(filtered.length / rowsPerPage);
-            const startIdx = (currentPage - 1) * rowsPerPage;
-            const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
-            
-            return (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-                  <table className="w-full text-left border-separate border-spacing-0">
-                    <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
-                      <tr className="bg-foreground/[0.02]">
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[100px]">Cust ID</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[100px]">Service ID</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Company Name</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[180px]">Brand / Site</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Grade</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Level</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Status</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Service</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-foreground/5">
-                      {paginated.map((c, i) => (
-                        <tr key={c.id} className="hover:bg-foreground/[0.01] transition-colors group">
-                          <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{startIdx + i + 1}</td>
-                          <td className="px-4 py-2.5 text-[11px] font-bold text-primary font-mono tracking-tighter">{c.customer_id}</td>
-                          <td className="px-4 py-2.5 text-[11px] font-bold text-secondary font-mono tracking-tighter">{c.service_id}</td>
-                          <td className="px-4 py-2.5 text-[11px] font-bold text-foreground/80 tracking-tight">{c.company_name}</td>
-                          <td className="px-4 py-2.5 text-[11px] font-bold text-foreground/60 tracking-tight">
-                            <div className="flex items-center gap-1.5">
-                              {c.brand_site}
-                              {(!c.latitude || !c.longitude) && (
-                                <span title="No coordinates found" className="text-error flex shrink-0">
-                                  <MapPinOff size={10} strokeWidth={3} />
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2.5 text-center"><GradeBadge grade={c.grade} /></td>
-                          <td className="px-4 py-2.5 text-center"><AccentBadge text={c.support_level} /></td>
-                          <td className="px-4 py-2.5 text-center"><StatusBadge active={c.is_active} /></td>
-                          <td className="px-4 py-2.5 text-[10px] font-black text-foreground/40 uppercase tracking-widest font-mono">{c.service_type}</td>
-                          <td className="px-4 py-2.5 text-right pr-4">
-                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button variant="ghost" size="xs" onClick={() => openEdit(c)} className="w-7 h-7 p-0" aria-label="Edit customer" title="Edit Customer"><Edit2 size={12} strokeWidth={ICON_ST} /></Button>
-                              <Button variant="ghost" size="xs" onClick={() => handleDelete(c.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10" aria-label="Deactivate customer" title="Deactivate Customer"><Trash2 size={12} strokeWidth={ICON_ST} /></Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-2 bg-foreground/[0.02] border-t border-foreground/5 gap-4 mt-auto">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                    Showing <span className="text-foreground/60">{startIdx + 1}</span> to <span className="text-foreground/60">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-foreground/60">{filtered.length}</span>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">Rows</span>
-                       <select 
-                        className="bg-transparent border-none text-[11px] font-bold focus:ring-0 p-0 h-auto cursor-pointer text-foreground/60 uppercase"
-                        value={rowsPerPage} 
-                        onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                      >
-                        {[20, 50, 100].map(v => <option key={v} value={v} className="bg-background">{v}</option>)}
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="xs" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 p-0"><ChevronRight className="rotate-180" size={12} /></Button>
-                      <div className="text-[10px] font-black flex items-center gap-1.5 px-3 uppercase tracking-widest">
-                         <span className="text-foreground/70">{currentPage}</span>
-                         <span className="text-foreground/20">/</span>
-                         <span className="text-foreground/50">{totalPages}</span>
-                      </div>
-                      <Button variant="ghost" size="xs" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 p-0"><ChevronRight size={12} /></Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()
+          <DataTable 
+            data={customers} 
+            columns={columns} 
+            globalFilter={searchQuery} 
+            setGlobalFilter={setSearchQuery}
+            pageSize={20}
+          />
         )}
       </div>
 
@@ -332,20 +340,20 @@ export function MasterClassificationPage() {
   }, {});
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Classification Master</h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">Hierarchy of incident categories</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Add Category</Button>
+          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8 uppercase"><Plus size={12} strokeWidth={ICON_HD} /> Add Category</Button>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-1">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-2 -mr-2">
         {loading ? <TableSkeleton rows={6} /> : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
             {Object.entries(grouped).map(([klasifikasi, items]) => (
               <SectionCard 
                 key={klasifikasi}
@@ -398,46 +406,112 @@ export function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
-  const [form, setForm] = useState({ employee_id: '', username: '', password: '', role: 'technician', name: '', email: '' });
+  const ROLES = ['admin', 'manager', 'noc', 'technician'];
+  const columns = React.useMemo(() => [
+    {
+      accessorFn: (_, i) => i + 1,
+      id: "index",
+      header: "#",
+      size: 40,
+      cell: info => <span className="text-foreground/30 font-mono italic">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "employee_id",
+      header: "Emp ID",
+      size: 70,
+      cell: info => <div className="text-center font-mono font-bold text-primary/80 tracking-tighter">{info.getValue() || '—'}</div>,
+    },
+    {
+      accessorKey: "name",
+      header: "User Identity",
+      size: 200,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => {
+        const u = info.row.original;
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-foreground/80 tracking-tight truncate">{u.name}</span>
+            <span className="text-[9px] font-black font-mono text-foreground/40 uppercase tracking-widest truncate">@{u.username}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "email",
+      header: "Email Access",
+      size: 150,
+      meta: { className: 'truncate opacity-60', flexible: true },
+      cell: info => <span className="font-bold tracking-tight">{info.getValue() || '—'}</span>,
+    },
+    {
+      accessorKey: "role",
+      header: "Permissions",
+      size: 90,
+      meta: { className: 'whitespace-nowrap text-center px-1' },
+      cell: info => <RoleBadge role={info.getValue()} />,
+    },
+    {
+      accessorKey: "is_active",
+      header: "State",
+      size: 60,
+      meta: { className: 'text-center' },
+      cell: info => (
+        <button onClick={() => handleToggle(info.row.original)} className="transition-transform active:scale-95">
+          <StatusBadge active={info.getValue()} />
+        </button>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 70,
+      meta: { className: 'text-right px-2' },
+      cell: info => (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
+          <Button variant="ghost" size="xs" onClick={() => openEdit(info.row.original)} className="w-6 h-6 p-0"><Edit2 size={11} strokeWidth={ICON_ST} /></Button>
+          <Button variant="ghost" size="xs" onClick={() => handleDelete(info.row.original.id)} className="w-6 h-6 p-0 text-error hover:bg-error/10"><Trash2 size={11} strokeWidth={ICON_ST} /></Button>
+        </div>
+      ),
+    },
+  ], []);
+
+  const [form, setForm] = useState({ employee_id: '', username: '', password: '', name: '', role: 'noc', email: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
-  const ROLES = ['admin', 'manager', 'noc', 'technician'];
 
   const load = () => api.getUsers().then(setUsers).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
-  const openEdit = (u) => { setModal(u); setForm({ employee_id: u.employee_id || '', username: u.username, password: '', role: u.role, name: u.name, email: u.email || '' }); };
-  const openCreate = () => { setModal('create'); setForm({ employee_id: '', username: '', password: '', role: 'technician', name: '', email: '' }); };
-  
+  const openEdit = (u) => { setModal(u); setForm({ ...u, password: '' }); };
+  const openCreate = () => { setModal('create'); setForm({ employee_id: '', username: '', password: '', name: '', role: 'noc', email: '' }); };
+
   const handleSave = async () => {
     try {
-      if (modal === 'create') { await api.createUser(form); addToast('User created successfully', 'success'); }
-      else { await api.updateUser(modal.id, form); addToast('User updated successfully', 'success'); }
+      if (modal === 'create') { await api.createUser(form); addToast('User created', 'success'); }
+      else { await api.updateUser(modal.id, form); addToast('User updated', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure?')) return;
-    try { await api.deleteUser(id); addToast('User removed', 'warning'); load(); }
+    if (!confirm('Delete this user?')) return;
+    try { await api.deleteUser(id); addToast('User deleted', 'warning'); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
 
   const handleToggle = async (u) => {
-    try { await api.updateUser(u.id, { is_active: u.is_active ? 0 : 1 }); load(); }
+    try { await api.updateUser(u.id, { is_active: !u.is_active }); addToast(`User ${!u.is_active ? 'activated' : 'deactivated'}`, 'info'); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">User Accounts</h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{users.length} registered access keys</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
             <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
             <input 
@@ -446,101 +520,22 @@ export function UserManagementPage() {
               placeholder="Search Username or Name..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search user accounts"
             />
           </div>
-          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Create Account</Button>
+          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8 shrink-0 uppercase"><Plus size={12} strokeWidth={ICON_HD} /> Create Account</Button>
         </div>
       </div>
 
       <div className="flex-1 min-h-0  bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
-        {loading ? <TableSkeleton rows={10} /> : (() => {
-          const filtered = users.filter(u => 
-            (u.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (u.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (u.employee_id || '').toLowerCase().includes(searchQuery.toLowerCase())
-          );
-          if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="No users match the search criteria" />;
-          
-          const totalPages = Math.ceil(filtered.length / rowsPerPage);
-          const startIdx = (currentPage - 1) * rowsPerPage;
-          const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
-
-          return (
-            <div className="flex flex-col h-full">
-              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-                <table className="w-full text-left border-separate border-spacing-0">
-                  <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
-                    <tr className="bg-foreground/[0.02]">
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[80px] text-center">Emp ID</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">User Identity</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[150px]">Email Access</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Permissions</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-center">Account State</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">Management</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-foreground/5 text-[11px]">
-                    {paginated.map((u, i) => (
-                      <tr key={u.id} className="hover:bg-foreground/[0.01] transition-colors group">
-                        <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{startIdx + i + 1}</td>
-                        <td className="px-4 py-2.5 text-center font-mono font-bold text-primary/80 tracking-tighter">{u.employee_id || '—'}</td>
-                        <td className="px-4 py-2.5">
-                           <div className="flex flex-col gap-0.5">
-                              <span className="font-bold text-foreground/80 tracking-tight">{u.name}</span>
-                              <span className="text-[9px] font-black font-mono text-foreground/40 uppercase tracking-widest">@{u.username}</span>
-                           </div>
-                        </td>
-                        <td className="px-4 py-2.5 font-bold text-foreground/50 tracking-tight">{u.email || '—'}</td>
-                        <td className="px-4 py-2.5 text-center"><RoleBadge role={u.role} /></td>
-                        <td className="px-4 py-2.5 text-center">
-                          <button onClick={() => handleToggle(u)} className="transition-transform active:scale-95">
-                            <StatusBadge active={u.is_active} />
-                          </button>
-                        </td>
-                        <td className="px-4 py-2.5 text-right pr-4">
-                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
-                             <Button variant="ghost" size="xs" onClick={() => openEdit(u)} className="w-7 h-7 p-0" aria-label="Edit user account" title="Edit User"><Edit2 size={12} strokeWidth={ICON_ST} /></Button>
-                             <Button variant="ghost" size="xs" onClick={() => handleDelete(u.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10" aria-label="Delete user account" title="Delete User"><Trash2 size={12} strokeWidth={ICON_ST} /></Button>
-                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-2 bg-foreground/[0.02] border-t border-foreground/5 gap-4 mt-auto">
-                <div className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                  Showing <span className="text-foreground/60">{startIdx + 1}</span> to <span className="text-foreground/60">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-foreground/60">{filtered.length}</span>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">Rows</span>
-                     <select 
-                      className="bg-transparent border-none text-[11px] font-bold focus:ring-0 p-0 h-auto cursor-pointer text-foreground/60 uppercase"
-                      value={rowsPerPage} 
-                      onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                    >
-                      {[20, 50, 100].map(v => <option key={v} value={v} className="bg-background">{v}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 p-0"><ChevronRight className="rotate-180" size={12} /></Button>
-                    <div className="text-[10px] font-black flex items-center gap-1.5 px-3 uppercase tracking-widest">
-                       <span className="text-foreground/70">{currentPage}</span>
-                       <span className="text-foreground/20">/</span>
-                       <span className="text-foreground/50">{totalPages}</span>
-                    </div>
-                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 p-0"><ChevronRight size={12} /></Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        {loading ? <TableSkeleton rows={10} /> : (
+          <DataTable 
+            data={users} 
+            columns={columns} 
+            globalFilter={searchQuery} 
+            setGlobalFilter={setSearchQuery}
+            pageSize={20}
+          />
+        )}
       </div>
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Create New Account' : 'Edit Account Details'}
@@ -628,6 +623,15 @@ export function MasterTechnicalSupportPage() {
     } catch (e) { addToast(e.message, 'error'); }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this record permanently?')) return;
+    try {
+      await api.deleteTechnicalSupport(id);
+      addToast('Deleted successfully', 'success');
+      load();
+    } catch (e) { addToast(e.message, 'error'); }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -652,14 +656,62 @@ export function MasterTechnicalSupportPage() {
     XLSX.writeFile(wb, 'Template_Personel_Data.xlsx');
   };
 
+  // Column definitions for DataTable
+  const columns = React.useMemo(() => [
+    {
+      accessorFn: (_, i) => i + 1,
+      id: "index",
+      header: "#",
+      size: 40,
+      cell: info => <span className="text-foreground/30 font-mono italic">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "no",
+      header: "NRK / No",
+      size: 90,
+      meta: { className: 'whitespace-nowrap font-mono' },
+      cell: info => <div className="text-center font-mono font-bold text-primary/80 tracking-tighter">{info.getValue() || '—'}</div>,
+    },
+    {
+      accessorKey: "name",
+      header: "Personnel Name",
+      size: 200,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => <span className="font-bold text-foreground/80 tracking-tight">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "unit",
+      header: "Assigned Unit / Area",
+      size: 200,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => (
+        <span className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[9px] font-black uppercase tracking-wider border border-primary/10">
+          {info.getValue()}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 70,
+      meta: { className: 'text-right px-2' },
+      cell: info => (
+        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="xs" onClick={() => openEdit(info.row.original)} className="w-6 h-6 p-0"><Edit2 size={11} strokeWidth={ICON_ST} /></Button>
+          <Button variant="ghost" size="xs" onClick={() => handleDelete(info.row.original.id)} className="w-6 h-6 p-0 text-error hover:bg-error/10"><Trash2 size={11} strokeWidth={ICON_ST} /></Button>
+        </div>
+      ),
+    },
+  ], []);
+
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Personnel Records</h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{data.length} registered field engineers</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
             <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
             <input 
@@ -668,7 +720,6 @@ export function MasterTechnicalSupportPage() {
               placeholder="Filter Technicians..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search personnel records"
             />
           </div>
           <Button variant="ghost" size="xs" onClick={downloadTemplate} className="font-bold text-[9px] tracking-widest px-2 h-8"><Download size={12} strokeWidth={ICON_ST} /> Template</Button>
@@ -678,57 +729,19 @@ export function MasterTechnicalSupportPage() {
               <Database size={12} strokeWidth={ICON_ST} /> Upload
             </Button>
           </label>
-          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-6 h-8"><Plus size={12} /> Add Personnel</Button>
+          <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-6 h-8 shrink-0 uppercase"><Plus size={12} strokeWidth={ICON_HD} /> Add Personnel</Button>
         </div>
       </div>
 
       <div className="flex-1 min-h-0 bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
         {loading ? <TableSkeleton rows={12} /> : (
-          (() => {
-            const filtered = data.filter(it => 
-              it.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              it.unit?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            if (filtered.length === 0) return <EmptyState icon={<Database size={40} />} title="Not Found" desc="No personnel match your search" />;
-
-            return (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-                  <table className="w-full text-left border-separate border-spacing-0">
-                    <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
-                      <tr className="bg-foreground/[0.02]">
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-24 text-center">Assign No</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 min-w-[200px]">Engineer Name</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Assignment / Unit</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Management</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-foreground/5 text-[11px]">
-                      {filtered.map((item, i) => (
-                        <tr key={item.id} className="hover:bg-foreground/[0.01] transition-colors group">
-                          <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{i + 1}</td>
-                          <td className="px-4 py-2.5 text-center font-mono font-bold text-foreground/40 tracking-tighter">{item.no || '—'}</td>
-                          <td className="px-4 py-2.5 font-bold text-foreground/80 tracking-tight">{item.name}</td>
-                          <td className="px-4 py-2.5">
-                             <span className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[9px] font-black uppercase tracking-wider border border-primary/10">
-                               {item.unit}
-                             </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-right pr-4">
-                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button variant="ghost" size="xs" onClick={() => openEdit(item)} className="w-7 h-7 p-0" aria-label="Edit personnel record" title="Edit"><Edit2 size={12} strokeWidth={ICON_ST} /></Button>
-                              <Button variant="ghost" size="xs" onClick={() => api.deleteTechnicalSupport(item.id).then(load)} className="w-7 h-7 p-0 text-error hover:bg-error/10" aria-label="Delete personnel record" title="Delete"><Trash2 size={12} strokeWidth={ICON_ST} /></Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            );
-          })()
+          <DataTable 
+            data={data} 
+            columns={columns} 
+            globalFilter={searchQuery} 
+            setGlobalFilter={setSearchQuery}
+            pageSize={20}
+          />
         )}
       </div>
 
@@ -756,11 +769,67 @@ export function MasterDistribusiPage() {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
   const [modal, setModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [form, setForm] = useState({ type: 'Fiber Optic', level_1: '', level_2: '', level_3: '', level_4: '', latitude: '', longitude: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  // Column definitions for DataTable
+  const columns = React.useMemo(() => [
+    {
+      accessorFn: (_, i) => i + 1,
+      id: "index",
+      header: "#",
+      size: 40,
+      cell: info => <span className="text-foreground/30 font-mono italic">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      size: 90,
+      meta: { className: 'whitespace-nowrap px-1' },
+      cell: info => <span className="font-black uppercase text-[10px] tracking-widest text-primary/70">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "level_1",
+      header: "Level 1",
+      size: 130,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => <span className="font-bold text-foreground/80 tracking-tight">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "level_2",
+      header: "Level 2",
+      size: 130,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => <span className="font-bold text-foreground/70 tracking-tight">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "level_3",
+      header: "Level 3",
+      size: 130,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => <span className="font-bold text-foreground/60 tracking-tight">{info.getValue() || '—'}</span>,
+    },
+    {
+      accessorKey: "level_4",
+      header: "Level 4",
+      size: 130,
+      meta: { className: 'truncate', flexible: true },
+      cell: info => <span className="font-bold text-foreground/60 tracking-tight">{info.getValue() || '—'}</span>,
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 70,
+      meta: { className: 'text-right px-2' },
+      cell: info => (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
+          <Button variant="ghost" size="xs" onClick={() => openEdit(info.row.original)} className="w-6 h-6 p-0"><Edit2 size={11} /></Button>
+          <Button variant="ghost" size="xs" onClick={() => handleDelete(info.row.original.id)} className="w-6 h-6 p-0 text-error hover:bg-error/10"><Trash2 size={11} /></Button>
+        </div>
+      ),
+    },
+  ], []);
 
   const load = () => api.getDistribusi().then(setData).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
@@ -820,13 +889,13 @@ export function MasterDistribusiPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Distribution Topology</h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{data.length} registered distribution points</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap flex-1 justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-8 flex-1 max-w-[300px] shadow-sm ring-1 ring-foreground/5 focus-within:ring-primary/40 focus-within:bg-background transition-all">
             <Search size={14} strokeWidth={ICON_ST} className="text-foreground/30" />
             <input 
@@ -841,12 +910,12 @@ export function MasterDistribusiPage() {
             <button className={cn("p-1 rounded-md transition-all", viewMode === 'list' ? 'bg-background text-primary shadow-sm' : 'text-foreground/40')} onClick={() => setViewMode('list')}><LayoutList size={14} /></button>
             <button className={cn("p-1 rounded-md transition-all", viewMode === 'map' ? 'bg-background text-primary shadow-sm' : 'text-foreground/40')} onClick={() => setViewMode('map')}><MapIcon size={14} /></button>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 justify-end">
             <label className="cursor-pointer">
               <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
-              <Button variant="ghost" size="xs" className="font-bold text-[9px] tracking-widest px-2 h-8 pointer-events-none"><Database size={12} /> Upload</Button>
+              <Button variant="ghost" size="xs" className="font-bold text-[9px] tracking-widest px-2 h-8 pointer-events-none uppercase"><Database size={12} /> Upload</Button>
             </label>
-            <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Add Point</Button>
+            <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8 uppercase"><Plus size={12} strokeWidth={ICON_HD} /> Add Point</Button>
           </div>
         </div>
       </div>
@@ -856,69 +925,15 @@ export function MasterDistribusiPage() {
           <div className="h-full p-4">
              <DistributionMap data={data} onRefresh={load} />
           </div>
-        ) : (() => {
-          const filtered = data.filter(d => 
-            (d.level_1 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (d.level_2 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (d.level_3 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (d.level_4 || '').toLowerCase().includes(searchQuery.toLowerCase())
-          );
-          const totalPages = Math.ceil(filtered.length / rowsPerPage);
-          const startIdx = (currentPage - 1) * rowsPerPage;
-          const paginated = filtered.slice(startIdx, startIdx + rowsPerPage);
-
-          return (
-            <div className="flex flex-col h-full">
-              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-                <table className="w-full text-left border-separate border-spacing-0">
-                  <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
-                    <tr className="bg-foreground/[0.02]">
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Type</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 1</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 2</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 3 / Extra</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Level 4 / Extra</th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-foreground/5 text-[11px]">
-                    {paginated.map((d, i) => (
-                      <tr key={d.id} className="hover:bg-foreground/[0.01] transition-colors group">
-                        <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{startIdx + i + 1}</td>
-                        <td className="px-4 py-2.5 font-black uppercase text-[10px] tracking-widest text-primary/70">{d.type}</td>
-                        <td className="px-4 py-2.5 font-bold text-foreground/80 tracking-tight">{d.level_1}</td>
-                        <td className="px-4 py-2.5 font-bold text-foreground/70 tracking-tight">{d.level_2}</td>
-                        <td className="px-4 py-2.5 font-bold text-foreground/60 tracking-tight">{d.level_3 || '—'}</td>
-                        <td className="px-4 py-2.5 font-bold text-foreground/60 tracking-tight">{d.level_4 || '—'}</td>
-                        <td className="px-4 py-2.5 text-right pr-4">
-                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
-                             <Button variant="ghost" size="xs" onClick={() => openEdit(d)} className="w-7 h-7 p-0"><Edit2 size={12} /></Button>
-                             <Button variant="ghost" size="xs" onClick={() => handleDelete(d.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10"><Trash2 size={12} /></Button>
-                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-2 bg-foreground/[0.02] border-t border-foreground/5 gap-4 mt-auto">
-                <div className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                  Showing <span className="text-foreground/60">{startIdx + 1}</span> to <span className="text-foreground/60">{Math.min(startIdx + rowsPerPage, filtered.length)}</span> of <span className="text-foreground/60">{filtered.length}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 p-0"><ChevronRight className="rotate-180" size={12} /></Button>
-                    <div className="text-[10px] font-black flex items-center gap-1.5 px-3 uppercase tracking-widest">
-                       <span className="text-foreground/70">{currentPage}</span>
-                       <span className="text-foreground/20">/</span>
-                       <span className="text-foreground/50">{totalPages}</span>
-                    </div>
-                    <Button variant="ghost" size="xs" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 p-0"><ChevronRight size={12} /></Button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        ) : (
+          <DataTable 
+            data={data} 
+            columns={columns} 
+            globalFilter={searchQuery} 
+            setGlobalFilter={setSearchQuery}
+            pageSize={20}
+          />
+        )}
       </div>
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Add Distribution Point' : 'Edit Distribution Point'}
@@ -963,6 +978,35 @@ export function MasterActionPage() {
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
+  const columns = React.useMemo(() => [
+    {
+      accessorFn: (_, i) => i + 1,
+      id: "index",
+      header: "#",
+      size: 40,
+      cell: info => <span className="text-foreground/33 font-mono italic">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: "name",
+      header: "Action Description",
+      size: 400,
+      meta: { className: 'truncate flex-1', flexible: true },
+      cell: info => <span className="font-bold text-foreground/80 tracking-tight">{info.getValue()}</span>,
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 70,
+      meta: { className: 'text-right px-2' },
+      cell: info => (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
+          <Button variant="ghost" size="xs" onClick={() => openEdit(info.row.original)} className="w-6 h-6 p-0"><Edit2 size={11} /></Button>
+          <Button variant="ghost" size="xs" onClick={() => handleDelete(info.row.original.id)} className="w-6 h-6 p-0 text-error hover:bg-error/10"><Trash2 size={11} /></Button>
+        </div>
+      ),
+    },
+  ], []);
+
   const load = () => api.getActions().then(setActions).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
@@ -984,44 +1028,24 @@ export function MasterActionPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0 max-w-2xl mx-auto w-full">
-      <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase leading-tight">Response Actions</h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{actions.length} preset incident actions</p>
         </div>
-        <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8"><Plus size={12} /> Add Action</Button>
+        <Button size="xs" onClick={openCreate} className="font-black text-[9px] tracking-widest px-4 h-8 uppercase"><Plus size={12} strokeWidth={ICON_HD} /> Add Action</Button>
       </div>
 
       <div className="flex-1 min-h-0 bg-background/50 rounded-xl overflow-hidden shadow-2xl shadow-primary/5 ring-1 ring-foreground/5 border border-foreground/[0.02]">
         {loading ? <TableSkeleton rows={8} /> : (
-          <div className="flex flex-col h-full">
-            <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-              <table className="w-full text-left border-separate border-spacing-0">
-                <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-foreground/5">
-                  <tr className="bg-foreground/[0.02]">
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 w-12 text-center">#</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5">Action Description</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-foreground/5 text-right pr-6">Management</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-foreground/5 text-[11px]">
-                  {actions.map((a, i) => (
-                    <tr key={a.id} className="hover:bg-foreground/[0.01] transition-colors group">
-                      <td className="px-4 py-2.5 text-[10px] font-bold text-foreground/30 text-center font-mono italic">{i + 1}</td>
-                      <td className="px-4 py-2.5 font-bold text-foreground/80 tracking-tight">{a.name}</td>
-                      <td className="px-4 py-2.5 text-right pr-4">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
-                          <Button variant="ghost" size="xs" onClick={() => openEdit(a)} className="w-7 h-7 p-0"><Edit2 size={12} /></Button>
-                          <Button variant="ghost" size="xs" onClick={() => handleDelete(a.id)} className="w-7 h-7 p-0 text-error hover:bg-error/10"><Trash2 size={12} /></Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataTable 
+            data={actions} 
+            columns={columns} 
+            globalFilter={searchQuery} 
+            setGlobalFilter={setSearchQuery}
+            pageSize={20}
+          />
         )}
       </div>
 

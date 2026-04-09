@@ -16,7 +16,7 @@ export function ChartContainer({ config = {}, children, className, style }) {
       }
     });
     return { 
-      minHeight: 0,
+      minHeight: '200px', // Ensure non-zero height for ResponsiveContainer
       minWidth: 0,
       ...style, 
       ...vars 

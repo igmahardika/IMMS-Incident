@@ -1,6 +1,8 @@
 import express from 'express';
 import db from '../db.js';
 import { authenticate } from '../middleware/auth.js';
+import { incidentCreateSchema, incidentUpdateSchema, validateRequest } from '../utils/validators.js';
+import { getIO } from '../socket.js';
 
 const router = express.Router();
 
@@ -277,7 +279,7 @@ router.get('/:id', authenticate, (req, res) => {
 });
 
 // ─── POST /api/incidents — create ───────────────────────────────────────────
-router.post('/', authenticate, (req, res) => {
+router.post('/', authenticate, validateRequest(incidentCreateSchema), (req, res) => {
   try {
     const { customer_id, ncal, odp_bts, level_support, initial_problem, power_before, indikasi, kabel, panjang_kabel, pic, case_no, start_time, sla, customer_terdampak, koordinat, technician_id } = req.body;
     if (!case_no || !case_no.trim()) return res.status(400).json({ error: 'Nomor Case wajib diisi!' });
@@ -309,6 +311,8 @@ router.post('/', authenticate, (req, res) => {
       `).run(technician_id, incident.id, `You have been assigned to Case #${incident.case_no}`);
     }
 
+    getIO().emit('incident-updated', { type: 'create', incident });
+    logger.info(`Incident created: Case #${incident.case_no} by User ID: ${req.user.id}`);
     res.status(201).json(incident);
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -320,7 +324,7 @@ router.post('/', authenticate, (req, res) => {
 });
 
 // ─── PUT /api/incidents/:id — update fields ─────────────────────────────────
-router.put('/:id', authenticate, (req, res) => {
+router.put('/:id', authenticate, validateRequest(incidentUpdateSchema), (req, res) => {
   const { technician_id, root_cause, last_action, power_before, power_after, classification_id, status, initial_problem, ncal, odp_bts, level_support, customer_id, indikasi, kabel, panjang_kabel, pic, customer_terdampak, sla, koordinat } = req.body;
   const old = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
   if (!old) return res.status(404).json({ error: 'Not found' });
@@ -404,6 +408,8 @@ router.put('/:id', authenticate, (req, res) => {
     `).run(req.params.id, `Technician ${req.user.name} updated Case #${old.case_no}: ${detailStr}`);
   }
 
+  getIO().emit('incident-updated', { type: 'update', id: req.params.id });
+  logger.info(`Incident updated: Case #${old.case_no} by User ID: ${req.user.id}`);
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
 });
 
@@ -417,6 +423,8 @@ router.post('/:id/start', authenticate, (req, res) => {
   db.prepare("UPDATE incidents SET start_action_time = ?, status = 'progress', updated_at = datetime('now') WHERE id = ?").run(now, req.params.id);
   db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'START_ACTION', ?)").run(req.params.id, req.user.id, `Action started at ${now}`);
 
+  getIO().emit('incident-updated', { type: 'status_change', id: req.params.id });
+  logger.info(`Action started for Case ID: ${req.params.id} by User ID: ${req.user.id}`);
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
 });
 
@@ -436,6 +444,8 @@ router.post('/:id/pause', authenticate, (req, res) => {
   db.prepare("UPDATE incidents SET status = 'pending', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
   db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'PAUSE', ?)").run(req.params.id, req.user.id, reason || 'No reason given');
 
+  getIO().emit('incident-updated', { type: 'status_change', id: req.params.id });
+  logger.info(`Incident paused: Case ID: ${req.params.id} by User ID: ${req.user.id}. Reason: ${reason || 'N/A'}`);
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
 });
 
@@ -457,6 +467,8 @@ router.post('/:id/resume', authenticate, (req, res) => {
   db.prepare("UPDATE incidents SET status = 'progress', total_pause_duration_seconds = ?, updated_at = datetime('now') WHERE id = ?").run(totalPause, req.params.id);
   db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'RESUME', ?)").run(req.params.id, req.user.id, `Paused for ${pauseSec}s`);
 
+  getIO().emit('incident-updated', { type: 'status_change', id: req.params.id });
+  logger.info(`Incident resumed: Case ID: ${req.params.id} by User ID: ${req.user.id}`);
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
 });
 
@@ -508,6 +520,8 @@ router.post('/:id/close', authenticate, (req, res) => {
   );
 
   sendEscalation(updated, 'close');
+  getIO().emit('incident-updated', { type: 'close', id: req.params.id });
+  logger.info(`Incident closed: Case #${updated.case_no} by User ID: ${req.user.id}`);
   res.json(updated);
 });
 
@@ -563,7 +577,7 @@ router.delete('/batch', authenticate, (req, res) => {
     const result = runBatch(ids);
     res.json({ success: true, deleted: result.changes });
   } catch (err) {
-    console.error('Batch delete error:', err);
+    logger.error(`Batch delete error: ${err.message}`);
     res.status(500).json({ error: 'Failed to delete incidents' });
   }
 });

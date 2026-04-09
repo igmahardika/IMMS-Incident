@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, formatDateTime, MONTH_NAMES, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
 import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton } from '../components/ui/index.jsx';
+import { DataTable } from '../components/tables/DataTable.jsx';
+import { exportToExcel } from '../utils/exportStats.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { Search, Download, Eye, Trash2, LayoutList, Map as MapIcon, ChevronRight, Calendar } from 'lucide-react';
+import { Search, FileSpreadsheet, Trash2, LayoutList, Map as MapIcon, ChevronRight, Calendar } from 'lucide-react';
 import CustomerMap from '../components/ui/CustomerMap.jsx';
 import { cn } from '../lib/utils.js';
 
@@ -21,18 +23,8 @@ function fmtDur(sec) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function exportCSV(data) {
-  const cols = ['case_no', 'ncal', 'brand_site', 'odp_bts', 'initial_problem', 'status',
-    'technician_name', 'root_cause', 'last_action', 'power_before', 'power_after',
-    'classification_name', 'start_time', 'end_time', 'duration_gross_seconds',
-    'duration_nett_seconds', 'total_pause_duration_seconds'];
-  const csv = [cols.join(','),
-    ...data.map(r => cols.map(c => `"${(r[c] ?? '').toString().replace(/"/g, '""')}"`).join(','))
-  ].join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `IMMS_History_${Date.now()}.csv`;
-  a.click();
+function exportData(data) {
+  exportToExcel(data, `IMMS_History_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 export default function HistoryPage() {
@@ -81,29 +73,112 @@ export default function HistoryPage() {
     finally { setDeleting(false); }
   };
 
-  const filtered = filters.search
-    ? data.filter(r =>
-        [r.case_no, r.brand_site, r.company_name, r.initial_problem, r.technician_name]
-          .join(' ').toLowerCase().includes(filters.search.toLowerCase())
-      )
-    : data;
+  const columns = useMemo(() => [
+    {
+      id: 'selection',
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllPageRowsSelected()}
+          onChange={table.getToggleAllPageRowsSelectedHandler()}
+          className="w-3 h-3 rounded border-foreground/20 text-primary"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          className="w-3 h-3 rounded border-foreground/20 text-primary"
+        />
+      ),
+      size: 40,
+      meta: { className: 'text-center' },
+    },
+    {
+      accessorKey: 'case_no',
+      header: 'Case No',
+      cell: ({ row }) => <span className="font-mono text-primary font-bold">{row.original.case_no}</span>,
+      size: 100,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
+    {
+      accessorKey: 'brand_site',
+      header: 'Site Specification',
+      cell: ({ row }) => {
+        const val = row.original.brand_site || row.original.company_name || '—';
+        return <span title={val} className="truncate block">{val}</span>;
+      },
+      size: 250,
+      meta: { flexible: true },
+    },
+    {
+      accessorKey: 'ncal',
+      header: 'NCAL',
+      cell: ({ row }) => <NcalBadge value={row.original.ncal} />,
+      size: 80,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <StatusPill status={row.original.status} />,
+      size: 90,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
+    {
+      accessorKey: 'technician_name',
+      header: 'Technician',
+      cell: ({ row }) => <span className="text-foreground/70 truncate block">{row.original.technician_name || '—'}</span>,
+      size: 130,
+      meta: { flexible: true },
+    },
+    {
+      accessorKey: 'start_time',
+      header: 'Start Date',
+      cell: ({ row }) => <span className="font-mono text-[10px] text-foreground/50 tabular-nums">{formatDateTime(row.original.start_time)}</span>,
+      size: 160,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
+    {
+      id: 'duration',
+      header: 'Nett Time',
+      cell: ({ row }) => <span className="font-mono text-primary tabular-nums font-bold">{fmtDur(row.original.duration_nett_seconds)}</span>,
+      size: 90,
+      meta: { className: 'whitespace-nowrap' },
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <button 
+          onClick={(e) => { e.stopPropagation(); navigate(`/incidents/${row.original.id}`); }}
+          className="p-1 hover:bg-foreground/5 rounded transition-transform active:scale-90"
+        >
+          <ChevronRight size={14} className="text-foreground/40" />
+        </button>
+      ),
+      size: 40,
+      meta: { className: 'text-right' },
+    }
+  ], [navigate]);
 
-  const allSelected = filtered.length > 0 && selectedIds.length === filtered.length;
+  const allSelected = selectedIds.length > 0 && selectedIds.length === data.length;
   const toggleRow = id => setSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
   const faintHdr = "py-3 px-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 text-left bg-foreground/[0.02] border-b border-foreground/5";
 
   return (
-    <div className="flex flex-col gap-6 h-full font-inter">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">Incident Archive</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{filtered.length} verified historical records</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{data.length} verified historical records</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {selectedIds.length > 0 && (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
-              <Button variant="ghost" size="sm" className="text-[9px] font-black tracking-widest" onClick={() => setSelectedIds(allSelected ? [] : filtered.map(r => r.id))}>
+              <Button variant="ghost" size="sm" className="text-[9px] font-black tracking-widest" onClick={() => setSelectedIds(allSelected ? [] : data.map(r => r.id))}>
                 {allSelected ? 'DESELECT' : 'SELECT ALL'}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleDeleteSelected} isLoading={deleting} className="text-error hover:bg-error/10 text-[9px] font-black tracking-widest">
@@ -119,8 +194,8 @@ export default function HistoryPage() {
               <MapIcon size={12} className="inline mr-1" /> Map
             </button>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => exportCSV(filtered)} className="font-bold text-[9px] tracking-widest">
-            <Download size={12} /> EXPORT CSV
+          <Button variant="ghost" size="sm" onClick={() => exportData(data)} className="font-bold text-[9px] tracking-widest text-success hover:bg-success/10">
+            <FileSpreadsheet size={12} className="mr-1" /> EXCEL REPORT
           </Button>
         </div>
       </div>
@@ -173,102 +248,23 @@ export default function HistoryPage() {
 
           {/* Data grid */}
           <SectionCard padding={false} className="border-foreground/5 min-h-0 flex-1">
-            <div className="overflow-auto w-full max-h-[70vh] custom-scrollbar">
+            <div className="flex-1 flex flex-col min-h-0 min-w-0">
               {loading ? (
                 <TableSkeleton rows={12} />
-              ) : filtered.length === 0 ? (
+              ) : data.length === 0 ? (
                 <EmptyState
                   icon={<Search size={40} className="text-foreground/10" />}
                   title="Archive Entry Not Found"
                   desc="Try adjusting filters or search parameters."
                 />
               ) : (
-                <table className="w-full text-left border-separate border-spacing-0 min-w-[2800px]">
-                  <thead>
-                    <tr className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
-                      <th className={cn(faintHdr, "w-10 text-center sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")} />
-                      <th className={cn(faintHdr, "w-32 sticky left-10 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")}>Ticket Hash</th>
-                      <th className={cn(faintHdr, "min-w-[300px] max-w-[300px] sticky left-[168px] z-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)] pr-8")}>Site Specification</th>
-                      <th className={cn(faintHdr, "w-32 text-center pl-6")}>Segment</th>
-                      <th className={cn(faintHdr, "w-24 text-center")}>Spt. Level</th>
-                      <th className={cn(faintHdr, "w-28 text-center")}>Lifecycle</th>
-                      <th className={cn(faintHdr, "w-16 text-center")}>Level</th>
-                      <th className={cn(faintHdr, "w-44")}>Field Engineer</th>
-                      <th className={cn(faintHdr, "w-44")}>Node Mapping</th>
-                      <th className={cn(faintHdr, "w-36")}>T0 (Discovery)</th>
-                      <th className={cn(faintHdr, "w-36")}>T1 (Dispatch)</th>
-                      <th className={cn(faintHdr, "w-36")}>T2 (Resolution)</th>
-                      <th className={cn(faintHdr, "w-24 text-center")}>Gross ΔT</th>
-                      <th className={cn(faintHdr, "w-24 text-center text-primary font-black bg-primary/[0.03]")}>Nett ΔT</th>
-                      <th className={cn(faintHdr, "w-36")}>Pause A Start</th>
-                      <th className={cn(faintHdr, "w-36")}>Pause A End</th>
-                      <th className={cn(faintHdr, "w-36")}>Pause B Start</th>
-                      <th className={cn(faintHdr, "w-36")}>Pause B End</th>
-                      <th className={cn(faintHdr, "w-24 text-center")}>Sum Pause</th>
-                      <th className={cn(faintHdr, "min-w-[280px]")}>Incident Manifest</th>
-                      <th className={cn(faintHdr, "min-w-[280px]")}>Root Cause Analysis</th>
-                      <th className={cn(faintHdr, "min-w-[280px]")}>Final Countermeasure</th>
-                      <th className={cn(faintHdr, "min-w-[180px]")}>Audit Class</th>
-                      <th className={cn(faintHdr, "w-20 text-center")}>Pwr₁</th>
-                      <th className={cn(faintHdr, "w-20 text-center")}>Pwr₂</th>
-                      <th className={cn(faintHdr, "w-12 sticky right-0 z-50 shadow-[-1px_0_0_0_rgba(0,0,0,0.05)]")} />
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-foreground/5 text-[11px] font-bold">
-                    {filtered.map(row => {
-                      const isSel = selectedIds.includes(row.id);
-                      const grossSec = row.duration_gross_seconds ?? 0;
-                      const nettSec  = row.duration_nett_seconds  ?? 0;
-                      const pauseSec = row.total_pause_duration_seconds ?? Math.max(0, grossSec - nettSec);
-                      const siteName = ['BLACK', 'RED', 'ORANGE'].includes(row.ncal)
-                        ? (row.brand_site || row.company_name || row.odp_bts || '—')
-                        : (row.brand_site || row.company_name || '—');
-                      const segOdp = row.ncal === 'BLUE' ? '' : (row.odp_bts || '');
-                      const sptLv  = row.level_support || row.cust_support_level || '—';
-
-                      return (
-                        <tr key={row.id} className={cn("transition-all duration-200 group cursor-pointer", isSel ? "bg-primary/[0.08]" : "hover:bg-foreground/[0.02]")} onClick={() => toggleRow(row.id)}>
-                          <td className={cn("px-4 py-2.5 text-center transition-colors sticky left-0 z-30 border-b border-foreground/5", isSel ? "bg-primary/5 shadow-[2px_0_4px_-2px_rgba(var(--color-primary),0.05)]" : "bg-background group-hover:bg-foreground/[0.01] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")} onClick={e => e.stopPropagation()}>
-                            <input type="checkbox" className="w-3.5 h-3.5 rounded border-foreground/20 text-primary transition-all focus:ring-primary focus:ring-offset-background bg-transparent" checked={isSel} onChange={() => toggleRow(row.id)} />
-                          </td>
-
-                          <td className={cn("px-3 py-2.5 sticky left-10 z-30 font-mono font-black text-[10px] text-primary tracking-tighter border-b border-r border-foreground/5", isSel ? "bg-primary/5 shadow-[2px_0_4px_-2px_rgba(var(--color-primary),0.05)]" : "bg-background group-hover:bg-foreground/[0.01] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]")}>{row.case_no || '—'}</td>
-                          <td className={cn("px-4 py-2.5 sticky left-[168px] z-30 font-bold text-[11px] text-foreground tracking-tight truncate border-b border-r border-foreground/5 pr-8", isSel ? "bg-primary/5 shadow-[4px_0_12px_-4px_rgba(var(--color-primary),0.15)]" : "bg-background group-hover:bg-foreground/[0.01] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)]")} title={siteName}>{siteName}</td>
-                          
-                          <td className="px-3 py-2.5 text-center border-b border-r border-foreground/5 pl-6"><NcalBadge value={row.ncal} /></td>
-                          <td className="px-3 py-2.5 text-center font-bold text-[10px] text-foreground/40 uppercase tracking-widest border-b border-r border-foreground/5">{sptLv}</td>
-                          <td className="px-3 py-2.5 text-center border-b border-r border-foreground/5"><StatusPill status={row.status} /></td>
-                          <td className="px-3 py-2.5 text-center border-b border-r border-foreground/5"><LevelBadge level={calculateIncidentLevel(row.start_time, row.end_time)} targetHours={getSLATarget(row.ncal) / 3600} /></td>
-                          <td className="px-3 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight border-b border-r border-foreground/5" title={row.technician_name}>{row.technician_name || '—'}</td>
-                          <td className="px-3 py-2.5 font-black text-[9px] text-foreground/20 uppercase tracking-widest truncate border-b border-r border-foreground/5" title={segOdp}>{segOdp || '—'}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/60 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.start_time).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.escalation_time).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/60 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.end_time).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 text-center font-mono font-bold text-[10px] text-foreground/40 tabular-nums italic border-b border-r border-foreground/5">{fmtDur(grossSec)}</td>
-                          <td className={cn("px-3 py-2.5 text-center font-mono font-black text-[11px] text-primary tabular-nums border-b border-r border-foreground/5", isSel ? "bg-primary/5" : "bg-primary/[0.02]")}>{fmtDur(nettSec)}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause1_start).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause1_end).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause2_start).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 font-mono font-bold text-[10px] text-foreground/30 tabular-nums whitespace-pre border-b border-r border-foreground/5 leading-tight">{formatDateTime(row.pause2_end).replace(', ', '\n') || '—'}</td>
-                          <td className="px-3 py-2.5 text-center font-mono font-bold text-[10px] text-foreground/40 tabular-nums italic border-b border-r border-foreground/5">{fmtDur(pauseSec)}</td>
-                          <td className="px-4 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight leading-relaxed line-clamp-2 border-b border-r border-foreground/5" title={row.initial_problem}>{row.initial_problem || ''}</td>
-                          <td className="px-4 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight leading-relaxed line-clamp-2 border-b border-r border-foreground/5" title={row.root_cause}>{row.root_cause || ''}</td>
-                          <td className="px-4 py-2.5 font-bold text-[11px] text-foreground/70 tracking-tight leading-relaxed line-clamp-2 border-b border-r border-foreground/5" title={row.last_action}>{row.last_action || ''}</td>
-                          <td className="px-4 py-2.5 font-black text-[9px] text-foreground/20 uppercase tracking-widest border-b border-r border-foreground/5" title={row.classification_name || row.klasifikasi}>{row.classification_name || row.klasifikasi || '—'}</td>
-                          <td className="px-3 py-2.5 text-center font-mono font-black text-[10px] text-info/70 tabular-nums border-b border-r border-foreground/5">{row.power_before != null ? row.power_before : ''}</td>
-                          <td className="px-3 py-2.5 text-center font-mono font-black text-[10px] text-success/70 tabular-nums border-b border-foreground/5">{row.power_after != null ? row.power_after : ''}</td>
-                          
-                          <td className={cn("px-2 py-1.5 align-middle border-b sticky right-0 z-30 transition-colors shadow-[-1px_0_0_0_rgba(0,0,0,0.05)]", isSel ? "bg-primary/5" : "bg-background group-hover:bg-foreground/[0.01]")} onClick={e => e.stopPropagation()}>
-                            <button className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-foreground/5 transition-all active:scale-95 opacity-0 group-hover:opacity-100 mx-auto" onClick={() => navigate(`/incidents/${row.id}`)} title="View Detail">
-                               <ChevronRight size={14} className="text-foreground/40" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <DataTable 
+                  columns={columns} 
+                  data={data} 
+                  globalFilter={filters.search}
+                  setGlobalFilter={(val) => setF('search', val)}
+                  pageSize={25}
+                />
               )}
             </div>
           </SectionCard>

@@ -2,12 +2,15 @@ import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar.jsx';
 import Topbar from './Topbar.jsx';
 import { cn } from '../../lib/utils.js';
+import { useSocket } from '../../hooks/useSocket.js';
 
 export const SidebarContext = React.createContext({ mobileOpen: false, setMobileOpen: () => {} });
 
 export default function AppLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+  
+  useSocket(); // Mount socket listener to subscribe to server invalidations
 
   return (
     <SidebarContext.Provider value={{ mobileOpen, setMobileOpen }}>

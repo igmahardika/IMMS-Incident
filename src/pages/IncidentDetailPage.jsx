@@ -29,16 +29,16 @@ export default function IncidentDetailPage() {
   const isDistribsi = ['ORANGE', 'RED', 'BLACK'].includes(incident.ncal);
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 bg-muted/10 min-h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header Bar */}
-      <div className="flex items-center justify-between gap-4 flex-wrap bg-background border border-foreground/5 p-4 rounded-xl shadow-sm">
+      <div className="flex items-center justify-between gap-4 flex-wrap bg-background border border-foreground/5 p-4 rounded-xl shadow-sm shrink-0 mb-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" className="w-9 h-9 p-0 rounded-full" onClick={() => navigate(-1)}>
             <ArrowLeft size={18} />
           </Button>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-black tracking-tighter font-mono text-primary leading-none">{incident.case_no}</h1>
+              <h1 className="text-xl font-black tracking-tighter font-mono text-primary leading-none uppercase">{incident.case_no}</h1>
               <div className="flex items-center gap-1.5 px-2 py-0.5 bg-foreground/5 rounded-md border border-foreground/5">
                 <StatusPill status={incident.status} />
                 <LevelBadge level={calculateIncidentLevel(incident.start_time, incident.end_time)} targetHours={getSLATarget(incident.ncal) / 3600} />
@@ -54,7 +54,8 @@ export default function IncidentDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-2 -mr-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start pb-8">
         
         {/* Main Content Column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
@@ -222,6 +223,7 @@ export default function IncidentDetailPage() {
             </SectionCard>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
