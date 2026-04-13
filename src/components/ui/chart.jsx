@@ -1,5 +1,9 @@
 import React from 'react';
-import { Tooltip, Legend as RechartsLegend, ResponsiveContainer } from 'recharts';
+import {
+  Tooltip,
+  Legend as RechartsLegend,
+  ResponsiveContainer as RechartsResponsiveContainer,
+} from 'recharts';
 import { cn } from '../../lib/utils.js';
 
 /**
@@ -25,7 +29,7 @@ export function ChartContainer({ config = {}, children, className, style }) {
   }, [config, style, className]);
 
   return (
-    <div className={cn("chart-container w-full relative", className)} style={chartStyle}>
+    <div className={cn("chart-container relative w-full min-w-0", className)} style={chartStyle}>
       {children}
     </div>
   );
@@ -104,4 +108,6 @@ export function ChartLegendContent({ payload, config = {} }) {
   );
 }
 
-export { ResponsiveContainer };
+export function ResponsiveContainer(props) {
+  return <RechartsResponsiveContainer minWidth={0} {...props} />;
+}

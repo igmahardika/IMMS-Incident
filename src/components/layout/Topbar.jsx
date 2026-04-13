@@ -25,13 +25,6 @@ const TITLES = {
   '/settings/escalation': 'Escalation Settings',
 };
 
-const ROLE_BADGE_STYLES = {
-  admin: 'bg-primary/10 text-primary border-primary/20',
-  manager: 'bg-secondary/20 text-secondary-foreground border-secondary/20',
-  noc: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400',
-  technician: 'bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-400',
-};
-
 function formatSegment(segment) {
   return segment.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
@@ -56,7 +49,7 @@ function LiveClock() {
   });
 
   return (
-    <div className="hidden items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs text-muted-foreground lg:flex">
+    <div className="hidden items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground lg:flex">
       <Clock3 className="h-3.5 w-3.5" />
       <span className="font-medium uppercase tracking-[0.12em]">
         {dayLabel}, {dateLabel}
@@ -92,7 +85,7 @@ export default function Topbar() {
   const pageTitle = breadcrumbItems[breadcrumbItems.length - 1]?.label || 'Dashboard';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-4 md:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <Button
           type="button"
@@ -113,7 +106,7 @@ export default function Topbar() {
 
             {breadcrumbItems.map((item, index) => (
               <React.Fragment key={`${item.label}-${index}`}>
-                <span className="text-muted-foreground/60">/</span>
+                <span className="text-muted-foreground">/</span>
                 <span
                   className={cn(
                     'truncate text-sm',
@@ -150,11 +143,10 @@ export default function Topbar() {
 
         <div
           className={cn(
-            'hidden h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium uppercase tracking-[0.14em] sm:flex',
-            ROLE_BADGE_STYLES[user?.role] || 'border-primary/20 bg-primary/10 text-primary'
+            'hidden h-9 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground sm:flex'
           )}
         >
-          <Shield className="h-3.5 w-3.5" />
+          <Shield className="h-3.5 w-3.5 text-primary" />
           <span>{user?.role || 'user'}</span>
         </div>
       </div>

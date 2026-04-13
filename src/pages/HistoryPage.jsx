@@ -1,34 +1,53 @@
-import React, { useEffect, useState, useCallback, useMemo, Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  FileSpreadsheet,
+  LayoutList,
+  Map as MapIcon,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { api } from '../utils/api.js';
 import { formatDateTime } from '../utils/incidentUtils.js';
 import { MONTH_NAMES } from '../utils/constants.js';
-import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton, Select } from '../components/ui/index.jsx';
+import {
+  Button,
+  EmptyState,
+  Input,
+  NcalBadge,
+  PageHeader,
+  SectionCard,
+  Select,
+  StatusPill,
+  TableSkeleton,
+} from '../components/ui/index.jsx';
 import { DataTable } from '../components/tables/DataTable.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Search, FileSpreadsheet, Trash2, LayoutList, Map as MapIcon, ChevronRight, Calendar } from 'lucide-react';
-import { cn } from '../lib/utils.js';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
+const YEAR_OPTIONS = Array.from({ length: 4 }, (_, index) => currentYear - index);
 const CustomerMap = lazy(() => import('../components/ui/CustomerMap.jsx'));
 
-// Format seconds → HH:MM:SS
-function fmtDur(sec) {
-  if (sec == null || sec === '') return '';
-  if (sec === 0) return '00:00:00';
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+function formatDuration(seconds) {
+  if (seconds == null || seconds === '') return '';
+  if (seconds === 0) return '00:00:00';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
 export default function HistoryPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ month: '', year: String(currentYear), ncal: '', search: '' });
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [filters, setFilters] = useState({
+    month: '',
+    year: String(currentYear),
+    ncal: '',
+    search: '',
+  });
+  const [selectedRowMap, setSelectedRowMap] = useState({});
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [viewMode, setViewMode] = useState('list');
@@ -36,7 +55,7 @@ export default function HistoryPage() {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
+  const setFilter = (key, value) => setFilters((previous) => ({ ...previous, [key]: value }));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,43 +64,82 @@ export default function HistoryPage() {
       if (filters.month) params.month = filters.month;
       if (filters.year) params.year = filters.year;
       if (filters.ncal) params.ncal = filters.ncal;
-      const res = await api.getHistory(params);
-      setData(res);
-      setSelectedIds([]);
-    } catch (e) { addToast(e.message, 'error'); }
-    finally { setLoading(false); }
-  }, [filters.month, filters.year, filters.ncal, addToast]);
 
-  useEffect(() => { load(); }, [load]);
+      const response = await api.getHistory(params);
+      setData(response);
+      setSelectedRowMap({});
+    } catch (error) {
+      addToast(error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast, filters.month, filters.ncal, filters.year]);
 
   useEffect(() => {
-    if (viewMode === 'map' && customers.length === 0)
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (viewMode === 'map' && customers.length === 0) {
       api.getCustomers().then(setCustomers).catch(console.error);
-  }, [viewMode, customers.length]);
+    }
+  }, [customers.length, viewMode]);
+
+  const filteredData = useMemo(() => {
+    const term = filters.search.trim().toLowerCase();
+    if (!term) return data;
+
+    return data.filter((item) => [
+      item.case_no,
+      item.brand_site,
+      item.company_name,
+      item.technician_name,
+      item.odp_bts,
+      item.root_cause,
+    ]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(term)));
+  }, [data, filters.search]);
+
+  const selectedIds = useMemo(
+    () => filteredData
+      .filter((item) => selectedRowMap[String(item.id)])
+      .map((item) => item.id),
+    [filteredData, selectedRowMap]
+  );
+
+  const allVisibleSelected = filteredData.length > 0 && selectedIds.length === filteredData.length;
 
   const handleDeleteSelected = async () => {
     if (!selectedIds.length) return;
     if (!window.confirm(`Delete ${selectedIds.length} incidents permanently?`)) return;
+
     setDeleting(true);
     try {
       await api.deleteIncidents({ ids: selectedIds });
       addToast(`${selectedIds.length} incidents deleted`, 'success');
       load();
-    } catch (e) { addToast(e.message, 'error'); }
-    finally { setDeleting(false); }
+    } catch (error) {
+      addToast(error.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
       const { exportToCsv } = await import('../utils/exportStats.js');
-      await exportToCsv(data, `IMMS_History_${new Date().toISOString().split('T')[0]}.csv`);
-    } catch (e) {
-      addToast(e.message || 'Failed to export Excel report', 'error');
+      await exportToCsv(
+        filteredData,
+        `IMMS_History_${new Date().toISOString().split('T')[0]}.csv`
+      );
+    } catch (error) {
+      addToast(error.message || 'Failed to export CSV report', 'error');
     } finally {
       setExporting(false);
     }
-  }, [addToast, data]);
+  }, [addToast, filteredData]);
 
   const columns = useMemo(() => [
     {
@@ -91,7 +149,8 @@ export default function HistoryPage() {
           type="checkbox"
           checked={table.getIsAllPageRowsSelected()}
           onChange={table.getToggleAllPageRowsSelectedHandler()}
-          className="w-3 h-3 rounded border-foreground/20 text-primary"
+          className="h-4 w-4 rounded border-input"
+          aria-label="Select all rows"
         />
       ),
       cell: ({ row }) => (
@@ -99,25 +158,43 @@ export default function HistoryPage() {
           type="checkbox"
           checked={row.getIsSelected()}
           onChange={row.getToggleSelectedHandler()}
-          className="w-3 h-3 rounded border-foreground/20 text-primary"
+          className="h-4 w-4 rounded border-input"
+          aria-label={`Select ${row.original.case_no}`}
         />
       ),
-      size: 50,
+      size: 52,
       meta: { className: 'text-center' },
     },
     {
       accessorKey: 'case_no',
       header: 'Case No',
-      cell: ({ row }) => <span className="font-mono text-primary font-bold">{row.original.case_no}</span>,
-      size: 100,
+      cell: ({ row }) => (
+        <button
+          type="button"
+          className="font-mono text-sm font-medium text-primary transition-colors hover:underline"
+          onClick={() => navigate(`/incidents/${row.original.id}`)}
+        >
+          {row.original.case_no}
+        </button>
+      ),
+      size: 116,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
       accessorKey: 'brand_site',
-      header: 'Site Specification',
+      header: 'Site / Customer',
       cell: ({ row }) => {
-        const val = row.original.brand_site || row.original.company_name || '—';
-        return <span title={val} className="truncate block">{val}</span>;
+        const value = row.original.brand_site || row.original.company_name || '—';
+        return (
+          <div className="min-w-0 space-y-1">
+            <span title={value} className="block truncate text-sm font-medium text-foreground">
+              {value}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {row.original.company_name || row.original.odp_bts || '—'}
+            </span>
+          </div>
+        );
       },
       size: 280,
       meta: { flexible: true },
@@ -126,158 +203,245 @@ export default function HistoryPage() {
       accessorKey: 'ncal',
       header: 'NCAL',
       cell: ({ row }) => <NcalBadge value={row.original.ncal} />,
-      size: 85,
+      size: 88,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => <StatusPill status={row.original.status} />,
-      size: 100,
+      size: 110,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
       accessorKey: 'technician_name',
       header: 'Technician',
-      cell: ({ row }) => <span className="text-foreground/70 truncate block">{row.original.technician_name || '—'}</span>,
-      size: 150,
+      cell: ({ row }) => (
+        <span className="block truncate text-sm text-muted-foreground">
+          {row.original.technician_name || '—'}
+        </span>
+      ),
+      size: 160,
       meta: { flexible: true },
     },
     {
       accessorKey: 'start_time',
-      header: 'Start Date',
-      cell: ({ row }) => <span className="font-mono text-[10px] text-foreground/50 tabular-nums">{formatDateTime(row.original.start_time)}</span>,
-      size: 160,
+      header: 'Start Time',
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          {formatDateTime(row.original.start_time)}
+        </span>
+      ),
+      size: 164,
       meta: { className: 'whitespace-nowrap px-2' },
     },
     {
       id: 'duration',
-      header: 'Nett Time',
-      cell: ({ row }) => <span className="font-mono text-primary tabular-nums font-bold">{fmtDur(row.original.duration_nett_seconds)}</span>,
-      size: 110,
-      meta: { className: 'whitespace-nowrap' },
-    },
-    {
-      id: 'actions',
-      header: '',
+      header: 'Net Duration',
       cell: ({ row }) => (
-        <button 
-          onClick={(e) => { e.stopPropagation(); navigate(`/incidents/${row.original.id}`); }}
-          className="p-1 hover:bg-foreground/5 rounded transition-transform active:scale-90"
-        >
-          <ChevronRight size={14} className="text-foreground/40" />
-        </button>
+        <span className="font-mono text-sm font-medium text-primary">
+          {formatDuration(row.original.duration_nett_seconds)}
+        </span>
       ),
-      size: 50,
-      meta: { className: 'text-right' },
-    }
+      size: 120,
+      meta: { className: 'whitespace-nowrap px-2' },
+    },
   ], [navigate]);
 
-  const allSelected = selectedIds.length > 0 && selectedIds.length === data.length;
+  const startDate = filters.month
+    ? `${filters.year}-${filters.month}-01 00:00:00`
+    : `${filters.year}-01-01 00:00:00`;
+  const endDate = filters.month
+    ? `${filters.year}-${filters.month}-${new Date(+filters.year, +filters.month, 0).getDate()} 23:59:59`
+    : `${filters.year}-12-31 23:59:59`;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">Incident Archive</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{data.length} verified historical records</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
-              <Button variant="ghost" size="sm" className="text-[9px] font-black tracking-widest" onClick={() => setSelectedIds(allSelected ? [] : data.map(r => r.id))}>
-                {allSelected ? 'DESELECT' : 'SELECT ALL'}
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <PageHeader
+        title="Incident Archive"
+        subtitle={`${filteredData.length} archived incident${filteredData.length === 1 ? '' : 's'} ready for review, export, or spatial analysis.`}
+        action={(
+          <div className="flex flex-wrap items-center gap-2">
+            {viewMode === 'list' && selectedIds.length > 0 ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (allVisibleSelected) {
+                      setSelectedRowMap({});
+                    } else {
+                      setSelectedRowMap(
+                        filteredData.reduce((accumulator, item) => {
+                          accumulator[String(item.id)] = true;
+                          return accumulator;
+                        }, {})
+                      );
+                    }
+                  }}
+                >
+                  {allVisibleSelected ? 'Clear Selection' : 'Select Visible'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                  isLoading={deleting}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete ({selectedIds.length})
+                </Button>
+              </>
+            ) : null}
+
+            <div className="flex items-center rounded-md border border-border bg-muted/30 p-1">
+              <Button
+                type="button"
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8"
+                onClick={() => setViewMode('list')}
+              >
+                <LayoutList className="mr-2 h-4 w-4" />
+                List
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleDeleteSelected} isLoading={deleting} className="text-error hover:bg-error/10 text-[9px] font-black tracking-widest">
-                <Trash2 size={12} /> DELETE ({selectedIds.length})
+              <Button
+                type="button"
+                variant={viewMode === 'map' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8"
+                onClick={() => setViewMode('map')}
+              >
+                <MapIcon className="mr-2 h-4 w-4" />
+                Map
               </Button>
             </div>
-          )}
-          <div className="flex bg-foreground/[0.03] p-0.5 rounded-md border border-foreground/5 mr-2">
-            <button className={cn("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded transition-all", viewMode === 'list' ? "bg-background text-primary shadow-sm" : "text-foreground/40 hover:text-foreground/60")} onClick={() => setViewMode('list')}>
-              <LayoutList size={12} className="inline mr-1" /> List
-            </button>
-            <button className={cn("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded transition-all", viewMode === 'map' ? "bg-background text-primary shadow-sm" : "text-foreground/40 hover:text-foreground/60")} onClick={() => setViewMode('map')}>
-              <MapIcon size={12} className="inline mr-1" /> Map
-            </button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              isLoading={exporting}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleExport} isLoading={exporting} className="font-bold text-[9px] tracking-widest text-success hover:bg-success/10">
-            <FileSpreadsheet size={12} className="mr-1" /> CSV REPORT
-          </Button>
+        )}
+      />
+
+      <SectionCard padding={false}>
+        <div className="grid gap-3 px-4 py-4 xl:grid-cols-[minmax(0,1.4fr)_160px_180px_160px_auto]">
+          <Input
+            id="archive-search"
+            value={filters.search}
+            onChange={(event) => setFilter('search', event.target.value)}
+            placeholder="Search case no, site, customer, technician..."
+          />
+
+          <Select
+            id="archive-year"
+            value={filters.year}
+            onChange={(event) => setFilter('year', event.target.value)}
+          >
+            {YEAR_OPTIONS.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            id="archive-month"
+            value={filters.month}
+            onChange={(event) => setFilter('month', event.target.value)}
+          >
+            <option value="">Full Year</option>
+            {MONTH_NAMES.map((month, index) => (
+              <option key={month} value={String(index + 1).padStart(2, '0')}>
+                {month}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            id="archive-ncal"
+            value={filters.ncal}
+            onChange={(event) => setFilter('ncal', event.target.value)}
+          >
+            <option value="">All NCAL</option>
+            {NCAL_OPTIONS.filter(Boolean).map((ncal) => (
+              <option key={ncal} value={ncal}>
+                {ncal}
+              </option>
+            ))}
+          </Select>
+
+          {(filters.search || filters.month || filters.ncal) ? (
+            <div className="flex items-center xl:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setFilters({ month: '', year: String(currentYear), ncal: '', search: '' })}
+              >
+                Reset
+              </Button>
+            </div>
+          ) : null}
         </div>
-      </div>
+      </SectionCard>
 
       {viewMode === 'map' ? (
-        <SectionCard padding={false} className="min-h-[600px]">
+        <SectionCard
+          title="Spatial Archive View"
+          subtitle="Visualize archived incident activity by customer location within the selected date range."
+          padding={false}
+          className="min-h-[640px] flex-1"
+        >
           <Suspense fallback={<TableSkeleton rows={8} />}>
-            <CustomerMap customers={customers} onRefresh={() => api.getCustomers().then(setCustomers)}
-              initialMode="trouble" showTroubleMode hideCustomerPins
-              startDate={filters.month ? `${filters.year}-${filters.month}-01 00:00:00` : `${filters.year}-01-01 00:00:00`}
-              endDate={filters.month
-                ? `${filters.year}-${filters.month}-${new Date(+filters.year, +filters.month, 0).getDate()} 23:59:59`
-                : `${filters.year}-12-31 23:59:59`}
+            <CustomerMap
+              customers={customers}
+              onRefresh={() => api.getCustomers().then(setCustomers)}
+              initialMode="trouble"
+              showTroubleMode
+              hideCustomerPins
+              startDate={startDate}
+              endDate={endDate}
             />
           </Suspense>
         </SectionCard>
       ) : (
-        <>
-          {/* Filter system */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4">
-            <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
-              <Search size={14} className="text-foreground/30" />
-              <input 
-                type="text" 
-                className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full py-1 placeholder:text-foreground/20 uppercase tracking-widest" 
-                placeholder="Search Archive (Case, Site, Tech)..." 
-                value={filters.search} 
-                onChange={e => setF('search', e.target.value)} 
+        <SectionCard
+          title="Archive Records"
+          subtitle="Browse closed incidents, inspect durations, and open the full detail record."
+          padding={false}
+          className="min-h-0 flex-1"
+        >
+          <div className="flex min-h-0 flex-1 flex-col">
+            {loading ? (
+              <TableSkeleton rows={12} />
+            ) : filteredData.length === 0 ? (
+              <EmptyState
+                icon={<Search className="h-8 w-8 text-muted-foreground" />}
+                title="No archive results"
+                desc="Try widening the date range or adjusting the search filters."
               />
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
-                <Calendar size={12} className="text-foreground/30" />
-                <Select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[80px]" value={filters.year} onChange={e => setF('year', e.target.value)}>
-                  {YEAR_OPTIONS.map(y => <option key={y} value={y} className="bg-background">{y}</option>)}
-                </Select>
-              </div>
-              <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
-                <Select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[120px]" value={filters.month} onChange={e => setF('month', e.target.value)}>
-                  <option value="" className="bg-background">Full Year</option>
-                  {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1).padStart(2, '0')} className="bg-background">{m.toUpperCase()}</option>)}
-                </Select>
-              </div>
-              <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
-                <Select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[100px]" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
-                  <option value="" className="bg-background">ALL NCAL</option>
-                  {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n} className="bg-background">{n}</option>)}
-                </Select>
-              </div>
-            </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredData}
+                pageSize={25}
+                className="flex-1"
+                rowSelection={selectedRowMap}
+                onRowSelectionChange={setSelectedRowMap}
+                enableRowSelection
+                getRowId={(row) => String(row.id)}
+              />
+            )}
           </div>
-
-          {/* Data grid */}
-          <SectionCard padding={false} className="border-foreground/5 min-h-0 flex-1">
-            <div className="flex-1 flex flex-col min-h-0 min-w-0">
-              {loading ? (
-                <TableSkeleton rows={12} />
-              ) : data.length === 0 ? (
-                <EmptyState
-                  icon={<Search size={40} className="text-foreground/10" />}
-                  title="Archive Entry Not Found"
-                  desc="Try adjusting filters or search parameters."
-                />
-              ) : (
-                <DataTable 
-                  columns={columns} 
-                  data={data} 
-                  globalFilter={filters.search}
-                  setGlobalFilter={(val) => setF('search', val)}
-                  pageSize={25}
-                />
-              )}
-            </div>
-          </SectionCard>
-        </>
+        </SectionCard>
       )}
     </div>
   );

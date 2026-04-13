@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { ChevronUp, ChevronDown, Search, Filter } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 
 export function DataTable({ 
@@ -17,7 +17,11 @@ export function DataTable({
   setGlobalFilter,
   pageSize = 50,
   className = "",
-  getRowClassName = () => ""
+  getRowClassName = () => "",
+  rowSelection,
+  onRowSelectionChange,
+  enableRowSelection = false,
+  getRowId,
 }) {
   const [sorting, setSorting] = useState([]);
 
@@ -27,13 +31,17 @@ export function DataTable({
     state: {
       sorting,
       globalFilter,
+      rowSelection,
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange,
+    enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getRowId,
     initialState: {
       pagination: {
         pageSize: pageSize,

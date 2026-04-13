@@ -112,8 +112,8 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
   };
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-r bg-background">
-      <div className="flex h-16 items-center justify-between border-b px-4">
+    <aside className="flex h-full w-64 max-w-64 shrink-0 flex-col border-r border-border bg-background">
+      <div className="flex h-16 items-center justify-between border-b border-border px-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <Zap className="h-4 w-4" />
@@ -186,8 +186,8 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
         ))}
       </nav>
 
-      <div className="border-t p-3">
-        <div className="rounded-xl border bg-card p-3 shadow-sm">
+      <div className="border-t border-border p-3">
+        <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
               {getInitials(user?.name)}

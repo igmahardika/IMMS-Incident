@@ -80,6 +80,7 @@ function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('imms_theme', theme);
   }, [theme]);
 

@@ -1,11 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  Loader2,
+  MapPin,
+  Network,
+  Plus,
+  Save,
+  Search,
+  Send,
+  X,
+} from 'lucide-react';
 import { api } from '../utils/api.js';
 import { formatDateTime, getIncidentDisplayName } from '../utils/incidentUtils.js';
 import { incidentService } from '../services/incidentService.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { NcalBadge, SectionCard, Button, Input, Select } from '../components/ui/index.jsx';
-import { ArrowLeft, Send, Network, Save, Loader2, ChevronRight, MapPin } from 'lucide-react';
+import {
+  Button,
+  Input,
+  NcalBadge,
+  PageHeader,
+  SectionCard,
+  Select,
+  Textarea,
+} from '../components/ui/index.jsx';
 import { cn } from '../lib/utils.js';
 
 const NCAL_OPTIONS = ['BLUE', 'YELLOW', 'ORANGE', 'RED', 'BLACK'];
@@ -13,33 +33,66 @@ const LEVEL_OPTIONS = [
   { value: '1', label: 'Level 1' },
   { value: '2', label: 'Level 2' },
   { value: '3', label: 'Level 3' },
-  { value: '4', label: 'Level 4' }
+  { value: '4', label: 'Level 4' },
 ];
+
+function DropdownSurface({ children, className = '' }) {
+  return (
+    <div
+      className={cn(
+        'absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 rounded-lg border border-border bg-popover p-2 shadow-lg',
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PreviewItem({ label, value, icon: Icon }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {label}
+          </p>
+          <p className="text-sm font-medium text-foreground">
+            {value || '—'}
+          </p>
+        </div>
+        {Icon ? <Icon className="h-4 w-4 text-muted-foreground" /> : null}
+      </div>
+    </div>
+  );
+}
 
 export default function CreateIncidentPage() {
   const { id } = useParams();
-  const isEdit = !!id;
+  const isEdit = Boolean(id);
   const navigate = useNavigate();
   const { addToast } = useToast();
 
   const [form, setForm] = useState({
-    case_no: '', 
-    start_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
-    customer_id: '', 
+    case_no: '',
+    start_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16),
+    customer_id: '',
     company_name: '',
     brand_site: '',
     ncal: 'YELLOW',
-    odp_bts: '', 
-    level_support: '2', 
+    odp_bts: '',
+    level_support: '2',
     sla: '',
-    initial_problem: '', 
-    indikasi: '', 
-    power_before: '', 
-    kabel: '', 
-    panjang_kabel: '', 
-    pic: '', 
-    customer_terdampak: '', 
-    koordinat: '', 
+    initial_problem: '',
+    indikasi: '',
+    power_before: '',
+    kabel: '',
+    panjang_kabel: '',
+    pic: '',
+    customer_terdampak: '',
+    koordinat: '',
     address_preview: '',
     distribusi_manual: '',
   });
@@ -56,90 +109,187 @@ export default function CreateIncidentPage() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(isEdit);
 
-  // Load initial options & Draft
-  useEffect(() => { 
+  useEffect(() => {
     const loadData = async () => {
       try {
-        const [custRes, distRes] = await Promise.all([
+        const [customersResponse, distribusiResponse] = await Promise.all([
           api.getCustomers(),
-          api.getDistribusi()
+          api.getDistribusi(),
         ]);
-        setCustomers(custRes);
-        setDistribusi(distRes);
+        setCustomers(customersResponse);
+        setDistribusi(distribusiResponse);
 
         if (isEdit) {
-          const inc = await api.getIncident(id);
-          if (inc) {
+          const incident = await api.getIncident(id);
+          if (incident) {
             setForm({
-              ...inc,
-              start_time: inc.start_time ? new Date(inc.start_time).toISOString().slice(0, 16) : ''
+              ...incident,
+              start_time: incident.start_time
+                ? new Date(incident.start_time).toISOString().slice(0, 16)
+                : '',
             });
-            setSearch(inc.brand_site || inc.company_name || '');
-            if (['ORANGE', 'RED', 'BLACK'].includes(inc.ncal)) {
-              setDistForm({ selectedItems: inc.odp_bts ? inc.odp_bts.split(', ') : [] });
+            setSearch(incident.brand_site || incident.company_name || '');
+            if (['ORANGE', 'RED', 'BLACK'].includes(incident.ncal)) {
+              setDistForm({
+                selectedItems: incident.odp_bts ? incident.odp_bts.split(', ') : [],
+              });
             }
           }
         } else {
-          // Check for draft
           const draft = localStorage.getItem('imms_incident_draft');
           if (draft) {
-             const { form: dForm, dist: dDist, search: dSearch } = JSON.parse(draft);
-             setForm(prev => ({ ...prev, ...dForm, start_time: prev.start_time })); // Keep fresh start time
-             setDistForm(dDist || { selectedItems: [] });
-             setSearch(dSearch || '');
-             addToast('Protocol Draft Restored', 'info');
+            const { form: draftForm, dist: draftDist, search: draftSearch } = JSON.parse(draft);
+            setForm((previous) => ({
+              ...previous,
+              ...draftForm,
+              start_time: previous.start_time,
+            }));
+            setDistForm(draftDist || { selectedItems: [] });
+            setSearch(draftSearch || '');
+            addToast('Protocol draft restored', 'info');
           }
         }
-      } catch (e) {
-        addToast(e.message, 'error');
+      } catch (error) {
+        addToast(error.message, 'error');
       } finally {
         setLoadingData(false);
       }
     };
-    loadData();
-  }, [id, isEdit, addToast]);
 
-  // Save draft
+    loadData();
+  }, [addToast, id, isEdit]);
+
   useEffect(() => {
-    if (isEdit || loadingData) return;
-    const t = setTimeout(() => {
-      localStorage.setItem('imms_incident_draft', JSON.stringify({ form, dist: distForm, search }));
+    if (isEdit || loadingData) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      localStorage.setItem(
+        'imms_incident_draft',
+        JSON.stringify({ form, dist: distForm, search })
+      );
     }, 1000);
-    return () => clearTimeout(t);
+
+    return () => window.clearTimeout(timeoutId);
   }, [form, distForm, search, isEdit, loadingData]);
 
-  // Click outside to close dropdowns
   useEffect(() => {
-    const handleOutside = (e) => {
-      if (!e.target.closest('.custom-dropdown-container')) {
+    const handleOutside = (event) => {
+      if (!event.target.closest('.custom-dropdown-container')) {
         setShowDropdown(false);
         setShowDistDropdown(false);
         setShowOdpDropdown(false);
       }
     };
+
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const setField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.case_no.trim()) return addToast('TICKET_ID required', 'warning');
-    if (!form.initial_problem.trim()) return addToast('PROBLEM_DESC required', 'warning');
-    
-    const isDistribsi = ['ORANGE', 'RED', 'BLACK'].includes(form.ncal);
-    if (isDistribsi && form.ncal === 'ORANGE' && distForm.selectedItems.length === 0) {
-      return addToast('Assign at least one NODE for ORANGE protocol', 'warning');
+  const isDistribusi = ['ORANGE', 'RED', 'BLACK'].includes(form.ncal);
+
+  const filteredCustomers = useMemo(
+    () => customers.filter((customer) => (
+      (customer.brand_site || '').toLowerCase().includes(search.toLowerCase()) ||
+      (customer.company_name || '').toLowerCase().includes(search.toLowerCase())
+    )),
+    [customers, search]
+  );
+
+  const combinedOptions = useMemo(
+    () => incidentService.getCombinedOptions(form.ncal, distribusi),
+    [distribusi, form.ncal]
+  );
+
+  const yellowDistOptions = useMemo(
+    () => [...new Set([
+      ...distribusi.filter((item) => item.type === 'Fiber Optic').map((item) => item.level_4),
+      ...distribusi.filter((item) => item.type === 'Wireless').map((item) => item.level_2),
+    ])]
+      .filter(Boolean)
+      .sort(),
+    [distribusi]
+  );
+
+  const customerCoverageOptions = useMemo(() => (
+    customers
+      .find((customer) => customer.id === form.customer_id)?.link_coverage
+      ?.split('\n')
+      .filter(Boolean) || []
+  ), [customers, form.customer_id]);
+
+  const filteredOdpOptions = useMemo(
+    () => [
+      ...(form.ncal === 'YELLOW' ? yellowDistOptions : []),
+      ...(!isDistribusi ? customerCoverageOptions : []),
+    ].filter((option) => option.toLowerCase().includes(odpSearch.toLowerCase())),
+    [customerCoverageOptions, form.ncal, isDistribusi, odpSearch, yellowDistOptions]
+  );
+
+  const filteredDistributionOptions = useMemo(
+    () => combinedOptions.filter((option) => (
+      !distForm.selectedItems.includes(option.value) &&
+      option.searchKey.toLowerCase().includes(distSearch.toLowerCase())
+    )),
+    [combinedOptions, distForm.selectedItems, distSearch]
+  );
+
+  const handleCustomerSelect = (customer) => {
+    let autoLevel = '2';
+    if (customer.support_level) {
+      const match = String(customer.support_level).match(/\d+/);
+      if (match) autoLevel = match[0];
     }
-    if (!isDistribsi && !form.customer_id) {
-      return addToast('Define target NODE for LAN/LASTMILE sequence', 'warning');
+
+    setForm((previous) => ({
+      ...previous,
+      customer_id: customer.id,
+      company_name: customer.company_name,
+      brand_site: customer.brand_site,
+      sla: customer.grade,
+      address_preview: customer.address || '',
+      level_support: autoLevel,
+    }));
+    setSearch(customer.brand_site);
+    setShowDropdown(false);
+  };
+
+  const toggleDistributionItem = (item) => {
+    setDistForm((previous) => ({
+      ...previous,
+      selectedItems: previous.selectedItems.includes(item)
+        ? previous.selectedItems.filter((selected) => selected !== item)
+        : [...previous.selectedItems, item],
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!form.case_no.trim()) {
+      addToast('TICKET_ID required', 'warning');
+      return;
+    }
+    if (!form.initial_problem.trim()) {
+      addToast('PROBLEM_DESC required', 'warning');
+      return;
+    }
+
+    if (isDistribusi && form.ncal === 'ORANGE' && distForm.selectedItems.length === 0) {
+      addToast('Assign at least one NODE for ORANGE protocol', 'warning');
+      return;
+    }
+
+    if (!isDistribusi && !form.customer_id) {
+      addToast('Define target NODE for LAN/LASTMILE sequence', 'warning');
+      return;
     }
 
     setLoading(true);
     try {
       const payload = { ...form };
-      if (isDistribsi) {
+      if (isDistribusi) {
         payload.customer_id = null;
         payload.odp_bts = distForm.selectedItems.join(', ');
       } else if (form.ncal === 'YELLOW') {
@@ -148,516 +298,568 @@ export default function CreateIncidentPage() {
 
       if (isEdit) {
         await api.updateIncident(id, payload);
-        addToast('Incident Record Refined', 'success');
+        addToast('Incident record refined', 'success');
       } else {
         await api.createIncident(payload);
-        addToast('Incident Protocol Initialized', 'success');
+        addToast('Incident protocol initialized', 'success');
         localStorage.removeItem('imms_incident_draft');
       }
+
       navigate(isEdit ? `/incidents/${id}` : '/incidents');
-    } catch (e) { 
-      addToast(e.message, 'error'); 
-    } finally { 
-      setLoading(false); 
+    } catch (error) {
+      addToast(error.message, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const isDistribsi = ['ORANGE', 'RED', 'BLACK'].includes(form.ncal);
+  const previewNode = isDistribusi
+    ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : '')
+    : getIncidentDisplayName(form);
 
-  const handleCustomerSelect = (c) => {
-    let autoLevel = '2';
-    if (c.support_level) {
-      const match = String(c.support_level).match(/\d+/);
-      if (match) autoLevel = match[0];
-    }
-    setForm(prev => ({
-      ...prev,
-      customer_id: c.id,
-      company_name: c.company_name,
-      brand_site: c.brand_site,
-      sla: c.grade,
-      address_preview: c.address || '',
-      level_support: autoLevel
-    }));
-    setSearch(c.brand_site); 
-    setShowDropdown(false); 
-  };
+  const previewHash = `${form.case_no || 'TICKET-NULL'} • ${formatDateTime(form.start_time)}`;
 
-  const toggleItem = (item) => {
-    setDistForm(p => ({
-      ...p,
-      selectedItems: p.selectedItems.includes(item) 
-        ? p.selectedItems.filter(i => i !== item)
-        : [...p.selectedItems, item]
-    }));
-  };
-
-  const combOptions = incidentService.getCombinedOptions(form.ncal, distribusi);
-  
-  const yellowDistOptions = [...new Set([
-    ...distribusi.filter(d => d.type === 'Fiber Optic').map(d => d.level_4),
-    ...distribusi.filter(d => d.type === 'Wireless').map(d => d.level_2)
-  ])].filter(Boolean).sort();
-
-  if (loadingData) return (
-    <div className="flex items-center justify-center h-full">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="animate-spin text-primary w-10 h-10" />
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/20">Synching Records...</span>
+  if (loadingData) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Loading incident data...
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Dynamic Header */}
-      <div className="flex items-end justify-between gap-4 flex-wrap shrink-0 mb-8 px-1">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="w-10 h-10 rounded-xl bg-foreground/[0.03] border border-foreground/[0.06] flex items-center justify-center text-foreground/40 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-all shadow-sm active:scale-90"
-          >
-            <ArrowLeft size={18} strokeWidth={2.5} />
-          </button>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-black tracking-tight uppercase text-foreground">
-              {isEdit ? 'Refine Protocol' : 'Initialize Node'}
-            </h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none italic">
-              {isEdit ? `Modifying ticket entity #${form.case_no}` : 'Establish new monitoring sequence'}
-            </p>
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <PageHeader
+        title={isEdit ? 'Edit Incident' : 'Create Incident'}
+        subtitle={isEdit
+          ? `Update the incident record for ${form.case_no || 'this ticket'}.`
+          : 'Register a new incident with customer, topology, and technical impact details.'}
+        action={(
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              icon={<ArrowLeft className="h-4 w-4" />}
+              onClick={() => navigate(-1)}
+            >
+              Back
+            </Button>
+            <Button
+              type="submit"
+              form="incident-form"
+              isLoading={loading}
+              icon={isEdit ? <Save className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+            >
+              {isEdit ? 'Save Changes' : 'Submit Incident'}
+            </Button>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-           <Button variant="ghost" onClick={() => navigate(-1)} className="font-black text-[9px] tracking-[0.2em] uppercase h-10 px-6 opacity-60 hover:opacity-100 transition-opacity">
-              Abort
-           </Button>
-           <Button onClick={handleSubmit} isLoading={loading} className="font-black text-[9px] tracking-[0.2em] uppercase h-10 px-8 shadow-lg shadow-primary/20">
-              {isEdit ? <Save size={13} strokeWidth={2.5} className="mr-2" /> : <Send size={13} strokeWidth={2.5} className="mr-2" />}
-              {isEdit ? 'Commit Changes' : 'Initialize Command'}
-           </Button>
-        </div>
-      </div>
+        )}
+      />
 
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-2 -mr-2">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-20">
-        <div className="lg:col-span-2 flex flex-col gap-8">
-          
-          {/* Node Metadata */}
-          <SectionCard title="Command Parameters" className="overflow-visible border border-foreground/[0.08] shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Input 
-                label="Ticket Terminal ID *" 
-                placeholder="C24XXXX-XXX" 
-                value={form.case_no} 
-                onChange={e => set('case_no', e.target.value.toUpperCase())} 
-                required 
-                className="font-mono font-black tracking-tighter text-primary"
-              />
-              <Input 
-                label="Initialize Timestamp *" 
-                type="datetime-local" 
-                value={form.start_time} 
-                onChange={e => set('start_time', e.target.value)} 
-                required 
-                className="font-mono font-black tracking-tighter opacity-80"
-              />
-              <div className="flex flex-col gap-2 w-full">
-                <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">Protocol Segment *</label>
-                <Select 
-                  className="flex h-11 w-full rounded-xl border border-input bg-background/50 px-4 py-2 text-[11px] font-black shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase tracking-widest"
-                  value={form.ncal} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    setForm(prev => {
-                      const upd = { ...prev, ncal: val };
-                      if (['ORANGE', 'RED', 'BLACK'].includes(val)) {
-                        upd.customer_id = ''; upd.company_name = ''; upd.brand_site = ''; upd.sla = '';
+      <div className="flex-1 overflow-y-auto pb-6">
+        <form
+          id="incident-form"
+          onSubmit={handleSubmit}
+          className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.8fr)_380px]"
+        >
+          <div className="space-y-6">
+            <SectionCard
+              title="Incident Basics"
+              subtitle="Define the ticket identity, start time, and NCAL segment."
+            >
+              <div className="grid gap-4 md:grid-cols-3">
+                <Input
+                  id="case_no"
+                  label="Ticket ID"
+                  placeholder="C24XXXX-XXX"
+                  value={form.case_no}
+                  onChange={(event) => setField('case_no', event.target.value.toUpperCase())}
+                  required
+                  className="font-mono"
+                />
+
+                <Input
+                  id="start_time"
+                  label="Start Time"
+                  type="datetime-local"
+                  value={form.start_time}
+                  onChange={(event) => setField('start_time', event.target.value)}
+                  required
+                  className="font-mono"
+                />
+
+                <Select
+                  id="ncal"
+                  label="NCAL Segment"
+                  value={form.ncal}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setForm((previous) => {
+                      const updated = { ...previous, ncal: nextValue };
+                      if (['ORANGE', 'RED', 'BLACK'].includes(nextValue)) {
+                        updated.customer_id = '';
+                        updated.company_name = '';
+                        updated.brand_site = '';
+                        updated.sla = '';
                       }
-                      return upd;
+                      return updated;
                     });
                     setSearch('');
-                    if (!['ORANGE', 'RED', 'BLACK'].includes(val)) {
+                    setShowDropdown(false);
+                    setShowOdpDropdown(false);
+                    if (!['ORANGE', 'RED', 'BLACK'].includes(nextValue)) {
                       setDistForm({ selectedItems: [] });
                     }
-                  }} 
+                  }}
                   required
                 >
-                  {NCAL_OPTIONS.map(n => <option key={n} value={n} className="bg-background">{n}</option>)}
+                  {NCAL_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
                 </Select>
               </div>
-            </div>
-          </SectionCard>
+            </SectionCard>
 
-          {/* Infrastructure Context */}
-          <SectionCard title="Target Nodes & Topology" className="overflow-visible border border-foreground/[0.08] shadow-sm">
-            {!isDistribsi ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col relative gap-2 custom-dropdown-container">
-                  <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">
-                    {form.ncal === 'BLUE' ? 'Installation Site *' : 'Target Entity *'}
-                  </label>
-                  <div className="relative group">
-                    <input 
-                      type="text" 
-                      className="flex h-11 w-full rounded-xl border border-input bg-background/50 pl-4 pr-10 py-2 text-[11px] font-black shadow-sm transition-all placeholder:text-foreground/20 focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase tracking-widest"
-                      placeholder="IDENTIFY NODE..." 
-                      value={search} 
-                      onChange={e => { setSearch(e.target.value); setShowDropdown(true); }} 
-                      onFocus={() => setShowDropdown(true)} 
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none group-focus-within:text-primary group-focus-within:opacity-100 transition-all">
-                       <ChevronRight size={16} strokeWidth={3} className="rotate-90" />
-                    </div>
-                  </div>
-                  
-                  {showDropdown && (
-                    <div className="absolute top-[calc(100%+12px)] left-0 right-0 bg-background border border-foreground/[0.08] rounded-2xl shadow-xl max-h-80 overflow-y-auto z-[100] p-2 flex flex-col gap-1 backdrop-blur-xl animate-in fade-in slide-in-from-top-4 duration-300">
-                      {customers.filter(c => 
-                        (c.brand_site || '').toLowerCase().includes(search.toLowerCase()) || 
-                        (c.company_name || '').toLowerCase().includes(search.toLowerCase())
-                      ).map(c => (
-                        <button key={c.id} type="button" className="flex flex-col px-4 py-3 hover:bg-primary/[0.03] rounded-xl text-left transition-all active:scale-[0.98] group" onClick={() => handleCustomerSelect(c)}>
-                          <span className="font-black text-[12px] tracking-tight text-foreground/80 group-hover:text-primary transition-colors uppercase leading-none">{c.brand_site}</span>
-                          <span className="text-[9px] text-foreground/30 font-black uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
-                             {c.company_name} <div className="w-1 h-1 rounded-full bg-foreground/10" /> GRADE {c.grade}
-                          </span>
-                        </button>
-                      ))}
-                      {customers.filter(c => (c.brand_site || '').toLowerCase().includes(search.toLowerCase()) || (c.company_name || '').toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                        <div className="py-12 text-center text-[10px] font-black text-foreground/20 uppercase tracking-[0.3em] italic">Zero Records Matched</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {form.ncal !== 'BLUE' && (
-                  <div className="flex flex-col relative gap-2 custom-dropdown-container">
-                    <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">
-                      {form.ncal === 'YELLOW' ? 'Distribution Node (ODP/BTS) *' : 'Node Sequence'}
+            <SectionCard
+              title="Target & Topology"
+              subtitle="Choose the affected customer or topology node based on the selected NCAL."
+            >
+              {!isDistribusi ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="custom-dropdown-container relative space-y-2">
+                    <label
+                      htmlFor="customer-search"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      {form.ncal === 'BLUE' ? 'Installation Site' : 'Target Entity'}
                     </label>
-                    <div className="flex flex-col gap-3">
-                      <button 
-                        type="button"
-                        className="flex h-11 w-full rounded-xl border border-input bg-background/50 px-4 py-2 text-[11px] font-black shadow-sm items-center justify-between cursor-pointer transition-all hover:bg-foreground/[0.04] focus:ring-2 focus:ring-primary/20 uppercase tracking-widest text-left"
-                        onClick={() => setShowOdpDropdown(!showOdpDropdown)}
-                      >
-                        <span className={cn(!form.odp_bts && "text-foreground/20 italic font-bold tracking-widest")}>{form.odp_bts || 'SELECT SEQUENCE'}</span>
-                        <ChevronRight size={16} strokeWidth={3} className={cn("rotate-90 opacity-20 transition-transform", showOdpDropdown && "rotate-[-90deg] text-primary opacity-100")} />
-                      </button>
-                      
-                      {showOdpDropdown && (
-                        <div className="absolute top-[calc(100%+12px)] left-0 right-0 bg-background border border-foreground/[0.08] rounded-2xl shadow-xl max-h-80 overflow-y-auto z-[100] p-2 flex flex-col gap-1 backdrop-blur-xl animate-in fade-in slide-in-from-top-4 duration-300" onClick={e => e.stopPropagation()}>
-                          <div className="p-2 mb-1 sticky top-0 bg-background/80 backdrop-blur-md z-10">
-                            <input 
-                              type="text" 
-                              className="bg-foreground/[0.04] border-none w-full px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] placeholder:text-foreground/20 focus:ring-2 focus:ring-primary/20" 
-                              placeholder="FILTER PROTOCOL..." 
-                              value={odpSearch} 
-                              onChange={e => setOdpSearch(e.target.value)}
-                            />
+
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        id="customer-search"
+                        type="text"
+                        className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-10 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        placeholder="Search customer or site..."
+                        value={search}
+                        onChange={(event) => {
+                          setSearch(event.target.value);
+                          setShowDropdown(true);
+                        }}
+                        onFocus={() => setShowDropdown(true)}
+                      />
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    </div>
+
+                    {showDropdown ? (
+                      <DropdownSurface className="max-h-80 overflow-y-auto">
+                        {filteredCustomers.length === 0 ? (
+                          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                            No customer matched your search.
                           </div>
-                          <div className="flex flex-col gap-1">
-                            {[
-                              ...((form.ncal === 'YELLOW' && yellowDistOptions) || []),
-                              ...((!isDistribsi && customers.find(c => c.id === form.customer_id)?.link_coverage?.split('\n').filter(Boolean)) || [])
-                            ].filter(o => o.toLowerCase().includes(odpSearch.toLowerCase())).map(o => (
-                              <button key={o} type="button" className="px-4 py-3 hover:bg-primary/[0.03] rounded-xl text-left text-[11px] font-black uppercase tracking-widest transition-all hover:text-primary" onClick={() => { set('odp_bts', o); setShowOdpDropdown(false); }}>
-                                {o}
+                        ) : (
+                          <div className="space-y-1">
+                            {filteredCustomers.map((customer) => (
+                              <button
+                                key={customer.id}
+                                type="button"
+                                className="flex w-full flex-col rounded-md px-3 py-3 text-left transition-colors hover:bg-accent"
+                                onClick={() => handleCustomerSelect(customer)}
+                              >
+                                <span className="text-sm font-medium text-foreground">
+                                  {customer.brand_site}
+                                </span>
+                                <span className="mt-1 text-xs text-muted-foreground">
+                                  {customer.company_name} • Grade {customer.grade || '—'}
+                                </span>
                               </button>
                             ))}
-                            <button type="button" className="p-4 bg-primary/5 text-primary rounded-xl text-left text-[10px] font-black uppercase tracking-[0.2em] transition-all mt-2 flex items-center justify-between hover:bg-primary/10 shadow-sm border border-primary/10" onClick={() => { set('odp_bts', 'MANUAL_INPUT'); setShowOdpDropdown(false); }}>
-                              <span>+ MANUAL OVERRIDE</span>
-                              <ChevronRight size={12} strokeWidth={3} />
+                          </div>
+                        )}
+                      </DropdownSurface>
+                    ) : null}
+                  </div>
+
+                  {form.ncal !== 'BLUE' ? (
+                    <div className="custom-dropdown-container relative space-y-2">
+                      <label className="text-sm font-medium text-foreground">
+                        {form.ncal === 'YELLOW' ? 'Distribution Node (ODP/BTS)' : 'Node Sequence'}
+                      </label>
+
+                      <button
+                        type="button"
+                        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors hover:bg-accent"
+                        onClick={() => setShowOdpDropdown((previous) => !previous)}
+                      >
+                        <span className={cn(!form.odp_bts && 'text-muted-foreground')}>
+                          {form.odp_bts && form.odp_bts !== 'MANUAL_INPUT'
+                            ? form.odp_bts
+                            : form.odp_bts === 'MANUAL_INPUT'
+                              ? 'Manual entry selected'
+                              : 'Select topology node'}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </button>
+
+                      {showOdpDropdown ? (
+                        <DropdownSurface className="max-h-80 overflow-y-auto">
+                          <div className="sticky top-0 bg-popover pb-2">
+                            <div className="relative">
+                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                              <input
+                                type="text"
+                                className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="Filter nodes..."
+                                value={odpSearch}
+                                onChange={(event) => setOdpSearch(event.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            {filteredOdpOptions.map((option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent"
+                                onClick={() => {
+                                  setField('odp_bts', option);
+                                  setShowOdpDropdown(false);
+                                }}
+                              >
+                                <span>{option}</span>
+                              </button>
+                            ))}
+
+                            <button
+                              type="button"
+                              className="mt-2 flex w-full items-center justify-between rounded-md border border-dashed border-primary/30 bg-primary/5 px-3 py-2.5 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                              onClick={() => {
+                                setField('odp_bts', 'MANUAL_INPUT');
+                                setShowOdpDropdown(false);
+                              }}
+                            >
+                              <span>Manual override</span>
+                              <Plus className="h-4 w-4" />
                             </button>
                           </div>
-                        </div>
-                      )}
+                        </DropdownSurface>
+                      ) : null}
 
-                      {form.odp_bts === 'MANUAL_INPUT' && (
-                        <input 
-                          type="text" 
-                          className="flex h-11 w-full rounded-xl border border-input bg-foreground/[0.03] px-4 py-2 text-[11px] font-black shadow-inner placeholder:text-foreground/20 animate-in slide-in-from-top-2 duration-300 uppercase tracking-widest focus:ring-2 focus:ring-primary/20"
-                          placeholder="INPUT CUSTOM SEQUENCE..." 
-                          value={form.distribusi_manual} 
-                          onChange={e => set('distribusi_manual', e.target.value.toUpperCase())} 
+                      {form.odp_bts === 'MANUAL_INPUT' ? (
+                        <Input
+                          id="manual-distribusi"
+                          label="Manual Node Value"
+                          value={form.distribusi_manual}
+                          onChange={(event) => setField('distribusi_manual', event.target.value.toUpperCase())}
+                          placeholder="Enter custom topology node"
+                          className="font-mono"
                         />
-                      )}
+                      ) : null}
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col relative gap-2 custom-dropdown-container">
-                <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">
-                  Node Grid Selection ({form.ncal} Protocol) *
-                </label>
-                <div 
-                  className={cn(
-                    "flex flex-wrap gap-2 items-center p-3 rounded-xl border border-input bg-background/50 min-h-[52px] cursor-pointer transition-all hover:bg-foreground/[0.04] focus:ring-2 focus:ring-primary/20",
-                    showDistDropdown && "ring-2 ring-primary/20 bg-background"
-                  )} 
-                  onClick={() => setShowDistDropdown(!showDistDropdown)}
-                >
-                  {distForm.selectedItems.length === 0 ? (
-                    <span className="text-foreground/20 text-[11px] font-black pl-1 uppercase tracking-[0.2em] italic">IDENTIFY TARGET NODES...</span>
-                  ) : distForm.selectedItems.map(item => (
-                    <div key={item} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-[9px] font-black uppercase tracking-[0.1em] border border-primary/10">
-                      {item}
-                      <button type="button" onClick={(e) => { e.stopPropagation(); toggleItem(item); }} className="hover:text-foreground p-0.5 leading-none bg-primary/10 rounded-full w-4 h-4 flex items-center justify-center ml-1">✕</button>
-                    </div>
-                  ))}
-                  <div className="ml-auto pr-1 opacity-20"><ChevronRight size={16} strokeWidth={3} className="rotate-90" /></div>
+                  ) : null}
                 </div>
+              ) : (
+                <div className="custom-dropdown-container relative space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Distribution Nodes
+                  </label>
 
-                {showDistDropdown && (
-                  <div className="absolute top-[calc(100%+12px)] left-0 right-0 bg-background border border-foreground/[0.08] rounded-2xl shadow-xl max-h-80 overflow-y-auto z-[100] p-2 flex flex-col gap-1 backdrop-blur-xl animate-in fade-in slide-in-from-top-4 duration-300" onClick={e => e.stopPropagation()}>
-                    <div className="p-2 mb-1 sticky top-0 bg-background/80 backdrop-blur-md z-10">
-                      <input 
-                        type="text" 
-                        className="bg-foreground/[0.04] border-none w-full px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] placeholder:text-foreground/20 focus:ring-2 focus:ring-primary/20" 
-                        placeholder="SEARCH NODES..." 
-                        value={distSearch} 
-                        onChange={e => setDistSearch(e.target.value)} 
-                        onFocus={e => e.stopPropagation()} 
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {combOptions.filter(o => !distForm.selectedItems.includes(o.value) && o.searchKey.toLowerCase().includes(distSearch.toLowerCase())).map(o => (
-                        <button key={o.value} type="button" className="flex items-center justify-between px-4 py-3 hover:bg-primary/[0.03] rounded-xl text-left transition-all active:scale-[0.98] group" onClick={() => toggleItem(o.value)}>
-                          <div className="flex flex-col">
-                            <span className="font-black text-[11px] tracking-tight text-foreground/80 uppercase group-hover:text-primary transition-colors">{o.label}</span>
-                            <span className="text-[8px] text-foreground/20 font-black uppercase tracking-[0.2em] mt-1">{o.value.split(':')[0]}</span>
-                          </div>
-                          <div className="w-5 h-5 rounded-lg border border-foreground/10 flex items-center justify-center group-hover:border-primary/50 group-hover:bg-primary/10 transition-all">
-                            <Plus size={12} strokeWidth={3} className="text-foreground/10 group-hover:text-primary transition-colors" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </SectionCard>
-
-          {/* Intel Details */}
-          <SectionCard title="Technical Analysis & Impact" className="border border-foreground/[0.08] shadow-sm">
-            <div className="flex flex-col gap-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col gap-2">
-                  <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">Problem Description *</label>
-                  <textarea 
-                    className="flex w-full rounded-xl border border-input bg-background/50 px-4 py-3 text-[11px] font-bold shadow-sm transition-all placeholder:text-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 leading-relaxed resize-none min-h-[120px]" 
-                    placeholder="DEFINE TECHNICAL ANOMALY..." 
-                    value={form.initial_problem} 
-                    onChange={e => set('initial_problem', e.target.value)} 
-                    rows={4} 
-                    required 
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">Diagnostic Indications</label>
-                  <textarea 
-                    className="flex w-full rounded-xl border border-input bg-background/50 px-4 py-3 text-[11px] font-bold shadow-sm transition-all placeholder:text-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 leading-relaxed resize-none text-foreground/60 min-h-[120px]" 
-                    placeholder="SIGNAL LOSS, ATTENUATION, FLAPS..." 
-                    value={form.indikasi} 
-                    onChange={e => set('indikasi', e.target.value)} 
-                    rows={4} 
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                <div className="flex flex-col gap-2">
-                  <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">Service Priority Tier *</label>
-                  <div className="flex flex-col gap-3">
-                    <Select 
-                      className="flex h-11 w-full rounded-xl border border-input bg-background/50 px-4 py-2 text-[11px] font-black shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-30 uppercase tracking-widest" 
-                      value={form.level_support} 
-                      onChange={e => set('level_support', e.target.value)} 
-                      required
-                      disabled={!isDistribsi && !!form.customer_id}
-                    >
-                      {LEVEL_OPTIONS.filter(opt => isDistribsi ? opt.value !== '4' : true).map(opt => (
-                        <option key={opt.value} value={opt.value} className="bg-background">{opt.label.toUpperCase()}</option>
-                      ))}
-                    </Select>
-                    {!isDistribsi && form.customer_id && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/[0.03] rounded-lg border border-primary/10 self-start">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[9px] font-black tracking-[0.2em] text-primary uppercase">Validated via Node Metadata</span>
-                      </div>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex min-h-11 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-left shadow-sm transition-colors hover:bg-accent',
+                      showDistDropdown && 'ring-1 ring-ring'
                     )}
-                  </div>
-                </div>
-                {!isDistribsi && (
-                  <Input 
-                    label="Command Personnel / PIC" 
-                    placeholder="ASSIGN OPERATOR..." 
-                    value={form.pic} 
-                    onChange={e => set('pic', e.target.value)} 
-                    className="font-black uppercase tracking-widest h-11"
-                  />
-                )}
-              </div>
-
-              {isDistribsi && (
-                <div className="flex flex-col gap-2">
-                  <label className="font-black text-[10px] uppercase tracking-[0.2em] text-foreground/40 ml-1 italic">Entity Impact Scope</label>
-                  <textarea 
-                    className="flex w-full rounded-xl border border-input bg-background/50 px-4 py-3 text-[11px] font-bold shadow-sm focus-visible:ring-primary/20 leading-relaxed resize-none h-20 placeholder:text-foreground/10" 
-                    placeholder="DEFINE DOWNSTREAM IMPACT..." 
-                    value={form.customer_terdampak} 
-                    onChange={e => set('customer_terdampak', e.target.value)} 
-                  />
-                </div>
-              )}
-
-              {form.ncal === 'YELLOW' && (
-                <div className="bg-warning/[0.02] border border-warning/10 rounded-2xl p-6 flex flex-col gap-6 mt-2 shadow-inner border-dashed">
-                  <div className="text-[10px] font-black text-warning uppercase tracking-[0.3em] flex items-center gap-3">
-                    <Network size={16} strokeWidth={3} className="animate-pulse" /> MAINTENANCE PROTOCOL OVERRIDE
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-black text-[10px] uppercase tracking-[0.2em] text-warning/40 ml-1 italic">Static Node Address</label>
-                      <div className="bg-background/40 border border-warning/5 rounded-xl p-4 text-[10px] font-bold text-foreground/40 leading-relaxed min-h-[60px] shadow-sm select-none italic">
-                        {form.address_preview || 'PROTOCOL_ADDR_UNDEFINED'}
-                      </div>
-                    </div>
-                    <Input 
-                      label="Spatial Coordinates (GPS)" 
-                      placeholder="LAT, LONG" 
-                      value={form.koordinat} 
-                      onChange={e => set('koordinat', e.target.value)} 
-                      className="bg-background font-mono font-black text-warning tracking-tighter h-11"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Input 
-                      label="Signal Power (RX)" 
-                      placeholder="dBm" 
-                      value={form.power_before} 
-                      onChange={e => set('power_before', e.target.value)} 
-                      className="bg-background font-mono font-black h-11"
-                    />
-                    <Input 
-                      label="Infrastructure Spec" 
-                      placeholder="e.g. CORE-FIBER" 
-                      value={form.kabel} 
-                      onChange={e => set('kabel', e.target.value)} 
-                      className="bg-background font-black h-11"
-                    />
-                    <Input 
-                      label="Path Dimension" 
-                      placeholder="METERS" 
-                      value={form.panjang_kabel} 
-                      onChange={e => set('panjang_kabel', e.target.value)} 
-                      className="bg-background font-mono font-black h-11"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </SectionCard>
-          
-        </div>
-
-        {/* Live Command Preview */}
-        <div className="flex flex-col gap-8 sticky top-8">
-          <div className="bg-background border border-foreground/[0.08] rounded-3xl overflow-hidden shadow-2xl shadow-primary/5 flex flex-col relative group">
-            <div className="absolute inset-x-0 h-1.5 bg-gradient-to-r from-primary via-primary/60 to-primary/40 opacity-80" />
-            
-            <div className="p-6 flex flex-col gap-8">
-               <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 italic">Command Receipt</h3>
-                  <div className="flex items-center gap-1.5 text-success">
-                     <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(var(--color-success),0.5)]" />
-                     <span className="text-[9px] font-black tracking-widest uppercase">Live Link</span>
-                  </div>
-               </div>
-
-               <div className="flex flex-col gap-6">
-                 <div className="p-5 bg-foreground/[0.04] border border-foreground/[0.04] rounded-2xl flex flex-col gap-6 shadow-inner">
-                    <div className="flex flex-col gap-3">
-                      <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.25em] flex items-center gap-2">
-                        <div className="w-3 h-[1px] bg-foreground/10" /> Impact Logic
+                    onClick={() => setShowDistDropdown((previous) => !previous)}
+                  >
+                    {distForm.selectedItems.length === 0 ? (
+                      <span className="text-sm text-muted-foreground">
+                        Select one or more affected topology nodes
                       </span>
-                      <div className="flex"><NcalBadge value={form.ncal} /></div>
-                    </div>
-                    <div className="h-[1px] bg-foreground/[0.04] w-full" />
-                    <div className="flex flex-col gap-3">
-                      <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.25em] flex items-center gap-2">
-                        <div className="w-3 h-[1px] bg-foreground/10" /> Infrastructure Node
-                      </span>
-                      <div className="font-black text-[11px] tracking-tight leading-tight text-foreground/90 uppercase bg-background/50 p-3 rounded-xl border border-foreground/[0.04] min-h-[50px] flex items-center">
-                        {isDistribsi 
-                          ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : <span className="opacity-10 italic">NODEID_NULL</span>)
-                          : (getIncidentDisplayName(form) || <span className="opacity-10 italic">NODEID_NULL</span>)
-                        }
-                      </div>
-                      {!isDistribsi && form.sla && (
-                        <div className="flex items-center gap-2 mt-1">
-                           <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] bg-primary/5 px-2 py-1 rounded-md border border-primary/10">Priority Grade {form.sla}</span>
+                    ) : (
+                      distForm.selectedItems.map((item) => (
+                        <span
+                          key={item}
+                          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+                        >
+                          {item}
+                          <button
+                            type="button"
+                            className="rounded-sm p-0.5 transition-colors hover:bg-primary/10"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleDistributionItem(item);
+                            }}
+                            aria-label={`Remove ${item}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))
+                    )}
+
+                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+
+                  {showDistDropdown ? (
+                    <DropdownSurface className="max-h-80 overflow-y-auto">
+                      <div className="sticky top-0 bg-popover pb-2">
+                        <div className="relative">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <input
+                            type="text"
+                            className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            placeholder="Search topology nodes..."
+                            value={distSearch}
+                            onChange={(event) => setDistSearch(event.target.value)}
+                          />
                         </div>
-                      )}
-                    </div>
-                 </div>
+                      </div>
 
-                 <div className="flex flex-col gap-3 px-1">
-                    <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.25em] flex items-center gap-2 font-mono">
-                      // problem_desc
-                    </span>
-                    <div className="text-[11px] font-bold leading-relaxed text-foreground/60 italic border-l-2 border-primary/40 pl-4 py-1">
-                      {form.initial_problem || <span className="opacity-10 not-italic tracking-tighter">AWAITING_INPUT_SEQUENCE...</span>}
-                    </div>
-                 </div>
-
-                 <div className="space-y-4 pt-4">
-                    <div className="flex items-center justify-between p-4 bg-foreground/[0.02] border border-foreground/[0.04] rounded-2xl group transition-all hover:bg-foreground/[0.04]">
-                       <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.2em]">Spatial Node</span>
-                          <span className="text-[10px] font-black text-foreground/60 tracking-tighter uppercase font-mono">{form.koordinat || 'SPATIAL_VOID'}</span>
-                       </div>
-                       <MapPin size={16} strokeWidth={2.5} className="text-foreground/10 group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-foreground/[0.02] border border-foreground/[0.04] rounded-2xl group transition-all hover:bg-foreground/[0.04]">
-                       <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.2em]">Protocol Hash</span>
-                          <div className="text-[10px] font-black text-foreground/60 uppercase font-mono tracking-tighter">
-                            #{form.case_no || 'TICKET_NULL'} — {formatDateTime(form.start_time).split(' ')[1]}
-                          </div>
-                       </div>
-                       <Network size={16} strokeWidth={2.5} className="text-foreground/10 group-hover:text-primary transition-colors" />
-                    </div>
-                 </div>
-               </div>
-
-               <div className="mt-6 pt-6 border-t border-foreground/[0.04] flex flex-col gap-5">
-                  <div className="flex items-center justify-between text-[8px] font-black text-foreground/20 uppercase tracking-[0.25em] px-1 font-mono">
-                     <span>OPERATOR_SIG</span>
-                     <span>VERIFICATION_HASH</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                     <div className="flex -space-x-3">
-                        {[1,2,3].map(i => (
-                          <div key={i} className="w-7 h-7 rounded-full bg-foreground/[0.05] border-2 border-background ring-1 ring-foreground/[0.05] group-hover:bg-primary/10 transition-colors" />
+                      <div className="space-y-1">
+                        {filteredDistributionOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-md px-3 py-3 text-left transition-colors hover:bg-accent"
+                            onClick={() => toggleDistributionItem(option.value)}
+                          >
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-foreground">
+                                {option.label}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {option.value.split(':')[0]}
+                              </p>
+                            </div>
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          </button>
                         ))}
-                     </div>
-                     <div className="px-3 py-1.5 bg-success/[0.03] border border-success/20 rounded-lg flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                        <span className="text-[9px] font-black tracking-[0.2em] text-success uppercase">Active Hub</span>
-                     </div>
+
+                        {filteredDistributionOptions.length === 0 ? (
+                          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                            No topology node matched your search.
+                          </div>
+                        ) : null}
+                      </div>
+                    </DropdownSurface>
+                  ) : null}
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard
+              title="Technical Details"
+              subtitle="Document the initial problem, indications, impact scope, and support level."
+            >
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Textarea
+                    id="initial_problem"
+                    label="Problem Description"
+                    value={form.initial_problem}
+                    onChange={(event) => setField('initial_problem', event.target.value)}
+                    placeholder="Describe the technical anomaly or outage symptoms."
+                    className="min-h-[140px]"
+                    required
+                  />
+
+                  <Textarea
+                    id="indikasi"
+                    label="Diagnostic Indications"
+                    value={form.indikasi}
+                    onChange={(event) => setField('indikasi', event.target.value)}
+                    placeholder="List symptoms such as signal loss, attenuation, or flap indications."
+                    className="min-h-[140px]"
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <Select
+                      id="level_support"
+                      label="Support Level"
+                      value={form.level_support}
+                      onChange={(event) => setField('level_support', event.target.value)}
+                      required
+                      disabled={!isDistribusi && Boolean(form.customer_id)}
+                    >
+                      {LEVEL_OPTIONS
+                        .filter((option) => (isDistribusi ? option.value !== '4' : true))
+                        .map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                    </Select>
+
+                    {!isDistribusi && form.customer_id ? (
+                      <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                        <Check className="h-3.5 w-3.5" />
+                        Support level is locked to customer metadata.
+                      </div>
+                    ) : null}
                   </div>
-               </div>
-            </div>
-            
-            <div className="p-4 bg-foreground/[0.02] text-center">
-               <span className="text-[8px] font-black text-foreground/10 uppercase tracking-[0.4em]">IMMS COMMAND INTERFACE V4.0.1</span>
-            </div>
+
+                  {!isDistribusi ? (
+                    <Input
+                      id="pic"
+                      label="PIC / Assigned Operator"
+                      placeholder="Enter responsible operator name"
+                      value={form.pic}
+                      onChange={(event) => setField('pic', event.target.value)}
+                    />
+                  ) : null}
+                </div>
+
+                {isDistribusi ? (
+                  <Textarea
+                    id="customer_terdampak"
+                    label="Impacted Customers"
+                    value={form.customer_terdampak}
+                    onChange={(event) => setField('customer_terdampak', event.target.value)}
+                    placeholder="List customer names, service areas, or affected branches."
+                    className="min-h-[100px]"
+                  />
+                ) : null}
+
+                {form.ncal === 'YELLOW' ? (
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+                    <div className="mb-4 flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-300">
+                      <Network className="h-4 w-4" />
+                      Yellow segment maintenance details
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground">
+                            Static Address
+                          </label>
+                          <div className="rounded-md border border-border bg-background px-3 py-3 text-sm text-muted-foreground">
+                            {form.address_preview || 'No address available from selected customer.'}
+                          </div>
+                        </div>
+
+                        <Input
+                          id="koordinat"
+                          label="Coordinates"
+                          placeholder="Latitude, Longitude"
+                          value={form.koordinat}
+                          onChange={(event) => setField('koordinat', event.target.value)}
+                          className="font-mono"
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <Input
+                          id="power_before"
+                          label="Signal Power (RX)"
+                          placeholder="dBm"
+                          value={form.power_before}
+                          onChange={(event) => setField('power_before', event.target.value)}
+                          className="font-mono"
+                        />
+
+                        <Input
+                          id="kabel"
+                          label="Infrastructure Spec"
+                          placeholder="e.g. CORE-FIBER"
+                          value={form.kabel}
+                          onChange={(event) => setField('kabel', event.target.value)}
+                        />
+
+                        <Input
+                          id="panjang_kabel"
+                          label="Path Dimension"
+                          placeholder="Meters"
+                          value={form.panjang_kabel}
+                          onChange={(event) => setField('panjang_kabel', event.target.value)}
+                          className="font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </SectionCard>
           </div>
-        </div>
+
+          <div className="xl:sticky xl:top-6">
+            <SectionCard
+              title="Incident Preview"
+              subtitle="Live summary of the record you are about to submit."
+              className="bg-card"
+            >
+              <div className="space-y-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                      Impact Segment
+                    </p>
+                    <NcalBadge value={form.ncal} />
+                  </div>
+
+                  <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                    {isEdit ? 'Edit Mode' : 'Draft Mode'}
+                  </div>
+                </div>
+
+                <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Affected Node
+                  </p>
+                  <p className="text-sm font-medium leading-6 text-foreground">
+                    {previewNode || 'No node selected yet.'}
+                  </p>
+                  {!isDistribusi && form.sla ? (
+                    <div className="inline-flex rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs text-primary">
+                      Priority grade {form.sla}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Problem Summary
+                  </p>
+                  <p className="text-sm leading-6 text-foreground">
+                    {form.initial_problem || 'Problem description will appear here.'}
+                  </p>
+                </div>
+
+                <div className="grid gap-3">
+                  <PreviewItem label="Coordinates" value={form.koordinat || 'Not provided'} icon={MapPin} />
+                  <PreviewItem label="Incident Hash" value={previewHash} icon={Network} />
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/20 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                        Submit State
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {loading ? 'Submitting incident...' : 'Ready to submit'}
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      Connected
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
         </form>
       </div>
     </div>

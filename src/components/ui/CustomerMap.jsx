@@ -5,7 +5,7 @@ import L from 'leaflet';
 import { api } from '../../utils/api.js';
 import { Button, Spinner } from './index.jsx';
 import { cn } from '../../lib/utils.js';
-import { Search, AlertCircle, Users, Activity } from 'lucide-react';
+import { Search, AlertCircle, Users, Activity, RefreshCw } from 'lucide-react';
 
 /**
  * Enhanced Customer Map - Spatial Visualization Protocol
@@ -136,7 +136,7 @@ export default function CustomerMap({
   };
 
   return (
-    <div className="flex-1 h-full relative bg-background overflow-hidden animate-in fade-in duration-500">
+    <div className="relative flex h-full min-h-[640px] flex-1 overflow-hidden bg-background animate-in fade-in duration-500">
       <MapContainer 
         center={semarangCenter} 
         zoom={12} 
