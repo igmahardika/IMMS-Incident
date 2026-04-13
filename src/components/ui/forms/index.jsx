@@ -2,109 +2,203 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '../../../lib/utils.js';
 
-export function Button({ children, variant = 'primary', size = 'md', outline = false, icon, isLoading, className = '', ...props }) {
-  const baseClasses = "inline-flex items-center justify-center font-bold tracking-wider rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:pointer-events-none active:scale-95";
-  
-  const variants = {
-    primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary shadow-sm",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary",
-    error: "bg-error text-white hover:bg-error/90 focus:ring-error shadow-sm",
-    warning: "bg-warning text-warning-foreground hover:bg-warning/90 focus:ring-warning shadow-sm",
-    info: "bg-info text-info-foreground hover:bg-info/90 focus:ring-info",
-    success: "bg-success text-white hover:bg-success/90 focus:ring-success shadow-sm",
-    neutral: "bg-foreground/10 text-foreground hover:bg-foreground/20 focus:ring-foreground/50",
-    ghost: "bg-transparent text-foreground/70 hover:bg-foreground/10 hover:text-foreground focus:ring-foreground/50",
-  };
+const buttonBaseClasses = [
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md',
+  'text-sm font-medium transition-colors',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+  'ring-offset-background disabled:pointer-events-none disabled:opacity-50',
+].join(' ');
 
-  const outlineVariants = {
-    primary: "border border-primary text-primary hover:bg-primary/10",
-    error: "border border-error text-error hover:bg-error/10",
-    neutral: "border border-border text-foreground hover:bg-muted",
-  };
+const buttonVariants = {
+  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+  destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+  error: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+  outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+  ghost: 'hover:bg-accent hover:text-accent-foreground',
+  link: 'text-primary underline-offset-4 hover:underline',
+  warning: 'border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200 dark:hover:bg-amber-950/50',
+  success: 'border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200 dark:hover:bg-emerald-950/50',
+  info: 'border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-200 dark:hover:bg-sky-950/50',
+  neutral: 'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
+};
 
-  const sizes = { 
-    xs: "h-6 px-2.5 text-[9px] uppercase", 
-    sm: "h-8 px-3 text-[10px] uppercase", 
-    md: "h-10 px-4 text-[11px] uppercase", 
-    lg: "h-12 px-6 text-xs uppercase" 
-  };
-  
-  const currentVariant = outline ? (outlineVariants[variant] || outlineVariants.primary) : (variants[variant] || variants.primary);
+const buttonSizes = {
+  xs: 'h-8 rounded-md px-2.5 text-xs',
+  sm: 'h-8 rounded-md px-3 text-sm',
+  md: 'h-9 px-4 py-2 text-sm',
+  lg: 'h-10 rounded-md px-8 text-sm',
+  icon: 'h-9 w-9',
+};
+
+function getButtonVariant(variant, outline) {
+  if (outline) return buttonVariants.outline;
+  return buttonVariants[variant] || buttonVariants.default;
+}
+
+export function Button({
+  children,
+  variant = 'default',
+  size = 'md',
+  outline = false,
+  icon,
+  isLoading = false,
+  className = '',
+  disabled,
+  type = 'button',
+  ...props
+}) {
+  const resolvedSize = buttonSizes[size] || buttonSizes.md;
+  const resolvedVariant = getButtonVariant(variant, outline);
 
   return (
-    <button className={cn(baseClasses, currentVariant, sizes[size], "w-auto", className)} disabled={isLoading || props.disabled} {...props}>
-      {isLoading ? <Loader2 className="animate-spin mr-2" size={14} /> : (icon && <span className="mr-2">{icon}</span>)}
+    <button
+      type={type}
+      className={cn(buttonBaseClasses, resolvedVariant, resolvedSize, className)}
+      disabled={isLoading || disabled}
+      {...props}
+    >
+      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : icon}
       {children}
     </button>
   );
 }
 
-export function FormField({ label, error, children, className }) {
+export function FormField({ label, error, children, className, htmlFor, description }) {
   return (
-    <div className={cn("flex flex-col w-full gap-1.5", className)}>
-      {label && (
-        <label className="font-bold text-[10px] uppercase tracking-widest text-foreground/50 ml-1">
+    <div className={cn('grid w-full gap-2', className)}>
+      {label ? (
+        <label
+          htmlFor={htmlFor}
+          className="text-sm font-medium leading-none text-foreground"
+        >
           {label}
         </label>
-      )}
+      ) : null}
       {children}
-      {error && (
-        <span className="text-error font-bold text-[10px] ml-1 mt-0.5">{error}</span>
-      )}
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
+      {error ? (
+        <p className="text-sm font-medium text-destructive">{error}</p>
+      ) : null}
     </div>
   );
 }
 
-export const Input = React.forwardRef(({ label, error, type = 'text', className = '', ...props }, ref) => {
+export const Input = React.forwardRef(function Input(
+  {
+    label,
+    error,
+    type = 'text',
+    className = '',
+    wrapperClassName,
+    description,
+    id,
+    ...props
+  },
+  ref
+) {
   return (
-    <FormField label={label} error={error} className={props.wrapperClassName}>
-      <input 
+    <FormField
+      label={label}
+      error={error}
+      className={wrapperClassName}
+      htmlFor={id}
+      description={description}
+    >
+      <input
         ref={ref}
-        type={type} 
+        id={id}
+        type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-          error && "border-error focus-visible:ring-error",
+          'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm',
+          'transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium',
+          'placeholder:text-muted-foreground',
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          error && 'border-destructive focus-visible:ring-destructive',
           className
-        )} 
-        {...props} 
+        )}
+        {...props}
       />
     </FormField>
   );
 });
-Input.displayName = "Input";
 
-export const Textarea = React.forwardRef(({ label, error, className = '', ...props }, ref) => {
+export const Textarea = React.forwardRef(function Textarea(
+  {
+    label,
+    error,
+    className = '',
+    wrapperClassName,
+    description,
+    id,
+    ...props
+  },
+  ref
+) {
   return (
-    <FormField label={label} error={error} className={props.wrapperClassName}>
-      <textarea 
+    <FormField
+      label={label}
+      error={error}
+      className={wrapperClassName}
+      htmlFor={id}
+      description={description}
+    >
+      <textarea
         ref={ref}
+        id={id}
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none",
-          error && "border-error focus-visible:ring-error",
+          'flex min-h-[96px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm',
+          'placeholder:text-muted-foreground transition-colors',
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          'disabled:cursor-not-allowed disabled:opacity-50 resize-none',
+          error && 'border-destructive focus-visible:ring-destructive',
           className
-        )} 
-        {...props} 
+        )}
+        {...props}
       />
     </FormField>
   );
 });
-Textarea.displayName = "Textarea";
 
-export const Select = React.forwardRef(({ label, error, className = '', children, ...props }, ref) => {
+export const Select = React.forwardRef(function Select(
+  {
+    label,
+    error,
+    className = '',
+    children,
+    wrapperClassName,
+    description,
+    id,
+    ...props
+  },
+  ref
+) {
   return (
-    <FormField label={label} error={error} className={props.wrapperClassName}>
-      <select 
+    <FormField
+      label={label}
+      error={error}
+      className={wrapperClassName}
+      htmlFor={id}
+      description={description}
+    >
+      <select
         ref={ref}
+        id={id}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-bold shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring uppercase tracking-wider disabled:opacity-50",
-          error && "border-error focus-visible:ring-error",
+          'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm',
+          'transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          error && 'border-destructive focus-visible:ring-destructive',
           className
-        )} 
-        {...props} 
+        )}
+        {...props}
       >
         {children}
       </select>
     </FormField>
   );
 });
-Select.displayName = "Select";

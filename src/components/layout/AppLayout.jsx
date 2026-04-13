@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import Sidebar from './Sidebar.jsx';
 import Topbar from './Topbar.jsx';
 import { cn } from '../../lib/utils.js';
@@ -9,38 +9,36 @@ export const SidebarContext = React.createContext({ mobileOpen: false, setMobile
 export default function AppLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
-  
-  useSocket(); // Mount socket listener to subscribe to server invalidations
+
+  useSocket();
 
   return (
     <SidebarContext.Provider value={{ mobileOpen, setMobileOpen }}>
       <div className="flex h-dvh w-full overflow-hidden bg-background">
-        
-        {/* Mobile Sidebar Overlay */}
-        {mobileOpen && (
-          <div 
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+        {mobileOpen ? (
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
             onClick={closeMobile}
-            aria-hidden="true"
+            aria-label="Close navigation overlay"
           />
-        )}
-        
-        {/* Sidebar */}
-        <div className={cn(
-          "fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:relative lg:translate-x-0",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
-          <Sidebar onClose={closeMobile} />
+        ) : null}
+
+        <div
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-out lg:static lg:translate-x-0',
+            mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          <Sidebar mobileOpen={mobileOpen} onClose={closeMobile} />
         </div>
-        
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar />
-          <main className="flex-1 overflow-hidden flex flex-col p-4 md:p-6 bg-muted/20">
+          <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/30 p-4 md:p-6">
             {children}
           </main>
         </div>
-
       </div>
     </SidebarContext.Provider>
   );

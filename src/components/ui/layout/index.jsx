@@ -1,45 +1,73 @@
 import React from 'react';
 import { cn } from '../../../lib/utils.js';
 
-export function SectionCard({ title, subtitle, footer, children, className = '', headerAction, style, padding = true }) {
+export function SectionCard({
+  title,
+  subtitle,
+  footer,
+  children,
+  className = '',
+  headerAction,
+  padding = true,
+}) {
   return (
-    <div className={cn("bg-background border border-foreground/[0.06] shadow-sm rounded-xl overflow-hidden flex flex-col min-h-0", className)} style={style}>
-      <div className={cn("flex flex-col flex-1 min-h-0", padding ? "p-4 md:p-5" : "")}>
-        {(title || headerAction) && (
-          <div className={cn("flex items-center justify-between mb-4 shrink-0", !padding && "px-4 pt-4")}>
-            <div className="flex flex-col gap-0.5">
-              {title && <h2 className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/40 leading-none">{title}</h2>}
-              {subtitle && <p className="text-[10px] font-medium text-foreground/30 leading-snug">{subtitle}</p>}
-            </div>
-            {headerAction}
+    <section
+      className={cn(
+        'rounded-xl border bg-card text-card-foreground shadow-sm',
+        'flex min-h-0 flex-col overflow-hidden',
+        className
+      )}
+    >
+      {(title || subtitle || headerAction) ? (
+        <div className={cn('flex items-start justify-between gap-4 border-b px-6 py-5', !padding && 'border-b')}>
+          <div className="space-y-1">
+            {title ? (
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
+                {title}
+              </h2>
+            ) : null}
+            {subtitle ? (
+              <p className="text-sm text-muted-foreground">
+                {subtitle}
+              </p>
+            ) : null}
           </div>
-        )}
+          {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
+        </div>
+      ) : null}
+
+      <div className={cn('flex min-h-0 flex-1 flex-col', padding && 'p-6')}>
         {children}
       </div>
-      {footer && (
-        <div className={cn(
-          "px-4 py-3 border-t border-foreground/5 bg-foreground/[0.02] mt-auto flex justify-end",
-          padding && "mx-4 mb-4 rounded-xl border border-transparent bg-muted/50"
-        )}>
+
+      {footer ? (
+        <div className="border-t bg-muted/30 px-6 py-4">
           {footer}
         </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
 }
 
 export function PageHeader({ title, subtitle, action }) {
   return (
-    <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-xl font-black tracking-tight text-foreground/90 uppercase">{title}</h1>
-        {subtitle && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">{subtitle}</p>}
+    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="space-y-1.5">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {title}
+        </h1>
+        {subtitle ? (
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            {subtitle}
+          </p>
+        ) : null}
       </div>
-      {action && (
+
+      {action ? (
         <div className="flex items-center gap-2">
           {action}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

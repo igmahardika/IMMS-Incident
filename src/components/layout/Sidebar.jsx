@@ -1,40 +1,55 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  AlertTriangle,
+  BarChart2,
+  Database,
+  HardHat,
+  History,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Network,
+  PlusCircle,
+  Settings,
+  Shield,
+  Tag,
+  UserCog,
+  X,
+  Zap,
+  TrendingUp,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { cn } from '../../lib/utils.js';
-import {
-  LayoutDashboard, AlertTriangle, PlusCircle, History, BarChart2,
-  TrendingUp, Database, Tag, Users, UserCog, Settings,
-  Zap, ListChecks, Network, HardHat, LogOut, X
-} from 'lucide-react';
+import { Button } from '../ui/index.jsx';
 
 const menuGroups = [
   {
     label: 'Monitoring',
     items: [
       { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'noc', 'technician'] },
-    ]
+    ],
   },
   {
     label: 'Tasks & Incidents',
     items: [
       { to: '/incidents', icon: AlertTriangle, label: 'Active Troubles', roles: ['admin', 'manager', 'noc', 'technician'] },
       { to: '/incidents/create', icon: PlusCircle, label: 'Create Incident', roles: ['admin', 'noc'] },
-    ]
+    ],
   },
   {
     label: 'Archives & Reports',
     items: [
       { to: '/history', icon: History, label: 'Resolved Incidents', roles: ['admin', 'manager', 'noc'] },
       { to: '/history/monthly', icon: ListChecks, label: 'Monthly Analysis', roles: ['admin', 'manager', 'noc'] },
-    ]
+    ],
   },
   {
     label: 'Analytics',
     items: [
       { to: '/analytics/duration', icon: BarChart2, label: 'Duration Report', roles: ['admin', 'manager', 'noc'] },
       { to: '/analytics/root-cause', icon: TrendingUp, label: 'Root Cause', roles: ['admin', 'manager', 'noc'] },
-    ]
+    ],
   },
   {
     label: 'Master Data',
@@ -45,158 +60,167 @@ const menuGroups = [
       { to: '/master/distribusi', icon: Network, label: 'Distribution Topology', roles: ['admin', 'manager'] },
       { to: '/master/actions', icon: ListChecks, label: 'Master Actions', roles: ['admin', 'manager'] },
       { to: '/master/users', icon: UserCog, label: 'User Accounts', roles: ['admin'] },
-    ]
+    ],
   },
   {
     label: 'Settings',
     items: [
       { to: '/settings/escalation', icon: Settings, label: 'Escalation Config', roles: ['admin'] },
-    ]
+    ],
   },
 ];
 
-export default function Sidebar({ mobileOpen, onClose }) {
+function getInitials(name) {
+  const parts = (name || 'User').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'U';
+}
+
+function formatRole(role) {
+  return role ? role.replace(/_/g, ' ') : 'user';
+}
+
+export default function Sidebar({ mobileOpen = false, onClose }) {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    if (confirmLogout) {
-      logout();
-      navigate('/login');
-    } else {
+  useEffect(() => {
+    if (!confirmLogout) return undefined;
+
+    const timeoutId = window.setTimeout(() => setConfirmLogout(false), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [confirmLogout]);
+
+  const filteredGroups = useMemo(
+    () => menuGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.roles || item.roles.includes(user?.role)),
+      }))
+      .filter((group) => group.items.length > 0),
+    [user?.role]
+  );
+
+  const handleLogout = async () => {
+    if (!confirmLogout) {
       setConfirmLogout(true);
-      setTimeout(() => setConfirmLogout(false), 3000);
+      return;
     }
+
+    await logout();
+    navigate('/login');
   };
 
-  const filteredGroups = menuGroups
-    .map(group => ({
-      ...group,
-      items: group.items.filter(item => !item.roles || item.roles.includes(user?.role))
-    }))
-    .filter(group => group.items.length > 0);
-
   return (
-    <aside className="w-60 flex flex-col h-full bg-background border-r border-foreground/[0.06] shrink-0 overflow-hidden">
-      
-      {/* ── Logo / Brand Header ── */}
-      <div className="h-[56px] flex items-center gap-3 px-4 shrink-0 border-b border-foreground/[0.06]">
-        <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 shrink-0">
-          <Zap size={16} strokeWidth={2.5} />
+    <aside className="flex h-full w-72 shrink-0 flex-col border-r bg-background">
+      <div className="flex h-16 items-center justify-between border-b px-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <Zap className="h-4 w-4" />
+          </div>
+
+          <div className="min-w-0 space-y-1">
+            <p className="truncate text-sm font-semibold tracking-tight text-foreground">
+              IMMS
+            </p>
+            <p className="truncate text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Enterprise NOC
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-black text-[13px] tracking-tight text-foreground leading-none">IMMS</div>
-          <div className="text-[9px] text-foreground/40 uppercase tracking-[0.2em] font-bold mt-0.5">Enterprise NOC</div>
-        </div>
-        {mobileOpen && (
-          <button
-            className="lg:hidden p-1.5 text-foreground/40 hover:text-foreground hover:bg-foreground/5 rounded-lg transition-colors"
+
+        {mobileOpen ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
             onClick={onClose}
-            aria-label="Close sidebar"
+            aria-label="Close navigation"
           >
-            <X size={16} strokeWidth={2} />
-          </button>
-        )}
+            <X className="h-4 w-4" />
+          </Button>
+        ) : null}
       </div>
 
-      {/* ── Navigation Groups ── */}
-      <nav className="flex-1 overflow-y-auto custom-scrollbar py-3 px-2.5">
-        <div className="space-y-6">
-          {filteredGroups.map((group) => (
-            <div key={group.label}>
-              {/* Section Label */}
-              <div className="px-2.5 mb-1 flex items-center gap-2">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 whitespace-nowrap">
-                  {group.label}
-                </span>
-                <div className="h-px flex-1 bg-foreground/[0.06]" />
-              </div>
-
-              {/* Nav Items */}
-              <div className="space-y-0.5">
-                {group.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === '/'}
-                    className={({ isActive }) => cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 group relative outline-none",
-                      isActive
-                        ? "bg-primary/10 text-primary font-bold"
-                        : "text-foreground/60 hover:bg-foreground/[0.05] hover:text-foreground/90 font-medium"
-                    )}
-                    onClick={mobileOpen ? onClose : undefined}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {/* Active left-bar indicator */}
-                        {isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
-                        )}
-
-                        {/* Icon */}
-                        <span className={cn(
-                          "flex items-center justify-center w-[18px] shrink-0 transition-all",
-                          isActive ? "text-primary" : "text-foreground/40 group-hover:text-foreground/70"
-                        )}>
-                          <item.icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-                        </span>
-
-                        {/* Label */}
-                        <span className="text-[11px] leading-tight flex-1 truncate">
-                          {item.label}
-                        </span>
-
-                        {/* Active dot */}
-                        {isActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        )}
-                      </>
-                    )}
-                  </NavLink>
-                ))}
-              </div>
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
+        {filteredGroups.map((group) => (
+          <div key={group.label} className="space-y-2">
+            <div className="px-3">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                {group.label}
+              </p>
             </div>
-          ))}
-        </div>
+
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) => cn(
+                    'group flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    isActive
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                  onClick={mobileOpen ? onClose : undefined}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <item.icon
+                        className={cn(
+                          'h-4 w-4 shrink-0',
+                          isActive ? 'text-foreground' : 'text-muted-foreground'
+                        )}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {isActive ? <span className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* ── Footer / User Profile ── */}
-      <div className="shrink-0 border-t border-foreground/[0.06] p-2.5">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Logout user options"
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogout(); } }}
-          className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg hover:bg-foreground/[0.04] transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          onClick={handleLogout}
-        >
-          {/* Avatar */}
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
-            <span className="text-[12px] font-black">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+      <div className="border-t p-3">
+        <div className="rounded-xl border bg-card p-3 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+              {getInitials(user?.name)}
+            </div>
+
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate text-sm font-medium text-foreground">
+                {user?.name || 'System User'}
+              </p>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Shield className="h-3.5 w-3.5" />
+                <span className="truncate capitalize">{formatRole(user?.role)}</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant={confirmLogout ? 'destructive' : 'ghost'}
+              size="icon"
+              className="shrink-0"
+              onClick={handleLogout}
+              aria-label={confirmLogout ? 'Confirm logout' : 'Logout'}
+              title={confirmLogout ? 'Click again to confirm logout' : 'Logout'}
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* User Info */}
-          <div className="flex-1 min-w-0">
-            <div className="text-[11px] font-bold text-foreground truncate leading-tight">{user?.name}</div>
-            <div className="text-[9px] font-black text-foreground/40 uppercase tracking-widest truncate mt-0.5">{user?.role}</div>
-          </div>
-
-          {/* Logout Icon */}
-          <button
-            className={cn(
-              "p-1.5 rounded-md transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error",
-              confirmLogout
-                ? "text-error bg-error/10 animate-pulse"
-                : "text-foreground/30 group-hover:text-error group-hover:bg-error/10"
-            )}
-            aria-label={confirmLogout ? "Confirm Logout" : "Logout"}
-            title={confirmLogout ? "Click again to confirm logout" : "Logout"}
-            onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-          >
-            <LogOut size={13} strokeWidth={2} aria-hidden="true" />
-          </button>
+          {confirmLogout ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Klik sekali lagi untuk keluar dari sesi ini.
+            </p>
+          ) : null}
         </div>
       </div>
     </aside>
