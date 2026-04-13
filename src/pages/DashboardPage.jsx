@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../utils/api.js';
-import { formatDuration } from '../utils/incidentUtils.js';
+import { formatDuration, getIncidentDisplayName } from '../utils/incidentUtils.js';
 import { NCAL_ORDER, MONTH_NAMES } from '../utils/constants.js';
-import { NcalBadge, SectionCard, CardSkeleton, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer, Button, PageSpinner } from '../components/ui/index.jsx';
+import { NcalBadge, SectionCard, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer, Button, PageSpinner } from '../components/ui/index.jsx';
 import { AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { cn } from '../lib/utils.js';
@@ -155,7 +155,7 @@ export default function DashboardPage() {
                         <td className="px-3 py-3 text-center align-top"><NcalBadge value={inc.ncal} /></td>
                         <td className="px-3 py-3 align-top">
                           <div className="font-mono text-[11px] font-black text-primary mb-1 tracking-tighter">{inc.case_no}</div>
-                          <div className="text-[10px] font-bold text-foreground/70 leading-tight line-clamp-2 uppercase tracking-tight">{inc.site_name_manual || '—'}</div>
+                          <div className="text-[10px] font-bold text-foreground/70 leading-tight line-clamp-2 uppercase tracking-tight">{getIncidentDisplayName(inc)}</div>
                         </td>
                         <td className="px-3 py-3 text-right align-top">
                           <div className="font-mono text-[11px] font-black tabular-nums text-foreground/80 mb-1">{formatDuration(inc.duration_nett_seconds)}</div>

@@ -1,4 +1,7 @@
-const BASE = `http://${window.location.hostname}:3001/api`;
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, '') ||
+  `${window.location.protocol}//${window.location.hostname}:3001`;
+const BASE = `${API_BASE}/api`;
 
 
 /**
@@ -9,6 +12,33 @@ function getToken() {
   return localStorage.getItem('imms_token');
 }
 
+function persistSession(data) {
+  if (data?.token) localStorage.setItem('imms_token', data.token);
+  if (data?.user) localStorage.setItem('imms_user', JSON.stringify(data.user));
+}
+
+function clearSession() {
+  localStorage.removeItem('imms_token');
+  localStorage.removeItem('imms_user');
+}
+
+async function refreshAccessToken() {
+  const res = await fetch(`${BASE}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  if (data?.token) {
+    persistSession(data);
+  }
+  return data;
+}
+
 /**
  * Standardized isomorphic HTTP request handler.
  * Applies Bearer tokens and gracefully intercepts 401 Unauthorized responses.
@@ -16,10 +46,11 @@ function getToken() {
  * @param {RequestInit} [options={}] - Fetch API initialization options.
  * @returns {Promise<any>} The parsed JSON payload or throws an Error.
  */
-async function request(path, options = {}) {
+async function request(path, options = {}, retry = true) {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -27,10 +58,15 @@ async function request(path, options = {}) {
     },
   });
 
-  if (res.status === 401 && path !== '/auth/login') {
-    // Session expired or invalid - clear state and force login
-    localStorage.removeItem('imms_token');
-    localStorage.removeItem('imms_user');
+  if (res.status === 401 && !['/auth/login', '/auth/refresh'].includes(path)) {
+    if (retry) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed?.token) {
+        return request(path, options, false);
+      }
+    }
+
+    clearSession();
     window.location.href = '/login';
     throw new Error('Session expired. Please login again.');
   }
@@ -47,7 +83,12 @@ async function request(path, options = {}) {
 
 export const api = {
   // Auth
-  login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+  login: async (body) => {
+    const data = await request('/auth/login', { method: 'POST', body: JSON.stringify(body) });
+    persistSession(data);
+    return data;
+  },
+  logout: () => request('/auth/logout', { method: 'POST' }),
   changePassword: (body) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(body) }),
 
   // Incidents
@@ -123,5 +164,4 @@ export const api = {
   updateEscalation: (body) => request('/settings/escalation', { method: 'PUT', body: JSON.stringify(body) }),
   testEscalation: () => request('/settings/escalation/test', { method: 'POST' }),
 };
-
 

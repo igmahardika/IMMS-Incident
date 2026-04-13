@@ -17,7 +17,7 @@ import {
   ChevronRight, 
   Activity, 
   Network,
-  Hierarchy,
+  GitBranch,
   Layers,
   Database
 } from 'lucide-react';
@@ -173,7 +173,7 @@ export default function MasterClassificationPage() {
                 className="flex flex-col h-fit border border-foreground/[0.08] shadow-sm hover:border-primary/20 transition-all group/card"
                 headerAction={
                    <div className="flex items-center gap-1.5 bg-foreground/[0.03] px-2 py-1 rounded-lg border border-foreground/[0.05]">
-                      <Hierarchy size={10} className="text-primary/40" />
+                      <GitBranch size={10} className="text-primary/40" />
                       <span className="text-[9px] font-black text-foreground/40 font-mono">SEQ_{klasifikasi.slice(0,3).toUpperCase()}</span>
                    </div>
                 }
@@ -216,7 +216,7 @@ export default function MasterClassificationPage() {
             
             {Object.keys(grouped).length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center p-24 text-center gap-4 opacity-20">
-                 <Hierarchy size={48} />
+                 <GitBranch size={48} />
                  <span className="text-[11px] font-black uppercase tracking-[0.3em]">No ontology matches found</span>
               </div>
             )}

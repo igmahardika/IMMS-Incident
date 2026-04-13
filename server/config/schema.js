@@ -24,6 +24,10 @@ export const master_customer = sqliteTable('master_customer', {
   support_level: text('support_level'),
   link_coverage: text('link_coverage'),
   sla: text('sla'),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  city: text('city'),
+  province: text('province'),
   is_active: integer('is_active').notNull().default(1),
   created_at: text('created_at').notNull().default('CURRENT_TIMESTAMP')
 });
@@ -157,5 +161,11 @@ export const escalation_config = sqliteTable('escalation_config', {
   template_open_vendor_black: text('template_open_vendor_black'),
   template_close_internal_black: text('template_close_internal_black'),
   template_close_vendor_black: text('template_close_vendor_black'),
+  updated_at: text('updated_at').notNull().default('CURRENT_TIMESTAMP')
+});
+
+export const metadata = sqliteTable('metadata', {
+  key: text('key').primaryKey(),
+  value: text('value'),
   updated_at: text('updated_at').notNull().default('CURRENT_TIMESTAMP')
 });

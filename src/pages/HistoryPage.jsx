@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api.js';
-import { formatDateTime, calculateIncidentLevel, getSLATarget } from '../utils/incidentUtils.js';
+import { formatDateTime } from '../utils/incidentUtils.js';
 import { MONTH_NAMES } from '../utils/constants.js';
 import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton, Select } from '../components/ui/index.jsx';
 import { DataTable } from '../components/tables/DataTable.jsx';
@@ -166,9 +166,6 @@ export default function HistoryPage() {
   ], [navigate]);
 
   const allSelected = selectedIds.length > 0 && selectedIds.length === data.length;
-  const toggleRow = id => setSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-
-  const faintHdr = "py-3 px-3 text-[10px] font-black uppercase tracking-widest text-foreground/40 text-left bg-foreground/[0.02] border-b border-foreground/5";
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

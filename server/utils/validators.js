@@ -12,7 +12,7 @@ export const incidentCreateSchema = z.object({
   odp_bts: z.string().optional(),
   level_support: z.string().optional(),
   initial_problem: z.string().optional(),
-  status: z.enum(['open', 'progress', 'resolved', 'closed']).default('open'),
+  status: z.enum(['open', 'progress', 'pending', 'done']).default('open'),
   technician_id: z.number().int().positive().optional(),
   classification_id: z.number().int().positive().optional(),
   start_time: z.string().optional(), // Assuming ISO string for date/time

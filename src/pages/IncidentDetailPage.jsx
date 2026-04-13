@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIncident } from '../hooks/useIncidents.js';
-import { formatDateTime, processTimeline, calculateIncidentLevel, getSLATarget } from '../utils/incidentUtils.js';
+import { formatDateTime, processTimeline, calculateIncidentLevel, getSLATarget, getIncidentDisplayName } from '../utils/incidentUtils.js';
 import { NcalBadge, StatusPill, DurationBadge, PageSpinner, UnifiedTimeline, LevelBadge, SectionCard, Button } from '../components/ui/index.jsx';
 import { ArrowLeft, Edit2, MapPin, Info, Shield, Activity } from 'lucide-react';
 import { cn } from '../lib/utils.js';
@@ -58,7 +58,7 @@ export default function IncidentDetailPage() {
           <SectionCard title="Core Asset Information" subtitle="Infrastructure and Locality Details" padding={false}>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               {[
-                { label: isDistribsi ? 'DISTRIBUTION' : 'SITE NAME', value: (isDistribsi ? (incident.odp_bts || incident.site_name_manual) : (incident.site_name_manual || incident.company_name)) || '—', icon: MapPin },
+                { label: isDistribsi ? 'DISTRIBUTION' : 'SITE NAME', value: getIncidentDisplayName(incident), icon: MapPin },
                 { label: incident.ncal === 'BLUE' ? 'DEVICE ID' : 'INFRASTRUCTURE', value: incident.odp_bts || '—', icon: Shield },
                 { label: 'PRIORITY LEVEL', value: incident.level_support ? `P${incident.level_support}` : '—', icon: Info },
                 { label: 'ASSIGNED OPERATOR', value: incident.pic || incident.technician_name || incident.technician_name_manual || '—', icon: Activity },

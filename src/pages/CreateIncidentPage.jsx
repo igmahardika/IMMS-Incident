@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../utils/api.js';
-import { formatDateTime } from '../utils/incidentUtils.js';
+import { formatDateTime, getIncidentDisplayName } from '../utils/incidentUtils.js';
 import { incidentService } from '../services/incidentService.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { NcalBadge, Spinner, SectionCard, Button, Input, Select } from '../components/ui/index.jsx';
-import { ArrowLeft, Send, Network, Save, Loader2, ChevronRight, MapPin, Globe } from 'lucide-react';
+import { NcalBadge, SectionCard, Button, Input, Select } from '../components/ui/index.jsx';
+import { ArrowLeft, Send, Network, Save, Loader2, ChevronRight, MapPin } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 
 const NCAL_OPTIONS = ['BLUE', 'YELLOW', 'ORANGE', 'RED', 'BLACK'];
@@ -26,7 +26,8 @@ export default function CreateIncidentPage() {
     case_no: '', 
     start_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
     customer_id: '', 
-    site_name_manual: '', 
+    company_name: '',
+    brand_site: '',
     ncal: 'YELLOW',
     odp_bts: '', 
     level_support: '2', 
@@ -73,7 +74,7 @@ export default function CreateIncidentPage() {
               ...inc,
               start_time: inc.start_time ? new Date(inc.start_time).toISOString().slice(0, 16) : ''
             });
-            setSearch(inc.site_name_manual || '');
+            setSearch(inc.brand_site || inc.company_name || '');
             if (['ORANGE', 'RED', 'BLACK'].includes(inc.ncal)) {
               setDistForm({ selectedItems: inc.odp_bts ? inc.odp_bts.split(', ') : [] });
             }
@@ -141,7 +142,6 @@ export default function CreateIncidentPage() {
       if (isDistribsi) {
         payload.customer_id = null;
         payload.odp_bts = distForm.selectedItems.join(', ');
-        payload.site_name_manual = `Segmen ${form.ncal}: ${distForm.selectedItems.join(', ')}`;
       } else if (form.ncal === 'YELLOW') {
         payload.odp_bts = form.odp_bts === 'MANUAL_INPUT' ? form.distribusi_manual : form.odp_bts;
       }
@@ -173,7 +173,8 @@ export default function CreateIncidentPage() {
     setForm(prev => ({
       ...prev,
       customer_id: c.id,
-      site_name_manual: c.brand_site,
+      company_name: c.company_name,
+      brand_site: c.brand_site,
       sla: c.grade,
       address_preview: c.address || '',
       level_support: autoLevel
@@ -271,7 +272,7 @@ export default function CreateIncidentPage() {
                     setForm(prev => {
                       const upd = { ...prev, ncal: val };
                       if (['ORANGE', 'RED', 'BLACK'].includes(val)) {
-                        upd.customer_id = ''; upd.site_name_manual = ''; upd.sla = '';
+                        upd.customer_id = ''; upd.company_name = ''; upd.brand_site = ''; upd.sla = '';
                       }
                       return upd;
                     });
@@ -593,7 +594,7 @@ export default function CreateIncidentPage() {
                       <div className="font-black text-[11px] tracking-tight leading-tight text-foreground/90 uppercase bg-background/50 p-3 rounded-xl border border-foreground/[0.04] min-h-[50px] flex items-center">
                         {isDistribsi 
                           ? (distForm.selectedItems.length > 0 ? distForm.selectedItems.join(', ') : <span className="opacity-10 italic">NODEID_NULL</span>)
-                          : (form.site_name_manual || <span className="opacity-10 italic">NODEID_NULL</span>)
+                          : (getIncidentDisplayName(form) || <span className="opacity-10 italic">NODEID_NULL</span>)
                         }
                       </div>
                       {!isDistribsi && form.sla && (

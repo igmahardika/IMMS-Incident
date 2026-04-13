@@ -3,6 +3,7 @@ import db from '../db.js';
 import { authenticate } from '../middleware/auth.js';
 import { incidentCreateSchema, incidentUpdateSchema, validateRequest } from '../utils/validators.js';
 import { getIO } from '../socket.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -153,16 +154,6 @@ async function sendEscalation(incident, type) {
   } catch (e) {
     console.error('Escalation webhook failed:', e.message);
   }
-}
-
-// ─── Generate case number ────────────────────────────────────────────────────
-function generateCaseNo() {
-  const now = new Date();
-  const yy = String(now.getFullYear()).slice(2);
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const rand = String(Math.floor(Math.random() * 9000) + 1000);
-  return `C${yy}${mm}${dd}-${rand}`;
 }
 
 // ─── GET /api/incidents — active ────────────────────────────────────────────

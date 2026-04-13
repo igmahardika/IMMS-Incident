@@ -28,7 +28,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 /**
  * Topology Explorer - Distribution Management
@@ -119,10 +119,7 @@ const TreeNode = ({ node, level = 0, onSelect, selectedId }) => {
 
       <AnimatePresence>
         {isOpen && hasChildren && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+          <div
             className="ml-8 border-l border-foreground/[0.05] pl-4 mt-1 flex flex-col gap-1 overflow-hidden"
           >
             {Object.values(node.children).map((child, i) => (
@@ -134,7 +131,7 @@ const TreeNode = ({ node, level = 0, onSelect, selectedId }) => {
                 selectedId={selectedId}
               />
             ))}
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

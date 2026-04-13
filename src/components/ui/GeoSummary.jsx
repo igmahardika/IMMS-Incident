@@ -7,15 +7,19 @@ import { cn } from '../../lib/utils.js';
  * Docked panel for spatial distribution breakdown.
  */
 
-const MiniStatCard = ({ label, val, icon: Icon, color }) => (
-  <div className="flex flex-col gap-1 p-3 bg-foreground/[0.02] border border-foreground/[0.04] rounded-xl hover:bg-foreground/[0.04] transition-all group">
-    <div className="flex items-center justify-between">
-      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/30 font-mono leading-none">{label}</span>
-      <Icon size={12} className={cn("opacity-20 group-hover:opacity-100 transition-opacity", color)} />
+const MiniStatCard = ({ label, val, icon, color }) => {
+  const IconComponent = icon;
+
+  return (
+    <div className="flex flex-col gap-1 p-3 bg-foreground/[0.02] border border-foreground/[0.04] rounded-xl hover:bg-foreground/[0.04] transition-all group">
+      <div className="flex items-center justify-between">
+        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/30 font-mono leading-none">{label}</span>
+        <IconComponent size={12} className={cn("opacity-20 group-hover:opacity-100 transition-opacity", color)} />
+      </div>
+      <span className="text-sm font-black tracking-tighter text-foreground/80 leading-none uppercase tabular-nums">{val}</span>
     </div>
-    <span className="text-sm font-black tracking-tighter text-foreground/80 leading-none uppercase tabular-nums">{val}</span>
-  </div>
-);
+  );
+};
 
 export default function GeoSummary({ customers }) {
   const stats = useMemo(() => {
@@ -68,7 +72,7 @@ export default function GeoSummary({ customers }) {
             <MapPin size={10} /> Regency Distribution
           </span>
           <div className="flex flex-col px-1">
-            {stats.sorted.map(([city, count], i) => {
+            {stats.sorted.map(([city, count]) => {
               const percentage = ((count / stats.totalWithCity) * 100).toFixed(1);
               return (
                 <div 

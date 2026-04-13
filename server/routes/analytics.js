@@ -161,7 +161,9 @@ router.get('/trouble-map', authenticate, (req, res) => {
   
   try {
     fs.appendFileSync('/tmp/imms_trouble_map.log', `[${new Date().toISOString()}] Start: ${start_date}, End: ${end_date}, Found: ${rows.length}\n`);
-  } catch(e) {}
+  } catch {
+    // Best-effort debug logging only.
+  }
   
   logger.info(`[API] /trouble-map result rows: ${rows.length}`);
   res.json(rows);

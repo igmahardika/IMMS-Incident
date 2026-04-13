@@ -77,14 +77,12 @@ export default function EscalationSettingsPage() {
     });
   };
 
-  const renderPreview = (template, ncal, isClose = false) => {
+  const renderPreview = (template, ncal) => {
     if (!template) return '—';
-    const ncalColors = { BLACK: 'text-base-content', RED: 'text-error', ORANGE: 'text-orange-500', YELLOW: 'text-warning', BLUE: 'text-info' };
-    const Icon = isClose ? CheckCircle2 : Circle;
-    const colorClass = isClose ? 'text-success' : (ncalColors[ncal] || 'text-base-content');
-    
-    let labelHTML = `<div class="flex items-center gap-1.5 ${colorClass}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${isClose ? 'none' : 'currentColor'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg> ${ncal}</div>`;
-    // We will inject labelHTML manually if needed, but since it's a textarea simulator string replacement, 
+
+    // We can't safely inject React nodes into the preview string, so we use a compact text label instead.
+    // The color/icon are rendered by the surrounding preview shell.
+    // This keeps the preview readable without mixing HTML into the template.
     // let's just make the preview render the icon OUTSIDE the string, or just use text if inside.
     // Actually, since the template uses `{ncal}` directly in the string, we can't easily inject React nodes.
     // Let's strip `{ncal}` and put a nice header above the preview instead! 

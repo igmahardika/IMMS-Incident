@@ -8,7 +8,6 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, Search, Filter } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils.js';
 
 export function DataTable({ 
@@ -86,11 +85,8 @@ export function DataTable({
           <tbody className="divide-y divide-foreground/5">
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map(row => (
-                <motion.tr 
-                  layout
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  key={row.id} 
+                <tr
+                  key={row.id}
                   className={cn("hover:bg-foreground/[0.02] transition-colors group", getRowClassName(row.original))}
                 >
                   {row.getVisibleCells().map(cell => {
@@ -112,7 +108,7 @@ export function DataTable({
                       </td>
                     );
                   })}
-                </motion.tr>
+                </tr>
               ))
             ) : (
               <tr>

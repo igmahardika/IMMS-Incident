@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, X, ExternalLink, CheckCheck, User, AlertCircle, CheckCircle2, History, Info } from 'lucide-react';
+import { Bell, CheckCheck, AlertCircle, CheckCircle2, History, Info } from 'lucide-react';
 import { api } from '../../utils/api.js';
 import { formatDateTime } from '../../utils/incidentUtils.js';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +12,9 @@ function playNotificationSound() {
     const audio = new Audio('/notification.wav');
     audio.volume = 0.55;
     audio.play().catch(() => {}); // catch autoplay block silently
-  } catch (_) {}
+  } catch {
+    // Notification sound is optional.
+  }
 }
 
 const NotificationIcon = ({ message }) => {
@@ -62,7 +64,9 @@ export default function NotificationBell() {
 
       prevIdsRef.current = currentIds;
       setUnread(data.filter(n => !n.is_read).length);
-    } catch (_) {}
+    } catch {
+      // Notification fetch should fail silently in the bell.
+    }
   }, []);
 
   useEffect(() => {
@@ -87,7 +91,9 @@ export default function NotificationBell() {
       const unreadItems = notifications.filter(n => !n.is_read);
       await Promise.all(unreadItems.map(n => api.markNotificationRead(n.id)));
       fetchNotifications();
-    } catch (_) {}
+    } catch {
+      // Ignore mark-all failures to keep panel responsive.
+    }
   };
 
   const handleClickNotif = async (n) => {
@@ -162,7 +168,7 @@ export default function NotificationBell() {
             </div>
           ) : (
             <div className="flex flex-col p-1.5 space-y-1 relative">
-              {notifications.map((n, idx) => {
+              {notifications.map((n) => {
                 const parsed = parseNotification(n.message);
                 return (
                   <div

@@ -1,17 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../utils/api.js';
-import * as XLSX from 'xlsx';
 import { useToast } from '../../context/ToastContext.jsx';
-import { Modal, TableSkeleton, EmptyState, RoleBadge, StatusBadge, GradeBadge, AccentBadge, SectionCard, Button, Input, Spinner } from '../../components/ui/index.jsx';
-import { Plus, Edit2, Trash2, Database, Download, Network, ChevronRight, ChevronDown, Layout, Map as MapIcon, LayoutList, MapPinOff, Search, Tag, Router, Cable, RadioReceiver } from 'lucide-react';
-import DistributionMap from '../../components/ui/DistributionMap.jsx';
-import CustomerMap from '../../components/ui/CustomerMap.jsx';
-import GeoSummary from '../../components/ui/GeoSummary.jsx';
-import { cn } from '../../lib/utils.js';
+import { Modal, TableSkeleton, SectionCard, Button, Input } from '../../components/ui/index.jsx';
+import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { DataTable } from '../../components/tables/DataTable.jsx';
-
-const ICON_ST = 2;
-const ICON_HD = 2.5;
 
 function TableCard({ children, title, subtitle, footer, headerAction }) {
   return (

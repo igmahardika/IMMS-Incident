@@ -41,7 +41,6 @@ function ChangeView({ center, zoom, viewId }) {
 }
 
 export default function DistributionMap({ data, onRefresh }) {
-  const [renderedCount, setRenderedCount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewState, setViewState] = useState({ center: SEMARANG_CENTER, zoom: 12, id: 0 });
@@ -53,8 +52,6 @@ export default function DistributionMap({ data, onRefresh }) {
   const [startDate, setStartDate] = useState('2026-01-01');
   const [endDate, setEndDate] = useState('2026-02-28'); // Set default to Feb 2026
   
-  const geocodingRef = useRef(false);
-
   const points = useMemo(() => (data || []).filter(d => d.latitude && d.longitude), [data]);
 
   // Points were previously rendered in background batches, removing for stability as requested.

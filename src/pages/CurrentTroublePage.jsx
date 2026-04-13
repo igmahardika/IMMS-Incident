@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { api } from '../utils/api.js';
-import { formatDateTime, processTimeline, formatDuration, calculateIncidentLevel, getSLATarget } from '../utils/incidentUtils.js';
+import { formatDateTime, processTimeline, calculateIncidentLevel, getSLATarget, getIncidentDisplayName, isIncidentOpenStatus } from '../utils/incidentUtils.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge, Button, Select } from '../components/ui/index.jsx';
@@ -173,7 +173,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
           <div className="flex flex-col gap-6 p-6 bg-foreground/[0.03] border border-foreground/5 rounded-2xl">
             <div className="flex flex-col gap-2">
                  <div className="text-sm font-semibold tracking-tight leading-snug text-foreground">
-                 {['ORANGE', 'RED', 'BLACK'].includes(iData.ncal) ? (iData.odp_bts || iData.site_name_manual || '—') : (iData.site_name_manual || iData.company_name || '—')}
+                 {getIncidentDisplayName(iData)}
                </div>
             </div>
 
@@ -259,7 +259,6 @@ function CloseModal({ open, onClose, incident, onClosed }) {
   const [selectedParent, setSelectedParent] = useState('');
   const [classificationId, setClassificationId] = useState('');
   const [history, setHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -270,8 +269,6 @@ function CloseModal({ open, onClose, incident, onClosed }) {
     setHistory([]);
     setClassificationId('');
     setSelectedParent('');
-    setLoadingHistory(true);
-
     api.getClassifications().then(c => {
       setClasses(c);
       if (incident.classification_id) {
@@ -289,7 +286,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
       const logs = full.audit_logs || [];
       const updates = logs.filter(l => l.action === 'UPDATE' && l.details);
       setHistory(updates);
-    }).catch(e => console.error('Error fetching incident history:', e)).finally(() => setLoadingHistory(false));
+    }).catch(e => console.error('Error fetching incident history:', e));
 
   }, [open, incident?.id]);
 
@@ -357,7 +354,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Infrastructure</span>
-            <span className="text-sm font-semibold text-foreground/80 tracking-tight">{incident.site_name_manual || incident.company_name || '—'}</span>
+            <span className="text-sm font-semibold text-foreground/80 tracking-tight">{getIncidentDisplayName(incident)}</span>
           </div>
         </div>
 
@@ -481,7 +478,7 @@ export default function CurrentTroublePage() {
   // SLA Breach Detection
   useEffect(() => {
     incidents.forEach(inc => {
-      if (inc.status !== 'closed' && inc.status !== 'resolved') {
+      if (isIncidentOpenStatus(inc.status)) {
         const target = getSLATarget(inc.ncal);
         const start = new Date(inc.start_time).getTime();
         const elapsed = Math.floor((Date.now() - start) / 1000);
@@ -545,7 +542,7 @@ export default function CurrentTroublePage() {
       header: 'Infrastructure',
       cell: ({ row }) => {
         const inc = row.original;
-        const name = ['ORANGE', 'RED', 'BLACK'].includes(inc.ncal) ? (inc.odp_bts || inc.site_name_manual || '—') : (inc.site_name_manual || inc.company_name || '—');
+        const name = getIncidentDisplayName(inc);
         return (
           <div className="flex flex-col gap-0.5 min-w-0">
             <span className="text-[11px] font-bold tracking-tight text-foreground leading-none truncate" title={name}>{name}</span>
@@ -616,7 +613,7 @@ export default function CurrentTroublePage() {
       size: 120,
       meta: { className: 'text-right px-2' },
     }
-  ], [user?.role, navigate, highlightedIds]);
+  ], [user?.role, navigate, handleResume, handleStart]);
 
   if (loading) return <PageSpinner />;
   
@@ -716,7 +713,7 @@ export default function CurrentTroublePage() {
                 const isHighlighted = highlightedIds.has(row.id);
                 const target = getSLATarget(row.ncal);
                 const elapsed = Math.floor((Date.now() - new Date(row.start_time).getTime()) / 1000);
-                const isSlaBreached = row.status !== 'closed' && row.status !== 'resolved' && elapsed > target;
+                const isSlaBreached = isIncidentOpenStatus(row.status) && elapsed > target;
                 
                 if (isHighlighted) return "bg-primary/[0.04] shadow-[inset_3px_0_0_0_var(--color-primary)] transition-all duration-1000";
                 if (isSlaBreached) return "bg-error/[0.03] shadow-[inset_3px_0_0_0_var(--color-error)]";

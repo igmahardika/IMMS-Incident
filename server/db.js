@@ -23,6 +23,33 @@ const db = sqlite;
 // CREATE TABLE statements have been migrated to Drizzle ORM schema definitions in ./config/schema.js
 // Use 'npx drizzle-kit push' to apply schema changes to the database natively
 
+function ensureColumn(table, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+  const columnNames = new Set(columns.map((column) => column.name));
+  const [columnName] = definition.split(/\s+/);
+  if (!columnNames.has(columnName)) {
+    db.prepare(`ALTER TABLE ${table} ADD COLUMN ${definition}`).run();
+  }
+}
+
+function ensureSchemaCompatibility() {
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS metadata (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  ensureColumn('master_customer', 'sla TEXT');
+  ensureColumn('master_customer', 'latitude REAL');
+  ensureColumn('master_customer', 'longitude REAL');
+  ensureColumn('master_customer', 'city TEXT');
+  ensureColumn('master_customer', 'province TEXT');
+}
+
+ensureSchemaCompatibility();
+
 // ─── Seed Data ─────────────────────────────────────────────────────────────
 
 const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
@@ -93,4 +120,3 @@ if (escCount === 0) {
 }
 
 export default db;
-

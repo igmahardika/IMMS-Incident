@@ -31,6 +31,18 @@ export function elapsedSeconds(startIso) {
   return Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
 }
 
+export function getIncidentDisplayName(incident) {
+  if (!incident) return '—';
+  if (['ORANGE', 'RED', 'BLACK'].includes(incident.ncal)) {
+    return incident.odp_bts || '—';
+  }
+  return incident.brand_site || incident.company_name || '—';
+}
+
+export function isIncidentOpenStatus(status) {
+  return ['open', 'progress', 'pending'].includes(status);
+}
+
 /**
  * Merges audit_logs and pause_logs into a single sorted timeline.
  * Calculates durations between steps where applicable.

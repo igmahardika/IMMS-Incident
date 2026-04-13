@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { api } from '../../utils/api.js';
-import { formatDateTime, formatDate } from '../../utils/incidentUtils.js';
 import { Button, Spinner } from './index.jsx';
 import { cn } from '../../lib/utils.js';
-import { Search, RefreshCw, AlertCircle, Users, Activity, Crosshair, Map as MapIcon } from 'lucide-react';
+import { Search, AlertCircle, Users, Activity } from 'lucide-react';
 
 /**
  * Enhanced Customer Map - Spatial Visualization Protocol
@@ -58,14 +57,11 @@ export default function CustomerMap({
   endDate = '2026-02-28 23:59:59',
   hideCustomerPins = false
 }) {
-  const [renderedCount, setRenderedCount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [geocodingStatus, setGeocodingStatus] = useState({ active: false, current: 0, total: 0 });
   const [mapMode, setMapMode] = useState(initialMode); // 'customers' | 'trouble'
   const [troubleData, setTroubleData] = useState([]);
-  const [isTroubleLoading, setIsTroubleLoading] = useState(false);
-  
   const semarangCenter = [-7.0051, 110.4381];
   const [viewState, setViewState] = useState({ center: semarangCenter, zoom: 12 });
 
@@ -109,14 +105,11 @@ export default function CustomerMap({
   useEffect(() => {
     if (mapMode === 'trouble' && showTroubleMode) {
       const fetchTroubleData = async () => {
-        setIsTroubleLoading(true);
         try {
           const data = await api.getTroubleMapData(startDate, endDate);
           setTroubleData(data);
         } catch (err) {
           console.error(err);
-        } finally {
-          setIsTroubleLoading(false);
         }
       };
       fetchTroubleData();

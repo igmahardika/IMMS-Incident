@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { Button } from '../components/ui/index.jsx';
-import { cn } from '../lib/utils.js';
 
 const QUICK_LOGINS = [
   { u: 'admin',   p: 'admin123',   role: 'Admin' },
