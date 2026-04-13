@@ -5,7 +5,7 @@ import {
   Spinner, 
   SectionCard, 
   ChartContainer, 
-  ChartTooltip, 
+  ChartTooltipContent,
   ResponsiveContainer
 } from '../components/ui/index.jsx';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
@@ -163,7 +163,7 @@ export default function RootCausePage() {
                                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} className="hover:opacity-80 transition-opacity cursor-pointer shadow-xl" />
                                ))}
                              </Pie>
-                             <Tooltip content={<ChartTooltip config={rootCauseConfig} />} />
+                             <Tooltip content={<ChartTooltipContent config={rootCauseConfig} />} />
                            </PieChart>
                          </ResponsiveContainer>
                        </ChartContainer>

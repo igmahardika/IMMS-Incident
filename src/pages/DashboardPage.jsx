@@ -4,7 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../utils/api.js';
 import { formatDuration, getIncidentDisplayName } from '../utils/incidentUtils.js';
 import { NCAL_ORDER, MONTH_NAMES } from '../utils/constants.js';
-import { NcalBadge, SectionCard, ChartContainer, ChartTooltip, ChartLegend, ResponsiveContainer, Button, PageSpinner } from '../components/ui/index.jsx';
+import {
+  NcalBadge,
+  SectionCard,
+  ChartContainer,
+  ChartTooltipContent,
+  ChartLegendContent,
+  ResponsiveContainer,
+  Button,
+  PageSpinner,
+} from '../components/ui/index.jsx';
 import { AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { cn } from '../lib/utils.js';
@@ -124,8 +133,8 @@ export default function DashboardPage() {
                       <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-foreground)" opacity={0.03} />
                       <XAxis dataKey="month" tick={{ fill: "var(--color-foreground)", opacity: 0.4, fontSize: 10, fontWeight: 800 }} axisLine={false} tickLine={false} tickMargin={15} />
                       <YAxis tick={{ fill: "var(--color-foreground)", opacity: 0.4, fontSize: 10, fontWeight: 800 }} axisLine={false} tickLine={false} tickMargin={10} width={45} />
-                      <Tooltip content={<ChartTooltip config={chartConfig} valueFormatter={(val) => formatDuration(Math.round(val * 60))} />} />
-                      <Legend content={<ChartLegend config={chartConfig} />} verticalAlign="bottom" height={36} wrapperStyle={{ paddingTop: '20px' }} />
+                      <Tooltip content={<ChartTooltipContent config={chartConfig} />} formatter={(val) => formatDuration(Math.round(val * 60))} />
+                      <Legend content={<ChartLegendContent config={chartConfig} />} verticalAlign="bottom" height={36} wrapperStyle={{ paddingTop: '20px' }} />
                       {NCAL_ORDER.map(ncal => (
                         <Line key={ncal} type="monotone" dataKey={ncal} stroke={chartConfig[ncal].color} strokeWidth={3} dot={{ r: 0 }} activeDot={{ r: 5, stroke: "var(--color-background)", strokeWidth: 2 }} connectNulls animationDuration={1000} />
                       ))}
