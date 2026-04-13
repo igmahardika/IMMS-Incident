@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
-import * as XLSX from 'xlsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { 
   Modal, 
@@ -34,6 +33,7 @@ import { cn } from '../../lib/utils.js';
 import { DataTable } from '../../components/tables/DataTable.jsx';
 import CustomerMap from '../../components/ui/CustomerMap.jsx';
 import GeoSummary from '../../components/ui/GeoSummary.jsx';
+import { parseCsvFile, downloadCsv } from '../../utils/csv.js';
 
 /**
  * Customer Intelligence - High-Density Infrastructure Registry
@@ -115,10 +115,7 @@ export default function MasterCustomerPage() {
     if (!file) return;
     setLoading(true);
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet);
+      const rows = await parseCsvFile(file);
       const parsed = rows.map(r => ({
         customer_id: r['Customer ID']?.toString() || '',
         service_id: r['Service ID']?.toString() || '',
@@ -143,10 +140,19 @@ export default function MasterCustomerPage() {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ 'Customer ID': 'CUST-01', 'Service ID': 'SID-01', 'Company Name': 'GLOBAL TECH', 'Brand / Site': 'HQ', 'Address': 'STREET 01', 'Service': 'Internet Dedicated', 'Grade': 'Gold', 'Support Level': 'L2' }]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'IMMS_Intel_Template.xlsx');
+    downloadCsv(
+      [{
+        'Customer ID': 'CUST-01',
+        'Service ID': 'SID-01',
+        'Company Name': 'GLOBAL TECH',
+        'Brand / Site': 'HQ',
+        Address: 'STREET 01',
+        Service: 'Internet Dedicated',
+        Grade: 'Gold',
+        'Support Level': 'L2',
+      }],
+      'IMMS_Intel_Template.csv'
+    );
   };
 
   const stats = useMemo(() => {
@@ -294,7 +300,7 @@ export default function MasterCustomerPage() {
                    <Download size={13} /> TMPL
                 </Button>
                 <label className="cursor-pointer">
-                   <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+                   <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileUpload} />
                    <Button variant="ghost" size="xs" className="font-black text-[9px] tracking-[0.2em] pointer-events-none px-3 h-10 opacity-60 hover:opacity-100 flex items-center gap-2">
                       <Database size={13} /> SYNC
                    </Button>

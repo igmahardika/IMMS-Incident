@@ -74,8 +74,8 @@ export default function HistoryPage() {
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
-      const { exportToExcel } = await import('../utils/exportStats.js');
-      await exportToExcel(data, `IMMS_History_${new Date().toISOString().split('T')[0]}.xlsx`);
+      const { exportToCsv } = await import('../utils/exportStats.js');
+      await exportToCsv(data, `IMMS_History_${new Date().toISOString().split('T')[0]}.csv`);
     } catch (e) {
       addToast(e.message || 'Failed to export Excel report', 'error');
     } finally {
@@ -202,7 +202,7 @@ export default function HistoryPage() {
             </button>
           </div>
           <Button variant="ghost" size="sm" onClick={handleExport} isLoading={exporting} className="font-bold text-[9px] tracking-widest text-success hover:bg-success/10">
-            <FileSpreadsheet size={12} className="mr-1" /> EXCEL REPORT
+            <FileSpreadsheet size={12} className="mr-1" /> CSV REPORT
           </Button>
         </div>
       </div>

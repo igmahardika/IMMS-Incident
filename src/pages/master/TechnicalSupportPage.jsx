@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
-import * as XLSX from 'xlsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { 
   Modal, 
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { DataTable } from '../../components/tables/DataTable.jsx';
+import { parseCsvFile, downloadCsv } from '../../utils/csv.js';
 
 /**
  * Personnel Registry - Enhanced Engineering Management
@@ -113,10 +113,7 @@ export default function MasterTechnicalSupportPage() {
     if (!file) return;
     setLoading(true);
     try {
-      const buf = await file.arrayBuffer();
-      const workbook = XLSX.read(buf);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet);
+      const rows = await parseCsvFile(file);
       const parsed = rows.map(r => ({ 
         no: r['No']?.toString() || '', 
         name: r['Name']?.toString() || '', 
@@ -135,10 +132,10 @@ export default function MasterTechnicalSupportPage() {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ No: '1001', Name: 'JOHN SMITH', Unit: 'JAKARTA CENTER' }]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Engineers');
-    XLSX.writeFile(wb, 'IMMS_Personnel_Template.xlsx');
+    downloadCsv(
+      [{ No: '1001', Name: 'JOHN SMITH', Unit: 'JAKARTA CENTER' }],
+      'IMMS_Personnel_Template.csv'
+    );
   };
 
   const columns = useMemo(() => [
@@ -254,7 +251,7 @@ export default function MasterTechnicalSupportPage() {
             <Download size={12} /> Template
           </button>
           <label className="cursor-pointer">
-            <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileUpload} />
             <div className="flex items-center gap-2 px-3 h-8 bg-primary/5 border border-primary/20 rounded-lg text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all shadow-sm">
               <Database size={12} /> Batch Sync
             </div>

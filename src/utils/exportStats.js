@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import { downloadCsv } from './csv.js';
 
 const EXPORT_COLUMNS = [
   { header: 'CASE NO', key: 'case_no', width: 20 },
@@ -14,19 +14,11 @@ const EXPORT_COLUMNS = [
   { header: 'NETT (SEC)', key: 'duration_nett_seconds', width: 15 },
 ];
 
-export async function exportToExcel(data, filename = 'IMMS_Report.xlsx') {
-  const rows = data.map(item => EXPORT_COLUMNS.reduce((record, column) => {
+export async function exportToCsv(data, filename = 'IMMS_Report.csv') {
+  const rows = data.map((item) => EXPORT_COLUMNS.reduce((record, column) => {
     record[column.header] = item[column.key] ?? '';
     return record;
   }, {}));
 
-  const worksheet = XLSX.utils.json_to_sheet(rows, {
-    header: EXPORT_COLUMNS.map(column => column.header),
-  });
-
-  worksheet['!cols'] = EXPORT_COLUMNS.map(column => ({ wch: column.width }));
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Incident History');
-  XLSX.writeFile(workbook, filename);
+  downloadCsv(rows, filename);
 }
