@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   BarChart2,
   Database,
-  HardHat,
   History,
   LayoutDashboard,
   ListChecks,
@@ -56,10 +55,8 @@ const menuGroups = [
     items: [
       { to: '/master/customers', icon: Database, label: 'Customer Records', roles: ['admin', 'manager'] },
       { to: '/master/classifications', icon: Tag, label: 'Classifications', roles: ['admin', 'manager'] },
-      { to: '/master/technical-support', icon: HardHat, label: 'Personnel Records', roles: ['admin', 'manager'] },
       { to: '/master/distribusi', icon: Network, label: 'Distribution Topology', roles: ['admin', 'manager'] },
-      { to: '/master/actions', icon: ListChecks, label: 'Master Actions', roles: ['admin', 'manager'] },
-      { to: '/master/users', icon: UserCog, label: 'User Accounts', roles: ['admin'] },
+      { to: '/master/users', icon: UserCog, label: 'Personnel & Accounts', roles: ['admin', 'manager'] },
     ],
   },
   {

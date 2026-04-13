@@ -1,395 +1,360 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Edit2,
+  Fingerprint,
+  Mail,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import { 
-  Modal, 
-  TableSkeleton, 
-  EmptyState, 
-  RoleBadge, 
-  StatusBadge, 
-  SectionCard, 
-  Button, 
-  Input, 
+import { useAuth } from '../../context/AuthContext.jsx';
+import {
+  Button,
+  Input,
+  Modal,
+  PageHeader,
+  RoleBadge,
+  SectionCard,
   Select,
-  PageSpinner
+  StatusBadge,
+  TableSkeleton,
 } from '../../components/ui/index.jsx';
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  User, 
-  ShieldCheck, 
-  Activity, 
-  Users, 
-  Lock,
-  Mail,
-  Fingerprint,
-  MoreVertical,
-  CheckCircle2,
-  XCircle
-} from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { DataTable } from '../../components/tables/DataTable.jsx';
 
-/**
- * Identity Hub - Enhanced User Management
- * High-density UI for administrative control of system access nodes.
- */
+const ROLES = ['admin', 'manager', 'noc', 'technician'];
+const EMPTY_FORM = {
+  employee_id: '',
+  username: '',
+  password: '',
+  name: '',
+  role: 'noc',
+  email: '',
+};
 
-// Mini Avatar Component for Table Alignment
-const UserAvatar = ({ name, role }) => {
-  const initials = name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??';
+function UserAvatar({ name, role }) {
+  const initials = name?.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '??';
   const roleColors = {
-    admin: 'bg-primary/20 text-primary border-primary/20',
-    noc: 'bg-info/20 text-info border-info/20',
-    manager: 'bg-warning/20 text-warning border-warning/20',
-    technician: 'bg-secondary/20 text-secondary border-secondary/20'
+    admin: 'bg-primary/10 text-primary border-primary/20',
+    noc: 'bg-info/10 text-info border-info/20',
+    manager: 'bg-warning/10 text-warning border-warning/20',
+    technician: 'bg-secondary/10 text-secondary border-secondary/20',
   };
-  
+
   return (
-    <div className={cn(
-      "w-9 h-9 rounded-xl border flex items-center justify-center font-black text-[11px] tracking-tighter shrink-0 transition-all group-hover:scale-105",
-      roleColors[role] || 'bg-foreground/5 text-foreground/40 border-foreground/10'
-    )}>
+    <div
+      className={cn(
+        'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border text-sm font-semibold',
+        roleColors[role] || 'border-border bg-muted text-muted-foreground'
+      )}
+    >
       {initials}
     </div>
   );
-};
+}
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // 'create' or user object
-  const [searchQuery, setSearchQuery] = useState('');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
   const { addToast } = useToast();
+  const { user } = useAuth();
 
-  const [form, setForm] = useState({ 
-    employee_id: '', 
-    username: '', 
-    password: '', 
-    name: '', 
-    role: 'noc', 
-    email: '' 
-  });
-  
-  const ROLES = ['admin', 'manager', 'noc', 'technician'];
-
-  const stats = useMemo(() => {
-    const total = users.length;
-    const active = users.filter(u => u.is_active).length;
-    const roleCounts = users.reduce((acc, u) => {
-      acc[u.role] = (acc[u.role] || 0) + 1;
-      return acc;
-    }, {});
-    
-    return { total, active, ...roleCounts };
-  }, [users]);
+  const isAdmin = user?.role === 'admin';
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.getUsers();
-      setUsers(res);
-    } catch (e) {
-      addToast(e.message, 'error');
+      const response = await api.getUsers();
+      setUsers(response);
+    } catch (error) {
+      addToast(error.message, 'error');
     } finally {
       setLoading(false);
     }
   }, [addToast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const setField = (key, value) => {
+    setForm((previous) => ({ ...previous, [key]: value }));
+  };
 
   const openCreate = () => {
-    setForm({ employee_id: '', username: '', password: '', name: '', role: 'noc', email: '' });
+    setForm(EMPTY_FORM);
     setModal('create');
   };
 
-  const openEdit = (u) => {
-    setForm({ ...u, password: '' });
-    setModal(u);
+  const openEdit = (account) => {
+    setForm({
+      ...EMPTY_FORM,
+      ...account,
+      password: '',
+    });
+    setModal(account);
   };
 
   const handleSave = async () => {
     try {
       if (modal === 'create') {
         await api.createUser(form);
-        addToast('Authorized access node initialized', 'success');
+        addToast('Personnel account created', 'success');
       } else {
         await api.updateUser(modal.id, form);
-        addToast('Identity protocol refined', 'success');
+        addToast('Personnel account updated', 'success');
       }
+
       setModal(null);
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   };
 
-  const handleDelete = useCallback(async (u) => {
-    if (!confirm(`Purge identity protocol for ${u.name}? This action is irreversible.`)) return;
+  const handleDelete = useCallback(async (account) => {
+    if (!window.confirm(`Deactivate account for ${account.name}?`)) {
+      return;
+    }
+
     try {
-      await api.deleteUser(u.id);
-      addToast('Identity purged from registry', 'warning');
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      await api.deleteUser(account.id);
+      addToast('Personnel account deactivated', 'warning');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   }, [addToast, load]);
 
-  const handleToggle = useCallback(async (u) => {
+  const handleToggle = useCallback(async (account) => {
     try {
-      await api.updateUser(u.id, { is_active: !u.is_active });
-      addToast(`Access terminal ${!u.is_active ? 'ENABLED' : 'DISABLED'}`, 'info');
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      await api.updateUser(account.id, { is_active: !account.is_active });
+      addToast(`Account ${account.is_active ? 'disabled' : 'enabled'}`, 'info');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   }, [addToast, load]);
 
   const columns = useMemo(() => [
     {
       accessorKey: 'identity',
-      header: 'Personnel Identity',
+      header: 'Name',
+      size: 280,
+      meta: { flexible: true },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <UserAvatar name={row.original.name} role={row.original.role} />
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="text-[11px] font-black text-foreground/90 tracking-tight truncate leading-tight">
+          <div className="min-w-0 space-y-0.5">
+            <p className="truncate text-sm font-medium text-foreground">
               {row.original.name}
-            </span>
-            <span className="text-[9px] font-mono font-bold text-foreground/40 uppercase tracking-[0.2em] leading-none">
-              @{row.original.username}
-            </span>
+            </p>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <span>@{row.original.username}</span>
+              <span>{row.original.employee_id || 'No employee ID'}</span>
+            </div>
           </div>
         </div>
       ),
-      size: 260,
-      meta: { flexible: true }
     },
     {
       accessorKey: 'role',
-      header: 'Authorization',
+      header: 'Role',
+      size: 120,
+      meta: { className: 'text-center' },
       cell: ({ row }) => <RoleBadge role={row.original.role} />,
-      size: 130,
-      meta: { className: 'text-center' }
     },
     {
-      accessorKey: 'metadata',
-      header: 'Access Meta',
+      accessorKey: 'directory',
+      header: 'Contact',
+      size: 220,
+      meta: { flexible: true },
       cell: ({ row }) => (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-foreground/50">
-            <Mail size={10} className="shrink-0" />
-            <span className="text-[10px] font-semibold truncate max-w-[140px]">{row.original.email || '—'}</span>
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 text-sm text-foreground">
+            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="truncate">{row.original.email || 'No email'}</span>
           </div>
-          <div className="flex items-center gap-2 text-primary/60 font-mono text-[9px] font-black uppercase tracking-widest">
-            <Fingerprint size={10} className="shrink-0" />
-            Emp-ID: {row.original.employee_id || 'NULL'}
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <Fingerprint className="h-3.5 w-3.5" />
+            Employee ID: {row.original.employee_id || 'Not assigned'}
           </div>
         </div>
       ),
-      size: 200,
     },
     {
+      accessorKey: 'status',
+      header: 'Status',
+      size: 96,
+      meta: { className: 'text-center' },
+      cell: ({ row }) => <StatusBadge active={row.original.is_active} />,
+    },
+    ...(isAdmin ? [{
       accessorKey: 'is_active',
-      header: 'Terminal State',
+      header: 'Access',
+      size: 90,
+      meta: { className: 'text-center' },
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <button 
+          <button
+            type="button"
             onClick={() => handleToggle(row.original)}
             className={cn(
-              "group relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              row.original.is_active ? "bg-success" : "bg-foreground/10"
+              'relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              row.original.is_active ? 'bg-success' : 'bg-muted-foreground/30'
             )}
           >
-            <span className={cn(
-              "pointer-events-none block h-3.5 w-3.5 rounded-full bg-background shadow-lg ring-0 transition-transform",
-              row.original.is_active ? "translate-x-5.5" : "translate-x-1"
-            )} />
+            <span
+              className={cn(
+                'block h-4 w-4 rounded-full bg-background shadow transition-transform',
+                row.original.is_active ? 'translate-x-5' : 'translate-x-1'
+              )}
+            />
           </button>
         </div>
       ),
-      size: 110,
-      meta: { className: 'text-center' }
-    },
-    {
+    }] : []),
+    ...(isAdmin ? [{
       id: 'actions',
       header: '',
+      size: 96,
+      meta: { className: 'text-right' },
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1 px-2">
-          <button 
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            icon={<Edit2 className="h-4 w-4" />}
             onClick={() => openEdit(row.original)}
-            className="p-1.5 rounded-lg text-foreground/30 hover:text-primary hover:bg-primary/5 transition-all"
-            title="Refine Protocol"
-          >
-            <Edit2 size={13} strokeWidth={2.5} />
-          </button>
-          <button 
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            icon={<Trash2 className="h-4 w-4" />}
             onClick={() => handleDelete(row.original)}
-            className="p-1.5 rounded-lg text-foreground/30 hover:text-error hover:bg-error/5 transition-all"
-            title="Purge Identity"
-          >
-            <Trash2 size={13} strokeWidth={2.5} />
-          </button>
+          />
         </div>
       ),
-      size: 80,
-      meta: { className: 'text-right' }
-    }
-  ], [handleToggle, handleDelete]);
+    }] : []),
+  ], [handleDelete, handleToggle, isAdmin]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Visual Header */}
-      <div className="flex flex-col gap-6 shrink-0 mb-6">
-        <div className="flex items-end justify-between gap-4 flex-wrap px-1">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Identity Registry</h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50 leading-relaxed italic">
-              Administration of <span className="text-primary">{users.length}</span> authorized access points
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/[0.06] rounded-xl px-3 h-10 w-[240px] focus-within:ring-1 focus-within:ring-primary/30 focus-within:bg-background transition-all">
-                <Search size={14} className="text-foreground/20" />
-                <input 
-                  type="text" 
-                  className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full placeholder:text-foreground/20 uppercase tracking-widest" 
-                  placeholder="Scan Protocol Registry..." 
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-             </div>
-             <Button variant="primary" icon={<Plus size={14} strokeWidth={2.5} />} onClick={openCreate} className="h-10 px-6">
-                Initialize Node
-             </Button>
-          </div>
-        </div>
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <PageHeader
+        title="Personnel & Accounts"
+        subtitle={isAdmin
+          ? 'Manage personnel records and their system access from one place.'
+          : 'Review active personnel and their assigned application roles.'}
+        action={isAdmin ? (
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={openCreate}
+          >
+            Add Account
+          </Button>
+        ) : null}
+      />
 
-        {/* KPI Metrics Row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-1">
-           {[
-             { label: 'Total Registry', val: stats.total, icon: Users, color: 'text-primary' },
-             { label: 'Active Access', val: stats.active, icon: Activity, color: 'text-success' },
-             { label: 'Privileged', val: stats.admin || 0, icon: ShieldCheck, color: 'text-warning' },
-             { label: 'NOC Command', val: stats.noc || 0, icon: Lock, color: 'text-info' },
-             { label: 'Field Agents', val: stats.technician || 0, icon: User, color: 'text-secondary' },
-           ].map((stat, i) => (
-             <div key={i} className="bg-foreground/[0.02] border border-foreground/[0.04] rounded-2xl p-3 flex flex-col gap-2 group hover:bg-foreground/[0.04] transition-all">
-                <div className="flex items-center justify-between">
-                   <span className="text-[8px] font-black uppercase tracking-[0.25em] text-foreground/30 font-mono leading-none">{stat.label}</span>
-                   <stat.icon size={12} className={cn("opacity-20 group-hover:opacity-100 transition-opacity", stat.color)} />
-                </div>
-                <span className="text-lg font-black tracking-tighter text-foreground/80 leading-none">{stat.val}</span>
-             </div>
-           ))}
-        </div>
-      </div>
-
-      <SectionCard padding={false} className="flex-1 min-h-0 border-foreground/[0.08] shadow-sm mb-4">
-        {loading ? <TableSkeleton rows={12} /> : (
-          <DataTable 
-            columns={columns} 
-            data={users} 
-            globalFilter={searchQuery}
-            setGlobalFilter={setSearchQuery}
+      <SectionCard
+        title="Directory"
+        subtitle={isAdmin
+          ? 'This table is the single source for personnel identity and account access.'
+          : 'Manager access is read-only. Contact an admin to create, deactivate, or change credentials.'}
+        padding={false}
+        className="flex-1 min-h-0"
+      >
+        {loading ? (
+          <TableSkeleton rows={12} />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={users}
+            globalFilter=""
+            setGlobalFilter={() => {}}
             pageSize={50}
-            getRowClassName={(row) => !row.is_active ? 'opacity-50 grayscale-[0.5]' : ''}
+            getRowClassName={(row) => (!row.is_active ? 'opacity-60' : '')}
           />
         )}
       </SectionCard>
 
-      <Modal 
-        open={!!modal} 
-        onClose={() => setModal(null)} 
-        title={modal === 'create' ? 'Initialize Identity Node' : 'Refine Identity Protocol'} 
-        size="2xl"
-        footer={
-          <div className="flex gap-2.5 w-full justify-end">
-            <Button variant="ghost" onClick={() => setModal(null)}>Abort</Button>
-            <Button variant="primary" onClick={handleSave} className="px-8 shadow-lg shadow-primary/20 leading-none">
-               Commit Protocol Change
-            </Button>
-          </div>
-        }
-      >
-        <div className="flex flex-col gap-8 py-2">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 mb-2">
-               <div className="w-1 h-3 bg-primary rounded-full" />
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Personnel Profile</span>
+      {isAdmin ? (
+        <Modal
+          open={!!modal}
+          onClose={() => setModal(null)}
+          title={modal === 'create' ? 'Add Personnel Account' : 'Edit Personnel Account'}
+          size="2xl"
+          footer={(
+            <>
+              <Button variant="ghost" onClick={() => setModal(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave}>
+                {modal === 'create' ? 'Create Account' : 'Save Changes'}
+              </Button>
+            </>
+          )}
+        >
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Full Name"
+                value={form.name}
+                onChange={(event) => setField('name', event.target.value)}
+                placeholder="Operational full name"
+                required
+              />
+              <Input
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(event) => setField('email', event.target.value)}
+                placeholder="personnel@company.com"
+              />
+              <Input
+                label="Employee ID"
+                value={form.employee_id}
+                onChange={(event) => setField('employee_id', event.target.value)}
+                placeholder="1001"
+              />
+              <Select
+                label="Role"
+                value={form.role}
+                onChange={(event) => setField('role', event.target.value)}
+              >
+                {ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {role.toUpperCase()}
+                  </option>
+                ))}
+              </Select>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input 
-                label="Legal Identity Name *" 
-                value={form.name} 
-                onChange={e => setF('name', e.target.value)} 
-                placeholder="Full operational name"
-              />
-              <Input 
-                label="Communications Access (Email)" 
-                type="email" 
-                value={form.email} 
-                onChange={e => setF('email', e.target.value)} 
-                placeholder="identity@internal.protocol"
-              />
-              <Input 
-                label="Employee ID Registry *" 
-                value={form.employee_id} 
-                onChange={e => setF('employee_id', e.target.value)} 
-                placeholder="e.g. 1001"
-                maxLength={10} 
-              />
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 ml-1">Operational Role</label>
-                <Select 
-                  value={form.role} 
-                  onChange={e => setF('role', e.target.value)}
-                  className="bg-background/50 h-10 border-foreground/10"
-                >
-                  {ROLES.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
-                </Select>
-              </div>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 mb-2">
-               <div className="w-1 h-3 bg-warning rounded-full" />
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Access Credentials</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input 
-                label="Command Username *" 
-                value={form.username} 
-                onChange={e => setF('username', e.target.value)} 
-                placeholder="username" 
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Username"
+                value={form.username}
+                onChange={(event) => setField('username', event.target.value)}
+                placeholder="username"
                 disabled={modal !== 'create'}
-                className="bg-foreground/[0.02]"
+                description={modal === 'create' ? 'Used for login authentication.' : 'Username cannot be changed after account creation.'}
               />
-              <Input 
-                label={`Auth Password ${modal !== 'create' ? '(Leave blank to retain)' : '*'}`}
-                type="password" 
-                value={form.password} 
-                onChange={e => setF('password', e.target.value)} 
-                placeholder="••••••••"
+              <Input
+                label={modal === 'create' ? 'Password' : 'Reset Password'}
+                type="password"
+                value={form.password}
+                onChange={(event) => setField('password', event.target.value)}
+                placeholder={modal === 'create' ? 'Minimum operational password' : 'Leave blank to keep current password'}
               />
             </div>
-            {modal !== 'create' && (
-              <div className="mt-2 p-4 bg-warning/5 border border-warning/10 rounded-xl flex items-start gap-3">
-                 <Lock size={14} className="text-warning mt-0.5 shrink-0" />
-                 <p className="text-[10px] font-medium text-warning leading-relaxed">
-                   SECURITY PROTOCOL: Updating the username is restricted for established identities. 
-                   Passwords should only be refined if the access key has been compromised.
-                 </p>
-              </div>
-            )}
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      ) : null}
     </div>
   );
 }

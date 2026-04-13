@@ -1,142 +1,196 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Activity,
+  Cable,
+  ChevronDown,
+  ChevronRight,
+  Cpu,
+  Edit2,
+  MapPin,
+  Network,
+  Plus,
+  RadioReceiver,
+  Server,
+  Trash2,
+} from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import { 
-  Modal, 
-  TableSkeleton, 
-  SectionCard, 
-  Button, 
-  Input, 
-  Select
+import {
+  Button,
+  EmptyState,
+  Input,
+  Modal,
+  PageHeader,
+  SectionCard,
+  Select,
+  TableSkeleton,
 } from '../../components/ui/index.jsx';
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  Cable, 
-  RadioReceiver, 
-  ChevronRight, 
-  ChevronDown, 
-  Network, 
-  MapPin, 
-  Activity, 
-  Server,
-  Cpu,
-  Database,
-  Info,
-  Maximize2
-} from 'lucide-react';
 import { cn } from '../../lib/utils.js';
-import { AnimatePresence } from 'framer-motion';
 
-/**
- * Topology Explorer - Distribution Management
- * Visualizes the network architecture from POP/BTS hubs to leaf ODP nodes.
- */
+const EMPTY_FORM = {
+  type: 'Fiber Optic',
+  level_1: '',
+  level_2: '',
+  level_3: '',
+  level_4: '',
+  latitude: '',
+  longitude: '',
+};
 
-// Helper to transform flat API data into a hierarchical tree
-const buildTopologyTree = (data) => {
+function buildTopologyTree(data) {
   const tree = { fo: {}, wireless: {} };
 
-  data.forEach(item => {
+  data.forEach((item) => {
     if (item.type === 'Fiber Optic') {
       const { level_1: pop, level_2: osc, level_3: odc, level_4: odp } = item;
-      if (!tree.fo[pop]) tree.fo[pop] = { name: pop, children: {}, type: 'pop', raw: item };
+
+      if (!tree.fo[pop]) {
+        tree.fo[pop] = { name: pop, children: {}, type: 'pop', raw: item };
+      }
+
       if (osc) {
-        if (!tree.fo[pop].children[osc]) tree.fo[pop].children[osc] = { name: osc, children: {}, type: 'osc', raw: item };
+        if (!tree.fo[pop].children[osc]) {
+          tree.fo[pop].children[osc] = { name: osc, children: {}, type: 'osc', raw: item };
+        }
+
         if (odc) {
-          if (!tree.fo[pop].children[osc].children[odc]) tree.fo[pop].children[osc].children[odc] = { name: odc, children: {}, type: 'odc', raw: item };
+          if (!tree.fo[pop].children[osc].children[odc]) {
+            tree.fo[pop].children[osc].children[odc] = { name: odc, children: {}, type: 'odc', raw: item };
+          }
+
           if (odp) {
-            tree.fo[pop].children[osc].children[odc].children[odp] = { name: odp, children: null, type: 'odp', raw: item };
+            tree.fo[pop].children[osc].children[odc].children[odp] = {
+              name: odp,
+              children: null,
+              type: 'odp',
+              raw: item,
+            };
           }
         }
       }
     } else {
       const { level_1: bts, level_2: radio } = item;
-      if (!tree.wireless[bts]) tree.wireless[bts] = { name: bts, children: {}, type: 'bts', raw: item };
+
+      if (!tree.wireless[bts]) {
+        tree.wireless[bts] = { name: bts, children: {}, type: 'bts', raw: item };
+      }
+
       if (radio) {
-        tree.wireless[bts].children[radio] = { name: radio, children: null, type: 'radio', raw: item };
+        tree.wireless[bts].children[radio] = {
+          name: radio,
+          children: null,
+          type: 'radio',
+          raw: item,
+        };
       }
     }
   });
 
   return tree;
-};
+}
 
-const TreeNode = ({ node, level = 0, onSelect, selectedId }) => {
-  const [isOpen, setIsOpen] = useState(level < 1); // Roots open by default
+function filterTree(nodes, term) {
+  if (!term) return nodes;
+
+  return Object.entries(nodes).reduce((accumulator, [key, node]) => {
+    const isMatch = node.name.toLowerCase().includes(term);
+    const filteredChildren = node.children ? filterTree(node.children, term) : null;
+
+    if (isMatch || (filteredChildren && Object.keys(filteredChildren).length > 0)) {
+      accumulator[key] = {
+        ...node,
+        children: filteredChildren,
+      };
+    }
+
+    return accumulator;
+  }, {});
+}
+
+function getNodeIcon(type) {
+  if (type === 'pop' || type === 'bts') return <Server className="h-4 w-4" />;
+  if (type === 'osc' || type === 'radio') return <Activity className="h-4 w-4" />;
+  if (type === 'odc') return <Cpu className="h-4 w-4" />;
+  return <Network className="h-4 w-4" />;
+}
+
+function getNodeTone(type) {
+  if (type === 'pop' || type === 'osc' || type === 'odc' || type === 'odp') {
+    return 'bg-primary/10 text-primary border-primary/20';
+  }
+
+  return 'bg-warning/10 text-warning border-warning/20';
+}
+
+function TreeNode({ node, level = 0, onSelect, selectedId, forceOpen = false }) {
+  const [isOpen, setIsOpen] = useState(level === 0);
   const hasChildren = node.children && Object.keys(node.children).length > 0;
   const isSelected = selectedId === node.raw?.id;
+  const icon = getNodeIcon(node.type);
 
-  const Icon = node.type === 'pop' || node.type === 'bts' ? Server 
-             : node.type === 'osc' || node.type === 'radio' ? Activity
-             : node.type === 'odc' ? Cpu
-             : Network;
+  useEffect(() => {
+    if (forceOpen && hasChildren) {
+      setIsOpen(true);
+    }
+  }, [forceOpen, hasChildren]);
+
+  const handleClick = () => {
+    onSelect(node.raw);
+    if (hasChildren) {
+      setIsOpen((previous) => !previous);
+    }
+  };
 
   return (
-    <div className="flex flex-col">
-      <div 
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={handleClick}
         className={cn(
-          "group flex items-center gap-3 px-3 py-2 rounded-xl border border-transparent transition-all cursor-pointer relative",
-          isSelected ? "bg-primary/10 border-primary/20" : "hover:bg-foreground/[0.03]"
+          'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+          isSelected ? 'border-primary/20 bg-primary/5' : 'border-transparent hover:bg-muted/30'
         )}
-        onClick={() => {
-          onSelect(node.raw);
-          if (hasChildren) setIsOpen(!isOpen);
-        }}
       >
-        {/* Branch Line Guide */}
-        {level > 0 && (
-          <div className="absolute -left-4 top-1/2 w-4 h-[1px] bg-foreground/10" />
-        )}
-        
-        <div className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110",
-          node.type === 'pop' || node.type === 'bts' ? "bg-primary/20 text-primary shadow-lg shadow-primary/10" : "bg-foreground/[0.05] text-foreground/40"
-        )}>
-          <Icon size={14} strokeWidth={2.5} />
+        <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border', getNodeTone(node.type))}>
+          {icon}
         </div>
 
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <span className={cn(
-            "text-[11px] font-black tracking-tight truncate leading-tight uppercase",
-            isSelected ? "text-primary" : "text-foreground/80"
-          )}>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className={cn('truncate text-sm font-medium', isSelected ? 'text-primary' : 'text-foreground')}>
             {node.name}
-          </span>
-          <span className="text-[8px] font-black text-foreground/30 uppercase tracking-[0.2em] font-mono leading-none">
-            Protocol: {node.type}
-          </span>
+          </p>
+          <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            {node.type}
+          </p>
         </div>
 
-        {hasChildren && (
-          <div className="ml-auto text-foreground/20 group-hover:text-foreground/40 transition-colors">
-            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          </div>
-        )}
-      </div>
+        {hasChildren ? (
+          isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        ) : null}
+      </button>
 
       <AnimatePresence>
-        {isOpen && hasChildren && (
-          <div
-            className="ml-8 border-l border-foreground/[0.05] pl-4 mt-1 flex flex-col gap-1 overflow-hidden"
-          >
-            {Object.values(node.children).map((child, i) => (
-              <TreeNode 
-                key={i} 
-                node={child} 
-                level={level + 1} 
-                onSelect={onSelect} 
-                selectedId={selectedId}
-              />
-            ))}
+        {isOpen && hasChildren ? (
+          <div className="ml-5 border-l border-border pl-4">
+            <div className="space-y-2">
+              {Object.values(node.children).map((child) => (
+                <TreeNode
+                  key={`${child.type}-${child.name}`}
+                  node={child}
+                  level={level + 1}
+                  onSelect={onSelect}
+                  selectedId={selectedId}
+                  forceOpen={forceOpen}
+                />
+              ))}
+            </div>
           </div>
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );
-};
+}
 
 export default function MasterDistribusiPage() {
   const [data, setData] = useState([]);
@@ -144,65 +198,86 @@ export default function MasterDistribusiPage() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
   const { addToast } = useToast();
-
-  const [form, setForm] = useState({ 
-    type: 'Fiber Optic', level_1: '', level_2: '', level_3: '', level_4: '', latitude: '', longitude: '' 
-  });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.getDistribusi();
-      setData(res);
-      if (res.length > 0 && !selectedNode) setSelectedNode(res[0]);
-    } catch (e) {
-      addToast(e.message, 'error');
+      const response = await api.getDistribusi();
+      setData(response);
+    } catch (error) {
+      addToast(error.message, 'error');
     } finally {
       setLoading(false);
     }
-  }, [addToast, selectedNode]);
+  }, [addToast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!data.length) {
+      setSelectedNode(null);
+      return;
+    }
+
+    if (!selectedNode) {
+      setSelectedNode(data[0]);
+      return;
+    }
+
+    const nextSelected = data.find((item) => item.id === selectedNode.id);
+    setSelectedNode(nextSelected || data[0]);
+  }, [data, selectedNode]);
 
   const tree = useMemo(() => buildTopologyTree(data), [data]);
-  
-  const stats = useMemo(() => {
-    const foRoots = Object.keys(tree.fo).length;
-    const wrRoots = Object.keys(tree.wireless).length;
-    const total = data.length;
-    return { foRoots, wrRoots, total };
-  }, [tree, data]);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
 
-  const filteredTree = useMemo(() => {
-    if (!searchQuery) return tree;
-    const s = searchQuery.toLowerCase();
-    const filterBranch = (nodes) => {
-      return Object.entries(nodes).reduce((acc, [k, node]) => {
-        const match = node.name.toLowerCase().includes(s);
-        const childrenMatch = node.children ? filterBranch(node.children) : null;
-        if (match || (childrenMatch && Object.keys(childrenMatch).length > 0)) {
-          acc[k] = { ...node, children: childrenMatch };
-        }
-        return acc;
-      }, {});
-    };
-    return {
-      fo: filterBranch(tree.fo),
-      wireless: filterBranch(tree.wireless)
-    };
-  }, [tree, searchQuery]);
+  const filteredTree = useMemo(() => ({
+    fo: filterTree(tree.fo, normalizedSearch),
+    wireless: filterTree(tree.wireless, normalizedSearch),
+  }), [tree, normalizedSearch]);
 
-  const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const stats = useMemo(() => ({
+    total: data.length,
+    fiberRoots: Object.keys(tree.fo).length,
+    wirelessRoots: Object.keys(tree.wireless).length,
+  }), [data, tree]);
+
+  const hierarchy = useMemo(() => {
+    if (!selectedNode) return [];
+
+    return [
+      { label: selectedNode.type === 'Fiber Optic' ? 'POP / BTS' : 'Primary Site', value: selectedNode.level_1 },
+      { label: selectedNode.type === 'Fiber Optic' ? 'OSC / Radio' : 'Secondary Link', value: selectedNode.level_2 },
+      { label: 'ODC', value: selectedNode.level_3 },
+      { label: 'ODP / Endpoint', value: selectedNode.level_4 },
+    ].filter((item) => item.value);
+  }, [selectedNode]);
+
+  const setField = (key, value) => {
+    setForm((previous) => ({ ...previous, [key]: value }));
+  };
 
   const openCreate = () => {
-    setForm({ type: 'Fiber Optic', level_1: '', level_2: '', level_3: '', level_4: '', latitude: '', longitude: '' });
+    setForm(EMPTY_FORM);
     setModal('create');
   };
 
   const openEdit = () => {
     if (!selectedNode) return;
-    setForm({ ...selectedNode });
+
+    setForm({
+      type: selectedNode.type || 'Fiber Optic',
+      level_1: selectedNode.level_1 || '',
+      level_2: selectedNode.level_2 || '',
+      level_3: selectedNode.level_3 || '',
+      level_4: selectedNode.level_4 || '',
+      latitude: selectedNode.latitude || '',
+      longitude: selectedNode.longitude || '',
+    });
     setModal('edit');
   };
 
@@ -210,257 +285,305 @@ export default function MasterDistribusiPage() {
     try {
       if (modal === 'create') {
         await api.createDistribusi(form);
-        addToast('Topology protocol synched', 'success');
-      } else {
+        addToast('Topology node created', 'success');
+      } else if (selectedNode) {
         await api.updateDistribusi(selectedNode.id, form);
-        addToast('Topology node refined', 'success');
+        addToast('Topology node updated', 'success');
       }
+
       setModal(null);
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   };
 
   const handleDelete = async () => {
     if (!selectedNode) return;
-    if (!confirm(`Purge topology node "${selectedNode.level_4 || selectedNode.level_1}"? This protocol action is irreversible.`)) return;
+    if (!window.confirm(`Delete topology node "${selectedNode.level_4 || selectedNode.level_1}"?`)) return;
+
     try {
       await api.deleteDistribusi(selectedNode.id);
-      addToast('Protocol node purged', 'warning');
+      addToast('Topology node deleted', 'warning');
       setSelectedNode(null);
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Topology Header */}
-      <div className="flex flex-col gap-6 shrink-0 mb-6">
-        <div className="flex items-end justify-between gap-4 flex-wrap px-1">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Topology Explorer</h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50 leading-relaxed italic">
-              Recursive mapping of <span className="text-primary font-mono">{stats.total}</span> active distribution nodes
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/[0.06] rounded-xl px-3 h-10 w-[240px] focus-within:ring-1 focus-within:ring-primary/30 focus-within:bg-background transition-all">
-                <Search size={14} className="text-foreground/20" />
-                <input 
-                  type="text" 
-                  className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full placeholder:text-foreground/20 uppercase tracking-widest" 
-                  placeholder="Scan Network Tree..." 
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <PageHeader
+        title="Distribution Topology"
+        subtitle={`Manage ${stats.total} active infrastructure nodes across fiber and wireless distribution layers.`}
+        action={(
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={openCreate}
+          >
+            Add Node
+          </Button>
+        )}
+      />
+
+      <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.05fr)]">
+        <SectionCard
+          title="Explorer"
+          subtitle="Browse fiber and wireless branches, then select a node to inspect or edit."
+          className="min-h-0"
+          padding={false}
+        >
+          {loading ? (
+            <TableSkeleton rows={14} />
+          ) : (
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="border-b p-4">
+                <Input
+                  label="Search"
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search POP, OSC, ODP, BTS, or radio"
+                  wrapperClassName="gap-1"
                 />
-             </div>
-             <Button variant="primary" onClick={openCreate} className="h-10 px-6">
-                <Plus size={14} strokeWidth={3} className="mr-2" /> Initialize Hub
-             </Button>
-          </div>
-        </div>
-
-        {/* KPI Metrics Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 px-1">
-           {[
-             { label: 'Network Points', val: stats.total, icon: Network, color: 'text-primary' },
-             { label: 'Fiber POPs', val: stats.foRoots, icon: Cable, color: 'text-info' },
-             { label: 'Wireless BTS', val: stats.wrRoots, icon: RadioReceiver, color: 'text-warning' },
-           ].map((stat, i) => (
-             <div key={i} className="bg-foreground/[0.02] border border-foreground/[0.04] rounded-2xl p-3 flex flex-col gap-2 group hover:bg-foreground/[0.04] transition-all">
-                <div className="flex items-center justify-between">
-                   <span className="text-[8px] font-black uppercase tracking-[0.25em] text-foreground/30 font-mono leading-none">{stat.label}</span>
-                   <stat.icon size={12} className={cn("opacity-20 group-hover:opacity-100 transition-opacity", stat.color)} />
-                </div>
-                <span className="text-lg font-black tracking-tighter text-foreground/80 leading-none lowercase tabular-nums">{stat.val}</span>
-             </div>
-           ))}
-        </div>
-      </div>
-
-      {/* Main Explorer View */}
-      <div className="flex-1 min-h-0 flex gap-6 pb-4">
-        {/* Tree Pane */}
-        <SectionCard padding={false} className="w-[45%] flex flex-col border-foreground/[0.08] shadow-sm relative overflow-hidden">
-          {loading ? <TableSkeleton rows={15} /> : (
-            <div className="flex-1 overflow-auto custom-scrollbar p-5 flex flex-col gap-8">
-              {/* Fiber Optic Section */}
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-md pt-1 pb-2 z-10 border-b border-foreground/[0.04]">
-                   <Cable size={14} className="text-info" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Fiber Infrastructure</span>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {Object.values(filteredTree.fo).map((pop, i) => (
-                    <TreeNode 
-                      key={i} 
-                      node={pop} 
-                      onSelect={setSelectedNode} 
-                      selectedId={selectedNode?.id} 
-                    />
-                  ))}
-                  {Object.keys(filteredTree.fo).length === 0 && (
-                    <span className="text-[10px] font-bold text-foreground/20 uppercase tracking-widest italic ml-1">No Fiber Nodes Found</span>
-                  )}
-                </div>
               </div>
 
-              {/* Wireless Section */}
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-md pt-1 pb-2 z-10 border-b border-foreground/[0.04]">
-                   <RadioReceiver size={14} className="text-warning" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Wireless Mesh</span>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {Object.values(filteredTree.wireless).map((bts, i) => (
-                    <TreeNode 
-                      key={i} 
-                      node={bts} 
-                      onSelect={setSelectedNode} 
-                      selectedId={selectedNode?.id} 
-                    />
-                  ))}
-                  {Object.keys(filteredTree.wireless).length === 0 && (
-                    <span className="text-[10px] font-bold text-foreground/20 uppercase tracking-widest italic ml-1">No Wireless Nodes Found</span>
-                  )}
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                      <Cable className="h-3.5 w-3.5 text-primary" />
+                      Fiber Optic
+                    </div>
+                    <div className="space-y-2">
+                      {Object.values(filteredTree.fo).length ? (
+                        Object.values(filteredTree.fo).map((node) => (
+                          <TreeNode
+                            key={`fiber-${node.name}`}
+                            node={node}
+                            onSelect={setSelectedNode}
+                            selectedId={selectedNode?.id}
+                            forceOpen={Boolean(normalizedSearch)}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No fiber nodes match the current search.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                      <RadioReceiver className="h-3.5 w-3.5 text-warning" />
+                      Wireless
+                    </div>
+                    <div className="space-y-2">
+                      {Object.values(filteredTree.wireless).length ? (
+                        Object.values(filteredTree.wireless).map((node) => (
+                          <TreeNode
+                            key={`wireless-${node.name}`}
+                            node={node}
+                            onSelect={setSelectedNode}
+                            selectedId={selectedNode?.id}
+                            forceOpen={Boolean(normalizedSearch)}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No wireless nodes match the current search.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </SectionCard>
 
-        {/* Details Pane */}
-        <SectionCard padding={false} className="flex-1 flex flex-col border-foreground/[0.08] bg-foreground/[0.01] shadow-sm overflow-hidden">
+        <SectionCard
+          title="Node Detail"
+          subtitle={selectedNode
+            ? 'Review hierarchy, coordinates, and operational metadata for the selected node.'
+            : 'Choose a node from the explorer to inspect its metadata.'}
+          className="min-h-0"
+          headerAction={selectedNode ? (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" icon={<Edit2 className="h-4 w-4" />} onClick={openEdit}>
+                Edit
+              </Button>
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" icon={<Trash2 className="h-4 w-4" />} onClick={handleDelete}>
+                Delete
+              </Button>
+            </div>
+          ) : null}
+        >
           {selectedNode ? (
-            <div className="flex flex-col h-full">
-              <div className="p-6 flex flex-col gap-8 flex-1 overflow-auto custom-scrollbar">
-                <div className="flex items-start justify-between">
-                  <div className="flex flex-col gap-1.5 min-w-0">
-                    <div className="flex items-center gap-2">
-                       <div className="w-1.5 h-4 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--color-primary),0.5)]" />
-                       <h2 className="text-lg font-black tracking-tight text-foreground uppercase truncate">{selectedNode.level_4 || selectedNode.level_1}</h2>
+            <div className="space-y-6">
+              <div className="rounded-xl border border-border bg-muted/20 p-5">
+                <div className="flex items-start gap-4">
+                  <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border', getNodeTone(selectedNode.type === 'Wireless' ? 'bts' : 'pop'))}>
+                    <Network className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <p className="truncate text-xl font-semibold tracking-tight text-foreground">
+                      {selectedNode.level_4 || selectedNode.level_2 || selectedNode.level_1}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span>{selectedNode.type}</span>
+                      <span>Node ID: {selectedNode.id}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold text-primary/60 uppercase tracking-widest flex items-center gap-1.5">
-                        <Maximize2 size={10} /> UUID: {String(selectedNode.id).slice(0, 8)}...
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <button onClick={openEdit} className="p-2 rounded-lg bg-background text-foreground/40 hover:text-primary transition-all border border-foreground/5 shadow-sm">
-                      <Edit2 size={14} />
-                    </button>
-                    <button onClick={handleDelete} className="p-2 rounded-lg bg-background text-foreground/40 hover:text-error transition-all border border-foreground/5 shadow-sm">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-background/40 border border-foreground/[0.04] p-4 rounded-2xl flex flex-col gap-3">
-                     <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] flex items-center gap-2">
-                       <MapPin size={10} /> Spatial Integrity
-                     </span>
-                     <div className="flex flex-col gap-1">
-                       <div className="flex items-center justify-between text-[11px] font-bold font-mono tracking-tight">
-                         <span className="text-foreground/40">LAT</span>
-                         <span className="text-foreground/70">{selectedNode.latitude || 'NULL'}</span>
-                       </div>
-                       <div className="flex items-center justify-between text-[11px] font-bold font-mono tracking-tight">
-                         <span className="text-foreground/40">LNG</span>
-                         <span className="text-foreground/70">{selectedNode.longitude || 'NULL'}</span>
-                       </div>
-                     </div>
-                  </div>
-                  <div className="bg-background/40 border border-foreground/[0.04] p-4 rounded-2xl flex flex-col gap-3">
-                     <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] flex items-center gap-2">
-                       <Info size={10} /> Protocol Specs
-                     </span>
-                     <div className="flex flex-col gap-1">
-                       <div className="flex items-center justify-between text-[11px] font-bold tracking-tight">
-                         <span className="text-foreground/40">DOMAIN</span>
-                         <span className="text-primary/70">{selectedNode.type.toUpperCase()}</span>
-                       </div>
-                       <div className="flex items-center justify-between text-[11px] font-bold tracking-tight">
-                         <span className="text-foreground/40">STATUS</span>
-                         <span className="text-success/70 font-mono">ENBL_0x0</span>
-                       </div>
-                     </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">Historical Sequence Trace</span>
-                  <div className="flex flex-col border-l-2 border-primary/20 ml-2 pl-4 gap-6">
-                     {[
-                       { l: 'Primary Hub', v: selectedNode.level_1 },
-                       { l: 'Secondary Link', v: selectedNode.level_2 },
-                       { l: 'Tertiary Dist', v: selectedNode.level_3 },
-                       { l: 'Endpoint', v: selectedNode.level_4 }
-                     ].filter(i => i.v).map((item, i) => (
-                       <div key={i} className="flex flex-col relative">
-                          <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-background border-2 border-primary/40" />
-                          <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">{item.l}</span>
-                          <span className="text-[11px] font-black text-foreground/60 tracking-tight uppercase">{item.v}</span>
-                       </div>
-                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Mini Map Placeholder */}
-              <div className="h-48 shrink-0 bg-foreground/[0.02] border-t border-foreground/[0.04] p-3">
-                 <div className="w-full h-full rounded-xl border border-foreground/[0.06] bg-background/50 flex flex-col items-center justify-center gap-2 opacity-60">
-                    <MapPin size={24} className="text-primary/40" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 italic">Spatial Engine Standby</span>
-                 </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    Coordinates
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Latitude</span>
+                      <span className="font-medium text-foreground">{selectedNode.latitude || 'Not set'}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Longitude</span>
+                      <span className="font-medium text-foreground">{selectedNode.longitude || 'Not set'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Activity className="h-4 w-4 text-primary" />
+                    Metadata
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Type</span>
+                      <span className="font-medium text-foreground">{selectedNode.type}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Status</span>
+                      <span className="font-medium text-success">Active</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card p-5">
+                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Network className="h-4 w-4 text-primary" />
+                  Hierarchy Path
+                </div>
+                <div className="space-y-4">
+                  {hierarchy.map((item, index) => (
+                    <div key={`${item.label}-${item.value}`} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="h-3 w-3 rounded-full border-2 border-primary bg-background" />
+                        {index < hierarchy.length - 1 ? <div className="mt-1 h-full w-px bg-border" /> : null}
+                      </div>
+                      <div className="space-y-1 pb-2">
+                        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          {item.label}
+                        </p>
+                        <p className="text-sm font-medium text-foreground">
+                          {item.value}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 gap-4">
-               <div className="w-16 h-16 rounded-3xl bg-foreground/[0.03] flex items-center justify-center text-foreground/10">
-                 <Network size={32} />
-               </div>
-               <div className="flex flex-col gap-1">
-                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/40">Protocol Registry Idle</h3>
-                 <p className="text-[10px] font-medium text-foreground/20 max-w-[200px] leading-relaxed mx-auto">Select a node from the explorer to view localized telemetry and administrative actions.</p>
-               </div>
-            </div>
+            <EmptyState
+              icon={<Network className="h-6 w-6" />}
+              title="No node selected"
+              desc="Select a topology branch from the explorer to see its metadata and hierarchy."
+            />
           )}
         </SectionCard>
       </div>
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Initialize Topology Node' : 'Refine Topology Metadata'} size="md"
-        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Abort</Button><Button onClick={handleSave} className="px-8 shadow-lg shadow-primary/20">Commit Changes</Button></>}
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal === 'create' ? 'Add Topology Node' : 'Edit Topology Node'}
+        size="md"
+        footer={(
+          <>
+            <Button variant="ghost" onClick={() => setModal(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              {modal === 'create' ? 'Create Node' : 'Save Changes'}
+            </Button>
+          </>
+        )}
       >
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 ml-1">Distribution Protocol</label>
-            <Select 
-              value={form.type} onChange={e => setF('type', e.target.value)}
-              className="bg-background/50 h-10 border-foreground/10"
-            >
-              <option>Fiber Optic</option>
-              <option>Wireless</option>
-            </Select>
+        <div className="space-y-4">
+          <Select
+            label="Topology Type"
+            value={form.type}
+            onChange={(event) => setField('type', event.target.value)}
+          >
+            <option value="Fiber Optic">Fiber Optic</option>
+            <option value="Wireless">Wireless</option>
+          </Select>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label={form.type === 'Fiber Optic' ? 'POP' : 'BTS'}
+              value={form.level_1}
+              onChange={(event) => setField('level_1', event.target.value)}
+              placeholder={form.type === 'Fiber Optic' ? 'POP-A' : 'BTS-A'}
+              required
+            />
+            <Input
+              label={form.type === 'Fiber Optic' ? 'OSC' : 'Radio'}
+              value={form.level_2}
+              onChange={(event) => setField('level_2', event.target.value)}
+              placeholder={form.type === 'Fiber Optic' ? 'OSC-01' : 'RADIO-01'}
+              required
+            />
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <Input label={form.type === 'Fiber Optic' ? 'POP (Sequence 01) *' : 'BTS (Sequence 01) *'} value={form.level_1} onChange={e => setF('level_1', e.target.value)} required placeholder="e.g. POP-A" />
-            <Input label={form.type === 'Fiber Optic' ? 'OSC (Sequence 02) *' : 'RADIO (Sequence 02) *'} value={form.level_2} onChange={e => setF('level_2', e.target.value)} required placeholder="e.g. OSC-01" />
-          </div>
-          {form.type === 'Fiber Optic' && (
-            <div className="grid grid-cols-2 gap-6">
-              <Input label="ODC (Sequence 03)" value={form.level_3} onChange={e => setF('level_3', e.target.value)} placeholder="Optional" />
-              <Input label="ODP (Sequence 04)" value={form.level_4} onChange={e => setF('level_4', e.target.value)} placeholder="Optional" />
+
+          {form.type === 'Fiber Optic' ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="ODC"
+                value={form.level_3}
+                onChange={(event) => setField('level_3', event.target.value)}
+                placeholder="Optional"
+              />
+              <Input
+                label="ODP"
+                value={form.level_4}
+                onChange={(event) => setField('level_4', event.target.value)}
+                placeholder="Optional"
+              />
             </div>
-          )}
-          <div className="h-[1px] bg-foreground/5 my-2" />
-          <div className="grid grid-cols-2 gap-6">
-            <Input label="Spatial Latitude" type="number" step="any" value={form.latitude} onChange={e => setF('latitude', e.target.value)} placeholder="-6.123..." />
-            <Input label="Spatial Longitude" type="number" step="any" value={form.longitude} onChange={e => setF('longitude', e.target.value)} placeholder="110.123..." />
+          ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Latitude"
+              type="number"
+              step="any"
+              value={form.latitude}
+              onChange={(event) => setField('latitude', event.target.value)}
+              placeholder="-6.123456"
+            />
+            <Input
+              label="Longitude"
+              type="number"
+              step="any"
+              value={form.longitude}
+              onChange={(event) => setField('longitude', event.target.value)}
+              placeholder="110.123456"
+            />
           </div>
         </div>
       </Modal>

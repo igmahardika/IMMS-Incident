@@ -39,15 +39,6 @@ export const master_classifications = sqliteTable('master_classifications', {
   is_active: integer('is_active').notNull().default(1)
 });
 
-export const master_technical_support = sqliteTable('master_technical_support', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  no: text('no'),
-  name: text('name').notNull(),
-  unit: text('unit').notNull(),
-  is_active: integer('is_active').notNull().default(1),
-  created_at: text('created_at').notNull().default('CURRENT_TIMESTAMP')
-});
-
 export const master_actions = sqliteTable('master_actions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

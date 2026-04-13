@@ -18,10 +18,8 @@ const TITLES = {
   '/analytics/root-cause': 'Root Cause Analysis',
   '/master/customers': 'Customer Master',
   '/master/classifications': 'Classifications',
-  '/master/technical-support': 'Personnel Records',
   '/master/distribusi': 'Distribution Topology',
-  '/master/users': 'User Management',
-  '/master/actions': 'Master Actions',
+  '/master/users': 'Personnel & Accounts',
   '/settings/escalation': 'Escalation Settings',
 };
 

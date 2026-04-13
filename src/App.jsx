@@ -20,9 +20,7 @@ const RootCausePage = lazy(() => import('./pages/RootCausePage.jsx'));
 // Master Pages
 const MasterCustomerPage = lazy(() => import('./pages/master/CustomersPage.jsx'));
 const MasterClassificationPage = lazy(() => import('./pages/master/ClassificationsPage.jsx'));
-const MasterTechnicalSupportPage = lazy(() => import('./pages/master/TechnicalSupportPage.jsx'));
 const MasterDistribusiPage = lazy(() => import('./pages/master/DistribusiPage.jsx'));
-const MasterActionPage = lazy(() => import('./pages/master/ActionsPage.jsx'));
 const UserManagementPage = lazy(() => import('./pages/master/UsersPage.jsx'));
 const EscalationSettingsPage = lazy(() => import('./pages/EscalationSettingsPage.jsx'));
 
@@ -108,6 +106,20 @@ function ProtectedRoute({ children, allowedRoles }) {
   return <AppLayout>{children}</AppLayout>;
 }
 
+function LegacyTechnicalSupportRedirect() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (['admin', 'manager'].includes(user.role)) {
+    return <Navigate to="/master/users" replace />;
+  }
+
+  return <Navigate to="/" replace />;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -143,10 +155,10 @@ export default function App() {
                     <Route path="/analytics/root-cause" element={<ProtectedRoute allowedRoles={['admin', 'noc', 'manager']}><RootCausePage /></ProtectedRoute>} />
                     <Route path="/master/customers" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterCustomerPage /></ProtectedRoute>} />
                     <Route path="/master/classifications" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterClassificationPage /></ProtectedRoute>} />
-                    <Route path="/master/technical-support" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterTechnicalSupportPage /></ProtectedRoute>} />
+                    <Route path="/master/technical-support" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><LegacyTechnicalSupportRedirect /></ProtectedRoute>} />
                     <Route path="/master/distribusi" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterDistribusiPage /></ProtectedRoute>} />
-                    <Route path="/master/actions" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><MasterActionPage /></ProtectedRoute>} />
-                    <Route path="/master/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
+                    <Route path="/master/actions" element={<Navigate to="/" replace />} />
+                    <Route path="/master/users" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><UserManagementPage /></ProtectedRoute>} />
                     <Route path="/settings/escalation" element={<ProtectedRoute allowedRoles={['admin']}><EscalationSettingsPage /></ProtectedRoute>} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

@@ -1,64 +1,64 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Edit2,
+  GitBranch,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import { 
-  Modal, 
-  TableSkeleton, 
-  SectionCard, 
-  Button, 
-  Input
+import {
+  Button,
+  EmptyState,
+  Input,
+  Modal,
+  PageHeader,
+  SectionCard,
+  TableSkeleton,
 } from '../../components/ui/index.jsx';
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  Tag, 
-  ChevronRight, 
-  Activity, 
-  Network,
-  GitBranch,
-  Layers,
-  Database
-} from 'lucide-react';
-import { cn } from '../../lib/utils.js';
 
-/**
- * Incident Ontology - Enhanced Classification Management
- * High-density management of trouble categories and root causes.
- */
+const EMPTY_FORM = {
+  klasifikasi: '',
+  sub_klasifikasi: '',
+};
 
 export default function MasterClassificationPage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [form, setForm] = useState({ klasifikasi: '', sub_klasifikasi: '' });
+  const [form, setForm] = useState(EMPTY_FORM);
   const { addToast } = useToast();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.getClassifications();
-      setClasses(res);
-    } catch (e) {
-      addToast(e.message, 'error');
+      const response = await api.getClassifications();
+      setClasses(response);
+    } catch (error) {
+      addToast(error.message, 'error');
     } finally {
       setLoading(false);
     }
   }, [addToast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const setField = (key, value) => {
+    setForm((previous) => ({ ...previous, [key]: value }));
+  };
 
   const openCreate = () => {
-    setForm({ klasifikasi: '', sub_klasifikasi: '' });
+    setForm(EMPTY_FORM);
     setModal('create');
   };
 
   const openEdit = (item) => {
-    setForm({ klasifikasi: item.klasifikasi, sub_klasifikasi: item.sub_klasifikasi || '' });
+    setForm({
+      klasifikasi: item.klasifikasi,
+      sub_klasifikasi: item.sub_klasifikasi || '',
+    });
     setModal(item);
   };
 
@@ -66,178 +66,163 @@ export default function MasterClassificationPage() {
     try {
       if (modal === 'create') {
         await api.createClassification(form);
-        addToast('Ontology node registered', 'success');
+        addToast('Classification created', 'success');
       } else {
         await api.updateClassification(modal.id, form);
-        addToast('Ontology definition refined', 'success');
+        addToast('Classification updated', 'success');
       }
+
       setModal(null);
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   };
 
   const handleDelete = async (item) => {
-    if (!confirm(`Purge ontology node "${item.sub_klasifikasi || item.klasifikasi}"? This action is irreversible.`)) return;
+    if (!window.confirm(`Delete classification "${item.sub_klasifikasi || item.klasifikasi}"?`)) {
+      return;
+    }
+
     try {
       await api.deleteClassification(item.id);
-      addToast('Definition purged from ontology', 'warning');
-      load();
-    } catch (e) {
-      addToast(e.message, 'error');
+      addToast('Classification deleted', 'warning');
+      await load();
+    } catch (error) {
+      addToast(error.message, 'error');
     }
   };
 
-  // Grouping logic for Hub-based visualization
-  const filteredClasses = useMemo(() => {
-    if (!searchQuery) return classes;
-    const s = searchQuery.toLowerCase();
-    return classes.filter(c => 
-      c.klasifikasi.toLowerCase().includes(s) || 
-      (c.sub_klasifikasi?.toLowerCase().includes(s))
-    );
-  }, [classes, searchQuery]);
-
-  const grouped = useMemo(() => {
-    return filteredClasses.reduce((acc, c) => {
-      if (!acc[c.klasifikasi]) acc[c.klasifikasi] = [];
-      acc[c.klasifikasi].push(c);
-      return acc;
-    }, {});
-  }, [filteredClasses]);
-
-  const stats = useMemo(() => {
-    const hubs = Object.keys(grouped).length;
-    const atomic = classes.length;
-    return { hubs, atomic };
-  }, [grouped, classes]);
+  const grouped = useMemo(() => (
+    classes.reduce((accumulator, item) => {
+      if (!accumulator[item.klasifikasi]) accumulator[item.klasifikasi] = [];
+      accumulator[item.klasifikasi].push(item);
+      return accumulator;
+    }, {})
+  ), [classes]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Ontology Header */}
-      <div className="flex flex-col gap-6 shrink-0 mb-6 font-sans">
-        <div className="flex items-end justify-between gap-4 flex-wrap px-1">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Incident Ontology</h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50 leading-relaxed italic">
-              Hierarchy of <span className="text-primary font-mono">{stats.hubs}</span> master domains and <span className="text-primary font-mono">{stats.atomic}</span> atomic nodes
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/[0.06] rounded-xl px-3 h-10 w-[240px] focus-within:ring-1 focus-within:ring-primary/30 focus-within:bg-background transition-all">
-                <Search size={14} className="text-foreground/20" />
-                <input 
-                  type="text" 
-                  className="bg-transparent border-none focus:ring-0 text-[11px] font-bold w-full placeholder:text-foreground/20 uppercase tracking-widest" 
-                  placeholder="Scan Ontology Hubs..." 
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-             </div>
-             <Button variant="primary" icon={<Plus size={14} strokeWidth={2.5} />} onClick={openCreate} className="h-10 px-6">
-                Initialize node
-             </Button>
-          </div>
-        </div>
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <PageHeader
+        title="Classifications"
+        subtitle="Maintain incident classifications so forms, analytics, and closure workflows stay consistent."
+        action={(
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={openCreate}
+          >
+            Add Classification
+          </Button>
+        )}
+      />
 
-        {/* KPI Metrics Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-1">
-           {[
-             { label: 'Primary Sequences', val: stats.hubs, icon: Layers, color: 'text-primary' },
-             { label: 'Atomic Definitions', val: stats.atomic, icon: Tag, color: 'text-info' },
-             { label: 'Semantic Health', val: 'OPTIMIZED', icon: Activity, color: 'text-success font-mono' },
-             { label: 'Registry Sync', val: 'PROT_0x1', icon: Database, color: 'text-foreground/20 font-mono' },
-           ].map((stat, i) => (
-             <div key={i} className="bg-foreground/[0.02] border border-foreground/[0.04] rounded-2xl p-3 flex flex-col gap-2 group hover:bg-foreground/[0.04] transition-all">
-                <div className="flex items-center justify-between">
-                   <span className="text-[8px] font-black uppercase tracking-[0.25em] text-foreground/30 font-mono leading-none">{stat.label}</span>
-                   <stat.icon size={12} className={cn("opacity-20 group-hover:opacity-100 transition-opacity", stat.color)} />
-                </div>
-                <span className="text-lg font-black tracking-tighter text-foreground/80 leading-none uppercase tabular-nums">{stat.val}</span>
-             </div>
-           ))}
-        </div>
-      </div>
-
-      {/* Main Ontology Grid */}
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-1 -mr-1">
-        {loading ? <TableSkeleton rows={8} /> : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-8">
-            {Object.entries(grouped).map(([klasifikasi, items]) => (
-              <SectionCard 
-                key={klasifikasi}
-                title={klasifikasi.toUpperCase()}
-                subtitle={`${items.length} atomic nodes registered`}
+      <div className="flex-1 overflow-y-auto pb-6">
+        {loading ? (
+          <TableSkeleton rows={10} />
+        ) : Object.keys(grouped).length ? (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {Object.entries(grouped).map(([classification, items]) => (
+              <SectionCard
+                key={classification}
+                title={classification}
+                subtitle={`${items.length} entries in this group`}
                 padding={false}
-                className="flex flex-col h-fit border border-foreground/[0.08] shadow-sm hover:border-primary/20 transition-all group/card"
-                headerAction={
-                   <div className="flex items-center gap-1.5 bg-foreground/[0.03] px-2 py-1 rounded-lg border border-foreground/[0.05]">
-                      <GitBranch size={10} className="text-primary/40" />
-                      <span className="text-[9px] font-black text-foreground/40 font-mono">SEQ_{klasifikasi.slice(0,3).toUpperCase()}</span>
-                   </div>
-                }
+                headerAction={(
+                  <div className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    <GitBranch className="h-3.5 w-3.5" />
+                    Group
+                  </div>
+                )}
               >
-                <div className="flex flex-col bg-foreground/[0.01]">
-                  {items.map(c => (
-                    <div key={c.id} className="group flex items-center justify-between gap-4 px-4 py-3 border-b border-foreground/[0.04] last:border-0 hover:bg-background transition-all">
-                      <div className="flex items-center gap-3 min-w-0">
-                         <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors shrink-0" />
-                         <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="text-[11px] font-black text-foreground/80 tracking-tight leading-none uppercase truncate">
-                              {c.sub_klasifikasi || 'General Classification'}
-                            </span>
-                            <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-[0.2em] leading-none italic">
-                              Ontology ID: {c.id.toString().padStart(3, '0')}
-                            </span>
-                         </div>
+                <div className="divide-y">
+                  {items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between gap-3 px-4 py-4 transition-colors hover:bg-muted/20"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {item.sub_klasifikasi || 'General classification'}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <span>ID: {String(item.id).padStart(3, '0')}</span>
+                          <span>Parent: {item.klasifikasi}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                        <button 
-                          onClick={() => openEdit(c)} 
-                          className="p-1.5 rounded-lg text-foreground/30 hover:text-primary hover:bg-primary/5"
-                          title="Refine Definition"
-                        >
-                          <Edit2 size={12} strokeWidth={2.5} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(c)} 
-                          className="p-1.5 rounded-lg text-foreground/30 hover:text-error hover:bg-error/5"
-                          title="Purge Definition"
-                        >
-                          <Trash2 size={12} strokeWidth={2.5} />
-                        </button>
+
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          icon={<Edit2 className="h-4 w-4" />}
+                          onClick={() => openEdit(item)}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          icon={<Trash2 className="h-4 w-4" />}
+                          onClick={() => handleDelete(item)}
+                        />
                       </div>
                     </div>
                   ))}
                 </div>
               </SectionCard>
             ))}
-            
-            {Object.keys(grouped).length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center p-24 text-center gap-4 opacity-20">
-                 <GitBranch size={48} />
-                 <span className="text-[11px] font-black uppercase tracking-[0.3em]">No ontology matches found</span>
-              </div>
-            )}
           </div>
+        ) : (
+          <SectionCard>
+            <EmptyState
+              icon={<GitBranch className="h-6 w-6" />}
+              title="No classifications found"
+              desc="Add a new classification group to start building the incident taxonomy."
+              action={(
+                <Button
+                  variant="primary"
+                  icon={<Plus className="h-4 w-4" />}
+                  onClick={openCreate}
+                >
+                  Add Classification
+                </Button>
+              )}
+            />
+          </SectionCard>
         )}
       </div>
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'create' ? 'Initialize Ontology Node' : 'Refine Ontology Protocol'} size="sm"
-        footer={<><Button variant="ghost" onClick={() => setModal(null)}>Abort</Button><Button onClick={handleSave} className="px-8 shadow-lg shadow-primary/20 leading-none">Commit Protocol Change</Button></>}
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal === 'create' ? 'Add Classification' : 'Edit Classification'}
+        size="sm"
+        footer={(
+          <>
+            <Button variant="ghost" onClick={() => setModal(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              {modal === 'create' ? 'Create Classification' : 'Save Changes'}
+            </Button>
+          </>
+        )}
       >
-        <div className="flex flex-col gap-8 py-2">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 mb-2">
-               <div className="w-1 h-3 bg-primary rounded-full" />
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Knowledge Sequence Configuration</span>
-            </div>
-            <div className="flex flex-col gap-6">
-              <Input label="Primary Sequence Hub *" value={form.klasifikasi} onChange={e => setF('klasifikasi', e.target.value)} required placeholder="e.g. INFRASTRUCTURE" />
-              <Input label="Atomic Definition Name" value={form.sub_klasifikasi} onChange={e => setF('sub_klasifikasi', e.target.value)} placeholder="e.g. CORE SWITCH FAILURE" />
-            </div>
-          </div>
+        <div className="space-y-4">
+          <Input
+            label="Classification"
+            value={form.klasifikasi}
+            onChange={(event) => setField('klasifikasi', event.target.value)}
+            placeholder="Infrastructure"
+            required
+          />
+          <Input
+            label="Sub-classification"
+            value={form.sub_klasifikasi}
+            onChange={(event) => setField('sub_klasifikasi', event.target.value)}
+            placeholder="Core switch failure"
+          />
         </div>
       </Modal>
     </div>

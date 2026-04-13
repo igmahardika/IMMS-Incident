@@ -26,13 +26,21 @@ export function useMasterDistribusi() {
 export function useMasterTechnicalSupport() {
   return useQuery({
     queryKey: ['master', 'technical-support'],
-    queryFn: () => api.getTechnicalSupport(),
-  });
-}
+    queryFn: async () => {
+      const users = await api.getUsers();
 
-export function useMasterActions() {
-  return useQuery({
-    queryKey: ['master', 'actions'],
-    queryFn: () => api.getActions(),
+      return users
+        .filter((user) => user.is_active && ['technician', 'noc'].includes(user.role))
+        .map((user) => ({
+          id: user.id,
+          no: user.employee_id || '',
+          name: user.name,
+          unit: user.role.toUpperCase(),
+          role: user.role,
+          email: user.email || '',
+          is_active: user.is_active,
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name));
+    },
   });
 }

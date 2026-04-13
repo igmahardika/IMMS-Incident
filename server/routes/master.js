@@ -5,6 +5,15 @@ import bcrypt from 'bcryptjs';
 import { geocode } from '../utils/geocoder.js';
 
 const router = express.Router();
+const USER_ROLE_PRIORITY = `
+  CASE role
+    WHEN 'admin' THEN 1
+    WHEN 'manager' THEN 2
+    WHEN 'noc' THEN 3
+    WHEN 'technician' THEN 4
+    ELSE 9
+  END
+`;
 
 // ── MASTER CUSTOMER ─────────────────────────────────────────────────────────────
 router.get('/customers', authenticate, (req, res) => {
@@ -91,73 +100,160 @@ router.delete('/classifications/:id', authenticate, authorize('admin'), (req, re
 
 // ── USERS ─────────────────────────────────────────────────────────────────────
 router.get('/users', authenticate, authorize('admin', 'manager', 'noc'), (req, res) => {
-  res.json(db.prepare('SELECT id, username, role, name, email, employee_id, is_active, created_at FROM users ORDER BY name').all());
+  res.json(
+    db.prepare(`
+      SELECT id, username, role, name, email, employee_id, is_active, created_at
+      FROM users
+      ORDER BY ${USER_ROLE_PRIORITY}, is_active DESC, name
+    `).all()
+  );
 });
 router.post('/users', authenticate, authorize('admin'), (req, res) => {
   const { username, password, role, name, email, employee_id } = req.body;
-  const hash = bcrypt.hashSync(password, 10);
-  const r = db.prepare('INSERT INTO users (username, password_hash, role, name, email, employee_id) VALUES (?, ?, ?, ?, ?, ?)').run(username, hash, role || 'technician', name, email || null, employee_id || null);
-  const user = db.prepare('SELECT id, username, role, name, email, employee_id, is_active FROM users WHERE id = ?').get(r.lastInsertRowid);
-  res.status(201).json(user);
+
+  if (!username?.trim() || !password || !name?.trim()) {
+    return res.status(400).json({ error: 'Username, password, and name are required.' });
+  }
+
+  if (role && !['admin', 'manager', 'noc', 'technician'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role.' });
+  }
+
+  try {
+    const hash = bcrypt.hashSync(password, 10);
+    const result = db.prepare(`
+      INSERT INTO users (username, password_hash, role, name, email, employee_id)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+      username.trim(),
+      hash,
+      role || 'technician',
+      name.trim(),
+      email?.trim() || null,
+      employee_id?.trim() || null
+    );
+
+    const user = db.prepare(`
+      SELECT id, username, role, name, email, employee_id, is_active
+      FROM users
+      WHERE id = ?
+    `).get(result.lastInsertRowid);
+
+    res.status(201).json(user);
+  } catch (error) {
+    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(400).json({ error: 'Username is already in use.' });
+    }
+
+    res.status(500).json({ error: error.message });
+  }
 });
 router.put('/users/:id', authenticate, authorize('admin'), (req, res) => {
   const { role, name, email, is_active, password, employee_id } = req.body;
-  if (password) {
-    const hash = bcrypt.hashSync(password, 10);
-    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, req.params.id);
+  const targetId = Number(req.params.id);
+  const existing = db.prepare('SELECT * FROM users WHERE id = ?').get(targetId);
+
+  if (!existing) {
+    return res.status(404).json({ error: 'User not found.' });
   }
-  db.prepare('UPDATE users SET role = COALESCE(?, role), name = COALESCE(?, name), email = COALESCE(?, email), employee_id = COALESCE(?, employee_id), is_active = COALESCE(?, is_active) WHERE id = ?').run(role ?? null, name ?? null, email ?? null, employee_id ?? null, is_active ?? null, req.params.id);
-  res.json(db.prepare('SELECT id, username, role, name, email, employee_id, is_active FROM users WHERE id = ?').get(req.params.id));
-});
-router.delete('/users/:id', authenticate, authorize('admin'), (req, res) => {
-  db.prepare('UPDATE users SET is_active = 0 WHERE id = ?').run(req.params.id);
-  res.json({ success: true });
-});
 
-// ── MASTER TECHNICAL SUPPORT ──────────────────────────────────────────────────
-router.get('/technical-support', authenticate, (req, res) => {
-  res.json(db.prepare('SELECT * FROM master_technical_support WHERE is_active = 1 ORDER BY CAST(no AS INTEGER), name').all());
-});
+  if (role && !['admin', 'manager', 'noc', 'technician'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role.' });
+  }
 
-router.post('/technical-support', authenticate, authorize('admin', 'manager'), (req, res) => {
-  const { no, name, unit } = req.body;
-  const r = db.prepare('INSERT INTO master_technical_support (no, name, unit) VALUES (?, ?, ?)').run(no || null, name, unit);
-  res.status(201).json(db.prepare('SELECT * FROM master_technical_support WHERE id = ?').get(r.lastInsertRowid));
-});
-
-router.post('/technical-support/batch', authenticate, authorize('admin', 'manager'), (req, res) => {
-  const { data } = req.body;
-  if (!data || !Array.isArray(data)) return res.status(400).json({ error: 'Invalid data' });
-
-  const insert = db.prepare('INSERT INTO master_technical_support (no, name, unit) VALUES (?, ?, ?)');
-  const insertMany = db.transaction((rows) => {
-    let count = 0;
-    for (const row of rows) {
-      if (!row.name || !row.unit) continue;
-      insert.run(row.no || null, row.name, row.unit);
-      count++;
+  if (req.user.id === targetId) {
+    if (is_active === false || is_active === 0) {
+      return res.status(400).json({ error: 'You cannot deactivate your own account.' });
     }
-    return count;
-  });
+
+    if (role && role !== 'admin') {
+      return res.status(400).json({ error: 'You cannot downgrade your own admin role.' });
+    }
+  }
 
   try {
-    const count = insertMany(data);
-    res.json({ success: true, count });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    if (typeof password === 'string' && password.trim()) {
+      const hash = bcrypt.hashSync(password, 10);
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, targetId);
+    }
+
+    db.prepare(`
+      UPDATE users
+      SET role = ?,
+          name = ?,
+          email = ?,
+          employee_id = ?,
+          is_active = ?
+      WHERE id = ?
+    `).run(
+      role ?? existing.role,
+      name?.trim() || existing.name,
+      email === undefined ? existing.email : (email?.trim() || null),
+      employee_id === undefined ? existing.employee_id : (employee_id?.trim() || null),
+      is_active === undefined ? existing.is_active : Number(Boolean(is_active)),
+      targetId
+    );
+
+    res.json(
+      db.prepare(`
+        SELECT id, username, role, name, email, employee_id, is_active
+        FROM users
+        WHERE id = ?
+      `).get(targetId)
+    );
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+router.delete('/users/:id', authenticate, authorize('admin'), (req, res) => {
+  const targetId = Number(req.params.id);
+
+  if (req.user.id === targetId) {
+    return res.status(400).json({ error: 'You cannot deactivate your own account.' });
+  }
+
+  try {
+    const result = db.prepare('UPDATE users SET is_active = 0 WHERE id = ?').run(targetId);
+
+    if (!result.changes) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-router.put('/technical-support/:id', authenticate, authorize('admin', 'manager'), (req, res) => {
-  const { no, name, unit, is_active } = req.body;
-  db.prepare('UPDATE master_technical_support SET no = COALESCE(?, no), name = COALESCE(?, name), unit = COALESCE(?, unit), is_active = COALESCE(?, is_active) WHERE id = ?').run(no ?? null, name ?? null, unit ?? null, is_active ?? null, req.params.id);
-  res.json(db.prepare('SELECT * FROM master_technical_support WHERE id = ?').get(req.params.id));
+// ── LEGACY TECHNICAL SUPPORT COMPATIBILITY ───────────────────────────────────
+router.get('/technical-support', authenticate, authorize('admin', 'manager', 'noc'), (req, res) => {
+  const personnel = db.prepare(`
+    SELECT
+      id,
+      employee_id AS no,
+      name,
+      UPPER(role) AS unit,
+      is_active,
+      created_at
+    FROM users
+    WHERE is_active = 1
+      AND role IN ('technician', 'noc')
+    ORDER BY ${USER_ROLE_PRIORITY}, name
+  `).all();
+
+  res.json(personnel);
 });
 
-router.delete('/technical-support/:id', authenticate, authorize('admin'), (req, res) => {
-  db.prepare('UPDATE master_technical_support SET is_active = 0 WHERE id = ?').run(req.params.id);
-  res.json({ success: true });
-});
+function deprecatedTechnicalSupportResponse(res) {
+  return res.status(410).json({
+    error: 'Technical support registry has been merged into /master/users.',
+  });
+}
+
+router.post('/technical-support', authenticate, authorize('admin', 'manager'), (_req, res) => deprecatedTechnicalSupportResponse(res));
+router.post('/technical-support/batch', authenticate, authorize('admin', 'manager'), (_req, res) => deprecatedTechnicalSupportResponse(res));
+router.put('/technical-support/:id', authenticate, authorize('admin', 'manager'), (_req, res) => deprecatedTechnicalSupportResponse(res));
+router.delete('/technical-support/:id', authenticate, authorize('admin'), (_req, res) => deprecatedTechnicalSupportResponse(res));
 
 // ── MASTER DISTRIBUSI ───────────────────────────────────────────────────────
 router.get('/distribusi', authenticate, (req, res) => {

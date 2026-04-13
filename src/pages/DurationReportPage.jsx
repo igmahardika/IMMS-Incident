@@ -1,37 +1,71 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  Activity,
+  Calendar,
+  Clock,
+  ShieldCheck,
+  TrendingUp,
+  UserCheck,
+  Zap,
+} from 'lucide-react';
 import { api } from '../utils/api.js';
 import { formatDuration } from '../utils/incidentUtils.js';
-import { NCAL_ORDER, MONTH_NAMES } from '../utils/constants.js';
-import { 
-  NcalBadge, 
-  SectionCard, 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent,
+import { MONTH_NAMES, NCAL_ORDER } from '../utils/constants.js';
+import {
+  ChartContainer,
   ChartLegend,
   ChartLegendContent,
-  ResponsiveContainer, 
-  Spinner 
+  ChartTooltip,
+  ChartTooltipContent,
+  PageHeader,
+  ResponsiveContainer,
+  SectionCard,
+  Select,
+  Spinner,
 } from '../components/ui/index.jsx';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Calendar, Activity, Zap, Clock, ShieldCheck, UserCheck, ChevronDown, BarChart3, TrendingUp } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 
-/**
- * Temporal Intelligence - Stabilized Spectral Analytics
- * Resolving render issues with explicit height management and robust SVG definitions.
- */
-
 const chartConfig = {
-  BLACK: { label: 'Black Sector', color: '#18181b' },
-  RED: { label: 'Red Sector', color: '#ef4444' },
-  ORANGE: { label: 'Orange Sector', color: '#f97316' },
-  YELLOW: { label: 'Yellow Sector', color: '#eab308' },
-  BLUE: { label: 'Blue Sector', color: '#3b82f6' },
+  BLACK: { label: 'Black', color: 'var(--color-chart-1)' },
+  RED: { label: 'Red', color: 'var(--color-destructive)' },
+  ORANGE: { label: 'Orange', color: 'var(--color-warning)' },
+  YELLOW: { label: 'Yellow', color: 'var(--color-chart-4)' },
+  BLUE: { label: 'Blue', color: 'var(--color-info)' },
 };
 
 const currentYear = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
+const YEAR_OPTIONS = Array.from({ length: 4 }, (_, index) => currentYear - index);
+
+function StatCard({ label, value, icon, tone = 'default' }) {
+  const Icon = icon;
+
+  const toneClassName = {
+    default: 'text-primary',
+    warning: 'text-warning',
+    success: 'text-success',
+    destructive: 'text-destructive',
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            {label}
+          </p>
+          <p className="text-2xl font-semibold tracking-tight text-foreground">
+            {value}
+          </p>
+        </div>
+
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+          <Icon className={cn('h-5 w-5', toneClassName[tone] || toneClassName.default)} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DurationReportPage() {
   const [year, setYear] = useState(String(currentYear));
@@ -42,216 +76,250 @@ export default function DurationReportPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.getDuration({ year }), api.getSla({ year }), api.getTechPerf({ year })])
-      .then(([dur, s, tp]) => {
+
+    Promise.all([
+      api.getDuration({ year }),
+      api.getSla({ year }),
+      api.getTechPerf({ year }),
+    ])
+      .then(([durationRows, slaRows, technicianRows]) => {
         const months = {};
-        dur.forEach(r => {
-          const mo = parseInt(r.month, 10);
-          if (!months[mo]) months[mo] = { month: MONTH_NAMES[mo - 1], total: 0 };
-          months[mo][r.ncal] = Math.max(0, Math.round((r.avg_nett_seconds || 0) / 60));
-          months[mo].total = (months[mo].total || 0) + r.total_cases;
+
+        durationRows.forEach((row) => {
+          const month = Number.parseInt(row.month, 10);
+          if (!months[month]) {
+            months[month] = {
+              month: MONTH_NAMES[month - 1],
+              total: 0,
+            };
+          }
+          months[month][row.ncal] = Math.max(0, Math.round((row.avg_nett_seconds || 0) / 60));
+          months[month].total = (months[month].total || 0) + row.total_cases;
         });
-        
-        // Ensure all NCAL keys exist even with 0 value to prevent Recharts key-missing crashes
-        const processed = Object.values(months).map(m => {
-          const entry = { ...m };
-          NCAL_ORDER.forEach(n => { if (entry[n] === undefined) entry[n] = 0; });
+
+        const processedDuration = Object.values(months).map((monthEntry) => {
+          const entry = { ...monthEntry };
+          NCAL_ORDER.forEach((ncal) => {
+            if (entry[ncal] === undefined) entry[ncal] = 0;
+          });
           return entry;
         });
-        
-        setDuration(processed);
-        setSla(s);
-        setTechPerf(tp);
+
+        setDuration(processedDuration);
+        setSla(slaRows);
+        setTechPerf(technicianRows);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [year]);
 
   const stats = useMemo(() => {
-    const totalCases = sla.reduce((s, r) => s + (r.total_cases || 0), 0);
-    const avgMttR = sla.length ? sla.reduce((s, r) => s + (r.avg_nett_seconds || 0), 0) / sla.length : 0;
-    const slaSuccess = totalCases ? (sla.reduce((s, r) => s + (r.sla_met || 0), 0) / totalCases) * 100 : 0;
-    const maxDur = techPerf.length ? Math.max(...techPerf.map(r => r.max_nett)) : 0;
-    return { totalCases, avgMttR, slaSuccess, maxDur };
+    const totalCases = sla.reduce((sum, row) => sum + (row.total_cases || 0), 0);
+    const avgMttR = sla.length
+      ? sla.reduce((sum, row) => sum + (row.avg_nett_seconds || 0), 0) / sla.length
+      : 0;
+    const slaSuccess = totalCases
+      ? (sla.reduce((sum, row) => sum + (row.sla_met || 0), 0) / totalCases) * 100
+      : 0;
+    const maxDur = techPerf.length ? Math.max(...techPerf.map((row) => row.max_nett || 0)) : 0;
+
+    return {
+      totalCases,
+      avgMttR,
+      slaSuccess,
+      maxDur,
+    };
   }, [sla, techPerf]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden font-sans bg-background animate-in fade-in duration-700">
-      {/* Precision Header */}
-      <div className="flex flex-col gap-6 shrink-0 mb-6 px-1">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
-          <div className="flex flex-col gap-1.5">
-             <h1 className="text-xl font-black tracking-tight text-foreground uppercase leading-none">Temporal Intelligence</h1>
-             <div className="flex items-center gap-2">
-                <div className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20 shadow-sm">
-                   <span className="text-[9px] font-black text-primary uppercase tracking-widest">{year} BGT FISCAL</span>
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/40 leading-none">
-                  Efficiency audit for <span className="text-foreground/80 font-mono italic">{stats.totalCases}</span> registered incidents
-                </p>
-             </div>
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <PageHeader
+        title="Duration Intelligence"
+        subtitle={`Review incident duration trends, SLA performance, and technician handling efficiency for ${year}.`}
+        action={(
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground sm:flex">
+              <Calendar className="h-3.5 w-3.5" />
+              Fiscal Year
+            </div>
+            <Select value={year} onChange={(event) => setYear(event.target.value)} className="w-[140px]">
+              {YEAR_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
           </div>
+        )}
+      />
 
-          <div className="flex items-center gap-2 p-1 bg-foreground/[0.015] border border-foreground/[0.06] rounded-xl shadow-sm backdrop-blur-md">
-             <div className="flex items-center gap-2 px-4 border-r border-foreground/[0.04] text-foreground/30">
-                <Calendar size={11} strokeWidth={3} />
-                <span className="text-[8px] font-black uppercase tracking-[0.25em] leading-none">Instruments</span>
-             </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-foreground/[0.03] transition-all group cursor-pointer relative overflow-hidden">
-                <select 
-                  className="bg-transparent border-none p-0 text-[10px] font-black text-foreground/80 focus:ring-0 cursor-pointer uppercase tracking-widest w-24 appearance-none outline-none z-10"
-                  value={year} 
-                  onChange={e => setYear(e.target.value)}
-                >
-                  {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y} FISCAL</option>)}
-                </select>
-                <ChevronDown size={10} className="text-foreground/20 group-hover:text-primary transition-colors" />
-             </div>
+      <div className="flex-1 overflow-y-auto pb-6">
+        {loading ? (
+          <div className="flex justify-center py-24">
+            <Spinner size="lg" />
           </div>
-        </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard
+                label="Incident Volume"
+                value={stats.totalCases}
+                icon={Activity}
+                tone="default"
+              />
+              <StatCard
+                label="Enterprise MTTR"
+                value={formatDuration(Math.round(stats.avgMttR))}
+                icon={Clock}
+                tone="warning"
+              />
+              <StatCard
+                label="SLA Success"
+                value={`${stats.slaSuccess.toFixed(1)}%`}
+                icon={ShieldCheck}
+                tone="success"
+              />
+              <StatCard
+                label="Longest Case"
+                value={formatDuration(stats.maxDur)}
+                icon={TrendingUp}
+                tone="destructive"
+              />
+            </div>
 
-        {/* Telemetry Nodes */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-           {[
-             { label: 'Incident Volume', val: stats.totalCases, icon: Activity, color: 'text-primary' },
-             { label: 'Enterprise MTTR', val: formatDuration(Math.round(stats.avgMttR)), icon: Clock, color: 'text-warning' },
-             { label: 'SLA Success Threshold', val: `${stats.slaSuccess.toFixed(1)}%`, icon: ShieldCheck, color: 'text-success' },
-             { label: 'Max Handle Tail', val: formatDuration(stats.maxDur), icon: TrendingUp, color: 'text-error' },
-           ].map((stat, i) => (
-             <div key={i} className="bg-foreground/[0.015] border border-foreground/[0.04] rounded-2xl p-4 flex flex-col gap-2 group hover:bg-foreground/[0.03] transition-all relative border-l-4" style={{ borderLeftColor: i === 0 ? 'var(--color-primary)' : 'transparent' }}>
-                <div className="flex items-center justify-between">
-                   <span className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/20 font-mono leading-none">{stat.label}</span>
-                   <stat.icon size={11} className={cn("opacity-40 group-hover:opacity-100 transition-opacity", stat.color)} />
-                </div>
-                <span className={cn(
-                  "text-lg font-black tracking-tighter text-foreground/70 leading-none uppercase tabular-nums truncate",
-                  stat.label.includes('MTTR') && "font-mono"
-                )}>{stat.val}</span>
-             </div>
-           ))}
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pr-1 -mr-1">
-        {loading ? <div className="flex justify-center py-32"><Spinner size="lg" className="opacity-20" /></div> : (
-          <div className="flex flex-col gap-6 pb-12">
-            
-            {/* Interactive Area Redesign - STABILIZED */}
-            <SectionCard 
-              title="Stacked Spectral Momentum" 
-              subtitle="Analytical breakdown of temporal handling volume by NCAL sector" 
+            <SectionCard
+              title="Duration Trend"
+              subtitle="Average net handling duration per month, segmented by NCAL."
               padding={false}
-              className="border-foreground/[0.08] shadow-lg bg-background overflow-hidden"
-              headerAction={
-                <div className="flex items-center gap-2 px-3 py-1 transparent border border-foreground/[0.04] rounded-full">
-                   <TrendingUp size={10} className="text-success" />
-                   <span className="text-[9px] font-black text-foreground/40 font-mono tracking-widest uppercase truncate max-w-[120px]">Analysis_Sync_0x8C</span>
-                </div>
-              }
             >
-              <div className="px-1 pt-6 sm:px-4 sm:pt-8 bg-foreground/[0.005]">
-                <ChartContainer 
-                  config={chartConfig} 
-                  className="aspect-auto h-[380px] w-full"
-                  style={{ height: '380px', minHeight: '380px' }}
-                >
-                  <ResponsiveContainer width="100%" height={380}>
-                    <AreaChart data={duration} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+              <div className="h-[400px] p-4 md:p-6">
+                <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={duration} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                       <defs>
-                        {NCAL_ORDER.map(ncal => (
-                          <linearGradient key={`fill${ncal}`} id={`fill${ncal}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={chartConfig[ncal].color} stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor={chartConfig[ncal].color} stopOpacity={0.1}/>
+                        {NCAL_ORDER.map((ncal) => (
+                          <linearGradient key={`fill-${ncal}`} id={`fill-${ncal}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={chartConfig[ncal].color} stopOpacity={0.7} />
+                            <stop offset="95%" stopColor={chartConfig[ncal].color} stopOpacity={0.08} />
                           </linearGradient>
                         ))}
                       </defs>
-                      <CartesianGrid vertical={false} strokeDasharray="4 4" stroke="var(--color-foreground)" opacity={0.03} />
-                      <XAxis 
-                        dataKey="month" 
-                        tickLine={false}
+
+                      <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 3" />
+
+                      <XAxis
+                        dataKey="month"
                         axisLine={false}
-                        tickMargin={12}
-                        minTickGap={32}
-                        tick={{ fill: 'var(--color-foreground)', opacity: 0.3, fontWeight: 900, fontSize: 10 }} 
-                        tickFormatter={(value) => value ? value.slice(0, 3) : ''}
-                      />
-                      <YAxis 
                         tickLine={false}
-                        axisLine={false}
                         tickMargin={12}
-                        tick={{ fill: 'var(--color-foreground)', opacity: 0.3, fontWeight: 900, fontSize: 10 }} 
-                        unit="m" 
+                        minTickGap={24}
+                        tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+                        tickFormatter={(value) => (value ? value.slice(0, 3) : '')}
                       />
-                      <ChartTooltip
-                        cursor={false}
-                        content={<ChartTooltipContent indicator="dot" />}
+
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tickMargin={12}
+                        tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+                        unit="m"
                       />
-                      {NCAL_ORDER.map(ncal => (
-                        <Area 
-                          key={ncal} 
+
+                      <ChartTooltip content={<ChartTooltipContent config={chartConfig} />} />
+
+                      {NCAL_ORDER.map((ncal) => (
+                        <Area
+                          key={ncal}
                           dataKey={ncal}
-                          type="natural" 
-                          fill={`url(#fill${ncal})`}
+                          type="natural"
+                          fill={`url(#fill-${ncal})`}
                           stroke={chartConfig[ncal].color}
                           strokeWidth={1.5}
-                          stackId="a"
-                          animationDuration={1500}
+                          stackId="duration"
+                          animationDuration={700}
                         />
                       ))}
-                      <ChartLegend content={<ChartLegendContent />} />
+
+                      <ChartLegend content={<ChartLegendContent config={chartConfig} />} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
             </SectionCard>
 
-            {/* Audit Grid: SLA & Personnel */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 px-1">
-              
-              {/* Compliance Registry */}
-              <SectionCard title="SLA Compliance Registry" subtitle="Operational service level monitoring protocol" padding={false} className="border-foreground/[0.08] shadow-sm flex flex-col h-fit overflow-hidden">
+            <div className="grid gap-6 xl:grid-cols-2">
+              <SectionCard
+                title="SLA Compliance"
+                subtitle="Year-to-date SLA performance by NCAL segment."
+                padding={false}
+              >
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse table-fixed min-w-[500px]">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
-                      <tr className="bg-foreground/[0.015] border-b border-foreground/[0.05]">
-                        <th className="p-4 w-[160px]"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Sector Definition</span></th>
-                        <th className="p-4 text-center w-[80px]"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Cases</span></th>
-                        <th className="p-4 text-center w-[120px] text-primary"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">MTTR Avg</span></th>
-                        <th className="p-4 text-right pr-6"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest font-mono">Success_Ratio</span></th>
+                      <tr className="border-b bg-muted/30">
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Segment
+                        </th>
+                        <th className="w-24 px-4 py-3 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Cases
+                        </th>
+                        <th className="w-36 px-4 py-3 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Avg MTTR
+                        </th>
+                        <th className="w-40 px-4 py-3 text-right text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Success
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-foreground/[0.03]">
-                      {sla.map(row => {
+                    <tbody>
+                      {sla.map((row) => {
                         const pct = row.total_cases ? Math.round((row.sla_met / row.total_cases) * 100) : 0;
+
                         return (
-                          <tr key={row.ncal} className="hover:bg-foreground/[0.01] group transition-all">
-                            <td className="p-4">
-                               <div className="flex items-center gap-3">
-                                  <div className="w-1.5 h-3 rounded-sm transform group-hover:scale-y-125 transition-transform" style={{ backgroundColor: chartConfig[row.ncal]?.color }} />
-                                  <span className="text-[11px] font-black text-foreground/60 tracking-tighter leading-none uppercase group-hover:text-foreground transition-colors">{row.ncal}</span>
-                               </div>
+                          <tr key={row.ncal} className="border-b transition-colors hover:bg-muted/20">
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="h-8 w-1 rounded-full"
+                                  style={{ backgroundColor: chartConfig[row.ncal]?.color }}
+                                />
+                                <span className="text-sm font-medium text-foreground">
+                                  {row.ncal}
+                                </span>
+                              </div>
                             </td>
-                            <td className="p-4 text-center font-black text-[11px] text-foreground/30 tabular-nums">{row.total_cases}</td>
-                            <td className="p-4 text-center font-mono font-black text-[11px] text-primary tabular-nums">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                            <td className="p-4 pr-6">
-                               <div className="flex items-center justify-end gap-3">
-                                  <div className="flex flex-col items-end">
-                                     <span className={cn(
-                                       "text-[10px] font-black font-mono leading-none tabular-nums",
-                                       pct >= 85 ? "text-success" : pct >= 70 ? "text-warning" : "text-error"
-                                     )}>{pct}%</span>
-                                     <span className="text-[7px] font-black text-foreground/20 uppercase mt-0.5 tracking-widest italic">{row.sla_target_hours}h SLA</span>
-                                  </div>
-                                  <div className="w-16 h-1 bg-foreground/[0.04] rounded-full overflow-hidden">
-                                     <div 
-                                      className={cn(
-                                        "h-full rounded-full transition-all duration-1000",
-                                        pct >= 85 ? "bg-success shadow-[0_0_8px_rgba(var(--color-success),0.3)]" : pct >= 70 ? "bg-warning" : "bg-error"
-                                      )} 
-                                      style={{ width: `${pct}%` }} 
-                                     />
-                                  </div>
-                               </div>
+                            <td className="px-4 py-4 text-center font-medium text-foreground">
+                              {row.total_cases}
+                            </td>
+                            <td className="px-4 py-4 text-center font-mono text-sm text-primary">
+                              {formatDuration(Math.round(row.avg_nett_seconds || 0))}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center justify-end gap-3">
+                                <div className="min-w-12 text-right">
+                                  <p className={cn(
+                                    'text-sm font-semibold',
+                                    pct >= 85 ? 'text-success' : pct >= 70 ? 'text-warning' : 'text-destructive'
+                                  )}>
+                                    {pct}%
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {row.sla_target_hours}h SLA
+                                  </p>
+                                </div>
+                                <progress
+                                  className={cn(
+                                    'h-2 w-20 overflow-hidden rounded-full [&::-moz-progress-bar]:rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted',
+                                    pct >= 85
+                                      ? '[&::-moz-progress-bar]:bg-emerald-500 [&::-webkit-progress-value]:bg-emerald-500'
+                                      : pct >= 70
+                                        ? '[&::-moz-progress-bar]:bg-amber-500 [&::-webkit-progress-value]:bg-amber-500'
+                                        : '[&::-moz-progress-bar]:bg-destructive [&::-webkit-progress-value]:bg-destructive'
+                                  )}
+                                  max={100}
+                                  value={pct}
+                                />
+                              </div>
                             </td>
                           </tr>
                         );
@@ -261,62 +329,75 @@ export default function DurationReportPage() {
                 </div>
               </SectionCard>
 
-              {/* Agent Benchmark Hub */}
-              <SectionCard title="Agent Benchmark Hub" subtitle="Analyst handling intelligence and capacity audit" padding={false} className="border-foreground/[0.08] shadow-sm flex flex-col h-fit overflow-hidden">
+              <SectionCard
+                title="Technician Benchmark"
+                subtitle="Handling load and duration performance across the top operators."
+                padding={false}
+              >
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse table-fixed min-w-[500px]">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
-                      <tr className="bg-foreground/[0.015] border-b border-foreground/[0.05]">
-                        <th className="p-4"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Analyst Segment</span></th>
-                        <th className="p-4 text-center w-[100px]"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Load</span></th>
-                        <th className="p-4 text-center w-[110px] text-primary"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Mean</span></th>
-                        <th className="p-4 text-right pr-6 w-[120px]"><span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest font-mono">Tail_Max</span></th>
+                      <tr className="border-b bg-muted/30">
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Technician
+                        </th>
+                        <th className="w-24 px-4 py-3 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Load
+                        </th>
+                        <th className="w-36 px-4 py-3 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Mean
+                        </th>
+                        <th className="w-32 px-4 py-3 text-right text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Max
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-foreground/[0.03]">
-                      {techPerf.slice(0, 10).map(row => (
-                        <tr key={row.technician} className="hover:bg-foreground/[0.01] group transition-all">
-                          <td className="p-4">
-                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-foreground/[0.02] border border-foreground/[0.06] flex items-center justify-center text-foreground/20 group-hover:bg-primary/10 group-hover:border-primary/30 transition-all">
-                                   <UserCheck size={11} className="group-hover:text-primary transition-colors" />
-                                </div>
-                                <div className="flex flex-col gap-0.5">
-                                   <span className="text-[11px] font-black text-foreground/70 tracking-tight uppercase leading-none truncate group-hover:text-foreground transition-colors">{row.technician}</span>
-                                   <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest italic leading-none opacity-40">Personnel_Ops</span>
-                                </div>
-                             </div>
+                    <tbody>
+                      {techPerf.slice(0, 10).map((row) => (
+                        <tr key={row.technician} className="border-b transition-colors hover:bg-muted/20">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                <UserCheck className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-foreground">
+                                  {row.technician}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Personnel ops
+                                </p>
+                              </div>
+                            </div>
                           </td>
-                          <td className="p-4 text-center font-black text-[11px] text-foreground/30 tabular-nums">{row.total_handled}n</td>
-                          <td className="p-4 text-center font-mono font-black text-[11px] text-primary tabular-nums">{formatDuration(Math.round(row.avg_nett_seconds || 0))}</td>
-                          <td className="p-4 text-right pr-6 font-mono font-black text-[11px] text-foreground/30 tabular-nums">{formatDuration(row.max_nett)}</td>
+                          <td className="px-4 py-4 text-center font-medium text-foreground">
+                            {row.total_handled}
+                          </td>
+                          <td className="px-4 py-4 text-center font-mono text-sm text-primary">
+                            {formatDuration(Math.round(row.avg_nett_seconds || 0))}
+                          </td>
+                          <td className="px-4 py-4 text-right font-mono text-sm text-muted-foreground">
+                            {formatDuration(row.max_nett)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </SectionCard>
-
             </div>
 
-             {/* Registry Empty State */}
-             {duration.length === 0 && (
-              <div className="py-32 mx-1 flex flex-col items-center justify-center gap-4 border border-foreground/[0.04] rounded-3xl bg-foreground/[0.015] shadow-inner font-mono">
-                 <Zap size={32} className="text-foreground/5 animate-pulse" strokeWidth={1} />
-                 <span className="text-[9px] font-black text-foreground/10 uppercase tracking-[0.5em]">System_Data_Null_Response</span>
+            {duration.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-muted/20 py-20">
+                <Zap className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  No duration data is available for the selected year.
+                </p>
               </div>
-            )}
-
+            ) : null}
           </div>
         )}
       </div>
-
-       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(var(--color-primary), 0.1); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(var(--color-primary), 0.3); }
-      `}</style>
     </div>
   );
 }

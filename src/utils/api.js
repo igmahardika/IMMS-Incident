@@ -190,22 +190,11 @@ export const api = {
   updateUser: (id, body) => request(`/master/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteUser: (id) => request(`/master/users/${id}`, { method: 'DELETE' }),
 
-  getTechnicalSupport: () => request('/master/technical-support'),
-  createTechnicalSupport: (body) => request('/master/technical-support', { method: 'POST', body: JSON.stringify(body) }),
-  updateTechnicalSupport: (id, body) => request(`/master/technical-support/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteTechnicalSupport: (id) => request(`/master/technical-support/${id}`, { method: 'DELETE' }),
-  uploadTechnicalSupport: (data) => request('/master/technical-support/batch', { method: 'POST', body: JSON.stringify({ data }) }),
-
   getDistribusi: () => request('/master/distribusi'),
   createDistribusi: (body) => request('/master/distribusi', { method: 'POST', body: JSON.stringify(body) }),
   updateDistribusi: (id, body) => request(`/master/distribusi/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteDistribusi: (id) => request(`/master/distribusi/${id}`, { method: 'DELETE' }),
   uploadDistribusi: (type, data) => request('/master/distribusi/batch', { method: 'POST', body: JSON.stringify({ type, data }) }),
-
-  getActions: () => request('/master/actions'),
-  createAction: (body) => request('/master/actions', { method: 'POST', body: JSON.stringify(body) }),
-  updateAction: (id, body) => request(`/master/actions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteAction: (id) => request(`/master/actions/${id}`, { method: 'DELETE' }),
 
   // Settings
   getEscalation: () => request('/settings/escalation'),

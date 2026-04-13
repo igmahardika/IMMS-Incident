@@ -387,7 +387,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
               >
                 <option value="">Unassigned</option>
                 {users
-                  .filter((account) => ['technician', 'noc', 'admin'].includes(account.role))
+                  .filter((account) => ['technician', 'noc'].includes(account.role))
                   .map((account) => (
                     <option key={account.id} value={account.id}>
                       {account.name}
@@ -793,7 +793,7 @@ function TableActionButton({ label, icon, onClick, tone = 'default' }) {
       type="button"
       variant="ghost"
       size="icon"
-      className={cn('h-8 w-8', toneClassName[tone] || toneClassName.default)}
+      className={cn('h-8 w-8 rounded-md', toneClassName[tone] || toneClassName.default)}
       onClick={onClick}
       title={label}
       aria-label={label}
@@ -912,38 +912,42 @@ export default function CurrentTroublePage() {
       accessorKey: 'ncal',
       header: 'NCAL',
       cell: ({ row }) => <NcalBadge value={row.original.ncal} />,
-      size: 92,
-      meta: { className: 'px-3' },
+      size: 96,
+      meta: { className: 'px-4' },
     },
     {
       accessorKey: 'case_no',
       header: 'Incident',
       cell: ({ row }) => (
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <button
             type="button"
-            className="font-mono text-sm font-medium text-primary transition-colors hover:underline"
+            className="block font-mono text-sm font-semibold text-foreground transition-colors hover:text-primary"
             onClick={() => navigate(`/incidents/${row.original.id}`)}
           >
             {row.original.case_no}
           </button>
-          <StatusPill status={row.original.status} />
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill status={row.original.status} />
+          </div>
         </div>
       ),
-      size: 128,
+      size: 156,
       meta: { className: 'whitespace-nowrap' },
     },
     {
       id: 'level',
       header: 'Level',
       cell: ({ row }) => (
-        <LevelBadge
-          level={calculateIncidentLevel(row.original.start_time)}
-          targetHours={getSLATarget(row.original.ncal) / 3600}
-        />
+        <div className="pt-0.5">
+          <LevelBadge
+            level={calculateIncidentLevel(row.original.start_time)}
+            targetHours={getSLATarget(row.original.ncal) / 3600}
+          />
+        </div>
       ),
-      size: 98,
-      meta: { className: 'px-2 text-center' },
+      size: 106,
+      meta: { className: 'px-3' },
     },
     {
       id: 'infrastructure',
@@ -953,44 +957,58 @@ export default function CurrentTroublePage() {
         const displayName = getIncidentDisplayName(incident);
 
         return (
-          <div className="min-w-0 space-y-1">
-            <p className="truncate text-sm font-medium text-foreground" title={displayName}>
+          <div className="min-w-0 space-y-1.5">
+            <p
+              className="line-clamp-2 text-sm font-semibold leading-5 text-foreground"
+              title={displayName}
+            >
               {displayName}
             </p>
-            <p className="truncate font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+            <p
+              className="line-clamp-1 text-xs text-muted-foreground"
+              title={incident.odp_bts || incident.service_id || 'No infrastructure code'}
+            >
               {incident.odp_bts || incident.service_id || '—'}
             </p>
           </div>
         );
       },
-      size: 280,
+      size: 320,
       meta: { flexible: true },
     },
     {
       id: 'logs',
       header: 'Current Logs',
-      cell: ({ row }) => (
-        <div className="min-w-0 space-y-2">
-          <p className="line-clamp-2 text-sm text-foreground">
-            {row.original.initial_problem || '—'}
-          </p>
-          {row.original.last_action ? (
-            <div className="inline-flex max-w-full items-center gap-2 rounded-md bg-primary/5 px-2.5 py-1 text-xs text-primary">
-              <Activity className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{row.original.last_action}</span>
+      cell: ({ row }) => {
+        const incident = row.original;
+        const headline = incident.last_action || incident.initial_problem || 'No active update yet.';
+        const supporting = incident.last_action && incident.initial_problem !== incident.last_action
+          ? incident.initial_problem
+          : `Started ${formatDateTime(incident.start_time)}`;
+
+        return (
+          <div className="min-w-0 space-y-2">
+            <p className="line-clamp-2 text-sm font-medium leading-5 text-foreground" title={headline}>
+              {headline}
+            </p>
+            <div className="flex min-w-0 items-start gap-2 text-xs text-muted-foreground">
+              <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span className="line-clamp-2" title={supporting}>
+                {supporting}
+              </span>
             </div>
-          ) : null}
-        </div>
-      ),
-      size: 320,
+          </div>
+        );
+      },
+      size: 360,
       meta: { flexible: true },
     },
     {
       id: 'downtime',
       header: 'Downtime',
       cell: ({ row }) => (
-        <div className="space-y-1">
-          <div className="font-mono text-sm font-medium text-foreground">
+        <div className="space-y-2">
+          <div className="font-mono text-sm font-semibold text-foreground">
             <LiveTimer
               startIso={row.original.start_time}
               pausedSec={row.original.total_pause_duration_seconds}
@@ -998,13 +1016,16 @@ export default function CurrentTroublePage() {
               target={getSLATarget(row.original.ncal)}
             />
           </div>
-          <p className="font-mono text-xs text-muted-foreground">
+          <div className="space-y-1">
+            <StatusPill status={row.original.status} />
+          </div>
+          <p className="text-xs text-muted-foreground">
             {formatDateTime(row.original.start_time)}
           </p>
         </div>
       ),
-      size: 148,
-      meta: { className: 'px-3 whitespace-nowrap' },
+      size: 164,
+      meta: { className: 'px-4 whitespace-nowrap' },
     },
     {
       id: 'actions',
@@ -1014,7 +1035,7 @@ export default function CurrentTroublePage() {
         const canManage = ['admin', 'noc'].includes(user?.role);
 
         return (
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-end gap-1.5">
             {incident.status === 'open' ? (
               <TableActionButton
                 label="Start"
@@ -1060,7 +1081,7 @@ export default function CurrentTroublePage() {
           </div>
         );
       },
-      size: 148,
+      size: 176,
       meta: { className: 'px-3 text-right' },
     },
   ], [handleResume, handleStart, navigate, user?.role]);
