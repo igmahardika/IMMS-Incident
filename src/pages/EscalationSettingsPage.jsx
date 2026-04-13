@@ -8,10 +8,9 @@ import { cn } from '../lib/utils.js';
 // Global icon stroke standard
 const ICON_ST = 2;
 const ICON_HD = 2.5;
-
-export default function EscalationSettingsPage() {
-  const segments_raw = ['blue', 'yellow', 'orange', 'red', 'black'];
-  const defaultTemplates = {
+const SEGMENTS_RAW = ['blue', 'yellow', 'orange', 'red', 'black'];
+const DEFAULT_TEMPLATES = (() => {
+  const templates = {
     template_open_internal_blue: `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\npic: {pic}`,
     template_close_internal_blue: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nResolved: {time}`,
     template_open_internal_yellow: `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\nSite  : {brand}\nLink Status  : Down\nODP : {odp}\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nDown Time : {time}\nPIC: {pic}`,
@@ -23,18 +22,25 @@ export default function EscalationSettingsPage() {
   ['orange', 'red', 'black'].forEach(seg => {
     const infraVar = seg === 'orange' ? '{odp}' : seg === 'red' ? '{odc}' : '{osc}/{pop}';
     const infraLabel = 'Distribution';
-    defaultTemplates[`template_open_internal_${seg}`] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\n${infraLabel} : ${infraVar}\nLink Status  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nDown Time : {time}\nImpacted Customers :\n{customer_terdampak}`;
-    defaultTemplates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal} - Level {level}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nResolved: {time}`;
+    templates[`template_open_internal_${seg}`] = `N-CAL  : {ncal} - Level {level}\nNomor case : {case_no}\n${infraLabel} : ${infraVar}\nLink Status  : Down\nSupport Level : {support_level}\nStatus  : OPEN\nProblem : {problem}\nIndication : {indikasi}\nDown Time : {time}\nImpacted Customers :\n{customer_terdampak}`;
+    templates[`template_close_internal_${seg}`] = `[CLOSE] {case_no}\n{ncal} - Level {level}\nODP : {odp}\nRoot Cause: {root_cause}\nNett Duration: {duration}\nResolved: {time}`;
   });
 
-  const initialTemplates = { ...defaultTemplates };
-  segments_raw.forEach(s => {
-    if (!initialTemplates[`template_open_internal_${s}`]) initialTemplates[`template_open_internal_${s}`] = '';
-    if (!initialTemplates[`template_open_vendor_${s}`]) initialTemplates[`template_open_vendor_${s}`] = '';
-    if (!initialTemplates[`template_close_internal_${s}`]) initialTemplates[`template_close_internal_${s}`] = '';
-    if (!initialTemplates[`template_close_vendor_${s}`]) initialTemplates[`template_close_vendor_${s}`] = '';
-  });
+  return templates;
+})();
 
+const INITIAL_TEMPLATES = (() => {
+  const templates = { ...DEFAULT_TEMPLATES };
+  SEGMENTS_RAW.forEach(segment => {
+    if (!templates[`template_open_internal_${segment}`]) templates[`template_open_internal_${segment}`] = '';
+    if (!templates[`template_open_vendor_${segment}`]) templates[`template_open_vendor_${segment}`] = '';
+    if (!templates[`template_close_internal_${segment}`]) templates[`template_close_internal_${segment}`] = '';
+    if (!templates[`template_close_vendor_${segment}`]) templates[`template_close_vendor_${segment}`] = '';
+  });
+  return templates;
+})();
+
+export default function EscalationSettingsPage() {
   const { data: escalationData, isLoading: loading } = useEscalationSettings();
   const updateSettings = useUpdateEscalationSettings();
   const testSettings = useTestEscalationSettings();
@@ -48,7 +54,7 @@ export default function EscalationSettingsPage() {
     template_open_vendor: '',
     template_close: '',
     template_close_vendor: '',
-    ...initialTemplates
+    ...INITIAL_TEMPLATES
   });
   
   const { addToast } = useToast();
@@ -59,7 +65,7 @@ export default function EscalationSettingsPage() {
   useEffect(() => {
     if (escalationData && escalationData.id) {
       const merged = { ...escalationData, is_active: !!escalationData.is_active };
-      Object.keys(defaultTemplates).forEach(k => { if (!merged[k]) merged[k] = defaultTemplates[k]; });
+      Object.keys(DEFAULT_TEMPLATES).forEach(k => { if (!merged[k]) merged[k] = DEFAULT_TEMPLATES[k]; });
       setCfg(prev => ({ ...prev, ...merged }));
     }
   }, [escalationData]);

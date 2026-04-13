@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { 
@@ -36,7 +36,7 @@ export default function MasterClassificationPage() {
   const [form, setForm] = useState({ klasifikasi: '', sub_klasifikasi: '' });
   const { addToast } = useToast();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getClassifications();
@@ -46,9 +46,9 @@ export default function MasterClassificationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 

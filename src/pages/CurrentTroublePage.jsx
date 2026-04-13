@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
@@ -288,7 +288,7 @@ function CloseModal({ open, onClose, incident, onClosed }) {
       setHistory(updates);
     }).catch(e => console.error('Error fetching incident history:', e));
 
-  }, [open, incident?.id]);
+  }, [open, incident]);
 
   const selectFromHistory = (item) => {
     const parts = (item.details || '').split(' | ');
@@ -490,18 +490,18 @@ export default function CurrentTroublePage() {
     });
   }, [incidents, addToast, alertedIds]);
 
-  const handleStart = async (id) => {
+  const handleStart = useCallback(async (id) => {
     try { await api.startAction(id); addToast('Action started!', 'success'); load(); }
     catch (e) { addToast(e.message, 'error'); }
-  };
+  }, [addToast, load]);
   const handlePause = async (inc, reason) => {
     try { await api.pauseIncident(inc.id, { reason }); addToast('Incident paused', 'warning'); setPauseModal(null); load(); }
     catch (e) { addToast(e.message, 'error'); }
   };
-  const handleResume = async (id) => {
+  const handleResume = useCallback(async (id) => {
     try { await api.resumeIncident(id); addToast('Incident resumed', 'success'); load(); }
     catch (e) { addToast(e.message, 'error'); }
-  };
+  }, [addToast, load]);
 
   const columns = useMemo(() => [
     {

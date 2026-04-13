@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { Modal, TableSkeleton, SectionCard, Button, Input } from '../../components/ui/index.jsx';
@@ -23,6 +23,20 @@ export default function MasterActionPage() {
   const [form, setForm] = useState({ name: '' });
   const { addToast } = useToast();
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const load = useCallback(() => {
+    setLoading(true);
+    return api.getActions()
+      .then(setActions)
+      .catch(e => addToast(e.message, 'error'))
+      .finally(() => setLoading(false));
+  }, [addToast]);
+
+  const handleDelete = useCallback(async (id) => {
+    if (!confirm('Purge this action protocol?')) return;
+    try { await api.deleteAction(id); addToast('Protocol Purged', 'warning'); load(); }
+    catch (e) { addToast(e.message, 'error'); }
+  }, [addToast, load]);
 
   const columns = React.useMemo(() => [
     {
@@ -59,10 +73,9 @@ export default function MasterActionPage() {
         </div>
       ),
     },
-  ], []);
+  ], [handleDelete]);
 
-  const load = () => api.getActions().then(setActions).catch(e => addToast(e.message, 'error')).finally(() => setLoading(false));
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const openEdit = (a) => { setModal(a); setForm({ name: a.name }); };
   const openCreate = () => { setModal('create'); setForm({ name: '' }); };
@@ -73,12 +86,6 @@ export default function MasterActionPage() {
       else { await api.updateAction(modal.id, form); addToast('Action Logic Updated', 'success'); }
       setModal(null); load();
     } catch (e) { addToast(e.message, 'error'); }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Purge this action protocol?')) return;
-    try { await api.deleteAction(id); addToast('Protocol Purged', 'warning'); load(); }
-    catch (e) { addToast(e.message, 'error'); }
   };
 
   return (

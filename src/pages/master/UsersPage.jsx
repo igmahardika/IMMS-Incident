@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { 
@@ -86,7 +86,7 @@ export default function UserManagementPage() {
     return { total, active, ...roleCounts };
   }, [users]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getUsers();
@@ -96,9 +96,9 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -128,7 +128,7 @@ export default function UserManagementPage() {
     }
   };
 
-  const handleDelete = async (u) => {
+  const handleDelete = useCallback(async (u) => {
     if (!confirm(`Purge identity protocol for ${u.name}? This action is irreversible.`)) return;
     try {
       await api.deleteUser(u.id);
@@ -137,9 +137,9 @@ export default function UserManagementPage() {
     } catch (e) {
       addToast(e.message, 'error');
     }
-  };
+  }, [addToast, load]);
 
-  const handleToggle = async (u) => {
+  const handleToggle = useCallback(async (u) => {
     try {
       await api.updateUser(u.id, { is_active: !u.is_active });
       addToast(`Access terminal ${!u.is_active ? 'ENABLED' : 'DISABLED'}`, 'info');
@@ -147,7 +147,7 @@ export default function UserManagementPage() {
     } catch (e) {
       addToast(e.message, 'error');
     }
-  };
+  }, [addToast, load]);
 
   const columns = useMemo(() => [
     {

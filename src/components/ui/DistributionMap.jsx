@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -85,7 +85,7 @@ export default function DistributionMap({ data, onRefresh }) {
   };
 
   // Load Trouble Data
-  const loadTroubleData = async () => {
+  const loadTroubleData = useCallback(async () => {
     setIsProcessing(true);
     try {
       const resp = await api.getDistributionTrouble(
@@ -98,13 +98,13 @@ export default function DistributionMap({ data, onRefresh }) {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
     if (viewMode === 'trouble') {
       loadTroubleData();
     }
-  }, [viewMode, startDate, endDate]);
+  }, [viewMode, loadTroubleData]);
 
   const troublePoints = useMemo(() => troubleData.filter(d => d.latitude && d.longitude), [troubleData]);
 

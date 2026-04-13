@@ -1,19 +1,18 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api.js';
 import { formatDateTime } from '../utils/incidentUtils.js';
 import { MONTH_NAMES } from '../utils/constants.js';
 import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton, Select } from '../components/ui/index.jsx';
 import { DataTable } from '../components/tables/DataTable.jsx';
-import { exportToExcel } from '../utils/exportStats.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { Search, FileSpreadsheet, Trash2, LayoutList, Map as MapIcon, ChevronRight, Calendar } from 'lucide-react';
-import CustomerMap from '../components/ui/CustomerMap.jsx';
 import { cn } from '../lib/utils.js';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => currentYear - i);
+const CustomerMap = lazy(() => import('../components/ui/CustomerMap.jsx'));
 
 // Format seconds → HH:MM:SS
 function fmtDur(sec) {
@@ -25,16 +24,13 @@ function fmtDur(sec) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function exportData(data) {
-  exportToExcel(data, `IMMS_History_${new Date().toISOString().split('T')[0]}.xlsx`);
-}
-
 export default function HistoryPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ month: '', year: String(currentYear), ncal: '', search: '' });
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [customers, setCustomers] = useState([]);
   const { addToast } = useToast();
@@ -74,6 +70,18 @@ export default function HistoryPage() {
     } catch (e) { addToast(e.message, 'error'); }
     finally { setDeleting(false); }
   };
+
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    try {
+      const { exportToExcel } = await import('../utils/exportStats.js');
+      await exportToExcel(data, `IMMS_History_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (e) {
+      addToast(e.message || 'Failed to export Excel report', 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [addToast, data]);
 
   const columns = useMemo(() => [
     {
@@ -193,7 +201,7 @@ export default function HistoryPage() {
               <MapIcon size={12} className="inline mr-1" /> Map
             </button>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => exportData(data)} className="font-bold text-[9px] tracking-widest text-success hover:bg-success/10">
+          <Button variant="ghost" size="sm" onClick={handleExport} isLoading={exporting} className="font-bold text-[9px] tracking-widest text-success hover:bg-success/10">
             <FileSpreadsheet size={12} className="mr-1" /> EXCEL REPORT
           </Button>
         </div>
@@ -201,13 +209,15 @@ export default function HistoryPage() {
 
       {viewMode === 'map' ? (
         <SectionCard padding={false} className="min-h-[600px]">
-          <CustomerMap customers={customers} onRefresh={() => api.getCustomers().then(setCustomers)}
-            initialMode="trouble" showTroubleMode hideCustomerPins
-            startDate={filters.month ? `${filters.year}-${filters.month}-01 00:00:00` : `${filters.year}-01-01 00:00:00`}
-            endDate={filters.month
-              ? `${filters.year}-${filters.month}-${new Date(+filters.year, +filters.month, 0).getDate()} 23:59:59`
-              : `${filters.year}-12-31 23:59:59`}
-          />
+          <Suspense fallback={<TableSkeleton rows={8} />}>
+            <CustomerMap customers={customers} onRefresh={() => api.getCustomers().then(setCustomers)}
+              initialMode="trouble" showTroubleMode hideCustomerPins
+              startDate={filters.month ? `${filters.year}-${filters.month}-01 00:00:00` : `${filters.year}-01-01 00:00:00`}
+              endDate={filters.month
+                ? `${filters.year}-${filters.month}-${new Date(+filters.year, +filters.month, 0).getDate()} 23:59:59`
+                : `${filters.year}-12-31 23:59:59`}
+            />
+          </Suspense>
         </SectionCard>
       ) : (
         <>

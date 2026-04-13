@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -49,7 +49,7 @@ export default function MasterTechnicalSupportPage() {
   const [form, setForm] = useState({ no: '', name: '', unit: '' });
   const { addToast } = useToast();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getTechnicalSupport();
@@ -59,9 +59,9 @@ export default function MasterTechnicalSupportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const stats = useMemo(() => {
     const total = data.length;
@@ -97,7 +97,7 @@ export default function MasterTechnicalSupportPage() {
     }
   };
 
-  const handleDelete = async (item) => {
+  const handleDelete = useCallback(async (item) => {
     if (!window.confirm(`Purge personnel node ${item.name}? This action will de-register the identity.`)) return;
     try {
       await api.deleteTechnicalSupport(item.id);
@@ -106,7 +106,7 @@ export default function MasterTechnicalSupportPage() {
     } catch (e) {
       addToast(e.message, 'error');
     }
-  };
+  }, [addToast, load]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -197,7 +197,7 @@ export default function MasterTechnicalSupportPage() {
         </div>
       ),
     },
-  ], []);
+  ], [handleDelete]);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">

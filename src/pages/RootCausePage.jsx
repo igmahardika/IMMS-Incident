@@ -47,7 +47,7 @@ export default function RootCausePage() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [filters.year, filters.month, filters.ncal]);
+  }, [filters]);
 
   const total = useMemo(() => data.reduce((s, d) => s + d.count, 0), [data]);
 

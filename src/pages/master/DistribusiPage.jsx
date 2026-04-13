@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { 
@@ -150,7 +150,7 @@ export default function MasterDistribusiPage() {
     type: 'Fiber Optic', level_1: '', level_2: '', level_3: '', level_4: '', latitude: '', longitude: '' 
   });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getDistribusi();
@@ -161,9 +161,9 @@ export default function MasterDistribusiPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast, selectedNode]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const tree = useMemo(() => buildTopologyTree(data), [data]);
   

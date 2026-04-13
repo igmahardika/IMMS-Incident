@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../utils/api.js';
 import * as XLSX from 'xlsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -53,7 +53,7 @@ export default function MasterCustomerPage() {
   });
   const { addToast } = useToast();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getCustomers();
@@ -63,9 +63,9 @@ export default function MasterCustomerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const setF = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -99,7 +99,7 @@ export default function MasterCustomerPage() {
     }
   };
 
-  const handleDelete = async (item) => {
+  const handleDelete = useCallback(async (item) => {
     if (!confirm(`Purge intelligence node for ${item.company_name}?`)) return;
     try {
       await api.deleteCustomer(item.id);
@@ -108,7 +108,7 @@ export default function MasterCustomerPage() {
     } catch (e) {
       addToast(e.message, 'error');
     }
-  };
+  }, [addToast, load]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -243,7 +243,7 @@ export default function MasterCustomerPage() {
         </div>
       ),
     },
-  ], []);
+  ], [handleDelete]);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden font-sans">
