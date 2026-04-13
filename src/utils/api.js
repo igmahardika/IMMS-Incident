@@ -2,7 +2,26 @@ const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ||
   `${window.location.protocol}//${window.location.hostname}:3001`;
 const BASE = `${API_BASE}/api`;
+let isRedirectingToLogin = false;
 
+function decodeJwtPayload(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const normalized = base64.padEnd(base64.length + ((4 - (base64.length % 4 || 4)) % 4), '=');
+    return JSON.parse(window.atob(normalized));
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenValid(token) {
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return true;
+  return payload.exp * 1000 > Date.now() + 5000;
+}
 
 /**
  * Retrieves the active JWT authentication token.
@@ -17,9 +36,32 @@ function persistSession(data) {
   if (data?.user) localStorage.setItem('imms_user', JSON.stringify(data.user));
 }
 
-function clearSession() {
+export function clearSession() {
   localStorage.removeItem('imms_token');
   localStorage.removeItem('imms_user');
+}
+
+export function getStoredUserSession() {
+  const token = getToken();
+  const storedUser = localStorage.getItem('imms_user');
+  if (!token || !storedUser || !isTokenValid(token)) {
+    clearSession();
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    clearSession();
+    return null;
+  }
+}
+
+function redirectToLogin() {
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname === '/login' || isRedirectingToLogin) return;
+  isRedirectingToLogin = true;
+  window.location.replace('/login');
 }
 
 async function refreshAccessToken() {
@@ -48,6 +90,12 @@ async function refreshAccessToken() {
  */
 async function request(path, options = {}, retry = true) {
   const token = getToken();
+  if (token && !isTokenValid(token) && !['/auth/login', '/auth/refresh', '/auth/logout'].includes(path)) {
+    clearSession();
+    redirectToLogin();
+    throw new Error('Session expired. Please login again.');
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     credentials: 'include',
@@ -67,7 +115,7 @@ async function request(path, options = {}, retry = true) {
     }
 
     clearSession();
-    window.location.href = '/login';
+    redirectToLogin();
     throw new Error('Session expired. Please login again.');
   }
 
@@ -164,4 +212,3 @@ export const api = {
   updateEscalation: (body) => request('/settings/escalation', { method: 'PUT', body: JSON.stringify(body) }),
   testEscalation: () => request('/settings/escalation/test', { method: 'POST' }),
 };
-

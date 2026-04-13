@@ -1,24 +1,10 @@
 import React, { createContext, useContext, useState } from 'react';
-import { api } from '../utils/api.js';
+import { api, getStoredUserSession } from '../utils/api.js';
 
 const AuthContext = createContext(null);
 
-function getStoredUser() {
-  const token = localStorage.getItem('imms_token');
-  const stored = localStorage.getItem('imms_user');
-  if (!token || !stored) return null;
-
-  try {
-    return JSON.parse(stored);
-  } catch {
-    localStorage.removeItem('imms_token');
-    localStorage.removeItem('imms_user');
-    return null;
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => getStoredUser());
+  const [user, setUser] = useState(() => getStoredUserSession());
   const [loading] = useState(false);
 
   const login = async (username, password) => {
