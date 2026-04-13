@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDateTime, formatDuration } from '../../utils/api.js';
+import { formatDateTime, formatDuration } from '../../utils/incidentUtils.js';
 import { Clock, Pause, Play, Edit2, CheckCircle, AlertTriangle, User, Activity } from 'lucide-react';
 
 const ACTION_ICONS = {

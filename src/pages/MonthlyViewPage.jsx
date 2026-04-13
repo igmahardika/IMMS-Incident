@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { api, MONTH_NAMES, formatDuration } from '../utils/api.js';
-import { NcalBadge, SectionCard } from '../components/ui/index.jsx';
+import React, { useState } from 'react';
+import { useIncidentHistory } from '../hooks/useIncidents.js';
+import { formatDuration } from '../utils/incidentUtils.js';
+import { MONTH_NAMES } from '../utils/constants.js';
+import { NcalBadge, SectionCard, Select } from '../components/ui/index.jsx';
 import { Calendar, Clock, Zap, BarChart2 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 
@@ -16,13 +18,7 @@ const PageSpinner = () => (
 
 export default function MonthlyViewPage() {
   const [year, setYear] = useState(String(currentYear));
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    api.getHistory({ year, limit: 2000 }).then(setHistory).catch(console.error).finally(() => setLoading(false));
-  }, [year]);
+  const { data: history = [], isLoading: loading } = useIncidentHistory({ year, limit: 2000 });
 
   // Group by month and NCAL
   const grouped = {};
@@ -97,13 +93,13 @@ export default function MonthlyViewPage() {
           <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9 shadow-[inset_0_1px_1px_rgba(0,0,0,0.02)]">
             <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] flex items-center gap-1.5"><Calendar size={12} /> Temporal Filter</span>
             <div className="w-px h-3 bg-foreground/10 mx-1" />
-            <select 
+            <Select 
               className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/70 uppercase tracking-widest outline-none cursor-pointer"
               value={year} 
               onChange={e => setYear(e.target.value)}
             >
               {YEAR_OPTIONS.map(y => <option key={y} value={y} className="bg-background">{y} CALENDAR</option>)}
-            </select>
+            </Select>
           </div>
         </div>
       </div>

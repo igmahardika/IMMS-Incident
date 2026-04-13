@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, formatDateTime, processTimeline, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
+import { useIncident } from '../hooks/useIncidents.js';
+import { formatDateTime, processTimeline, calculateIncidentLevel, getSLATarget } from '../utils/incidentUtils.js';
 import { NcalBadge, StatusPill, DurationBadge, PageSpinner, UnifiedTimeline, LevelBadge, SectionCard, Button } from '../components/ui/index.jsx';
 import { ArrowLeft, Edit2, MapPin, Info, Shield, Activity } from 'lucide-react';
 import { cn } from '../lib/utils.js';
@@ -8,14 +9,7 @@ import { cn } from '../lib/utils.js';
 export default function IncidentDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [incident, setIncident] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(() => {
-    api.getIncident(id).then(setIncident).catch(console.error).finally(() => setLoading(false));
-  }, [id]);
-
-  useEffect(() => { load(); }, [load]);
+  const { data: incident, isLoading: loading } = useIncident(id);
 
   if (loading) return <PageSpinner />;
   if (!incident) return (

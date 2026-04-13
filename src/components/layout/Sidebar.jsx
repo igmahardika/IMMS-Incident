@@ -165,7 +165,11 @@ export default function Sidebar({ mobileOpen, onClose }) {
       {/* ── Footer / User Profile ── */}
       <div className="shrink-0 border-t border-foreground/[0.06] p-2.5">
         <div
-          className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg hover:bg-foreground/[0.04] transition-colors cursor-pointer group"
+          role="button"
+          tabIndex={0}
+          aria-label="Logout user options"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogout(); } }}
+          className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg hover:bg-foreground/[0.04] transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           onClick={handleLogout}
         >
           {/* Avatar */}
@@ -182,7 +186,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
           {/* Logout Icon */}
           <button
             className={cn(
-              "p-1.5 rounded-md transition-all shrink-0",
+              "p-1.5 rounded-md transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error",
               confirmLogout
                 ? "text-error bg-error/10 animate-pulse"
                 : "text-foreground/30 group-hover:text-error group-hover:bg-error/10"
@@ -191,7 +195,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
             title={confirmLogout ? "Click again to confirm logout" : "Logout"}
             onClick={(e) => { e.stopPropagation(); handleLogout(); }}
           >
-            <LogOut size={13} strokeWidth={2} />
+            <LogOut size={13} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
       </div>

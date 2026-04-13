@@ -4,7 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMark
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Network, Database, Search, Map as MapIcon, Layout, Info, Calendar, AlertTriangle } from 'lucide-react';
-import { api, formatDateTime } from '../../utils/api';
+import { api } from '../../utils/api.js';
+import { formatDateTime } from '../../utils/incidentUtils.js';
 
 const createODPIcon = (type) => {
   const color = type === 'Fiber Optic' ? '#4f46e5' : '#d97706';

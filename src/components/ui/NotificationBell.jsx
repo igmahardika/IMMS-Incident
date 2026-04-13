@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, X, ExternalLink, CheckCheck, User, AlertCircle, CheckCircle2, History, Info } from 'lucide-react';
-import { api, formatDateTime } from '../../utils/api.js';
+import { api } from '../../utils/api.js';
+import { formatDateTime } from '../../utils/incidentUtils.js';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils.js';
 

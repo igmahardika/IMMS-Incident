@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, formatDateTime, MONTH_NAMES, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
-import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton } from '../components/ui/index.jsx';
+import { api } from '../utils/api.js';
+import { formatDateTime, calculateIncidentLevel, getSLATarget } from '../utils/incidentUtils.js';
+import { MONTH_NAMES } from '../utils/constants.js';
+import { NcalBadge, StatusPill, EmptyState, LevelBadge, Button, SectionCard, TableSkeleton, Select } from '../components/ui/index.jsx';
 import { DataTable } from '../components/tables/DataTable.jsx';
 import { exportToExcel } from '../utils/exportStats.js';
 import { useToast } from '../context/ToastContext.jsx';
@@ -227,21 +229,21 @@ export default function HistoryPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
                 <Calendar size={12} className="text-foreground/30" />
-                <select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[80px]" value={filters.year} onChange={e => setF('year', e.target.value)}>
+                <Select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[80px]" value={filters.year} onChange={e => setF('year', e.target.value)}>
                   {YEAR_OPTIONS.map(y => <option key={y} value={y} className="bg-background">{y}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
-                <select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[120px]" value={filters.month} onChange={e => setF('month', e.target.value)}>
+                <Select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[120px]" value={filters.month} onChange={e => setF('month', e.target.value)}>
                   <option value="" className="bg-background">Full Year</option>
                   {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1).padStart(2, '0')} className="bg-background">{m.toUpperCase()}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="flex items-center gap-2 bg-foreground/[0.03] border border-foreground/5 rounded-md px-3 h-9">
-                <select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[100px]" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
+                <Select className="bg-transparent border-none focus:ring-0 text-[10px] font-black text-foreground/60 uppercase tracking-widest min-w-[100px]" value={filters.ncal} onChange={e => setF('ncal', e.target.value)}>
                   <option value="" className="bg-background">ALL NCAL</option>
                   {NCAL_OPTIONS.filter(Boolean).map(n => <option key={n} value={n} className="bg-background">{n}</option>)}
-                </select>
+                </Select>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../utils/api.js';
+import { useEscalationSettings, useUpdateEscalationSettings, useTestEscalationSettings } from '../hooks/useSettings.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { PageSpinner, SectionCard, Button, Input, Spinner } from '../components/ui/index.jsx';
+import { PageSpinner, SectionCard, Button, Input, Spinner, Select } from '../components/ui/index.jsx';
 import { Save, Send, Settings, Smartphone, Info, Circle, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 
@@ -19,6 +19,7 @@ export default function EscalationSettingsPage() {
     template_close_internal_yellow: `[CLOSE] {case_no}\n{ncal} - Level {level}\nSite: {brand}\nLink Status  : Up\nRoot Cause: {root_cause}\nNett Duration: {duration}\nResolved: {time}`,
     template_close_vendor_yellow: `Close Order\n{ncal}\nSite : {brand}\nCase Number : {case_no}\nRoot Cause: {root_cause}\nAction: {action}\nNett: {duration}`,
   };
+
   ['orange', 'red', 'black'].forEach(seg => {
     const infraVar = seg === 'orange' ? '{odp}' : seg === 'red' ? '{odc}' : '{osc}/{pop}';
     const infraLabel = 'Distribution';
@@ -34,6 +35,10 @@ export default function EscalationSettingsPage() {
     if (!initialTemplates[`template_close_vendor_${s}`]) initialTemplates[`template_close_vendor_${s}`] = '';
   });
 
+  const { data: escalationData, isLoading: loading } = useEscalationSettings();
+  const updateSettings = useUpdateEscalationSettings();
+  const testSettings = useTestEscalationSettings();
+
   const [cfg, setCfg] = useState({
     type: 'telegram',
     webhook_url: '',
@@ -45,32 +50,31 @@ export default function EscalationSettingsPage() {
     template_close_vendor: '',
     ...initialTemplates
   });
-  const [loading, setLoading] = useState(true);
-  const [testing, setTesting] = useState(false);
+  
   const { addToast } = useToast();
   const [previewNcal, setPreviewNcal] = useState('BLUE');
   const [previewType, setPreviewType] = useState('open');
   const setF = (k, v) => setCfg(p => ({ ...p, [k]: v }));
 
   useEffect(() => {
-    api.getEscalation().then(d => {
-      if (d.id) {
-        const merged = { ...d, is_active: !!d.is_active };
-        Object.keys(defaultTemplates).forEach(k => { if (!merged[k]) merged[k] = defaultTemplates[k]; });
-        setCfg(prev => ({ ...prev, ...merged }));
-      }
-    }).catch(console.error).finally(() => setLoading(false));
-  }, []);
+    if (escalationData && escalationData.id) {
+      const merged = { ...escalationData, is_active: !!escalationData.is_active };
+      Object.keys(defaultTemplates).forEach(k => { if (!merged[k]) merged[k] = defaultTemplates[k]; });
+      setCfg(prev => ({ ...prev, ...merged }));
+    }
+  }, [escalationData]);
 
-  const handleSave = async () => {
-    try { await api.updateEscalation(cfg); addToast('Configuration saved successfully', 'success'); }
-    catch (e) { addToast(e.message, 'error'); }
+  const handleSave = () => {
+    updateSettings.mutate(cfg, {
+      onSuccess: () => addToast('Configuration saved successfully', 'success'),
+      onError: (e) => addToast(e.message, 'error')
+    });
   };
-  const handleTest = async () => {
-    setTesting(true);
-    try { await api.testEscalation(); addToast('Test message sent!', 'success'); }
-    catch (e) { addToast(e.message, 'error'); }
-    finally { setTesting(false); }
+  const handleTest = () => {
+    testSettings.mutate(undefined, {
+      onSuccess: () => addToast('Test message sent!', 'success'),
+      onError: (e) => addToast(e.message, 'error')
+    });
   };
 
   const renderPreview = (template, ncal, isClose = false) => {
@@ -118,7 +122,7 @@ export default function EscalationSettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 h-full font-inter">
+    <div className="flex flex-col gap-6 h-full font-sans">
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-0.5">
@@ -126,10 +130,10 @@ export default function EscalationSettingsPage() {
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 leading-none">Automated incident broadcasting & response protocols</p>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <Button variant="ghost" size="sm" onClick={handleTest} disabled={testing || !cfg.webhook_url} className="font-bold text-[9px] tracking-widest" aria-label="Send test notification" title="Send Test">
-            <Send size={12} strokeWidth={ICON_ST} /> {testing ? 'DISPATCHING...' : 'GLOBAL TEST'}
+          <Button variant="ghost" size="sm" onClick={handleTest} disabled={testSettings.isPending || !cfg.webhook_url} className="font-bold text-[9px] tracking-widest" aria-label="Send test notification" title="Send Test">
+            <Send size={12} strokeWidth={ICON_ST} /> {testSettings.isPending ? 'DISPATCHING...' : 'GLOBAL TEST'}
           </Button>
-          <Button size="sm" onClick={handleSave} className="font-black text-[9px] tracking-widest px-6 shadow-xl shadow-primary/20" aria-label="Save escalation configuration" title="Save Configuration">
+          <Button size="sm" onClick={handleSave} isLoading={updateSettings.isPending} className="font-black text-[9px] tracking-widest px-6 shadow-xl shadow-primary/20" aria-label="Save escalation configuration" title="Save Configuration">
             <Save size={12} strokeWidth={ICON_HD} /> SAVE CONFIGURATION
           </Button>
         </div>
@@ -157,7 +161,7 @@ export default function EscalationSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-black text-[10px] uppercase tracking-widest text-foreground/40 ml-1">Platform Architecture</label>
-                  <select 
+                  <Select 
                     className="flex h-9 w-full rounded-md border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[11px] font-bold shadow-sm focus:ring-1 focus:ring-primary transition-all uppercase tracking-tight" 
                     value={cfg.type} 
                     onChange={e => setF('type', e.target.value)}
@@ -165,7 +169,7 @@ export default function EscalationSettingsPage() {
                     <option value="telegram" className="bg-background">Telegram Bot API</option>
                     <option value="whatsapp" className="bg-background">WhatsApp Business Protocol</option>
                     <option value="custom" className="bg-background">Generic Webhook (JSON)</option>
-                  </select>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="font-black text-[10px] uppercase tracking-widest text-foreground/40 ml-1">Traffic Routing</label>

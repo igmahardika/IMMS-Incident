@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { api, formatDateTime, processTimeline, formatDuration, calculateIncidentLevel, getSLATarget } from '../utils/api.js';
+import { api } from '../utils/api.js';
+import { formatDateTime, processTimeline, formatDuration, calculateIncidentLevel, getSLATarget } from '../utils/incidentUtils.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge, Button } from '../components/ui/index.jsx';
+import { NcalBadge, StatusPill, LiveTimer, PageSpinner, Modal, EmptyState, UnifiedTimeline, DurationBadge, Spinner, SectionCard, LevelBadge, Button, Select } from '../components/ui/index.jsx';
 import { DataTable } from '../components/tables/DataTable.jsx';
 import { Play, Pause, Square, Edit2, Plus, AlertTriangle, Activity, X as XIcon, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils.js';
@@ -115,7 +116,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 w-full">
                   <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Field Technician</label>
-                  <select 
+                  <Select 
                     className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
                     value={form.technician_id} 
                     onChange={e => setForm(p => ({ ...p, technician_id: e.target.value }))}
@@ -124,7 +125,7 @@ function UpdateModal({ open, onClose, incident, onSaved }) {
                     {users.filter(u => ['technician', 'noc', 'admin'].includes(u.role)).map(u => (
                       <option key={u.id} value={u.id}>{u.name}</option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             )}
@@ -363,17 +364,17 @@ function CloseModal({ open, onClose, incident, onClosed }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1.5 w-full">
             <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Root Category *</label>
-            <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
+            <Select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={selectedParent} onChange={e => { setSelectedParent(e.target.value); setClassificationId(''); }}>
               <option value="">— Select Category —</option>
               {uniqueParents.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="flex flex-col gap-1.5 w-full">
             <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest ml-1">Sub-Classification *</label>
-            <select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
+            <Select className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-[11px] font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" value={classificationId} onChange={e => setClassificationId(e.target.value)} disabled={!selectedParent}>
               <option value="">— Select Detail —</option>
               {classes.filter(c => c.klasifikasi === selectedParent).map(c => <option key={c.id} value={c.id}>{c.sub_klasifikasi}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -443,6 +444,7 @@ export default function CurrentTroublePage() {
 
   const [alertedIds, setAlertedIds] = useState(new Set());
   const [highlightedIds, setHighlightedIds] = useState(new Set());
+  const [ncalFilter, setNcalFilter] = useState(null);
   const prevDataRef = useRef([]);
 
   const [pauseModal, setPauseModal] = useState(null);
@@ -620,44 +622,108 @@ export default function CurrentTroublePage() {
   
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0 mb-6">
+      {/* Page Header */}
+      <div className="flex items-end justify-between gap-4 flex-wrap shrink-0 mb-6 px-1">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Active Troubles</h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 leading-relaxed">
-            Monitoring <span className="text-primary">{incidents.length}</span> live incidents
+          <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Incident Queue</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 leading-relaxed italic">
+            Monitoring <span className="text-primary">{incidents.length}</span> live network disruptions
           </p>
         </div>
         <div className="flex items-center gap-3">
           {user?.role !== 'technician' && (
-            <Button variant="primary" icon={<Plus size={14} />} onClick={() => navigate('/incidents/create')}>
-              Create Incident
+            <Button variant="primary" icon={<Plus size={14} strokeWidth={2.5} />} onClick={() => navigate('/incidents/create')}>
+              Initialize Ticket
             </Button>
           )}
         </div>
       </div>
 
-      <div className="bg-background border border-foreground/5 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+      <div className="bg-background border border-foreground/[0.08] shadow-sm rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0 mb-4">
         {incidents.length === 0 ? (
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto bg-foreground/[0.01]">
             <EmptyState
-              icon={<CheckCircle size={48} className="text-success" />}
-              title="All Clear"
-              desc="No active incidents reported. The network is operating normally."
+              icon={<CheckCircle size={48} className="text-success/50" />}
+              title="Silent Monitoring"
+              desc="No active disruptions detected. Network integrity is presently 100%."
               action={['admin', 'noc'].includes(user?.role) && (
                 <Button variant="outline" size="sm" onClick={() => navigate('/incidents/create')} icon={<Plus size={14}/>}>
-                  Create Incident Manually
+                  Manual Entry
                 </Button>
               )}
             />
           </div>
         ) : (
-          <DataTable 
-            columns={columns} 
-            data={incidents} 
-            className="flex-1"
-            pageSize={100}
-            getRowClassName={(row) => highlightedIds.has(row.id) ? "bg-primary/5 shadow-inner" : ""}
-          />
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Filter Ribbons */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/5 bg-foreground/[0.01] shrink-0">
+              <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar-slim pb-1 md:pb-0">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 mr-2 flex items-center gap-1.5 shrink-0">
+                  <Activity size={10} /> Active Segments
+                </span>
+                <button 
+                  onClick={() => setNcalFilter(null)} 
+                  className={cn(
+                    "px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-md transition-all border shrink-0", 
+                    !ncalFilter ? 'bg-foreground/10 text-foreground border-transparent shadow-sm' : 'bg-transparent text-foreground/40 border-foreground/5 hover:bg-foreground/5 hover:text-foreground/60'
+                  )}
+                >
+                  Global
+                </button>
+                {['BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'].map(n => {
+                  const isActive = ncalFilter === n;
+                  const count = incidents.filter(i => i.ncal === n).length;
+                  if (count === 0 && !isActive) return null;
+
+                  return (
+                    <button 
+                      key={n} 
+                      onClick={() => setNcalFilter(n)} 
+                      className={cn(
+                        "px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-md transition-all border flex items-center gap-2 shrink-0", 
+                        isActive ? 'border-transparent shadow-md' : 'bg-transparent text-foreground/30 border-foreground/5 hover:bg-foreground/5 hover:text-foreground/50'
+                      )} 
+                      style={isActive ? { backgroundColor: `var(--color-ncal-${n.toLowerCase()})`, color: 'white' } : {}}
+                    >
+                      <span className={cn("w-1 h-1 rounded-full", isActive ? "bg-white" : "bg-current")} style={!isActive ? { color: `var(--color-ncal-${n.toLowerCase()})` } : {}} /> 
+                      {n}
+                      <span className={cn("text-[8px] font-black px-1.5 py-0.5 rounded ml-1", isActive ? 'bg-black/20' : 'bg-foreground/5')}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="hidden md:flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-foreground/20">
+                 <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-sm bg-error/10 border border-error/20" />
+                    SLA Hazard
+                 </div>
+                 <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-sm bg-primary/10 border border-primary/20" />
+                    Live Update
+                 </div>
+              </div>
+            </div>
+            
+            {/* Main Table Content */}
+            <DataTable 
+              columns={columns} 
+              data={ncalFilter ? incidents.filter(i => i.ncal === ncalFilter) : incidents} 
+              className="flex-1"
+              pageSize={100}
+              getRowClassName={(row) => {
+                const isHighlighted = highlightedIds.has(row.id);
+                const target = getSLATarget(row.ncal);
+                const elapsed = Math.floor((Date.now() - new Date(row.start_time).getTime()) / 1000);
+                const isSlaBreached = row.status !== 'closed' && row.status !== 'resolved' && elapsed > target;
+                
+                if (isHighlighted) return "bg-primary/[0.04] shadow-[inset_3px_0_0_0_var(--color-primary)] transition-all duration-1000";
+                if (isSlaBreached) return "bg-error/[0.03] shadow-[inset_3px_0_0_0_var(--color-error)]";
+                return "hover:bg-foreground/[0.02]";
+              }}
+            />
+          </div>
         )}
       </div>
 

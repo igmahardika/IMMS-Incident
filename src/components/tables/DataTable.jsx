@@ -44,9 +44,9 @@ export function DataTable({
 
   return (
     <div className={cn("flex flex-col h-full overflow-hidden", className)}>
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar border-t border-foreground/5">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
         <table className="w-full text-left border-collapse border-separate border-spacing-0 table-fixed">
-          <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+          <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-md">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
@@ -56,7 +56,7 @@ export function DataTable({
                     <th 
                       key={header.id}
                       className={cn(
-                        "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/40 border-b border-r border-foreground/5 bg-foreground/[0.02] last:border-r-0",
+                        "px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 border-b border-foreground/5 bg-foreground/[0.01]",
                         header.column.columnDef.meta?.className
                       )}
                       style={{ 
@@ -68,13 +68,13 @@ export function DataTable({
                         <div 
                           className={cn(
                             "flex items-center gap-2 select-none whitespace-nowrap",
-                            header.column.getCanSort() && "cursor-pointer hover:text-foreground/70"
+                            header.column.getCanSort() && "cursor-pointer hover:text-foreground/70 transition-colors"
                           )}
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getIsSorted() === 'asc' && <ChevronUp size={12} className="shrink-0" />}
-                          {header.column.getIsSorted() === 'desc' && <ChevronDown size={12} className="shrink-0" />}
+                          {header.column.getIsSorted() === 'asc' && <ChevronUp size={12} className="shrink-0 text-primary" />}
+                          {header.column.getIsSorted() === 'desc' && <ChevronDown size={12} className="shrink-0 text-primary" />}
                         </div>
                       )}
                     </th>
@@ -88,8 +88,8 @@ export function DataTable({
               table.getRowModel().rows.map(row => (
                 <motion.tr 
                   layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   key={row.id} 
                   className={cn("hover:bg-foreground/[0.02] transition-colors group", getRowClassName(row.original))}
                 >
@@ -100,7 +100,7 @@ export function DataTable({
                       <td 
                         key={cell.id}
                         className={cn(
-                          "px-3 py-1.5 text-[11px] font-bold border-r border-foreground/5 last:border-r-0 truncate",
+                          "px-4 py-2.5 text-[11px] font-bold leading-tight border-b border-foreground/[0.03] transition-colors text-foreground/80",
                           cell.column.columnDef.meta?.className
                         )}
                         style={{ 
@@ -116,8 +116,8 @@ export function DataTable({
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="text-center py-20 text-foreground/30 text-xs font-bold uppercase tracking-widest">
-                  No records found
+                <td colSpan={columns.length} className="text-center py-24 text-foreground/20 text-[10px] font-black uppercase tracking-[0.3em]">
+                  No Intelligence Data Found
                 </td>
               </tr>
             )}
@@ -126,33 +126,36 @@ export function DataTable({
       </div>
       
       {/* Pagination & Info */}
-      <div className="flex items-center justify-between px-4 py-3 bg-muted/20 border-t border-foreground/5 shrink-0">
-         <div className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest flex items-center gap-4">
-            <span>
-              Showing {table.getRowModel().rows.length > 0 ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1 : 0} to {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, data.length)} of {data.length} entries
+      <div className="flex items-center justify-between px-6 py-4 bg-background border-t border-foreground/[0.06] shrink-0">
+         <div className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.15em] flex items-center gap-4">
+            <span className="flex items-center gap-2">
+              Viewing <span className="text-foreground/60">{table.getRowModel().rows.length > 0 ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1 : 0} — {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, data.length)}</span> of <span className="text-foreground/60">{data.length}</span> entries
             </span>
             {table.getPageCount() > 1 && (
-               <span className="text-primary/60">— Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
+               <div className="w-1 h-1 rounded-full bg-foreground/10" />
+            )}
+            {table.getPageCount() > 1 && (
+               <span className="text-primary/40">Sequence {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
             )}
          </div>
          
          {table.getPageCount() > 1 && (
-           <div className="flex gap-1">
-             <button
-               className="h-7 px-3 text-[9px] font-black uppercase border border-foreground/10 rounded-md bg-background hover:bg-foreground/5 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-               onClick={() => table.previousPage()}
-               disabled={!table.getCanPreviousPage()}
-             >
-               Prev
-             </button>
-             <button
-               className="h-7 px-3 text-[9px] font-black uppercase border border-foreground/10 rounded-md bg-background hover:bg-foreground/5 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-               onClick={() => table.nextPage()}
-               disabled={!table.getCanNextPage()}
-             >
-               Next
-             </button>
-           </div>
+            <div className="flex gap-2">
+              <button
+                className="h-8 px-4 text-[10px] font-black uppercase tracking-widest border border-foreground/[0.08] rounded-lg bg-background hover:bg-foreground/[0.03] hover:border-foreground/20 transition-all disabled:opacity-20 disabled:pointer-events-none active:scale-95"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </button>
+              <button
+                className="h-8 px-4 text-[10px] font-black uppercase tracking-widest border border-foreground/[0.08] rounded-lg bg-background hover:bg-foreground/[0.03] hover:border-foreground/20 transition-all disabled:opacity-20 disabled:pointer-events-none active:scale-95"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </button>
+            </div>
          )}
       </div>
     </div>

@@ -23,8 +23,8 @@
   --color-error: oklch(0.6 0.25 25);
   --color-info: oklch(0.7 0.15 230);
   
-  /* NCAL Colors (Hardcoded HEX) */
-  --color-ncal-black: #475569;
+  /* NCAL Colors (Hardcoded HEX for brand accuracy) */
+  --color-ncal-black: #64748b;
   --color-ncal-red: #ef4444;
   --color-ncal-orange: #f59e0b;
   --color-ncal-yellow: #eab308;
@@ -34,14 +34,23 @@
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Roboto Mono", monospace;
 
+  /* Micro-typography heights */
+  --line-height-base: 1.5;
+  --line-height-tight: 1.25;
+
   /* Radius (Sesuai Audit) */
   --radius-sm: 0.25rem;
-  --radius-md: 0.25rem;
-  --radius-lg: 0.25rem;
-  --radius-xl: 0.25rem;
-  --radius-2xl: 0.25rem;
-  --radius-3xl: 0.25rem;
-  --radius: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius: 0.5rem;
+
+  /* Shadows for depth without hard borders */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 /* 2. GLOBAL OVERRIDES & MICRO-TYPOGRAPHY */
@@ -49,59 +58,72 @@
   :root {
     --color-base-100: oklch(1 0 0);
     --color-base-content: oklch(0.2 0.02 260);
+    --muted: oklch(0.95 0 0);
+    --muted-foreground: oklch(0.5 0 0);
     font-size: 14px;
   }
 
   @media (min-width: 1440px) {
     :root {
-      font-size: 16px;
+      font-size: 15px; /* Slightly smaller base for better density on large screens */
     }
   }
 
   :root[data-theme='dark'] {
     --color-base-100: #000000; /* OLED Black */
     --color-base-content: #ffffff;
-    --color-border: oklch(0.2 0 0);
+    --color-border: oklch(0.25 0 0); /* Slightly visible border in dark mode */
     --color-input: oklch(0.15 0 0);
+    --muted: oklch(0.2 0 0);
+    --muted-foreground: oklch(0.7 0 0);
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased min-h-[100dvh] overflow-hidden selection:bg-primary/30 selection:text-primary-foreground;
-    line-height: 1.6;
+    line-height: var(--line-height-base);
   }
 
   /* Linear Grain Texture for OLED depth */
   body::after {
     content: "";
-    @apply fixed inset-0 opacity-[0.012] pointer-events-none z-[9999];
+    @apply fixed inset-0 opacity-[0.015] pointer-events-none z-[9999];
     background-image: url("data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PScwIDAgMjAwIDIwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48ZmlsdGVyIGlkPSdub2lzZUZpbHRlcic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzAuNjUnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjbm9pc2VGaWx0ZXIpJy8+PC9zdmc+");
   }
 
   /* Standard Scrollbar */
   ::-webkit-scrollbar { 
-    @apply w-1 h-1; 
+    @apply w-1.5 h-1.5; 
   }
   ::-webkit-scrollbar-track { 
     @apply bg-transparent; 
   }
   ::-webkit-scrollbar-thumb { 
-    @apply bg-foreground/10 rounded-full hover:bg-foreground/20 transition-colors; 
+    @apply bg-foreground/5 rounded-full hover:bg-foreground/10 transition-colors; 
   }
+
+  /* High-Density Typography Presets */
+  .text-micro { @apply text-[10px] uppercase tracking-widest font-black opacity-40; }
+  .text-data { @apply text-[11px] font-bold tracking-tight text-foreground/80; }
+  .text-val { @apply text-[13px] font-black tracking-tight; }
 
   /* Target Tipografi Ekstrem untuk Tabel (Bypass shadcn & daisyui default) */
   table {
-    @apply w-full border-collapse;
+    @apply w-full border-collapse border-separate border-spacing-0;
   }
   th {
-    @apply text-[10px] uppercase tracking-widest font-black text-foreground/40 text-left;
+    @apply px-3 py-2 text-[10px] uppercase tracking-widest font-black text-foreground/40 text-left border-b border-border bg-foreground/[0.01] sticky top-0 z-10;
   }
   td {
-    @apply text-[11px] font-bold leading-tight text-foreground/80;
+    @apply px-3 py-2.5 text-[11px] font-bold leading-tight text-foreground/80 border-b border-border transition-colors;
+  }
+  
+  tr:hover td {
+    @apply bg-foreground/[0.02];
   }
   
   /* Optimasi Angka agar sejajar */
   .tabular-data {
-    @apply text-[11px] font-mono tabular-nums;
+    @apply font-mono tabular-nums;
   }
 
   /* Smooth Transitions for Interactive Elements */
@@ -110,8 +132,8 @@
   }
 
   /* Fluid Text Utility */
-  h1 { font-size: clamp(1.25rem, 2vw + 1rem, 1.75rem); }
-  h2 { font-size: clamp(1rem, 1.5vw + 0.9rem, 1.25rem); }
+  h1 { font-size: clamp(1.25rem, 1.5vw + 1rem, 1.5rem); font-weight: 900; letter-spacing: -0.02em; }
+  h2 { font-size: clamp(1rem, 1.2vw + 0.8rem, 1.15rem); font-weight: 800; letter-spacing: -0.01em; }
 }
 
 @layer utilities {

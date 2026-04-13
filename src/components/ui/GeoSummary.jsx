@@ -1,5 +1,21 @@
 import React, { useMemo } from 'react';
-import { MapPin, Globe, TrendingUp, Users } from 'lucide-react';
+import { MapPin, Globe, TrendingUp, Users, Activity, Crosshair } from 'lucide-react';
+import { cn } from '../../lib/utils.js';
+
+/**
+ * Spatial Analyst Panel - High-Density Geographical Analytics
+ * Docked panel for spatial distribution breakdown.
+ */
+
+const MiniStatCard = ({ label, val, icon: Icon, color }) => (
+  <div className="flex flex-col gap-1 p-3 bg-foreground/[0.02] border border-foreground/[0.04] rounded-xl hover:bg-foreground/[0.04] transition-all group">
+    <div className="flex items-center justify-between">
+      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/30 font-mono leading-none">{label}</span>
+      <Icon size={12} className={cn("opacity-20 group-hover:opacity-100 transition-opacity", color)} />
+    </div>
+    <span className="text-sm font-black tracking-tighter text-foreground/80 leading-none uppercase tabular-nums">{val}</span>
+  </div>
+);
 
 export default function GeoSummary({ customers }) {
   const stats = useMemo(() => {
@@ -20,97 +36,72 @@ export default function GeoSummary({ customers }) {
 
   if (stats.sorted.length === 0) {
     return (
-      <div className="card bg-base-200 border border-base-300 shadow-sm flex flex-col items-center justify-center p-12 text-center gap-4">
-        <Globe size={48} className="text-base-content/20" />
-        <div className="text-sm font-medium text-base-content/50 leading-relaxed">
-          No geographical distribution data available. 
-          <br />Use the Map View to trigger auto-geocoding.
+      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center gap-4 bg-foreground/[0.01]">
+        <Globe size={48} className="text-foreground/10" />
+        <div className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.2em] leading-relaxed italic max-w-[180px]">
+          Registry currently holds zero spatial telemetry nodes.
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Hero Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-6 flex flex-row items-center gap-5 border-l-4 border-l-primary relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <Users size={80} />
-          </div>
-          <div className="p-3 bg-primary/10 rounded-2xl text-primary shrink-0">
-            <Users size={24} />
-          </div>
-          <div className="z-10">
-            <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Total Infrastructure</div>
-            <div className="text-2xl font-bold tracking-tight">
-              {stats.totalMapped.toLocaleString()} <span className="text-xs font-semibold text-base-content/40 ml-1 uppercase tracking-wider">Mapped Nodes</span>
-            </div>
-          </div>
+    <div className="flex flex-col h-full bg-background border-l border-foreground/[0.08] w-[320px] shrink-0 overflow-hidden font-sans">
+      <header className="px-5 py-4 border-b border-foreground/[0.04] flex flex-col gap-1 shrink-0">
+        <div className="flex items-center gap-2">
+           <Crosshair size={14} className="text-primary" />
+           <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground/80">Spatial Analytics</h3>
         </div>
+        <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest italic leading-tight">Geographical Density Registry</p>
+      </header>
 
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-6 flex flex-row items-center gap-5 border-l-4 border-l-success relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <TrendingUp size={80} />
-          </div>
-          <div className="p-3 bg-success/10 rounded-2xl text-success shrink-0">
-            <TrendingUp size={24} />
-          </div>
-          <div className="z-10">
-            <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-1">Network Coverage</div>
-            <div className="text-2xl font-bold tracking-tight">
-              {stats.sorted.length} <span className="text-xs font-semibold text-base-content/40 ml-1 uppercase tracking-wider">Cities & Regencies</span>
-            </div>
-          </div>
-        </div>
+      {/* Analyst Overview */}
+      <div className="p-4 grid grid-cols-2 gap-2 shrink-0 border-b border-foreground/[0.04] bg-foreground/[0.01]">
+         <MiniStatCard label="Mapped Nodes" val={stats.totalMapped} icon={Users} color="text-primary" />
+         <MiniStatCard label="Coverage" val={stats.sorted.length} icon={TrendingUp} color="text-success" />
       </div>
 
-      {/* City Grid */}
-      <div className="card bg-base-100 border border-base-300 shadow-sm">
-        <header className="px-6 py-4 border-b border-base-200 flex justify-between items-center bg-base-100/50">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              <MapPin size={18} />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-tight text-base-content/80">Geographical Distribution</h3>
-              <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-0.5">Updated real-time from geocoding task</p>
-            </div>
-          </div>
-        </header>
+      {/* Density Breakdown */}
+      <div className="flex-1 overflow-auto custom-scrollbar p-1">
+        <div className="flex flex-col py-3">
+          <span className="px-4 text-[9px] font-black text-foreground/20 uppercase tracking-[0.25em] mb-3 leading-none flex items-center gap-2">
+            <MapPin size={10} /> Regency Distribution
+          </span>
+          <div className="flex flex-col px-1">
+            {stats.sorted.map(([city, count], i) => {
+              const percentage = ((count / stats.totalWithCity) * 100).toFixed(1);
+              return (
+                <div 
+                  key={city} 
+                  className="group px-4 py-3 rounded-xl hover:bg-foreground/[0.03] transition-all flex flex-col gap-2 relative overflow-hidden"
+                >
+                  <div className="flex justify-between items-baseline min-w-0 relative z-10">
+                    <span className="text-[10px] font-black text-foreground/60 tracking-tight uppercase truncate mr-2">{city}</span>
+                    <span className="text-[10px] font-black text-primary font-mono shrink-0">{count}n</span>
+                  </div>
 
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-base-200/30">
-          {stats.sorted.map(([city, count]) => {
-            const percentage = ((count / stats.totalWithCity) * 100).toFixed(1);
-            return (
-              <div 
-                key={city} 
-                className="group p-5 bg-base-100 border border-base-200 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30 relative overflow-hidden flex flex-col justify-between"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="font-semibold text-sm tracking-tight text-base-content group-hover:text-primary transition-colors">{city}</div>
-                  <div className="badge badge-primary badge-outline font-semibold text-xs px-1.5 py-0.5 h-auto">
-                    {percentage}%
+                  <div className="flex items-center gap-2 relative z-10">
+                    <div className="flex-1 h-1 bg-foreground/[0.05] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary/40 rounded-full transition-all duration-1000 group-hover:bg-primary shadow-[0_0_8px_rgba(var(--color-primary),0.3)]"
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-[9px] font-bold text-foreground/30 font-mono shrink-0">{percentage}%</span>
                   </div>
                 </div>
-
-                <div className="flex items-baseline gap-1.5 mb-4">
-                  <span className="text-2xl font-bold tracking-tighter text-base-content">{count}</span>
-                  <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">sites</span>
-                </div>
-
-                {/* Progress Mini Bar */}
-                <div className="w-full h-1.5 bg-base-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-1000 group-hover:bg-primary"
-                    style={{ width: `${percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      <footer className="p-4 border-t border-foreground/[0.04] bg-foreground/[0.02] shrink-0">
+         <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-background border border-foreground/[0.05]">
+            <Activity size={12} className="text-success animate-pulse shrink-0" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-foreground/40 leading-none">Scanning Active Nodes</span>
+         </div>
+      </footer>
     </div>
   );
 }

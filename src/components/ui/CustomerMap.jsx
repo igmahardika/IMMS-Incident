@@ -2,7 +2,16 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { api, formatDateTime, formatDate } from '../../utils/api';
+import { api } from '../../utils/api.js';
+import { formatDateTime, formatDate } from '../../utils/incidentUtils.js';
+import { Button, Spinner } from './index.jsx';
+import { cn } from '../../lib/utils.js';
+import { Search, RefreshCw, AlertCircle, Users, Activity, Crosshair, Map as MapIcon } from 'lucide-react';
+
+/**
+ * Enhanced Customer Map - Spatial Visualization Protocol
+ * Integrated with internal glassmorphism controls and multi-mode telemetry.
+ */
 
 // Province colors - Refined for premium look
 const PROVINCE_COLORS = {
@@ -24,8 +33,8 @@ const createCustomMarker = (province) => {
         width: 12px; 
         height: 12px; 
         border-radius: 50%; 
-        border: 1.5px solid white; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        border: 2px solid white; 
+        box-shadow: 0 0 10px ${color}44;
       "></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6]
@@ -44,7 +53,7 @@ export default function CustomerMap({
   customers, 
   onRefresh, 
   initialMode = 'customers', 
-  showTroubleMode = false,
+  showTroubleMode = true,
   startDate = '2026-01-01',
   endDate = '2026-02-28 23:59:59',
   hideCustomerPins = false
@@ -56,310 +65,253 @@ export default function CustomerMap({
   const [mapMode, setMapMode] = useState(initialMode); // 'customers' | 'trouble'
   const [troubleData, setTroubleData] = useState([]);
   const [isTroubleLoading, setIsTroubleLoading] = useState(false);
-  const [troubleError, setTroubleError] = useState(null);
   
   const semarangCenter = [-7.0051, 110.4381];
   const [viewState, setViewState] = useState({ center: semarangCenter, zoom: 12 });
-  const geocodingRef = useRef(false);
 
   const filteredCustomers = useMemo(() => 
     customers.filter(c => c.latitude && c.longitude),
     [customers]
   );
 
-  // Background Rendering Progress
+  // Background Rendering Progress logic
   useEffect(() => {
-    if (filteredCustomers.length === 0 && !geocodingStatus.active) {
+    if (filteredCustomers.length === 0) {
       setIsProcessing(false);
       return;
     }
-
     setIsProcessing(true);
-    setRenderedCount(0);
-    
-    let current = 0;
-    const batchSize = Math.max(50, Math.floor(filteredCustomers.length / 20));
-    const interval = setInterval(() => {
-      current += batchSize;
-      if (current >= filteredCustomers.length) {
-        setRenderedCount(filteredCustomers.length);
-        setIsProcessing(false);
-        clearInterval(interval);
-      } else {
-        setRenderedCount(current);
-      }
-    }, 50);
+    const timeout = setTimeout(() => setIsProcessing(false), 800);
+    return () => clearTimeout(timeout);
+  }, [filteredCustomers.length]);
 
-    return () => clearInterval(interval);
-  }, [filteredCustomers.length, geocodingStatus.active]);
-
-  // Geocoding trigger moved to manual button to avoid 429 surges
   const startAutoGeocode = async () => {
     if (geocodingStatus.active) return;
     try {
       const missing = await api.getCustomersWithMissingCoords();
       if (missing && missing.length > 0) {
         setGeocodingStatus({ active: true, current: 0, total: missing.length });
-        
-        // Process in small batches
         const batchSize = 3;
         for (let i = 0; i < missing.length; i += batchSize) {
           const batch = missing.slice(i, i + batchSize);
-          const ids = batch.map(m => m.id);
-          await api.autoGeocodeCustomers(ids);
-          setGeocodingStatus(prev => ({ ...prev, current: i + batch.length }));
+          await api.autoGeocodeCustomers(batch.map(m => m.id));
+          setGeocodingStatus(prev => ({ ...prev, current: Math.min(prev.total, i + batch.length) }));
         }
         if (onRefresh) onRefresh(); 
       }
     } catch (err) {
-      console.error('Auto-Geocoding error:', err);
+      console.error(err);
     } finally {
       setGeocodingStatus({ active: false, current: 0, total: 0 });
     }
   };
 
-  // Fetch Trouble Map Data
   useEffect(() => {
-    if (mapMode === 'trouble') {
+    if (mapMode === 'trouble' && showTroubleMode) {
       const fetchTroubleData = async () => {
         setIsTroubleLoading(true);
-        setTroubleError(null);
         try {
           const data = await api.getTroubleMapData(startDate, endDate);
           setTroubleData(data);
         } catch (err) {
-          console.error('Failed to fetch trouble map data:', err);
-          setTroubleError(err.message);
+          console.error(err);
         } finally {
           setIsTroubleLoading(false);
         }
       };
       fetchTroubleData();
     }
-  }, [mapMode, startDate, endDate]);
+  }, [mapMode, startDate, endDate, showTroubleMode]);
 
   const getBubbleColor = (count) => {
-    if (count > 10) return '#ef4444'; // Red 500
-    if (count > 5) return '#f97316';  // Orange 500
-    if (count > 2) return '#f59e0b';  // Amber 500
-    return '#eab308';                // Yellow 500
-  };
-
-  const getBubbleRadius = (count) => {
-    return Math.min(Math.max(count * 3, 8), 25);
+    if (count > 10) return '#ef4444';
+    if (count > 5) return '#f97316';
+    return '#eab308';
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     const term = searchTerm.toLowerCase();
-    
-    const found = filteredCustomers
-      .sort((a, b) => {
-        const aIsSem = (a.city || '').toLowerCase().includes('semarang') ? -1 : 1;
-        const bIsSem = (b.city || '').toLowerCase().includes('semarang') ? -1 : 1;
-        return aIsSem - bIsSem;
-      })
-      .find(c => 
-        (c.brand_site || '').toLowerCase().includes(term) || 
-        (c.company_name || '').toLowerCase().includes(term) ||
-        (c.city || '').toLowerCase().includes(term) ||
-        (c.service_id || '').toLowerCase().includes(term)
-      );
-
+    const found = filteredCustomers.find(c => 
+      (c.brand_site || '').toLowerCase().includes(term) || 
+      (c.company_name || '').toLowerCase().includes(term) ||
+      (c.service_id || '').toLowerCase().includes(term)
+    );
     if (found) {
       setViewState({ center: [found.latitude, found.longitude], zoom: 16 });
     }
   };
 
   return (
-    <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col overflow-hidden h-[700px]">
-      <header className="flex items-center justify-between flex-wrap gap-4 px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md z-50">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <h3 className="text-sm font-semibold uppercase tracking-tight text-base-content/80">Customer Density Map</h3>
-            <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mt-0.5 whitespace-nowrap">Service Locations & Analytics</p>
-          </div>
-          
-          {(isProcessing || geocodingStatus.active || isTroubleLoading) && (
-            <div className="flex items-center gap-2.5 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
-              <span className="loading loading-spinner loading-xs text-primary"></span>
-              <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                {geocodingStatus.active 
-                   ? `Syncing: ${geocodingStatus.current}/${geocodingStatus.total}`
-                   : isTroubleLoading ? 'Analyzing Patterns...' : `Loading Nodes...`
-                }
-              </span>
-            </div>
-          )}
-          {mapMode === 'trouble' && !isTroubleLoading && (
-            <div className={`badge badge-sm font-bold gap-2 ${
-              troubleError || troubleData.length > 0
-                ? 'badge-error badge-outline'
-                : 'badge-ghost opacity-60'
-            }`}>
-              {troubleError 
-                ? `Error: ${troubleError}`
-                : troubleData.length > 0 
-                ? `${troubleData.length} Trouble Spots` 
-                : `No Trouble Spots`}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {showTroubleMode && (
-            <div className="join bg-base-200 p-1 rounded-xl">
-              {!hideCustomerPins && (
-                <button 
-                  className={`btn btn-xs join-item border-none ${mapMode === 'customers' ? 'btn-primary shadow-sm' : 'bg-transparent text-base-content/60'}`}
-                  onClick={() => setMapMode('customers')}
-                >
-                  Customers
-                </button>
-              )}
-              <button 
-                className={`btn btn-xs join-item border-none ${mapMode === 'trouble' ? 'btn-error shadow-sm' : 'bg-transparent text-base-content/60'}`}
-                onClick={() => setMapMode('trouble')}
-              >
-                Trouble
-              </button>
-            </div>
-          )}
-          
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-base-content/40 pointer-events-none text-xs">🔍</span>
-              <input 
-                type="text" 
-                className="input input-bordered input-sm pl-9 w-56 font-medium" 
-                placeholder="Site, Service ID, or City..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn btn-sm btn-primary font-bold">Locate</button>
-            <button 
-              type="button" 
-              className={`btn btn-sm ${geocodingStatus.active ? 'btn-disabled' : 'btn-ghost'} px-3 font-bold`}
-              onClick={startAutoGeocode}
-            >
-              {geocodingStatus.active ? 'Syncing...' : '🔄 Sync'}
-            </button>
-          </form>
-        </div>
-      </header>
-
-      <div className="flex-1 relative">
-        <MapContainer 
-          center={semarangCenter} 
-          zoom={12} 
-          className="h-full w-full z-0"
-          zoomControl={false}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          <ZoomControl position="bottomright" />
-          <ChangeView center={viewState.center} zoom={viewState.zoom} />
-          
-          {mapMode === 'customers' && !hideCustomerPins ? (
-            filteredCustomers.map((c) => (
-              <Marker 
-                key={c.id} 
-                position={[c.latitude, c.longitude]} 
-                icon={createCustomMarker(c.province)}
-              >
-                <Popup className="premium-popup">
-                  <div className="min-w-[220px] p-1">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs font-semibold tracking-wider uppercase opacity-40">
-                        {c.service_id}
-                      </span>
-                      <div className="badge badge-neutral badge-outline font-semibold text-xs px-1.5 py-0.5 h-auto rounded-md">
-                        {c.grade}
-                      </div>
-                    </div>
-                    
-                    <h4 className="text-sm font-semibold tracking-tight text-base-content mb-0.5">{c.brand_site}</h4>
-                    <p className="text-xs font-medium text-base-content/60 mb-3">{c.company_name}</p>
-                    
-                    <div className="bg-base-200/50 border border-base-300 rounded-xl p-3 flex flex-col gap-2 mb-3">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-medium text-base-content/40 uppercase tracking-wider">Location</span>
-                        <div className="text-sm font-medium text-base-content">{c.city || 'N/A'}</div>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-medium text-base-content/40 uppercase tracking-wider">Type</span>
-                        <div className="text-sm font-medium text-base-content">{c.service_type}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs font-medium text-base-content/40 leading-relaxed italic border-t border-base-200 pt-2">
-                      {c.address}
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))
-          ) : (
-            troubleData
-              .filter(t => t.latitude != null && t.longitude != null)
-              .map((t) => (
-              <CircleMarker
-                key={t.id}
-                center={[Number(t.latitude), Number(t.longitude)]}
-                radius={getBubbleRadius(t.incident_count)}
-                pathOptions={{
-                  fillColor: getBubbleColor(t.incident_count),
-                  color: 'white',
-                  weight: 1,
-                  fillOpacity: 0.7
-                }}
-              >
-                <Popup className="premium-popup">
-                  <div className="min-w-[220px] p-1">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-xs font-semibold tracking-wider text-error uppercase">💥 Area Pattern</span>
-                      <div className="badge badge-error font-semibold text-xs px-2 py-0.5 h-auto rounded-full">
-                        {t.incident_count} Cases
-                      </div>
-                    </div>
-                    <h4 className="text-sm font-semibold tracking-tight text-base-content mb-0.5">{t.brand_site}</h4>
-                    <p className="text-xs font-medium text-base-content/60 mb-3">{t.company_name}</p>
-                    
-                    <div className="bg-base-200/50 border border-base-300 rounded-xl p-3.5 flex flex-col gap-3">
-                      <div className="flex justify-between items-center text-xs">
-                         <span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">Analysis Period</span>
-                         <span className="font-bold text-base-content text-right">{formatDate(startDate)} to {formatDate(endDate)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs">
-                         <span className="font-semibold text-base-content/40 uppercase tracking-wider text-xs">Last Incident</span>
-                         <span className="font-bold text-base-content">{t.last_incident_at ? formatDateTime(t.last_incident_at) : 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))
-          )}
-        </MapContainer>
+    <div className="flex-1 h-full relative bg-background overflow-hidden animate-in fade-in duration-500">
+      <MapContainer 
+        center={semarangCenter} 
+        zoom={12} 
+        className="h-full w-full z-0 font-sans"
+        zoomControl={false}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        <ZoomControl position="bottomright" />
+        <ChangeView center={viewState.center} zoom={viewState.zoom} />
         
-        <style>{`
-          .premium-popup .leaflet-popup-content-wrapper {
-            border-radius: 1.25rem;
-            padding: 4px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--color-base-300);
-            background: var(--color-base-100);
-          }
-          .premium-popup .leaflet-popup-tip {
-             background: var(--color-base-100);
-             border: 1px solid var(--color-base-300);
-          }
-        `}</style>
+        {mapMode === 'customers' && !hideCustomerPins ? (
+          filteredCustomers.map((c) => (
+            <Marker 
+              key={c.id} 
+              position={[c.latitude, c.longitude]} 
+              icon={createCustomMarker(c.province)}
+            >
+              <Popup className="premium-popup">
+                <div className="min-w-[220px] p-1 font-sans">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[9px] font-black tracking-widest uppercase text-foreground/40 font-mono">
+                      {c.service_id}
+                    </span>
+                    <div className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
+                      {c.grade}
+                    </div>
+                  </div>
+                  
+                  <h4 className="text-[11px] font-black tracking-tight text-foreground uppercase leading-tight mb-0.5">{c.brand_site}</h4>
+                  <p className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest mb-3 truncate italic">{c.company_name}</p>
+                  
+                  <div className="bg-foreground/[0.02] border border-foreground/[0.04] rounded-xl p-3 flex flex-col gap-2 mb-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest leading-none">Location Node</span>
+                      <div className="text-[10px] font-black text-foreground/70 uppercase">{c.city || 'UNSET'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-[8px] font-bold text-foreground/20 leading-relaxed uppercase tracking-widest border-t border-foreground/[0.04] pt-2">
+                     {c.address}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))
+        ) : (
+          troubleData
+            .filter(t => t.latitude != null && t.longitude != null)
+            .map((t) => (
+            <CircleMarker
+              key={t.id}
+              center={[Number(t.latitude), Number(t.longitude)]}
+              radius={Math.min(Math.max(t.incident_count * 3, 8), 25)}
+              pathOptions={{
+                fillColor: getBubbleColor(t.incident_count),
+                color: 'white',
+                weight: 1.5,
+                fillOpacity: 0.6
+              }}
+            >
+              <Popup className="premium-popup">
+                <div className="min-w-[220px] p-1 font-sans">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-[9px] font-black tracking-widest text-error uppercase flex items-center gap-1.5"><Activity size={10} strokeWidth={3}/> Pattern Alert</span>
+                    <div className="bg-error font-black text-[8px] px-2 py-0.5 rounded-full text-white uppercase tracking-widest shadow-sm shadow-error/20">
+                      {t.incident_count} Nodes
+                    </div>
+                  </div>
+                  <h4 className="text-[11px] font-black tracking-tight text-foreground leading-tight mb-0.5 uppercase">{t.brand_site}</h4>
+                  <p className="text-[9px] font-bold text-foreground/40 mb-3 truncate italic uppercase">{t.company_name}</p>
+                  <div className="bg-error/[0.02] border border-error/10 rounded-xl p-3 flex flex-col gap-2">
+                     <span className="text-[8px] font-black tracking-widest text-error/40 uppercase">Critical Cluster</span>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))
+        )}
+      </MapContainer>
+
+      {/* Internal Glass Controls Overlay */}
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-wrap gap-2 pointer-events-none">
+         {/* Left Controls: Mode & Status */}
+         <div className="flex items-center gap-2 p-1 bg-background/60 backdrop-blur-xl border border-foreground/[0.08] shadow-2xl rounded-2xl pointer-events-auto ring-1 ring-white/20">
+            <div className="flex items-center gap-1.5 px-3 border-r border-foreground/[0.04]">
+               <Activity size={14} className={cn("transition-colors", isProcessing || geocodingStatus.active ? "text-primary animate-pulse" : "text-foreground/20")} />
+               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/60 whitespace-nowrap">
+                  {geocodingStatus.active ? `SYNCING [${geocodingStatus.current}/${geocodingStatus.total}]` : `SPATIAL_SYNC_OK`}
+               </span>
+            </div>
+            
+            <div className="flex gap-1">
+               <button 
+                  onClick={() => setMapMode('customers')}
+                  className={cn(
+                     "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                     mapMode === 'customers' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-foreground/40 hover:bg-foreground/[0.05]"
+                  )}
+               >
+                  <Users size={12} className="inline mr-1.5" /> Nodes
+               </button>
+               {showTroubleMode && (
+                  <button 
+                     onClick={() => setMapMode('trouble')}
+                     className={cn(
+                        "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                        mapMode === 'trouble' ? "bg-error text-white shadow-lg shadow-error/20" : "text-foreground/40 hover:bg-foreground/[0.05]"
+                     )}
+                  >
+                     <AlertCircle size={12} className="inline mr-1.5" /> Incidents
+                  </button>
+               )}
+            </div>
+         </div>
+
+         {/* Right Controls: Search & Tools */}
+         <div className="ml-auto flex items-center gap-2 pointer-events-auto">
+            <form onSubmit={handleSearch} className="flex items-center gap-2 p-1 bg-background/60 backdrop-blur-xl border border-foreground/[0.08] shadow-2xl rounded-2xl ring-1 ring-white/20">
+               <div className="relative flex items-center">
+                  <Search className="absolute left-3 text-foreground/40" size={14} strokeWidth={3} />
+                  <input 
+                     type="text" 
+                     className="bg-transparent border-none focus:ring-0 text-[10px] font-black w-48 pl-9 pr-3 py-1.5 placeholder:text-foreground/20 uppercase tracking-widest h-8" 
+                     placeholder="Locate Node..." 
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+               </div>
+               <button 
+                  type="button"
+                  onClick={startAutoGeocode}
+                  className={cn(
+                     "flex items-center justify-center w-8 h-8 rounded-xl transition-all",
+                     geocodingStatus.active ? "bg-primary/20 text-primary" : "bg-foreground/[0.03] text-foreground/40 hover:text-primary hover:bg-primary/5"
+                  )}
+                  title="Resync Coordinates"
+               >
+                  <RefreshCw size={14} strokeWidth={2.5} className={cn(geocodingStatus.active && "animate-spin")} />
+               </button>
+            </form>
+         </div>
       </div>
+
+      <style>{`
+        .leaflet-container { 
+          background: transparent !important; 
+          height: 100% !important;
+          width: 100% !important;
+        }
+        .premium-popup .leaflet-popup-content-wrapper {
+          border-radius: 1rem;
+          padding: 4px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          border: 1px solid var(--color-border);
+          background: var(--color-background);
+        }
+        .premium-popup .leaflet-popup-tip {
+           background: var(--color-background);
+           border: 1px solid var(--color-border);
+           border-top: none;
+           border-left: none;
+        }
+        .premium-popup .leaflet-popup-content { margin: 12px; }
+      `}</style>
     </div>
   );
 }
