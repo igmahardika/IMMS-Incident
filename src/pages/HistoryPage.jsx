@@ -256,7 +256,7 @@ export default function HistoryPage() {
     : `${filters.year}-12-31 23:59:59`;
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Incident Archive"
         subtitle={`${filteredData.length} archived incident${filteredData.length === 1 ? '' : 's'} ready for review, export, or spatial analysis.`}
@@ -300,7 +300,6 @@ export default function HistoryPage() {
                 type="button"
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8"
                 onClick={() => setViewMode('list')}
               >
                 <LayoutList className="mr-2 h-4 w-4" />
@@ -310,7 +309,6 @@ export default function HistoryPage() {
                 type="button"
                 variant={viewMode === 'map' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8"
                 onClick={() => setViewMode('map')}
               >
                 <MapIcon className="mr-2 h-4 w-4" />
@@ -332,7 +330,7 @@ export default function HistoryPage() {
       />
 
       <SectionCard padding={false}>
-        <div className="grid gap-3 px-4 py-4 xl:grid-cols-[minmax(0,1.4fr)_160px_180px_160px_auto]">
+        <div className="grid gap-6 px-4 py-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_160px_180px_160px_auto]">
           <Input
             id="archive-search"
             value={filters.search}

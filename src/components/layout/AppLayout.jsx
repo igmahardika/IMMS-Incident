@@ -14,7 +14,7 @@ export default function AppLayout({ children }) {
 
   return (
     <SidebarContext.Provider value={{ mobileOpen, setMobileOpen }}>
-      <div className="flex h-dvh w-full overflow-hidden bg-background">
+      <div className="flex h-screen w-full overflow-hidden bg-background text-sm">
         {mobileOpen ? (
           <button
             type="button"
@@ -35,7 +35,7 @@ export default function AppLayout({ children }) {
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar />
-          <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/20 p-4 md:p-6">
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-muted/20 p-4 md:p-6">
             {children}
           </main>
         </div>

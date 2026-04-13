@@ -135,7 +135,7 @@ function IncidentSummaryCard({ incident }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid items-stretch gap-6 sm:grid-cols-2">
         <div className="space-y-2 rounded-lg border bg-background p-4">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
             SLA Level
@@ -913,7 +913,7 @@ function TableActionButton({ label, icon, onClick, tone = 'default' }) {
       type="button"
       variant="ghost"
       size="icon"
-      className={cn('h-8 w-8 rounded-md', toneClassName[tone] || toneClassName.default)}
+      className={cn('rounded-md', toneClassName[tone] || toneClassName.default)}
       onClick={onClick}
       title={label}
       aria-label={label}
@@ -1211,7 +1211,7 @@ export default function CurrentTroublePage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Active Incident Queue"
         subtitle={`Monitor ${incidents.length} live incident${incidents.length === 1 ? '' : 's'}, track SLA pressure, and update handling activity in real time.`}

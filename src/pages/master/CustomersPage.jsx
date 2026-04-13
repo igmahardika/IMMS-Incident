@@ -72,7 +72,7 @@ function StatCard({ label, value, meta, icon, tone = 'default' }) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground">
@@ -88,7 +88,7 @@ function StatCard({ label, value, meta, icon, tone = 'default' }) {
           ) : null}
         </div>
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
           <Icon className={cn('h-4.5 w-4.5', toneClassName[tone] || toneClassName.default)} />
         </div>
       </div>
@@ -325,7 +325,6 @@ export default function MasterCustomerPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
               icon={<ExternalLink className="h-4 w-4" />}
               onClick={() => window.open(row.original.link_coverage, '_blank', 'noopener,noreferrer')}
             />
@@ -333,14 +332,13 @@ export default function MasterCustomerPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
             icon={<Edit2 className="h-4 w-4" />}
             onClick={() => openEdit(row.original)}
           />
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
+            className="text-destructive hover:text-destructive"
             icon={<Trash2 className="h-4 w-4" />}
             onClick={() => handleDelete(row.original)}
           />
@@ -350,7 +348,7 @@ export default function MasterCustomerPage() {
   ], [handleDelete]);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Customer Records"
         subtitle={`Manage ${customers.length} customer endpoints, keep location data accurate, and switch between registry and map views without leaving the workspace.`}
@@ -360,7 +358,6 @@ export default function MasterCustomerPage() {
               <Button
                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-8"
                 icon={<LayoutList className="h-4 w-4" />}
                 onClick={() => setViewMode('list')}
               >
@@ -369,7 +366,6 @@ export default function MasterCustomerPage() {
               <Button
                 variant={viewMode === 'map' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-8"
                 icon={<MapIcon className="h-4 w-4" />}
                 onClick={() => setViewMode('map')}
               >
@@ -402,7 +398,7 @@ export default function MasterCustomerPage() {
         )}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total Records"
           value={stats.total}

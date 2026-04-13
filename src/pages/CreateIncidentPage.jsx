@@ -333,7 +333,7 @@ export default function CreateIncidentPage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title={isEdit ? 'Edit Incident' : 'Create Incident'}
         subtitle={isEdit

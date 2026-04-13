@@ -92,7 +92,7 @@ function NotificationItem({ notification, onClick }) {
             <div className="flex flex-wrap items-center gap-2">
               <p className="truncate text-sm font-medium text-foreground">{parsed.actor}</p>
               {parsed.caseId ? (
-                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   #{parsed.caseId}
                 </span>
               ) : null}
@@ -212,11 +212,11 @@ export default function NotificationBell() {
       <div
         ref={panelRef}
         className={cn(
-          'absolute right-0 top-full z-[2000] mt-2 w-[360px] max-w-[calc(100vw-24px)] origin-top-right overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg transition-all duration-150',
+          'absolute right-0 top-full z-[2000] mt-2 w-96 max-w-[calc(100vw-32px)] origin-top-right overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg transition-all duration-150',
           open ? 'visible scale-100 opacity-100' : 'invisible scale-95 opacity-0'
         )}
       >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-4">
           <div className="space-y-0.5">
             <p className="text-sm font-semibold text-foreground">Notifications</p>
             <p className="text-xs text-muted-foreground">
@@ -232,7 +232,7 @@ export default function NotificationBell() {
           ) : null}
         </div>
 
-        <div className="custom-scrollbar max-h-[420px] overflow-y-auto p-2">
+        <div className="custom-scrollbar max-h-[460px] overflow-y-auto p-3">
           {notifications.length === 0 ? (
             <EmptyState />
           ) : (

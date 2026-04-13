@@ -83,7 +83,7 @@ export default function MonthlyViewPage() {
   }, [history]);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Monthly Analysis"
         subtitle={`Review incident closures by month and NCAL severity for ${year}.`}

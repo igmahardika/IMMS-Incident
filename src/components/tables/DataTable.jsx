@@ -111,7 +111,7 @@ export function DataTable({
                       <td 
                         key={cell.id}
                         className={cn(
-                          "border-b border-border/70 px-4 py-4 align-top text-sm text-foreground transition-colors",
+                          "border-b border-border/70 px-4 py-3.5 align-top text-sm text-foreground transition-colors",
                           cell.column.columnDef.meta?.className
                         )}
                         style={{ 
@@ -136,7 +136,7 @@ export function DataTable({
         </table>
       </div>
       
-      <div className="flex shrink-0 items-center justify-between border-t border-border bg-background px-4 py-3">
+      <div className="flex shrink-0 flex-col gap-3 border-t border-border bg-background px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">
           Showing <span className="font-medium text-foreground">{pageStart}</span> - <span className="font-medium text-foreground">{pageEnd}</span> of <span className="font-medium text-foreground">{data.length}</span>
         </div>

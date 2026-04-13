@@ -3,9 +3,9 @@ import { Activity, Globe, MapPin, TrendingUp, Users } from 'lucide-react';
 
 function SummaryStat({ label, value, icon }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-4 shadow-sm">
+    <div className="rounded-xl border border-border bg-background p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
         {React.createElement(icon, { className: 'h-4 w-4 text-muted-foreground' })}
       </div>
       <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">{value}</p>
@@ -30,7 +30,7 @@ export default function GeoSummary({ customers = [] }) {
 
   if (stats.sorted.length === 0) {
     return (
-      <aside className="flex w-80 shrink-0 items-center justify-center border-l border-border bg-card p-6">
+      <aside className="flex w-[19rem] shrink-0 items-center justify-center border-l border-border bg-card p-6">
         <div className="space-y-3 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-border bg-muted/40">
             <Globe className="h-5 w-5 text-muted-foreground" />
@@ -45,7 +45,7 @@ export default function GeoSummary({ customers = [] }) {
   }
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-border bg-card">
+    <aside className="flex w-[19rem] shrink-0 flex-col border-l border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <h3 className="text-base font-semibold tracking-tight text-foreground">Geographic Summary</h3>
         <p className="mt-1 text-sm text-muted-foreground">Customer density by city and mapped coverage.</p>

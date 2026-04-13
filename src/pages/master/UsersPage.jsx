@@ -227,14 +227,13 @@ export default function UserManagementPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
             icon={<Edit2 className="h-4 w-4" />}
             onClick={() => openEdit(row.original)}
           />
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
+            className="text-destructive hover:text-destructive"
             icon={<Trash2 className="h-4 w-4" />}
             onClick={() => handleDelete(row.original)}
           />
@@ -244,7 +243,7 @@ export default function UserManagementPage() {
   ], [handleDelete, handleToggle, isAdmin]);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Personnel & Accounts"
         subtitle={isAdmin

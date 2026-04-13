@@ -62,7 +62,7 @@ function LegendItem({ className, label }) {
 function StatChip({ label, value }) {
   return (
     <div className="rounded-lg border border-border bg-background/90 px-3 py-2 shadow-sm backdrop-blur">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
@@ -76,7 +76,7 @@ function CustomerPopup({ customer }) {
           <p className="text-sm font-semibold tracking-tight text-foreground">
             {customer.brand_site || 'Unlabeled site'}
           </p>
-          <span className="rounded-md border border-border bg-muted px-2 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          <span className="rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
             {customer.grade || 'N/A'}
           </span>
         </div>
@@ -266,7 +266,7 @@ export default function CustomerMap({
   };
 
   return (
-    <div className="map-surface relative flex h-full min-h-[640px] flex-1 overflow-hidden rounded-none bg-muted/20">
+    <div className="map-surface relative flex h-full min-h-[600px] flex-1 overflow-hidden rounded-xl bg-muted/20">
       <MapContainer
         center={SEMARANG_CENTER}
         zoom={12}
@@ -352,7 +352,7 @@ export default function CustomerMap({
                     ? 'Search address, city, service ID, or site'
                     : 'Search address, city, province, or service ID'
                 }
-                className="w-60 pl-9"
+                className="w-64 pl-9"
               />
             </div>
 
@@ -373,7 +373,7 @@ export default function CustomerMap({
           </form>
         </div>
 
-        <div className="pointer-events-none ml-auto hidden gap-3 xl:flex">
+        <div className="pointer-events-none ml-auto hidden items-stretch gap-3 xl:flex">
           <StatChip
             label={mapMode === 'trouble' ? 'Incident Nodes' : 'Mapped Customers'}
             value={mapMode === 'trouble' ? troublePoints.length : filteredCustomers.length}

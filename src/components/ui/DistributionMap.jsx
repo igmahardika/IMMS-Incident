@@ -62,7 +62,7 @@ function LegendItem({ colorClassName, label }) {
 function StatChip({ label, value }) {
   return (
     <div className="rounded-lg border border-border bg-background/90 px-3 py-2 shadow-sm backdrop-blur">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
@@ -290,8 +290,8 @@ export default function DistributionMap({ data, onRefresh }) {
   };
 
   return (
-    <div className="flex h-[700px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-5 py-4">
+    <div className="flex h-full min-h-[680px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-4 py-4 md:px-5">
         <div className="space-y-1">
           <h3 className="text-base font-semibold tracking-tight text-foreground">
             Distribution Topology Map
@@ -324,13 +324,13 @@ export default function DistributionMap({ data, onRefresh }) {
                   type="date"
                   value={startDate}
                   onChange={(event) => setStartDate(event.target.value)}
-                  className="w-[154px]"
+                className="w-[156px]"
                 />
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(event) => setEndDate(event.target.value)}
-                  className="w-[154px]"
+                className="w-[156px]"
                 />
               </>
             ) : null}
@@ -341,7 +341,7 @@ export default function DistributionMap({ data, onRefresh }) {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={viewMode === 'normal' ? 'Search ODP, POP, or BTS' : 'Search trouble node'}
-                className="w-56 pl-9"
+                className="w-64 pl-9"
               />
             </div>
 

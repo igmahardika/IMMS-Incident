@@ -102,7 +102,7 @@ export default function MasterClassificationPage() {
   ), [classes]);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Classifications"
         subtitle="Maintain incident classifications so forms, analytics, and closure workflows stay consistent."
@@ -155,14 +155,13 @@ export default function MasterClassificationPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
                           icon={<Edit2 className="h-4 w-4" />}
                           onClick={() => openEdit(item)}
                         />
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive"
                           icon={<Trash2 className="h-4 w-4" />}
                           onClick={() => handleDelete(item)}
                         />

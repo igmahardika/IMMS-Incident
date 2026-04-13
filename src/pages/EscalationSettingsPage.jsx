@@ -160,7 +160,7 @@ export default function EscalationSettingsPage() {
   const showVendor = previewNcal === 'YELLOW' || Boolean(cfg[vendorTemplateKey]);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Escalation Settings"
         subtitle="Configure notification endpoints and message templates for incident opening and closing broadcasts."
@@ -202,7 +202,7 @@ export default function EscalationSettingsPage() {
             title="Core Integration"
             subtitle="Choose the escalation channel, set endpoints, and control whether outbound automation is active."
           >
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               <Select
                 label="Platform"
                 value={cfg.type}
@@ -229,7 +229,7 @@ export default function EscalationSettingsPage() {
               </div>
             </div>
 
-            <div className="mt-4 grid gap-4">
+            <div className="mt-6 grid gap-6">
               <InputField
                 label={cfg.type === 'telegram' ? 'Internal Endpoint' : 'Primary Webhook URL'}
                 value={cfg.webhook_url || ''}
@@ -251,7 +251,7 @@ export default function EscalationSettingsPage() {
             padding={false}
           >
             <div className="border-b p-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 <Select
                   label="NCAL Segment"
                   value={previewNcal}

@@ -313,7 +313,7 @@ export default function MasterDistribusiPage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Distribution Topology"
         subtitle={`Manage ${stats.total} active infrastructure nodes across fiber and wireless distribution layers.`}

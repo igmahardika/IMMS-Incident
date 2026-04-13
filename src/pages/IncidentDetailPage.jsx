@@ -115,7 +115,7 @@ export default function IncidentDetailPage() {
   const targetHours = getSLATarget(incident.ncal) / 3600;
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <PageHeader
         title={incident.case_no}
         subtitle="Review asset metadata, duration metrics, activity timeline, and final resolution details for this incident."
@@ -155,7 +155,7 @@ export default function IncidentDetailPage() {
                   <NcalBadge value={incident.ncal} />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid items-stretch gap-6 md:grid-cols-2">
                   <DetailItem
                     label={isDistribusi ? 'Distribution Node' : 'Site Name'}
                     value={getIncidentDisplayName(incident)}
@@ -179,7 +179,7 @@ export default function IncidentDetailPage() {
                 </div>
 
                 {incident.address || incident.koordinat ? (
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid items-stretch gap-6 md:grid-cols-2">
                     {incident.address ? (
                       <DetailItem
                         label="Site Address"
@@ -199,7 +199,7 @@ export default function IncidentDetailPage() {
                   </div>
                 ) : null}
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid items-stretch gap-6 md:grid-cols-2">
                   <TextPanel
                     label="Problem Statement"
                     value={incident.initial_problem}
@@ -219,7 +219,7 @@ export default function IncidentDetailPage() {
                 title="Maintenance Specification"
                 subtitle="Technical maintenance metadata captured for yellow incidents."
               >
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid items-stretch gap-6 md:grid-cols-3">
                   <DetailItem label="Cable Medium" value={incident.kabel || '—'} />
                   <DetailItem
                     label="Span Distance"
@@ -240,7 +240,7 @@ export default function IncidentDetailPage() {
               title="Performance Metrics"
               subtitle="Timeline checkpoints and downtime calculations for this incident."
             >
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
                 <MetricItem label="Reported Time" value={incident.start_time ? formatDateTime(incident.start_time) : '—'} />
                 <MetricItem label="Action Start" value={incident.start_action_time ? formatDateTime(incident.start_action_time) : '—'} />
                 <MetricItem label="Resolution Time" value={incident.end_time ? formatDateTime(incident.end_time) : '—'} />
