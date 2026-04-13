@@ -24,7 +24,6 @@ const BUILDING_COORDS = {
   'ahmad yani': { lat: -6.9530, lon: 110.3735 }, // Airport
   'sim square': { lat: -6.9855, lon: 110.4205 },
   'suara merdeka': { lat: -6.9848, lon: 110.4190 },
-  'tentrem': { lat: -6.1132, lon: 106.8400 }, // Fallback if general search fails
   'pinnacle': { lat: -6.9840, lon: 110.4180 },
   'bsb city': { lat: -7.0350, lon: 110.3500 },
   'candi': { lat: -7.0100, lon: 110.3500 }, // Kawasan Industri Candi
@@ -44,11 +43,37 @@ function smartCleanAddress(addr) {
     .replace(/rt\s*\d+/gi, '')
     .replace(/rw\s*\d+/gi, '')
     .replace(/,\s*,/g, ',')
+    .replace(/\s{2,}/g, ' ')
     .trim();
 }
 
-// Rate limiting settings
-const MIN_INTERVAL = 2000; // 2 seconds between requests
+const MIN_INTERVAL = Math.max(Number.isFinite(CONFIG.minInterval) ? CONFIG.minInterval : 1000, 750);
+
+function normalizeLocationPart(value) {
+  return String(value || '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^,\s*|\s*,$/g, '')
+    .trim();
+}
+
+function buildQueryCandidates(address, { city, province, country = 'Indonesia' } = {}) {
+  const cleanedAddress = smartCleanAddress(address);
+  const normalizedCity = normalizeLocationPart(city);
+  const normalizedProvince = normalizeLocationPart(province);
+  const normalizedCountry = normalizeLocationPart(country);
+
+  const candidates = [
+    [cleanedAddress, normalizedCity, normalizedProvince, normalizedCountry].filter(Boolean).join(', '),
+    [cleanedAddress, normalizedCity, normalizedCountry].filter(Boolean).join(', '),
+    [cleanedAddress, normalizedProvince, normalizedCountry].filter(Boolean).join(', '),
+    [cleanedAddress, normalizedCountry].filter(Boolean).join(', '),
+    cleanedAddress,
+  ]
+    .map((candidate) => normalizeLocationPart(candidate))
+    .filter(Boolean);
+
+  return [...new Set(candidates)];
+}
 
 async function waitIfNeeded() {
   let isWaiting = true;
@@ -74,7 +99,7 @@ async function waitIfNeeded() {
   }
 }
 
-async function geocode(address, retryCount = 0) {
+async function geocode(address, options = {}) {
   if (!address) return null;
   const lowerAddr = address.toLowerCase();
 
@@ -91,9 +116,19 @@ async function geocode(address, retryCount = 0) {
 
   // 2. Choose Provider
   try {
-    if (CONFIG.provider === 'google' && CONFIG.googleKey) return await geocodeGoogle(address);
-    if (CONFIG.provider === 'mapbox' && CONFIG.mapboxKey) return await geocodeMapbox(address);
-    return await geocodeNominatim(address, retryCount);
+    const queryCandidates = buildQueryCandidates(address, options);
+
+    for (const query of queryCandidates) {
+      let found = null;
+
+      if (CONFIG.provider === 'google' && CONFIG.googleKey) found = await geocodeGoogle(query);
+      else if (CONFIG.provider === 'mapbox' && CONFIG.mapboxKey) found = await geocodeMapbox(query);
+      else found = await geocodeNominatim(query);
+
+      if (found) return found;
+    }
+
+    return null;
   } catch (error) {
     console.error(`[Geocoder] Error with ${CONFIG.provider}:`, error.message);
     return null;
@@ -122,11 +157,10 @@ async function geocodeMapbox(address) {
   return null;
 }
 
-async function geocodeNominatim(address, retryCount = 0) {
+async function geocodeNominatim(query, retryCount = 0) {
   await waitIfNeeded();
-  const cleaned = smartCleanAddress(address);
-  const query = encodeURIComponent(`${cleaned}, Jawa Tengah, Indonesia`);
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
+  const encodedQuery = encodeURIComponent(query);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1`;
   
   const response = await fetch(url, {
     headers: { 'User-Agent': 'IMMS-Internal-Geocoding-Service/1.0' }
@@ -138,7 +172,7 @@ async function geocodeNominatim(address, retryCount = 0) {
   if (response.status === 429 && retryCount < 3) {
     const backoff = Math.pow(2, retryCount) * 2000;
     await new Promise(r => setTimeout(r, backoff));
-    return geocodeNominatim(address, retryCount + 1);
+    return geocodeNominatim(query, retryCount + 1);
   }
 
   if (!response.ok) return null;

@@ -1,42 +1,119 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, CheckCheck, AlertCircle, CheckCircle2, History, Info } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertCircle, Bell, CheckCheck, CheckCircle2, History, Info, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../../utils/api.js';
 import { formatDateTime } from '../../utils/incidentUtils.js';
-import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils.js';
+import { Button } from './index.jsx';
 
-const POLL_INTERVAL = 10000; // 10s
+const POLL_INTERVAL = 10000;
 
 function playNotificationSound() {
   try {
     const audio = new Audio('/notification.wav');
     audio.volume = 0.55;
-    audio.play().catch(() => {}); // catch autoplay block silently
+    audio.play().catch(() => {});
   } catch {
-    // Notification sound is optional.
+    // Notification sound remains optional.
   }
 }
 
-const NotificationIcon = ({ message }) => {
-  const msg = message.toLowerCase();
-  if (msg.includes('updated') || msg.includes('memperbarui')) return <History size={15} className="text-primary" />;
-  if (msg.includes('created') || msg.includes('baru')) return <AlertCircle size={15} className="text-warning" />;
-  if (msg.includes('closed') || msg.includes('selesai')) return <CheckCircle2 size={15} className="text-success" />;
-  return <Info size={15} className="text-foreground/40" />;
-};
+function NotificationIcon({ message }) {
+  const normalizedMessage = message.toLowerCase();
 
-const parseNotification = (message) => {
+  if (normalizedMessage.includes('updated') || normalizedMessage.includes('memperbarui')) {
+    return <History className="h-4 w-4 text-primary" />;
+  }
+
+  if (normalizedMessage.includes('created') || normalizedMessage.includes('baru')) {
+    return <AlertCircle className="h-4 w-4 text-warning" />;
+  }
+
+  if (normalizedMessage.includes('closed') || normalizedMessage.includes('selesai')) {
+    return <CheckCircle2 className="h-4 w-4 text-success" />;
+  }
+
+  return <Info className="h-4 w-4 text-muted-foreground" />;
+}
+
+function parseNotification(message) {
   const caseMatch = message.match(/#([CN]\d+)/);
-  const userMatch = message.match(/^(?:Technician|Teknisi|User)\s+([^\s]+ [^\s]+)/i);
   const detailIndex = message.indexOf(':');
-  
+  const userMatch = message.match(/^(?:Technician|Teknisi|User)\s+([^\s]+(?:\s+[^\s]+)?)/i);
+
   return {
     caseId: caseMatch ? caseMatch[1] : null,
-    user: userMatch ? userMatch[1] : 'System Update',
-    detail: detailIndex !== -1 ? message.substring(detailIndex + 1).trim() : message,
-    isTechAction: message.toLowerCase().includes('technician') || message.toLowerCase().includes('teknisi')
+    actor: userMatch ? userMatch[1] : 'System update',
+    detail: detailIndex !== -1 ? message.slice(detailIndex + 1).trim() : message,
   };
-};
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
+      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
+        <Bell className="h-4.5 w-4.5" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-foreground">No notifications yet</p>
+        <p className="text-sm text-muted-foreground">New incident updates will appear here.</p>
+      </div>
+    </div>
+  );
+}
+
+function NotificationItem({ notification, onClick }) {
+  const parsed = parseNotification(notification.message);
+  const timeLabel = formatDateTime(notification.created_at);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors',
+        notification.is_read
+          ? 'border-transparent bg-transparent hover:border-border hover:bg-muted/40'
+          : 'border-primary/15 bg-primary/5 hover:bg-primary/8'
+      )}
+    >
+      <div
+        className={cn(
+          'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border',
+          notification.is_read ? 'border-border bg-muted/40' : 'border-primary/20 bg-background'
+        )}
+      >
+        <NotificationIcon message={notification.message} />
+      </div>
+
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate text-sm font-medium text-foreground">{parsed.actor}</p>
+              {parsed.caseId ? (
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  #{parsed.caseId}
+                </span>
+              ) : null}
+            </div>
+            <p className="line-clamp-2 text-sm leading-5 text-muted-foreground">{parsed.detail}</p>
+          </div>
+
+          {!notification.is_read ? <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <span className="text-xs text-muted-foreground">{timeLabel}</span>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            Open
+            <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -52,191 +129,124 @@ export default function NotificationBell() {
       const data = await api.getNotifications();
       setNotifications(data);
 
-      const currentIds = new Set(data.map(n => n.id));
+      const currentIds = new Set(data.map((item) => item.id));
       const isFirstLoad = prevIdsRef.current.size === 0;
 
       if (!isFirstLoad) {
-        const newOnes = data.filter(n => !prevIdsRef.current.has(n.id));
-        if (newOnes.length > 0) {
+        const newItems = data.filter((item) => !prevIdsRef.current.has(item.id));
+        if (newItems.length > 0) {
           playNotificationSound();
         }
       }
 
       prevIdsRef.current = currentIds;
-      setUnread(data.filter(n => !n.is_read).length);
+      setUnread(data.filter((item) => !item.is_read).length);
     } catch {
-      // Notification fetch should fail silently in the bell.
+      // Keep the topbar responsive if polling fails.
     }
   }, []);
 
   useEffect(() => {
     fetchNotifications();
-    const t = setInterval(fetchNotifications, POLL_INTERVAL);
-    return () => clearInterval(t);
+    const intervalId = window.setInterval(fetchNotifications, POLL_INTERVAL);
+    return () => window.clearInterval(intervalId);
   }, [fetchNotifications]);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => {
-      if (panelRef.current && !panelRef.current.contains(e.target) && buttonRef.current && !buttonRef.current.contains(e.target)) {
+
+    const handleOutside = (event) => {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
   }, [open]);
 
   const handleMarkAllRead = async () => {
     try {
-      const unreadItems = notifications.filter(n => !n.is_read);
-      await Promise.all(unreadItems.map(n => api.markNotificationRead(n.id)));
+      const unreadItems = notifications.filter((item) => !item.is_read);
+      await Promise.all(unreadItems.map((item) => api.markNotificationRead(item.id)));
       fetchNotifications();
     } catch {
-      // Ignore mark-all failures to keep panel responsive.
+      // Ignore failures to keep panel usable.
     }
   };
 
-  const handleClickNotif = async (n) => {
-    await api.markNotificationRead(n.id).catch(() => {});
+  const handleOpenNotification = async (notification) => {
+    await api.markNotificationRead(notification.id).catch(() => {});
     setOpen(false);
-    if (n.incident_id) navigate(`/incidents/${n.incident_id}`);
+
+    if (notification.incident_id) {
+      navigate(`/incidents/${notification.incident_id}`);
+    }
+
     fetchNotifications();
   };
 
   return (
-    <div className="relative inline-block">
-      {/* Bell Button */}
-      <button
+    <div className="relative">
+      <Button
         ref={buttonRef}
         type="button"
-        className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center transition-all relative",
-          open ? "bg-foreground/[0.08] text-foreground" : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05]"
-        )}
-        aria-label="Notifications"
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen((previous) => !previous)}
+        aria-label="Open notifications"
         title="Notifications"
-        onClick={() => setOpen(!open)}
+        className={cn('relative', open && 'bg-accent text-accent-foreground')}
       >
-        <Bell size={14} strokeWidth={2} className={unread > 0 ? 'text-primary' : ''} />
-        {unread > 0 && (
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-error border border-background" />
-        )}
-      </button>
+        <Bell className={cn('h-4 w-4', unread > 0 && 'text-primary')} />
+        {unread > 0 ? (
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+        ) : null}
+      </Button>
 
-      {/* Dropdown Panel */}
-      <div 
+      <div
         ref={panelRef}
         className={cn(
-          "absolute right-0 top-full mt-2 z-[2000] shadow-[0_20px_60px_rgba(0,0,0,0.2)] bg-background/98 backdrop-blur-xl rounded-xl w-80 md:w-[360px] max-w-[calc(100vw-24px)] overflow-hidden flex flex-col max-h-[460px] border border-foreground/[0.08] transition-all duration-200 origin-top-right",
-          open 
-            ? 'opacity-100 scale-100 pointer-events-auto visible' 
-            : 'opacity-0 scale-95 pointer-events-none hidden'
+          'absolute right-0 top-full z-[2000] mt-2 w-[360px] max-w-[calc(100vw-24px)] origin-top-right overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg transition-all duration-150',
+          open ? 'visible scale-100 opacity-100' : 'invisible scale-95 opacity-0'
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/5 bg-foreground/5">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[10px] tracking-widest text-foreground/50 uppercase">
-              Recent Updates
-            </span>
-            {unread > 0 && (
-              <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold">
-                {unread} NEW
-              </span>
-            )}
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold text-foreground">Notifications</p>
+            <p className="text-xs text-muted-foreground">
+              {unread > 0 ? `${unread} unread update${unread > 1 ? 's' : ''}` : 'All updates are read'}
+            </p>
           </div>
-          {unread > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/70 transition-colors"
-              title="Mark all as read"
-            >
-              <CheckCheck size={12} />
-              Read All
-            </button>
-          )}
+
+          {unread > 0 ? (
+            <Button type="button" variant="ghost" size="sm" onClick={handleMarkAllRead} className="gap-2 px-2.5">
+              <CheckCheck className="h-4 w-4" />
+              Mark all
+            </Button>
+          ) : null}
         </div>
 
-        {/* List */}
-        <div className="overflow-y-auto flex-1 custom-scrollbar">
+        <div className="custom-scrollbar max-h-[420px] overflow-y-auto p-2">
           {notifications.length === 0 ? (
-            <div className="py-16 px-6 text-center text-foreground/30 flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center">
-                <Bell size={20} strokeWidth={1.5} />
-              </div>
-              <span className="text-[11px] font-medium uppercase tracking-widest text-foreground/50">No new updates</span>
-            </div>
+            <EmptyState />
           ) : (
-            <div className="flex flex-col p-1.5 space-y-1 relative">
-              {notifications.map((n) => {
-                const parsed = parseNotification(n.message);
-                return (
-                  <div
-                    key={n.id}
-                    onClick={() => handleClickNotif(n)}
-                    className={cn(
-                      "flex gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 relative group border border-transparent",
-                      n.is_read 
-                        ? 'hover:bg-foreground/5 opacity-70 hover:opacity-100' 
-                        : 'bg-primary/5 border-primary/10'
-                    )}
-                  >
-                    {/* Unread Indicator */}
-                    {!n.is_read && (
-                      <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-sm bg-primary" />
-                    )}
-
-                    {/* Icon Area */}
-                    <div className={cn(
-                      "w-8 h-8 rounded-md flex items-center justify-center shrink-0 border border-foreground/5",
-                      n.is_read ? 'bg-muted text-foreground/50' : 'bg-primary/10'
-                    )}>
-                      <NotificationIcon message={n.message} />
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      <div className="flex justify-between items-start">
-                        <span className={cn(
-                          "text-[11px] font-bold leading-tight line-clamp-1 flex-1",
-                          n.is_read ? 'text-foreground/70' : 'text-primary'
-                        )}>
-                          {parsed.user}
-                        </span>
-                        <span className="text-[9px] font-mono font-bold text-foreground/40 shrink-0 tabular-nums">
-                           {formatDateTime(n.created_at).split(',')[1]?.trim() || '—'}
-                        </span>
-                      </div>
-
-                      <p className={cn(
-                        "text-[11px] leading-snug line-clamp-2",
-                        n.is_read ? 'text-foreground/60' : 'text-foreground/90 font-medium'
-                      )}>
-                        {parsed.caseId && <span className="font-bold mr-1 opacity-70">#{parsed.caseId}</span>}
-                        {parsed.detail}
-                      </p>
-
-                      {!n.is_read && (
-                        <div className="text-[9px] font-bold uppercase tracking-wider text-primary mt-0.5 opacity-60">
-                           New Activity
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="space-y-2">
+              {notifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onClick={() => handleOpenNotification(notification)}
+                />
+              ))}
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        {notifications.length > 0 && (
-          <div className="px-4 py-2 bg-foreground/5 text-center border-t border-foreground/5 shrink-0">
-            <span className="text-[9px] font-bold text-foreground/40 tracking-widest uppercase">
-              End of list
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

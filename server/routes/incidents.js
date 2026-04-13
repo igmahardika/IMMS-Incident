@@ -2,7 +2,7 @@ import express from 'express';
 import db from '../db.js';
 import { authenticate } from '../middleware/auth.js';
 import { incidentCreateSchema, incidentUpdateSchema, validateRequest } from '../utils/validators.js';
-import { getIO } from '../socket.js';
+import { emitSocketEvent } from '../socket.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -302,7 +302,7 @@ router.post('/', authenticate, validateRequest(incidentCreateSchema), (req, res)
       `).run(technician_id, incident.id, `You have been assigned to Case #${incident.case_no}`);
     }
 
-    getIO().emit('incident-updated', { type: 'create', incident });
+    emitSocketEvent('incident-updated', { type: 'create', incident });
     logger.info(`Incident created: Case #${incident.case_no} by User ID: ${req.user.id}`);
     res.status(201).json(incident);
   } catch (err) {
@@ -399,68 +399,85 @@ router.put('/:id', authenticate, validateRequest(incidentUpdateSchema), (req, re
     `).run(req.params.id, `Technician ${req.user.name} updated Case #${old.case_no}: ${detailStr}`);
   }
 
-  getIO().emit('incident-updated', { type: 'update', id: req.params.id });
+  emitSocketEvent('incident-updated', { type: 'update', id: req.params.id });
   logger.info(`Incident updated: Case #${old.case_no} by User ID: ${req.user.id}`);
   res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
 });
 
 // ─── POST /api/incidents/:id/start ──────────────────────────────────────────
 router.post('/:id/start', authenticate, (req, res) => {
-  const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
-  if (!incident) return res.status(404).json({ error: 'Not found' });
-  if (incident.start_action_time) return res.status(400).json({ error: 'Already started' });
+  try {
+    const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+    if (!incident) return res.status(404).json({ error: 'Not found' });
+    if (incident.start_action_time) return res.status(400).json({ error: 'Already started' });
 
-  const now = new Date().toISOString();
-  db.prepare("UPDATE incidents SET start_action_time = ?, status = 'progress', updated_at = datetime('now') WHERE id = ?").run(now, req.params.id);
-  db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'START_ACTION', ?)").run(req.params.id, req.user.id, `Action started at ${now}`);
+    const now = new Date().toISOString();
+    db.prepare("UPDATE incidents SET start_action_time = ?, status = 'progress', updated_at = datetime('now') WHERE id = ?").run(now, req.params.id);
+    db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'START_ACTION', ?)").run(req.params.id, req.user.id, `Action started at ${now}`);
 
-  getIO().emit('incident-updated', { type: 'status_change', id: req.params.id });
-  logger.info(`Action started for Case ID: ${req.params.id} by User ID: ${req.user.id}`);
-  res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+    emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
+    logger.info(`Action started for Case ID: ${req.params.id} by User ID: ${req.user.id}`);
+    res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+  } catch (error) {
+    logger.error(`Failed to start incident ${req.params.id}: ${error.message}`);
+    res.status(500).json({ error: 'Failed to start incident action.' });
+  }
 });
 
 // ─── POST /api/incidents/:id/pause ──────────────────────────────────────────
 router.post('/:id/pause', authenticate, (req, res) => {
-  const { reason } = req.body;
-  const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
-  if (!incident) return res.status(404).json({ error: 'Not found' });
-  if (incident.status !== 'progress') return res.status(400).json({ error: 'Incident must be in progress to pause' });
+  try {
+    const { reason } = req.body || {};
+    const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+    if (!incident) return res.status(404).json({ error: 'Not found' });
+    if (incident.status !== 'progress') {
+      return res.status(400).json({ error: 'Incident must be in progress to pause' });
+    }
 
-  // Check no open pause
-  const openPause = db.prepare('SELECT * FROM pause_logs WHERE incident_id = ? AND pause_end IS NULL').get(req.params.id);
-  if (openPause) return res.status(400).json({ error: 'Incident already paused' });
+    const openPause = db.prepare('SELECT * FROM pause_logs WHERE incident_id = ? AND pause_end IS NULL').get(req.params.id);
+    if (openPause) return res.status(400).json({ error: 'Incident already paused' });
 
-  const now = new Date().toISOString();
-  db.prepare("INSERT INTO pause_logs (incident_id, pause_start, reason) VALUES (?, ?, ?)").run(req.params.id, now, reason || null);
-  db.prepare("UPDATE incidents SET status = 'pending', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
-  db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'PAUSE', ?)").run(req.params.id, req.user.id, reason || 'No reason given');
+    const now = new Date().toISOString();
+    db.prepare("INSERT INTO pause_logs (incident_id, pause_start, reason) VALUES (?, ?, ?)").run(req.params.id, now, reason || null);
+    db.prepare("UPDATE incidents SET status = 'pending', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+    db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'PAUSE', ?)").run(req.params.id, req.user.id, reason || 'No reason given');
 
-  getIO().emit('incident-updated', { type: 'status_change', id: req.params.id });
-  logger.info(`Incident paused: Case ID: ${req.params.id} by User ID: ${req.user.id}. Reason: ${reason || 'N/A'}`);
-  res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+    emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
+    logger.info(`Incident paused: Case ID: ${req.params.id} by User ID: ${req.user.id}. Reason: ${reason || 'N/A'}`);
+    res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+  } catch (error) {
+    logger.error(`Failed to pause incident ${req.params.id}: ${error.message}`);
+    res.status(500).json({ error: 'Failed to pause incident.' });
+  }
 });
 
 // ─── POST /api/incidents/:id/resume ─────────────────────────────────────────
 router.post('/:id/resume', authenticate, (req, res) => {
-  const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
-  if (!incident) return res.status(404).json({ error: 'Not found' });
-  if (incident.status !== 'pending') return res.status(400).json({ error: 'Incident is not paused' });
+  try {
+    const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+    if (!incident) return res.status(404).json({ error: 'Not found' });
+    if (incident.status !== 'pending') return res.status(400).json({ error: 'Incident is not paused' });
 
-  const openPause = db.prepare('SELECT * FROM pause_logs WHERE incident_id = ? AND pause_end IS NULL').get(req.params.id);
-  if (!openPause) return res.status(400).json({ error: 'No open pause log found' });
+    const openPause = db.prepare('SELECT * FROM pause_logs WHERE incident_id = ? AND pause_end IS NULL').get(req.params.id);
+    if (!openPause) return res.status(400).json({ error: 'No open pause log found' });
 
-  const now = new Date().toISOString();
-  const pauseSec = Math.floor((new Date(now) - new Date(openPause.pause_start)) / 1000);
+    const now = new Date().toISOString();
+    const pauseSec = Math.floor((new Date(now) - new Date(openPause.pause_start)) / 1000);
+    const existingTotalPause = incident.total_pause_duration_seconds || 0;
 
-  db.prepare('UPDATE pause_logs SET pause_end = ?, duration_seconds = ? WHERE id = ?').run(now, pauseSec, openPause.id);
+    db.prepare('UPDATE pause_logs SET pause_end = ?, duration_seconds = ? WHERE id = ?').run(now, pauseSec, openPause.id);
 
-  const totalPause = incident.total_pause_duration_seconds + pauseSec;
-  db.prepare("UPDATE incidents SET status = 'progress', total_pause_duration_seconds = ?, updated_at = datetime('now') WHERE id = ?").run(totalPause, req.params.id);
-  db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'RESUME', ?)").run(req.params.id, req.user.id, `Paused for ${pauseSec}s`);
+    const totalPause = existingTotalPause + pauseSec;
+    db.prepare("UPDATE incidents SET status = 'progress', total_pause_duration_seconds = ?, updated_at = datetime('now') WHERE id = ?").run(totalPause, req.params.id);
+    db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'RESUME', ?)").run(req.params.id, req.user.id, `Paused for ${pauseSec}s`);
 
-  getIO().emit('incident-updated', { type: 'status_change', id: req.params.id });
-  logger.info(`Incident resumed: Case ID: ${req.params.id} by User ID: ${req.user.id}`);
-  res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+    emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
+    logger.info(`Incident resumed: Case ID: ${req.params.id} by User ID: ${req.user.id}`);
+    res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+  } catch (error) {
+    logger.error(`Failed to resume incident ${req.params.id}: ${error.message}`);
+    res.status(500).json({ error: 'Failed to resume incident.' });
+  }
 });
 
 // ─── POST /api/incidents/:id/close ──────────────────────────────────────────
@@ -511,7 +528,7 @@ router.post('/:id/close', authenticate, (req, res) => {
   );
 
   sendEscalation(updated, 'close');
-  getIO().emit('incident-updated', { type: 'close', id: req.params.id });
+  emitSocketEvent('incident-updated', { type: 'close', id: req.params.id });
   logger.info(`Incident closed: Case #${updated.case_no} by User ID: ${req.user.id}`);
   res.json(updated);
 });

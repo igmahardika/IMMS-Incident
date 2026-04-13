@@ -1,180 +1,235 @@
 import React from 'react';
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Edit2,
+  Pause,
+  Play,
+  User,
+} from 'lucide-react';
 import { formatDateTime, formatDuration } from '../../utils/incidentUtils.js';
-import { Clock, Pause, Play, Edit2, CheckCircle, AlertTriangle, User, Activity } from 'lucide-react';
+import { cn } from '../../lib/utils.js';
 
 const ACTION_ICONS = {
-  'CREATE': AlertTriangle,
-  'START': Play,
-  'UPDATE': Edit2,
-  'PAUSE': Pause,
-  'RESUME': Play,
-  'CLOSE': CheckCircle,
+  CREATE: AlertTriangle,
+  START: Play,
+  UPDATE: Edit2,
+  PAUSE: Pause,
+  RESUME: Play,
+  CLOSE: CheckCircle,
 };
 
-const ACTION_COLORS = {
-  'CREATE': 'var(--danger)',
-  'START': 'var(--success)',
-  'UPDATE': 'var(--accent)',
-  'PAUSE': 'var(--warning)',
-  'RESUME': 'var(--success)',
-  'CLOSE': 'var(--success)',
+const ACTION_STYLES = {
+  CREATE: {
+    dot: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  },
+  START: {
+    dot: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  },
+  UPDATE: {
+    dot: 'border-primary/40 bg-primary/10 text-primary',
+    badge: 'bg-primary/10 text-primary',
+  },
+  PAUSE: {
+    dot: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  },
+  RESUME: {
+    dot: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  },
+  CLOSE: {
+    dot: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  },
 };
+
+function parseTimelineText(text, action) {
+  let cause = '';
+  let actionText = '';
+  const others = [];
+
+  if (text.includes(' | ')) {
+    text.split(' | ').forEach((part) => {
+      const clean = part.trim();
+      if (!clean) return;
+
+      if (clean.startsWith('Cause:') || clean.startsWith('Penyebab:')) {
+        cause = clean.replace(/^Cause:\s*|^Penyebab:\s*/, '').trim();
+      } else if (clean.startsWith('Last Action:') || clean.startsWith('Action Terakhir:')) {
+        actionText = clean.replace(/^Last Action:\s*|^Action Terakhir:\s*/, '').trim();
+      } else {
+        others.push(clean);
+      }
+    });
+  } else if (text && action === 'UPDATE') {
+    actionText = text;
+  }
+
+  return { cause, actionText, others };
+}
+
+function getActionLabel(action, isPause, filterType, handlingIndex, hasHandling) {
+  if (isPause) return 'Incident Paused';
+  if (action === 'UPDATE') {
+    if (filterType === 'technical' && hasHandling) return `Handling ${handlingIndex}`;
+    return 'System Update';
+  }
+  if (action === 'START') return 'Action Started';
+  if (action === 'RESUME') return 'Action Resumed';
+  if (action === 'CREATE') return 'Incident Created';
+  if (action === 'CLOSE') return 'Incident Closed';
+  return action;
+}
 
 export default function UnifiedTimeline({ timeline, filterType = 'technical', isCompact = false }) {
   if (!timeline || timeline.length === 0) {
     return (
-      <div className="p-8 text-center text-base-content/50 text-xs font-medium italic">
+      <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
         No activity history recorded yet.
       </div>
     );
   }
 
-  let renderedHandlingCount = 0;
-  
+  const preparedTimeline = [];
+  let technicalHandlingCount = 0;
+
+  timeline.forEach((item, index) => {
+    const isPause = item.type === 'pause';
+    const action = isPause ? 'PAUSE' : item.action || 'UPDATE';
+    const text = item.details || item.reason || '';
+    const parsed = parseTimelineText(text, action);
+    const isTechnical = Boolean(
+      parsed.cause || parsed.actionText || ['START', 'PAUSE', 'RESUME', 'CLOSE'].includes(action)
+    );
+    const isSystem = Boolean(parsed.others.length > 0 || action === 'CREATE');
+
+    if (filterType === 'technical' && !isTechnical) return;
+    if (filterType === 'system' && !isSystem) return;
+
+    const hasHandling = Boolean(parsed.cause || parsed.actionText);
+    const handlingIndex = hasHandling && filterType === 'technical'
+      ? (technicalHandlingCount += 1)
+      : technicalHandlingCount;
+
+    preparedTimeline.push({
+      item,
+      index,
+      isPause,
+      action,
+      parsed,
+      isTechnical,
+      isSystem,
+      hasHandling,
+      handlingIndex,
+    });
+  });
+
   return (
-    <div className={`flex flex-col ${isCompact ? 'px-0 py-1' : 'px-4 py-2'}`}>
-      {timeline.map((item, idx) => {
-        const isPause = item.type === 'pause';
-        const action = isPause ? 'PAUSE' : (item.action || 'UPDATE');
-        const text = item.details || item.reason || '';
-
-        // Parsing
-        let cause = '';
-        let actionTxt = '';
-        const others = [];
-        if (text.includes(' | ')) {
-          const parts = text.split(' | ');
-          parts.forEach(p => {
-            const cleanP = p.trim();
-            if (!cleanP) return;
-            if (cleanP.startsWith('Cause:') || cleanP.startsWith('Penyebab:')) {
-              cause = cleanP.replace(/^Cause:\s*|^Penyebab:\s*/, '').trim();
-            } else if (cleanP.startsWith('Last Action:') || cleanP.startsWith('Action Terakhir:')) {
-              actionTxt = cleanP.replace(/^Last Action:\s*|^Action Terakhir:\s*/, '').trim();
-            } else {
-              others.push(cleanP);
-            }
-          });
-        } else if (text && action === 'UPDATE') {
-          actionTxt = text;
-        }
-
-        const isTechnical = !!(cause || actionTxt || ['START', 'PAUSE', 'RESUME', 'CLOSE'].includes(action));
-        const isSystem = !!(others.length > 0 || ['CREATE'].includes(action));
-
-        // Filtering Logic
-        if (filterType === 'technical' && !isTechnical) return null;
-        if (filterType === 'system' && !isSystem) return null;
-
-        // Visual setup
-        if (filterType === 'technical' && (cause || actionTxt)) renderedHandlingCount++;
-        
+    <div className={cn('space-y-4', isCompact ? 'py-1' : 'py-2')}>
+      {preparedTimeline.map(({ item, isPause, action, parsed, hasHandling, handlingIndex }, index) => {
         const Icon = ACTION_ICONS[action] || Activity;
+        const { cause, actionText, others } = parsed;
         const timestamp = item.timestamp || item.pause_start;
-
-        const colorClasses = {
-          'CREATE': 'text-error border-error',
-          'START': 'text-success border-success',
-          'UPDATE': 'text-primary border-primary',
-          'PAUSE': 'text-warning border-warning',
-          'RESUME': 'text-success border-success',
-          'CLOSE': 'text-success border-success',
-        };
-        const currentColors = colorClasses[action] || 'text-base-content/40 border-base-content/20';
-
-        const getActionLabel = () => {
-          if (isPause) return 'Incident Paused';
-          if (action === 'UPDATE') {
-             if (filterType === 'technical' && (cause || actionTxt)) return `Handling ${renderedHandlingCount}`;
-             return 'System Update';
-          }
-          if (action === 'START') return 'Action Started';
-          if (action === 'RESUME') return 'Action Resumed';
-          if (action === 'CREATE') return 'Incident Created';
-          if (action === 'CLOSE') return 'Incident Closed';
-          return action;
-        };
+        const styles = ACTION_STYLES[action] || ACTION_STYLES.UPDATE;
+        const actionLabel = getActionLabel(action, isPause, filterType, handlingIndex, hasHandling);
+        const lifecycleMessage = action === 'CREATE'
+          ? 'Incident established in the monitoring system.'
+          : item.details || item.reason || actionLabel;
 
         return (
-          <div key={item.id || idx} className="flex gap-4 relative group">
-            {/* Connector Line */}
-            {idx !== timeline.length - 1 && (
-              <div className="absolute left-[9px] top-6 bottom-[-24px] w-0.5 bg-base-300 opacity-40 z-0" />
-            )}
+          <div key={item.id || index} className="relative pl-8">
+            {index !== timeline.length - 1 ? (
+              <div className="absolute left-[11px] top-6 bottom-[-18px] w-px bg-border" />
+            ) : null}
 
-            {/* Icon Circle */}
-            <div className={`w-5 h-5 rounded-full bg-base-100 border-2 ${currentColors.split(' ')[1]} flex items-center justify-center z-10 shrink-0 mt-0.5 shadow-sm`}>
-              <Icon size={10} className={currentColors.split(' ')[0]} />
+            <div
+              className={cn(
+                'absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full border',
+                styles.dot
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
             </div>
 
-            {/* Content Area */}
-            <div className={`flex-1 min-w-0 ${isCompact ? 'pb-6' : 'pb-8'}`}>
-              <div className={`flex justify-between items-start gap-3 ${isCompact ? 'mb-2' : 'mb-3'}`}>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold tracking-tight text-base-content leading-none`}>
-                      {getActionLabel()}
-                    </span>
-                    {item.user_name && (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200/50 rounded-full text-xs font-medium text-base-content/70 uppercase tracking-wider leading-none">
-                        <User size={8} /> {item.user_name}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className={cn('font-medium tracking-tight text-foreground', isCompact ? 'text-sm' : 'text-sm')}>
+                      {actionLabel}
+                    </p>
+                    {item.user_name ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                        <User className="h-3 w-3" />
+                        {item.user_name}
                       </span>
-                    )}
+                    ) : null}
                   </div>
-                  <div className={`${isCompact ? 'text-xs' : 'text-xs'} font-mono font-bold text-base-content/40 mt-1 uppercase tracking-wider`}>
-                    {formatDateTime(timestamp)}
-                  </div>
+                  <p className="text-xs text-muted-foreground">{formatDateTime(timestamp)}</p>
                 </div>
-                {item.segment_duration != null && item.segment_duration > 0 && filterType === 'technical' && (
-                  <div className="badge badge-primary badge-soft badge-xs font-semibold text-xs px-1.5 h-5 rounded uppercase tracking-wider flex-shrink-0">
+
+                {item.segment_duration != null && item.segment_duration > 0 && filterType === 'technical' ? (
+                  <span className={cn('inline-flex items-center rounded-md px-2 py-1 text-xs font-medium', styles.badge)}>
                     {formatDuration(item.segment_duration)}
-                  </div>
-                )}
+                  </span>
+                ) : null}
               </div>
 
-              {/* Detail Content */}
-              <div className={isCompact ? 'mt-1.5' : 'mt-2.5'}>
-                {filterType === 'technical' && (cause || actionTxt) && (
-                  <div className={`grid grid-cols-1 ${ (cause && actionTxt && !isCompact) ? 'md:grid-cols-2' : ''} gap-2`}>
-                    {cause && (
-                      <div className="p-3 bg-error/5 rounded-xl">
-                        <div className="text-xs font-medium text-error/80 uppercase tracking-wider mb-1">Root Cause</div>
-                        <div className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold text-base-content/80 leading-relaxed`}>{cause}</div>
-                      </div>
-                    )}
-                    {actionTxt && (
-                      <div className="p-3 bg-success/5 rounded-xl">
-                        <div className="text-xs font-medium text-success/80 uppercase tracking-wider mb-1">Action Taken</div>
-                        <div className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold text-base-content/80 leading-relaxed`}>{actionTxt}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
+              {filterType === 'technical' && hasHandling ? (
+                <div className={cn('grid gap-2', cause && actionText && !isCompact ? 'md:grid-cols-2' : 'grid-cols-1')}>
+                  {cause ? (
+                    <div className="rounded-lg border border-border bg-card px-3 py-3">
+                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                        Root Cause
+                      </p>
+                      <p className={cn('mt-2 leading-6 text-foreground', isCompact ? 'text-sm' : 'text-sm')}>
+                        {cause}
+                      </p>
+                    </div>
+                  ) : null}
 
-                {filterType === 'system' && others.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {others.map((o, offsetIdx) => (
-                      <span key={offsetIdx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-base-200/50 rounded-lg text-xs font-semibold text-base-content/70">
-                        <div className="w-1 h-1 rounded-full bg-primary/40" />
-                        {o}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                  {actionText ? (
+                    <div className="rounded-lg border border-border bg-card px-3 py-3">
+                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                        Action Taken
+                      </p>
+                      <p className={cn('mt-2 leading-6 text-foreground', isCompact ? 'text-sm' : 'text-sm')}>
+                        {actionText}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
-                {/* Lifecycle Messages */}
-                {((filterType === 'technical' && !cause && !actionTxt && action !== 'UPDATE') || (filterType === 'system' && action === 'CREATE')) && (
-                   <div className={`p-3 bg-base-200/40 rounded-xl ${isCompact ? 'text-xs' : 'text-sm'} italic font-bold text-base-content/60 leading-relaxed`}>
-                     {action === 'CREATE' ? 'Initial entry: Incident established in the monitoring system.' : (item.details || item.reason || getActionLabel())}
-                   </div>
-                )}
+              {filterType === 'system' && others.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {others.map((other, otherIndex) => (
+                    <span
+                      key={otherIndex}
+                      className="inline-flex items-center rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+                    >
+                      {other}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
 
-                {isPause && item.pause_end && filterType === 'technical' && (
-                  <div className={`flex items-center gap-2 mt-2 px-2 py-1 bg-success/10 rounded-lg w-fit ${isCompact ? 'text-xs' : 'text-xs'} font-bold text-success uppercase tracking-wider`}>
-                    <Play size={10} fill="currentColor" /> Resumed at {formatDateTime(item.pause_end)}
-                  </div>
-                )}
-              </div>
+              {((filterType === 'technical' && !hasHandling && action !== 'UPDATE') || (filterType === 'system' && action === 'CREATE')) ? (
+                <div className="rounded-lg border border-border bg-muted/20 px-3 py-3 text-sm text-muted-foreground">
+                  {lifecycleMessage}
+                </div>
+              ) : null}
+
+              {isPause && item.pause_end && filterType === 'technical' ? (
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                  <Play className="h-3.5 w-3.5" />
+                  Resumed at {formatDateTime(item.pause_end)}
+                </div>
+              ) : null}
             </div>
           </div>
         );

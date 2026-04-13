@@ -3,6 +3,7 @@ import db from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import bcrypt from 'bcryptjs';
 import { geocode } from '../utils/geocoder.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 const USER_ROLE_PRIORITY = `
@@ -14,6 +15,10 @@ const USER_ROLE_PRIORITY = `
     ELSE 9
   END
 `;
+
+function normalizeIds(ids) {
+  return [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+}
 
 // ── MASTER CUSTOMER ─────────────────────────────────────────────────────────────
 router.get('/customers', authenticate, (req, res) => {
@@ -327,86 +332,113 @@ router.put('/actions/:id', authenticate, authorize('admin', 'manager'), (req, re
 
 // ── AUTO-GEOCODING CUSTOMERS ──────────────────────────────────────────────────
 router.get('/customers/missing-coords', authenticate, (req, res) => {
-  const missing = db.prepare('SELECT id, company_name, brand_site, address FROM master_customer WHERE latitude IS NULL').all();
+  const missing = db.prepare(`
+    SELECT id, company_name, brand_site, address, city, province
+    FROM master_customer
+    WHERE latitude IS NULL OR longitude IS NULL
+  `).all();
   res.json(missing);
 });
 
 router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { ids } = req.body; 
-  if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid IDs' });
+  const normalizedIds = normalizeIds(req.body?.ids);
+  if (!normalizedIds.length) return res.status(400).json({ error: 'Invalid IDs' });
 
-  const items = db.prepare(`SELECT * FROM master_customer WHERE id IN (${ids.join(',')})`).all();
-  const updateStmt = db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?');
-  
-  const results = [];
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  try {
+    const placeholders = normalizedIds.map(() => '?').join(', ');
+    const items = db.prepare(`SELECT * FROM master_customer WHERE id IN (${placeholders})`).all(...normalizedIds);
+    const updateStmt = db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?');
 
-  for (const c of items) {
-    const searchTerms = [
-      c.address,
-      `${c.brand_site}, ${c.city || ''}`,
-      `${c.company_name}, ${c.city || ''}`
-    ].filter(Boolean);
+    const results = [];
 
-    let found = null;
-    for (const term of searchTerms) {
-      found = await geocode(term);
-      if (found) break;
-      await delay(1000);
+    for (const customer of items) {
+      const baseAddress = String(customer.address || '').trim();
+
+      if (!baseAddress) {
+        results.push({ id: customer.id, success: false, reason: 'missing_address' });
+        continue;
+      }
+
+      const found = await geocode(baseAddress, {
+        city: customer.city,
+        province: customer.province,
+      });
+
+      if (found) {
+        updateStmt.run(found.latitude, found.longitude, customer.id);
+        results.push({ id: customer.id, success: true, ...found });
+      } else {
+        results.push({ id: customer.id, success: false, reason: 'not_found' });
+      }
     }
 
-    if (found) {
-      updateStmt.run(found.latitude, found.longitude, c.id);
-      results.push({ id: c.id, success: true, ...found });
-    } else {
-      results.push({ id: c.id, success: false });
-    }
+    const updated = results.filter((result) => result.success).length;
+    const skipped = results.filter((result) => result.reason === 'missing_address').length;
+    const failed = results.length - updated - skipped;
+
+    logger.info(`[Geocode][Customers] requested=${normalizedIds.length} updated=${updated} failed=${failed} skipped=${skipped}`);
+    res.json({ success: true, total: results.length, updated, failed, skipped, results });
+  } catch (error) {
+    logger.error(`[Geocode][Customers] ${error.message}`);
+    res.status(500).json({ error: 'Customer geocoding failed.' });
   }
-
-  res.json({ success: true, results });
 });
 
 // ── AUTO-GEOCODING DISTRIBUSI ──────────────────────────────────────────────────
 router.get('/distribusi/missing-coords', authenticate, (req, res) => {
-  const missing = db.prepare('SELECT id, type, level_1, level_2, level_3, level_4 FROM master_distribusi WHERE latitude IS NULL').all();
+  const missing = db.prepare(`
+    SELECT id, type, level_1, level_2, level_3, level_4
+    FROM master_distribusi
+    WHERE latitude IS NULL OR longitude IS NULL
+  `).all();
   res.json(missing);
 });
 
 router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { ids } = req.body;
-  if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid IDs' });
+  const normalizedIds = normalizeIds(req.body?.ids);
+  if (!normalizedIds.length) return res.status(400).json({ error: 'Invalid IDs' });
 
-  const items = db.prepare(`SELECT * FROM master_distribusi WHERE id IN (${ids.join(',')})`).all();
-  const updateStmt = db.prepare('UPDATE master_distribusi SET latitude = ?, longitude = ? WHERE id = ?');
-  
-  const results = [];
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  try {
+    const placeholders = normalizedIds.map(() => '?').join(', ');
+    const items = db.prepare(`SELECT * FROM master_distribusi WHERE id IN (${placeholders})`).all(...normalizedIds);
+    const updateStmt = db.prepare('UPDATE master_distribusi SET latitude = ?, longitude = ? WHERE id = ?');
 
-  for (const item of items) {
-    let searchTerms = [];
-    if (item.type === 'Fiber Optic') {
-      searchTerms = [item.level_4, item.level_3, item.level_1].filter(Boolean);
-    } else {
-      searchTerms = [item.level_1].filter(Boolean);
+    const results = [];
+
+    for (const item of items) {
+      const locationTerms = item.type === 'Fiber Optic'
+        ? [item.level_4, item.level_3, item.level_2, item.level_1]
+        : [item.level_1, item.level_2];
+
+      const query = locationTerms.filter((term) => term && term.length >= 3).join(', ');
+      if (!query) {
+        results.push({ id: item.id, success: false, reason: 'missing_location' });
+        continue;
+      }
+
+      const found = await geocode(query, {
+        city: 'Semarang',
+        province: 'Jawa Tengah',
+      });
+
+      if (found) {
+        updateStmt.run(found.latitude, found.longitude, item.id);
+        results.push({ id: item.id, success: true, ...found });
+      } else {
+        results.push({ id: item.id, success: false, reason: 'not_found' });
+      }
     }
 
-    let found = null;
-    for (const term of searchTerms) {
-      if (term.length < 3) continue;
-      found = await geocode(`${term}, Semarang`);
-      if (found) break;
-      await delay(1000);
-    }
+    const updated = results.filter((result) => result.success).length;
+    const skipped = results.filter((result) => result.reason === 'missing_location').length;
+    const failed = results.length - updated - skipped;
 
-    if (found) {
-      updateStmt.run(found.latitude, found.longitude, item.id);
-      results.push({ id: item.id, success: true, ...found });
-    } else {
-      results.push({ id: item.id, success: false });
-    }
+    logger.info(`[Geocode][Distribusi] requested=${normalizedIds.length} updated=${updated} failed=${failed} skipped=${skipped}`);
+    res.json({ success: true, total: results.length, updated, failed, skipped, results });
+  } catch (error) {
+    logger.error(`[Geocode][Distribusi] ${error.message}`);
+    res.status(500).json({ error: 'Distribution geocoding failed.' });
   }
-
-  res.json({ success: true, results });
 });
 
 export default router;

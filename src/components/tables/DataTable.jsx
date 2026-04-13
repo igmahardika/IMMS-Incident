@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
+import { Button } from '../ui/forms/index.jsx';
 
 export function DataTable({ 
   columns, 
@@ -49,9 +50,15 @@ export function DataTable({
     },
   });
 
+  const rowCount = table.getRowModel().rows.length;
+  const pageIndex = table.getState().pagination.pageIndex;
+  const currentPageSize = table.getState().pagination.pageSize;
+  const pageStart = rowCount > 0 ? pageIndex * currentPageSize + 1 : 0;
+  const pageEnd = Math.min((pageIndex + 1) * currentPageSize, data.length);
+
   return (
-    <div className={cn("flex flex-col h-full overflow-hidden", className)}>
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+    <div className={cn('flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card', className)}>
+      <div className="min-h-0 flex-1 overflow-auto custom-scrollbar">
         <table className="w-full table-fixed border-separate border-spacing-0 text-left">
           <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             {table.getHeaderGroups().map(headerGroup => (
@@ -72,16 +79,16 @@ export function DataTable({
                       }}
                     >
                       {header.isPlaceholder ? null : (
-                        <div 
+                        <div
                           className={cn(
-                            "flex items-center gap-2 select-none whitespace-nowrap",
-                            header.column.getCanSort() && "cursor-pointer transition-colors hover:text-foreground"
+                            'flex items-center gap-2 select-none whitespace-nowrap',
+                            header.column.getCanSort() && 'cursor-pointer transition-colors hover:text-foreground'
                           )}
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getIsSorted() === 'asc' && <ChevronUp size={12} className="shrink-0 text-primary" />}
-                          {header.column.getIsSorted() === 'desc' && <ChevronDown size={12} className="shrink-0 text-primary" />}
+                          {header.column.getIsSorted() === 'asc' ? <ChevronUp size={12} className="shrink-0 text-primary" /> : null}
+                          {header.column.getIsSorted() === 'desc' ? <ChevronDown size={12} className="shrink-0 text-primary" /> : null}
                         </div>
                       )}
                     </th>
@@ -95,7 +102,7 @@ export function DataTable({
               table.getRowModel().rows.map(row => (
                 <tr
                   key={row.id}
-                  className={cn("hover:bg-foreground/[0.02] transition-colors group", getRowClassName(row.original))}
+                  className={cn('group transition-colors hover:bg-muted/20', getRowClassName(row.original))}
                 >
                   {row.getVisibleCells().map(cell => {
                     const size = cell.column.getSize();
@@ -130,39 +137,20 @@ export function DataTable({
       </div>
       
       <div className="flex shrink-0 items-center justify-between border-t border-border bg-background px-4 py-3">
-         <div className="text-sm text-muted-foreground">
-            Showing{' '}
-            <span className="font-medium text-foreground">
-              {table.getRowModel().rows.length > 0
-                ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
-                : 0}
-            </span>
-            {' '}-{' '}
-            <span className="font-medium text-foreground">
-              {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, data.length)}
-            </span>
-            {' '}of{' '}
-            <span className="font-medium text-foreground">{data.length}</span>
-         </div>
+        <div className="text-sm text-muted-foreground">
+          Showing <span className="font-medium text-foreground">{pageStart}</span> - <span className="font-medium text-foreground">{pageEnd}</span> of <span className="font-medium text-foreground">{data.length}</span>
+        </div>
 
-         {table.getPageCount() > 1 ? (
-            <div className="flex items-center gap-2">
-              <button
-                className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </button>
-              <button
-                className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </button>
-            </div>
-         ) : null}
+        {table.getPageCount() > 1 ? (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+              Next
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

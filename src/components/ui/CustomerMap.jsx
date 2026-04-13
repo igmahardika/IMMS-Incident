@@ -1,120 +1,234 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, CircleMarker } from 'react-leaflet';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CircleMarker, MapContainer, Popup, TileLayer, useMap, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { AlertCircle, RefreshCw, Search, Users } from 'lucide-react';
 import { api } from '../../utils/api.js';
-import { Button, Spinner } from './index.jsx';
+import { formatDateTime } from '../../utils/incidentUtils.js';
 import { cn } from '../../lib/utils.js';
-import { Search, AlertCircle, Users, Activity, RefreshCw } from 'lucide-react';
+import { useToast } from '../../context/ToastContext.jsx';
+import { Button, Input, SectionCard, Spinner } from './index.jsx';
 
-/**
- * Enhanced Customer Map - Spatial Visualization Protocol
- * Integrated with internal glassmorphism controls and multi-mode telemetry.
- */
-
-// Province colors - Refined for premium look
+const SEMARANG_CENTER = [-7.0051, 110.4381];
 const PROVINCE_COLORS = {
-  'Jawa Tengah': '#4f46e5', // Indigo 600
-  'Jawa Barat': '#059669', // Emerald 600
-  'Jawa Timur': '#d97706', // Amber 600
-  'DKI Jakarta': '#dc2626', // Red 600
-  'Banten': '#7c3aed', // Violet 600
-  'Others': '#64748b'  // Slate 500
+  'Jawa Tengah': '#4f46e5',
+  'Jawa Barat': '#059669',
+  'Jawa Timur': '#d97706',
+  'DKI Jakarta': '#dc2626',
+  Banten: '#7c3aed',
+  Others: '#64748b',
 };
 
-const createCustomMarker = (province) => {
-  const color = PROVINCE_COLORS[province] || PROVINCE_COLORS['Others'];
-  return new L.DivIcon({
-    className: 'custom-marker-simple',
-    html: `
-      <div style="
-        background-color: ${color}; 
-        width: 12px; 
-        height: 12px; 
-        border-radius: 50%; 
-        border: 2px solid white; 
-        box-shadow: 0 0 10px ${color}44;
-      "></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
-  });
-};
-
-function ChangeView({ center, zoom }) {
+function ChangeView({ center, zoom, viewId }) {
   const map = useMap();
+
   useEffect(() => {
     map.setView(center, zoom, { animate: true, duration: 1 });
-  }, [center, zoom, map]);
+  }, [center, zoom, map, viewId]);
+
   return null;
 }
 
-export default function CustomerMap({ 
-  customers, 
-  onRefresh, 
-  initialMode = 'customers', 
+function SegmentedButton({ active, children, onClick, tone = 'default' }) {
+  const activeClassName = {
+    default: 'bg-primary text-primary-foreground shadow-sm',
+    destructive: 'bg-destructive text-destructive-foreground shadow-sm',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors',
+        active
+          ? activeClassName[tone] || activeClassName.default
+          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function LegendItem({ className, label }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className={cn('h-3 w-3 rounded-full ring-4', className)} />
+      <span className="text-sm text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function StatChip({ label, value }) {
+  return (
+    <div className="rounded-lg border border-border bg-background/90 px-3 py-2 shadow-sm backdrop-blur">
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function CustomerPopup({ customer }) {
+  return (
+    <div className="min-w-[240px] space-y-4 p-4">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold tracking-tight text-foreground">
+            {customer.brand_site || 'Unlabeled site'}
+          </p>
+          <span className="rounded-md border border-border bg-muted px-2 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            {customer.grade || 'N/A'}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">{customer.company_name || 'Unknown customer'}</p>
+      </div>
+
+      <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Service ID</span>
+          <span className="font-medium text-foreground">{customer.service_id || '—'}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">City</span>
+          <span className="font-medium text-foreground">{customer.city || '—'}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Province</span>
+          <span className="font-medium text-foreground">{customer.province || '—'}</span>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Address</p>
+        <p className="text-sm leading-6 text-foreground">{customer.address || 'No address available'}</p>
+      </div>
+    </div>
+  );
+}
+
+function TroublePopup({ trouble }) {
+  return (
+    <div className="min-w-[240px] space-y-4 p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold tracking-tight text-foreground">
+            {trouble.brand_site || 'Cluster node'}
+          </p>
+          <p className="text-xs text-muted-foreground">{trouble.company_name || 'Customer location'}</p>
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Incident frequency</span>
+          <span className="font-semibold text-destructive">{trouble.incident_count}x</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Last incident</span>
+          <span className="font-medium text-foreground">
+            {trouble.last_incident_at ? formatDateTime(trouble.last_incident_at) : '—'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CustomerMap({
+  customers = [],
+  onRefresh,
+  initialMode = 'customers',
   showTroubleMode = true,
   startDate = '2026-01-01',
   endDate = '2026-02-28 23:59:59',
-  hideCustomerPins = false
+  hideCustomerPins = false,
 }) {
+  const { addToast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [geocodingStatus, setGeocodingStatus] = useState({ active: false, current: 0, total: 0 });
-  const [mapMode, setMapMode] = useState(initialMode); // 'customers' | 'trouble'
+  const [mapMode, setMapMode] = useState(initialMode);
   const [troubleData, setTroubleData] = useState([]);
-  const semarangCenter = [-7.0051, 110.4381];
-  const [viewState, setViewState] = useState({ center: semarangCenter, zoom: 12 });
+  const [viewState, setViewState] = useState({ center: SEMARANG_CENTER, zoom: 12, id: 0 });
 
-  const filteredCustomers = useMemo(() => 
-    customers.filter(c => c.latitude && c.longitude),
+  const filteredCustomers = useMemo(
+    () => customers.filter((customer) => customer.latitude && customer.longitude),
     [customers]
   );
-
-  // Background Rendering Progress logic
-  useEffect(() => {
-    if (filteredCustomers.length === 0) {
-      setIsProcessing(false);
-      return;
-    }
-    setIsProcessing(true);
-    const timeout = setTimeout(() => setIsProcessing(false), 800);
-    return () => clearTimeout(timeout);
-  }, [filteredCustomers.length]);
-
-  const startAutoGeocode = async () => {
-    if (geocodingStatus.active) return;
-    try {
-      const missing = await api.getCustomersWithMissingCoords();
-      if (missing && missing.length > 0) {
-        setGeocodingStatus({ active: true, current: 0, total: missing.length });
-        const batchSize = 3;
-        for (let i = 0; i < missing.length; i += batchSize) {
-          const batch = missing.slice(i, i + batchSize);
-          await api.autoGeocodeCustomers(batch.map(m => m.id));
-          setGeocodingStatus(prev => ({ ...prev, current: Math.min(prev.total, i + batch.length) }));
-        }
-        if (onRefresh) onRefresh(); 
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setGeocodingStatus({ active: false, current: 0, total: 0 });
-    }
-  };
+  const troublePoints = useMemo(
+    () => troubleData.filter((item) => item.latitude != null && item.longitude != null),
+    [troubleData]
+  );
+  const provinceCount = useMemo(
+    () => new Set(filteredCustomers.map((customer) => customer.province).filter(Boolean)).size,
+    [filteredCustomers]
+  );
 
   useEffect(() => {
     if (mapMode === 'trouble' && showTroubleMode) {
       const fetchTroubleData = async () => {
+        setIsProcessing(true);
+
         try {
           const data = await api.getTroubleMapData(startDate, endDate);
-          setTroubleData(data);
-        } catch (err) {
-          console.error(err);
+          setTroubleData(data || []);
+        } catch (error) {
+          console.error('Failed to load trouble map data:', error);
+        } finally {
+          setIsProcessing(false);
         }
       };
+
       fetchTroubleData();
+      return;
     }
-  }, [mapMode, startDate, endDate, showTroubleMode]);
+
+    setIsProcessing(true);
+    const timeoutId = window.setTimeout(() => setIsProcessing(false), 500);
+    return () => window.clearTimeout(timeoutId);
+  }, [filteredCustomers.length, mapMode, startDate, endDate, showTroubleMode]);
+
+  const startAutoGeocode = async () => {
+    if (geocodingStatus.active) return;
+
+    try {
+      const missing = await api.getCustomersWithMissingCoords();
+      if (!missing?.length) {
+        addToast('All customer map records already have coordinates', 'info');
+        return;
+      }
+
+      setGeocodingStatus({ active: true, current: 0, total: missing.length });
+      const batchSize = 20;
+      let updated = 0;
+      let failed = 0;
+      let skipped = 0;
+
+      for (let index = 0; index < missing.length; index += batchSize) {
+        const batch = missing.slice(index, index + batchSize);
+        const response = await api.autoGeocodeCustomers(batch.map((item) => item.id));
+        updated += response.updated || 0;
+        failed += response.failed || 0;
+        skipped += response.skipped || 0;
+        setGeocodingStatus((previous) => ({
+          ...previous,
+          current: Math.min(previous.total, index + batch.length),
+        }));
+      }
+
+      if (onRefresh) onRefresh();
+      addToast(`Customer sync complete: ${updated} updated, ${failed} failed, ${skipped} skipped`, failed > 0 ? 'warning' : 'success', 6000);
+    } catch (error) {
+      console.error('Auto-geocoding customer error:', error);
+      addToast(error.message || 'Customer sync failed', 'error');
+    } finally {
+      setGeocodingStatus({ active: false, current: 0, total: 0 });
+    }
+  };
 
   const getBubbleColor = (count) => {
     if (count > 10) return '#ef4444';
@@ -122,189 +236,186 @@ export default function CustomerMap({
     return '#eab308';
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  const handleSearch = (event) => {
+    event.preventDefault();
+
     const term = searchTerm.toLowerCase();
-    const found = filteredCustomers.find(c => 
-      (c.brand_site || '').toLowerCase().includes(term) || 
-      (c.company_name || '').toLowerCase().includes(term) ||
-      (c.service_id || '').toLowerCase().includes(term)
+    if (!term.trim()) return;
+    const activeCollection = mapMode === 'trouble' ? troublePoints : filteredCustomers;
+    const found = activeCollection.find(
+      (item) =>
+        (item.address || '').toLowerCase().includes(term) ||
+        (item.city || '').toLowerCase().includes(term) ||
+        (item.province || '').toLowerCase().includes(term) ||
+        (item.customer_id || '').toLowerCase().includes(term) ||
+        (item.service_id || '').toLowerCase().includes(term) ||
+        (item.brand_site || '').toLowerCase().includes(term) ||
+        (item.company_name || '').toLowerCase().includes(term)
     );
+
     if (found) {
-      setViewState({ center: [found.latitude, found.longitude], zoom: 16 });
+      setViewState({
+        center: [Number(found.latitude), Number(found.longitude)],
+        zoom: 16,
+        id: Date.now(),
+      });
+      return;
     }
+
+    addToast('No mapped customer location matched that search', 'warning');
   };
 
   return (
-    <div className="relative flex h-full min-h-[640px] flex-1 overflow-hidden bg-background animate-in fade-in duration-500">
-      <MapContainer 
-        center={semarangCenter} 
-        zoom={12} 
-        className="h-full w-full z-0 font-sans"
+    <div className="map-surface relative flex h-full min-h-[640px] flex-1 overflow-hidden rounded-none bg-muted/20">
+      <MapContainer
+        center={SEMARANG_CENTER}
+        zoom={12}
+        className="h-full w-full"
         zoomControl={false}
-        scrollWheelZoom={true}
+        scrollWheelZoom
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
         <ZoomControl position="bottomright" />
-        <ChangeView center={viewState.center} zoom={viewState.zoom} />
-        
-        {mapMode === 'customers' && !hideCustomerPins ? (
-          filteredCustomers.map((c) => (
-            <Marker 
-              key={c.id} 
-              position={[c.latitude, c.longitude]} 
-              icon={createCustomMarker(c.province)}
-            >
-              <Popup className="premium-popup">
-                <div className="min-w-[220px] p-1 font-sans">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[9px] font-black tracking-widest uppercase text-foreground/40 font-mono">
-                      {c.service_id}
-                    </span>
-                    <div className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
-                      {c.grade}
-                    </div>
-                  </div>
-                  
-                  <h4 className="text-[11px] font-black tracking-tight text-foreground uppercase leading-tight mb-0.5">{c.brand_site}</h4>
-                  <p className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest mb-3 truncate italic">{c.company_name}</p>
-                  
-                  <div className="bg-foreground/[0.02] border border-foreground/[0.04] rounded-xl p-3 flex flex-col gap-2 mb-3">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest leading-none">Location Node</span>
-                      <div className="text-[10px] font-black text-foreground/70 uppercase">{c.city || 'UNSET'}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-[8px] font-bold text-foreground/20 leading-relaxed uppercase tracking-widest border-t border-foreground/[0.04] pt-2">
-                     {c.address}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))
-        ) : (
-          troubleData
-            .filter(t => t.latitude != null && t.longitude != null)
-            .map((t) => (
-            <CircleMarker
-              key={t.id}
-              center={[Number(t.latitude), Number(t.longitude)]}
-              radius={Math.min(Math.max(t.incident_count * 3, 8), 25)}
-              pathOptions={{
-                fillColor: getBubbleColor(t.incident_count),
-                color: 'white',
-                weight: 1.5,
-                fillOpacity: 0.6
-              }}
-            >
-              <Popup className="premium-popup">
-                <div className="min-w-[220px] p-1 font-sans">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-[9px] font-black tracking-widest text-error uppercase flex items-center gap-1.5"><Activity size={10} strokeWidth={3}/> Pattern Alert</span>
-                    <div className="bg-error font-black text-[8px] px-2 py-0.5 rounded-full text-white uppercase tracking-widest shadow-sm shadow-error/20">
-                      {t.incident_count} Nodes
-                    </div>
-                  </div>
-                  <h4 className="text-[11px] font-black tracking-tight text-foreground leading-tight mb-0.5 uppercase">{t.brand_site}</h4>
-                  <p className="text-[9px] font-bold text-foreground/40 mb-3 truncate italic uppercase">{t.company_name}</p>
-                  <div className="bg-error/[0.02] border border-error/10 rounded-xl p-3 flex flex-col gap-2">
-                     <span className="text-[8px] font-black tracking-widest text-error/40 uppercase">Critical Cluster</span>
-                  </div>
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))
-        )}
+        <ChangeView center={viewState.center} zoom={viewState.zoom} viewId={viewState.id} />
+
+        {mapMode === 'customers' && !hideCustomerPins
+          ? filteredCustomers.map((customer) => {
+              const color = PROVINCE_COLORS[customer.province] || PROVINCE_COLORS.Others;
+
+              return (
+                <CircleMarker
+                  key={customer.id}
+                  center={[Number(customer.latitude), Number(customer.longitude)]}
+                  radius={7}
+                  pathOptions={{
+                    fillColor: color,
+                    color: '#ffffff',
+                    weight: 2,
+                    fillOpacity: 0.92,
+                  }}
+                >
+                  <Popup className="map-popup">
+                    <CustomerPopup customer={customer} />
+                  </Popup>
+                </CircleMarker>
+              );
+            })
+          : troublePoints.map((trouble) => (
+              <CircleMarker
+                key={`trouble-${trouble.id}`}
+                center={[Number(trouble.latitude), Number(trouble.longitude)]}
+                radius={Math.min(Math.max(trouble.incident_count * 3, 8), 25)}
+                pathOptions={{
+                  fillColor: getBubbleColor(trouble.incident_count),
+                  color: '#ffffff',
+                  weight: 2,
+                  fillOpacity: 0.62,
+                }}
+              >
+                <Popup className="map-popup">
+                  <TroublePopup trouble={trouble} />
+                </Popup>
+              </CircleMarker>
+            ))}
       </MapContainer>
 
-      {/* Internal Glass Controls Overlay */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-wrap gap-2 pointer-events-none">
-         {/* Left Controls: Mode & Status */}
-         <div className="flex items-center gap-2 p-1 bg-background/60 backdrop-blur-xl border border-foreground/[0.08] shadow-2xl rounded-2xl pointer-events-auto ring-1 ring-white/20">
-            <div className="flex items-center gap-1.5 px-3 border-r border-foreground/[0.04]">
-               <Activity size={14} className={cn("transition-colors", isProcessing || geocodingStatus.active ? "text-primary animate-pulse" : "text-foreground/20")} />
-               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/60 whitespace-nowrap">
-                  {geocodingStatus.active ? `SYNCING [${geocodingStatus.current}/${geocodingStatus.total}]` : `SPATIAL_SYNC_OK`}
-               </span>
-            </div>
-            
-            <div className="flex gap-1">
-               <button 
-                  onClick={() => setMapMode('customers')}
-                  className={cn(
-                     "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                     mapMode === 'customers' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-foreground/40 hover:bg-foreground/[0.05]"
-                  )}
-               >
-                  <Users size={12} className="inline mr-1.5" /> Nodes
-               </button>
-               {showTroubleMode && (
-                  <button 
-                     onClick={() => setMapMode('trouble')}
-                     className={cn(
-                        "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                        mapMode === 'trouble' ? "bg-error text-white shadow-lg shadow-error/20" : "text-foreground/40 hover:bg-foreground/[0.05]"
-                     )}
-                  >
-                     <AlertCircle size={12} className="inline mr-1.5" /> Incidents
-                  </button>
-               )}
-            </div>
-         </div>
+      <div className="pointer-events-none absolute left-4 top-4 right-4 z-[1000] flex flex-wrap items-start gap-3">
+        <div className="pointer-events-auto flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/92 px-4 py-3 shadow-sm backdrop-blur">
+          <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
+            <SegmentedButton active={mapMode === 'customers'} onClick={() => setMapMode('customers')}>
+              <Users className="mr-2 h-4 w-4" />
+              Customers
+            </SegmentedButton>
+            {showTroubleMode ? (
+              <SegmentedButton
+                active={mapMode === 'trouble'}
+                onClick={() => setMapMode('trouble')}
+                tone="destructive"
+              >
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Incidents
+              </SegmentedButton>
+            ) : null}
+          </div>
 
-         {/* Right Controls: Search & Tools */}
-         <div className="ml-auto flex items-center gap-2 pointer-events-auto">
-            <form onSubmit={handleSearch} className="flex items-center gap-2 p-1 bg-background/60 backdrop-blur-xl border border-foreground/[0.08] shadow-2xl rounded-2xl ring-1 ring-white/20">
-               <div className="relative flex items-center">
-                  <Search className="absolute left-3 text-foreground/40" size={14} strokeWidth={3} />
-                  <input 
-                     type="text" 
-                     className="bg-transparent border-none focus:ring-0 text-[10px] font-black w-48 pl-9 pr-3 py-1.5 placeholder:text-foreground/20 uppercase tracking-widest h-8" 
-                     placeholder="Locate Node..." 
-                     value={searchTerm}
-                     onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-               </div>
-               <button 
-                  type="button"
-                  onClick={startAutoGeocode}
-                  className={cn(
-                     "flex items-center justify-center w-8 h-8 rounded-xl transition-all",
-                     geocodingStatus.active ? "bg-primary/20 text-primary" : "bg-foreground/[0.03] text-foreground/40 hover:text-primary hover:bg-primary/5"
-                  )}
-                  title="Resync Coordinates"
-               >
-                  <RefreshCw size={14} strokeWidth={2.5} className={cn(geocodingStatus.active && "animate-spin")} />
-               </button>
-            </form>
-         </div>
+          <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder={
+                  mapMode === 'trouble'
+                    ? 'Search address, city, service ID, or site'
+                    : 'Search address, city, province, or service ID'
+                }
+                className="w-60 pl-9"
+              />
+            </div>
+
+            <Button type="submit" variant="outline">
+              Locate
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={startAutoGeocode}
+              disabled={geocodingStatus.active}
+              className="gap-2"
+            >
+              <RefreshCw className={cn('h-4 w-4', geocodingStatus.active && 'animate-spin')} />
+              {geocodingStatus.active ? 'Syncing' : 'Sync'}
+            </Button>
+          </form>
+        </div>
+
+        <div className="pointer-events-none ml-auto hidden gap-3 xl:flex">
+          <StatChip
+            label={mapMode === 'trouble' ? 'Incident Nodes' : 'Mapped Customers'}
+            value={mapMode === 'trouble' ? troublePoints.length : filteredCustomers.length}
+          />
+          <StatChip label="Coverage" value={`${provinceCount} provinces`} />
+        </div>
       </div>
 
-      <style>{`
-        .leaflet-container { 
-          background: transparent !important; 
-          height: 100% !important;
-          width: 100% !important;
-        }
-        .premium-popup .leaflet-popup-content-wrapper {
-          border-radius: 1rem;
-          padding: 4px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-          border: 1px solid var(--color-border);
-          background: var(--color-background);
-        }
-        .premium-popup .leaflet-popup-tip {
-           background: var(--color-background);
-           border: 1px solid var(--color-border);
-           border-top: none;
-           border-left: none;
-        }
-        .premium-popup .leaflet-popup-content { margin: 12px; }
-      `}</style>
+      {(isProcessing || geocodingStatus.active) ? (
+        <div className="pointer-events-none absolute inset-x-0 top-24 z-[1000] flex justify-center px-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/92 px-4 py-2 shadow-sm backdrop-blur">
+            <Spinner size="sm" className="p-0" />
+            <span className="text-sm text-muted-foreground">
+              {geocodingStatus.active
+                ? `Syncing ${geocodingStatus.current}/${geocodingStatus.total}`
+                : 'Loading map'}
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      <SectionCard
+        title={mapMode === 'trouble' ? 'Incident Density' : 'Customer Coverage'}
+        className="pointer-events-none absolute bottom-5 left-5 z-[1000] min-w-[220px] shadow-lg"
+      >
+        <div className="pointer-events-auto space-y-3">
+          {mapMode === 'trouble' ? (
+            <>
+              <LegendItem className="bg-destructive ring-destructive/10" label="High (>10 incidents)" />
+              <LegendItem className="bg-orange-500 ring-orange-500/10" label="Medium (6-10 incidents)" />
+              <LegendItem className="bg-yellow-500 ring-yellow-500/10" label="Low (1-5 incidents)" />
+            </>
+          ) : (
+            <>
+              <LegendItem className="bg-primary ring-primary/10" label="Jawa Tengah" />
+              <LegendItem className="bg-emerald-600 ring-emerald-600/10" label="Jawa Barat" />
+              <LegendItem className="bg-amber-600 ring-amber-600/10" label="Jawa Timur" />
+              <LegendItem className="bg-slate-500 ring-slate-500/10" label="Other province" />
+            </>
+          )}
+        </div>
+      </SectionCard>
     </div>
   );
 }

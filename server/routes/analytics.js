@@ -85,9 +85,32 @@ router.get('/dashboard', authenticate, (req, res) => {
   const activeByNcal = db.prepare(`
     SELECT ncal, COUNT(*) as count FROM incidents WHERE status != 'done' GROUP BY ncal
   `).all();
+  const activeByStatus = db.prepare(`
+    SELECT status, COUNT(*) as count
+    FROM incidents
+    WHERE status != 'done'
+    GROUP BY status
+  `).all();
 
   const totalActive = db.prepare("SELECT COUNT(*) as c FROM incidents WHERE status != 'done'").get().c;
   const totalDone = db.prepare("SELECT COUNT(*) as c FROM incidents WHERE status = 'done'").get().c;
+  const createdToday = db.prepare(`
+    SELECT COUNT(*) as c
+    FROM incidents
+    WHERE date(created_at) = date('now', 'localtime')
+  `).get().c;
+  const resolvedToday = db.prepare(`
+    SELECT COUNT(*) as c
+    FROM incidents
+    WHERE status = 'done'
+      AND date(end_time) = date('now', 'localtime')
+  `).get().c;
+  const unassignedActive = db.prepare(`
+    SELECT COUNT(*) as c
+    FROM incidents
+    WHERE status != 'done'
+      AND technician_id IS NULL
+  `).get().c;
 
   const monthlyTrend = db.prepare(`
     SELECT strftime('%Y-%m', created_at) AS ym, COUNT(*) AS total
@@ -102,7 +125,17 @@ router.get('/dashboard', authenticate, (req, res) => {
     WHERE i.status = 'done' ORDER BY i.end_time DESC LIMIT 5
   `).all();
 
-  res.json({ activeByNcal, totalActive, totalDone, monthlyTrend, recentClosed });
+  res.json({
+    activeByNcal,
+    activeByStatus,
+    totalActive,
+    totalDone,
+    createdToday,
+    resolvedToday,
+    unassignedActive,
+    monthlyTrend,
+    recentClosed,
+  });
 });
 
 // ─── Technician performance ───────────────────────────────────────────────────

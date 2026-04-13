@@ -1,166 +1,202 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useMotionTemplate, useMotionValue, useSpring } from 'framer-motion';
+import { Eye, EyeOff, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Eye, EyeOff, Lock, User } from 'lucide-react';
-import { Button } from '../components/ui/index.jsx';
+import { Button, Input, SectionCard } from '../components/ui/index.jsx';
 
-const QUICK_LOGINS = [
-  { u: 'admin',   p: 'admin123',   role: 'Admin' },
-  { u: 'noc1',    p: 'noc123',     role: 'NOC' },
-  { u: 'tech1',   p: 'tech123',    role: 'Technician' },
-  { u: 'manager', p: 'manager123', role: 'Manager' },
+const FLOATING_NODES = [
+  { top: '12%', left: '16%', delay: 0 },
+  { top: '24%', left: '74%', delay: 0.8 },
+  { top: '58%', left: '22%', delay: 1.3 },
+  { top: '70%', left: '82%', delay: 0.4 },
+  { top: '42%', left: '56%', delay: 1.1 },
 ];
+
+const MotionDiv = motion.div;
 
 export default function LoginPage() {
   const [form, setForm] = useState({ username: '', password: '' });
-  const [showPw, setShowPw] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const heroRef = useRef(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const pointerX = useMotionValue(320);
+  const pointerY = useMotionValue(320);
+  const smoothX = useSpring(pointerX, { stiffness: 120, damping: 22, mass: 0.35 });
+  const smoothY = useSpring(pointerY, { stiffness: 120, damping: 22, mass: 0.35 });
+
+  const spotlight = useMotionTemplate`radial-gradient(600px circle at ${smoothX}px ${smoothY}px, hsl(var(--primary) / 0.28), transparent 42%)`;
+  const accentGlow = useMotionTemplate`radial-gradient(440px circle at ${smoothX}px ${smoothY}px, hsl(var(--chart-2) / 0.24), transparent 34%)`;
+  const tertiaryGlow = useMotionTemplate`radial-gradient(320px circle at ${smoothX}px ${smoothY}px, hsl(var(--chart-3) / 0.22), transparent 30%)`;
+
+  const handleHeroPointerMove = (event) => {
+    const bounds = heroRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+    pointerX.set(event.clientX - bounds.left);
+    pointerY.set(event.clientY - bounds.top);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
+
     try {
       await login(form.username, form.password);
       navigate('/');
-    } catch (err) {
-      addToast(err.message || 'Login failed. Please check your username and password.', 'error');
+    } catch (error) {
+      addToast(error.message || 'Login failed. Please check your username and password.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4 font-sans relative overflow-hidden bg-[#0A0A0A]">
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/5 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PScwIDAgMjAwIDIwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48ZmlsdGVyIGlkPSdub2lzZUZpbHRlcic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzAuNjUnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjbm9pc2VGaWx0ZXIpJy8+PC9zdmc+')] opacity-[0.03] brightness-100 contrast-150" />
-      </div>
+    <div className="relative min-h-dvh overflow-hidden bg-background">
+      <div className="relative z-10 grid min-h-dvh lg:grid-cols-[minmax(0,1.15fr)_480px]">
+        <div
+          ref={heroRef}
+          onPointerMove={handleHeroPointerMove}
+          className="relative hidden overflow-hidden border-r border-border/60 bg-[linear-gradient(145deg,hsl(var(--background)),hsl(var(--chart-2)/0.1)_34%,hsl(var(--primary)/0.08)_64%,hsl(var(--chart-3)/0.14))] lg:block"
+        >
+          <MotionDiv className="pointer-events-none absolute inset-0 opacity-100 mix-blend-screen" style={{ background: spotlight }} />
+          <MotionDiv className="pointer-events-none absolute inset-0 opacity-90 mix-blend-screen" style={{ background: accentGlow }} />
+          <MotionDiv className="pointer-events-none absolute inset-0 opacity-80 mix-blend-screen" style={{ background: tertiaryGlow }} />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_24%),radial-gradient(circle_at_82%_18%,hsl(var(--chart-2)/0.16),transparent_22%),radial-gradient(circle_at_24%_85%,hsl(var(--chart-3)/0.16),transparent_24%)]" />
+          <MotionDiv
+            className="pointer-events-none absolute z-[1] h-[26rem] w-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[linear-gradient(135deg,hsl(var(--primary)/0.24),hsl(var(--chart-2)/0.2),hsl(var(--chart-3)/0.18))] blur-[120px]"
+            style={{ left: smoothX, top: smoothY }}
+          />
+          <MotionDiv
+            className="pointer-events-none absolute z-[1] h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.18),hsl(var(--chart-2)/0.14),transparent_72%)] blur-2xl"
+            style={{ left: smoothX, top: smoothY }}
+          />
 
-      <div className="w-full max-w-[400px] relative z-10 flex flex-col gap-10">
-        {/* Enterprise Brand Identity */}
-        <div className="flex flex-col items-center text-center">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-primary/20 blur-2xl group-hover:bg-primary/40 transition-all duration-700 rounded-full scale-150" />
-            <div className="relative w-16 h-16 bg-gradient-to-tr from-primary to-primary/60 rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 border border-white/10 ring-1 ring-primary/50">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-white drop-shadow-sm" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-col items-center gap-1.5">
-             <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic leading-none">IMMS<span className="text-primary not-italic">.</span></h1>
-             <div className="h-px w-8 bg-primary/30" />
-             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/40 leading-none">Management Core System</p>
-          </div>
-        </div>
+          {FLOATING_NODES.map((node, index) => (
+            <MotionDiv
+              key={`${node.top}-${node.left}`}
+              className="pointer-events-none absolute"
+              style={{ top: node.top, left: node.left }}
+              animate={{ y: [0, -14, 0], opacity: [0.16, 0.38, 0.16], scale: [1, 1.08, 1] }}
+              transition={{ duration: 6.5 + index, delay: node.delay, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <div className="h-3 w-3 rounded-full bg-primary/25 ring-1 ring-primary/18 shadow-[0_0_28px_hsl(var(--primary)/0.28)]" />
+            </MotionDiv>
+          ))}
 
-        {/* Security Access Module */}
-        <div className="relative group p-[1px] rounded-2xl overflow-hidden bg-gradient-to-br from-white/10 to-transparent shadow-2xl shadow-black/50">
-          <div className="relative bg-[#0A0A0A]/95 backdrop-blur-3xl rounded-[15px] overflow-hidden flex flex-col">
-            <div className="p-8 flex flex-col gap-8">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-black tracking-tight text-white/90 uppercase italic">Security Protocol</h2>
-                <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] leading-none">
-                  Encrypted session initialization required
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="flex flex-col gap-5 text-left">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="login-username" className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Operator Identifier</label>
-                  <div className="relative group/input flex items-center">
-                    <User size={14} className="absolute left-4 text-foreground/20 group-focus-within/input:text-primary transition-colors duration-300" />
-                    <input
-                      id="login-username"
-                      type="text"
-                      className="h-11 w-full bg-foreground/[0.03] border border-foreground/5 rounded-xl pl-11 pr-4 text-[13px] font-bold text-white placeholder:text-white/30 transition-all duration-300 focus:outline-none focus:border-primary/40 focus:bg-primary/[0.02] focus:ring-4 focus:ring-primary/5"
-                      placeholder="Username"
-                      value={form.username}
-                      onChange={(e) => setForm(p => ({ ...p, username: e.target.value }))}
-                      required
-                      autoFocus
-                      autoComplete="username"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="login-password" className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Access Directive</label>
-                  <div className="relative group/input flex items-center">
-                    <Lock size={14} className="absolute left-4 text-foreground/20 group-focus-within/input:text-primary transition-colors duration-300" />
-                    <input
-                      id="login-password"
-                      type={showPw ? 'text' : 'password'}
-                      className="h-11 w-full bg-foreground/[0.03] border border-foreground/5 rounded-xl pl-11 pr-12 text-[13px] font-bold text-white placeholder:text-white/30 transition-all duration-300 focus:outline-none focus:border-primary/40 focus:bg-primary/[0.02] focus:ring-4 focus:ring-primary/5"
-                      placeholder="Password"
-                      value={form.password}
-                      onChange={(e) => setForm(p => ({ ...p, password: e.target.value }))}
-                      required
-                      autoComplete="current-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPw(v => !v)}
-                      className="absolute right-4 text-foreground/20 hover:text-white transition-all active:scale-90"
-                      tabIndex={-1}
-                    >
-                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button 
-                  type="submit" 
-                  variant="primary" 
-                  size="lg" 
-                  className="mt-4 h-12 text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 relative overflow-hidden group/btn"
-                  isLoading={loading}
-                >
-                  <span className="relative z-10">{loading ? 'AUTHENTICATING...' : 'INITIALIZE SYSTEM'}</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary via-white/20 to-primary translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000 opacity-30" />
-                </Button>
-              </form>
-            </div>
-            
-            {/* Ambient indicator */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-          </div>
-        </div>
-
-        {/* Temporal Quick Access */}
-        <div className="bg-[#0A0A0A]/40 backdrop-blur-md rounded-2xl p-6 border border-white/[0.03]">
-          <div className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.3em] mb-5 text-center leading-none">
-             Development Sandbox Credentials
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {QUICK_LOGINS.map(({ u, p, role }) => (
-              <button
-                key={u}
-                onClick={() => setForm({ username: u, password: p })}
-                className="flex flex-col items-center justify-center py-3 px-2 bg-white/[0.02] hover:bg-primary/[0.08] hover:border-primary/20 rounded-xl border border-white/[0.02] transition-all duration-300 group relative overflow-hidden active:scale-95"
+          <div className="relative flex h-full flex-col justify-center p-12">
+            <div className="space-y-10">
+              <MotionDiv
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, ease: 'easeOut' }}
+                className="inline-flex items-center gap-4 rounded-2xl border border-border/80 bg-background/60 px-4 py-3 shadow-lg backdrop-blur-xl"
               >
-                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="text-[10px] font-black text-primary/70 uppercase tracking-widest leading-none mb-1.5 group-hover:text-primary transition-colors">{role}</div>
-                <div className="text-[9px] font-mono font-bold text-foreground/20 uppercase tracking-tighter group-hover:text-foreground/40 transition-colors uppercase">{u}</div>
-              </button>
-            ))}
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold tracking-tight text-foreground">IMMS</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Enterprise NOC Console
+                  </p>
+                </div>
+              </MotionDiv>
+
+              <MotionDiv
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, delay: 0.08, ease: 'easeOut' }}
+                className="max-w-xl space-y-6"
+              >
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                  <Sparkles className="h-4 w-4" />
+                  Incident Management Platform
+                </div>
+
+                <h1 className="text-5xl font-semibold leading-tight tracking-tight text-foreground">
+                  Premium command center for monitoring, handling, and continuity.
+                </h1>
+
+                <p className="max-w-lg text-base leading-7 text-muted-foreground">
+                  Track live incidents, preserve readable handling history, and keep every
+                  operational decision consistent across shifts.
+                </p>
+              </MotionDiv>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-2 opacity-30 group">
-          <p className="text-[9px] font-black uppercase tracking-[0.4em] text-foreground leading-none">
-            NCAL MONITORING FRAMEWORK <span className="text-primary italic">CORE</span>
-          </p>
-          <div className="h-px w-32 bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/60 leading-none">
-            V 5.0.0 ENTERPRISE EDITION • SECURE CHANNEL ADAPTER
-          </p>
+        <div className="flex items-center justify-center bg-background px-6 py-10 sm:px-8 lg:px-12">
+          <MotionDiv
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="w-full max-w-md"
+          >
+            <SectionCard className="border-border/80 bg-background/82 shadow-2xl backdrop-blur-2xl" padding={false}>
+              <div className="space-y-6 p-7">
+                <div className="space-y-2 text-center lg:text-left">
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary">
+                    Secure Sign In
+                  </p>
+                  <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+                    Access IMMS workspace
+                  </h2>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Sign in with your account to continue into the operations console.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <Input
+                    id="login-username"
+                    label="Username"
+                    value={form.username}
+                    onChange={(event) => setForm((previous) => ({ ...previous, username: event.target.value }))}
+                    placeholder="Enter username"
+                    autoComplete="username"
+                    autoFocus
+                    required
+                  />
+
+                  <div className="grid gap-2">
+                    <label htmlFor="login-password" className="text-sm font-medium text-foreground">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={form.password}
+                        onChange={(event) => setForm((previous) => ({ ...previous, password: event.target.value }))}
+                        placeholder="Enter password"
+                        autoComplete="current-password"
+                        required
+                        className="pr-11"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((previous) => !previous)}
+                        className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" size="lg" isLoading={loading}>
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                </form>
+              </div>
+            </SectionCard>
+          </MotionDiv>
         </div>
       </div>
     </div>

@@ -4,14 +4,21 @@ import { cn } from '../../../lib/utils.js';
 
 export function Modal({ open, onClose, title, children, footer, size = '' }) {
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
 
-    const handler = (event) => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleEscape = (event) => {
       if (event.key === 'Escape') onClose();
     };
 
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -39,16 +46,14 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative z-10 flex max-h-[85vh] w-full flex-col overflow-hidden rounded-xl border bg-background shadow-2xl',
+          'relative z-10 flex max-h-[88vh] w-full flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl',
           'animate-in fade-in zoom-in-95 duration-200',
           sizeMap[size] || 'max-w-lg'
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b px-6 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold leading-none tracking-tight text-foreground">
-              {title}
-            </h3>
+            <h3 className="text-lg font-semibold tracking-tight text-foreground">{title}</h3>
           </div>
 
           <button
@@ -61,12 +66,10 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
 
         {footer ? (
-          <div className="flex justify-end gap-2 border-t bg-muted/30 px-6 py-4">
+          <div className="flex justify-end gap-2 border-t border-border bg-muted/20 px-6 py-4">
             {footer}
           </div>
         ) : null}
@@ -78,18 +81,12 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
 export function EmptyState({ icon, title, desc, action }) {
   return (
     <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full border bg-muted/40 text-muted-foreground">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
         {icon || <PackageOpen className="h-6 w-6" />}
       </div>
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
-          {title}
-        </h2>
-        {desc ? (
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            {desc}
-          </p>
-        ) : null}
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+        {desc ? <p className="max-w-md text-sm leading-6 text-muted-foreground">{desc}</p> : null}
       </div>
       {action ? <div className="pt-2">{action}</div> : null}
     </div>
@@ -123,27 +120,20 @@ export function TableSkeleton({ rows = 8 }) {
   const cellWidths = ['w-14', 'w-28', 'w-36', 'w-20', 'w-24', 'w-28'];
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border bg-card">
-      <div className="flex items-center gap-3 border-b px-4 py-3">
+    <div className="w-full overflow-hidden rounded-xl border border-border bg-card">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         {headerWidths.map((widthClass, index) => (
-          <div
-            key={index}
-            className={cn('h-4 animate-pulse rounded-md bg-muted', widthClass)}
-          />
+          <div key={index} className={cn('h-4 animate-pulse rounded-md bg-muted', widthClass)} />
         ))}
       </div>
 
-      <div className="divide-y">
+      <div className="divide-y divide-border">
         {Array.from({ length: rows }).map((_, rowIndex) => (
           <div key={rowIndex} className="flex items-center gap-3 px-4 py-3">
             {cellWidths.map((widthClass, cellIndex) => (
               <div
                 key={cellIndex}
-                className={cn(
-                  'h-4 animate-pulse rounded-md bg-muted/80',
-                  widthClass,
-                  cellIndex === 2 && 'w-48'
-                )}
+                className={cn('h-4 animate-pulse rounded-md bg-muted/80', widthClass, cellIndex === 2 && 'w-48')}
               />
             ))}
           </div>
@@ -155,7 +145,7 @@ export function TableSkeleton({ rows = 8 }) {
 
 export function CardSkeleton() {
   return (
-    <div className="w-full rounded-xl border bg-card p-6">
+    <div className="w-full rounded-xl border border-border bg-card p-6">
       <div className="flex items-center gap-4">
         <div className="h-12 w-12 animate-pulse rounded-xl bg-muted" />
         <div className="flex flex-1 flex-col gap-2">

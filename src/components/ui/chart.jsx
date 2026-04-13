@@ -19,17 +19,20 @@ export function ChartContainer({ config = {}, children, className, style }) {
       }
     });
 
-    // Ensure a fallback height if neither style nor specific h- class is dominant
-    return { 
-      minHeight: style?.height || className?.includes('p-') ? undefined : '300px',
+    const hasExplicitHeight =
+      Boolean(style?.height) ||
+      /\bh-\[|\bh-\d+|\bmin-h-\[|\bmin-h-\d+/.test(className || '');
+
+    return {
+      minHeight: hasExplicitHeight ? undefined : '300px',
       height: '100%',
-      ...style, 
-      ...vars 
+      ...style,
+      ...vars,
     };
   }, [config, style, className]);
 
   return (
-    <div className={cn("chart-container relative w-full min-w-0", className)} style={chartStyle}>
+    <div className={cn('chart-container relative w-full min-w-0', className)} style={chartStyle}>
       {children}
     </div>
   );
@@ -109,5 +112,36 @@ export function ChartLegendContent({ payload, config = {} }) {
 }
 
 export function ResponsiveContainer(props) {
-  return <RechartsResponsiveContainer minWidth={0} {...props} />;
+  const wrapperRef = React.useRef(null);
+  const [bounds, setBounds] = React.useState({ width: 0, height: 0 });
+
+  React.useEffect(() => {
+    const element = wrapperRef.current;
+    if (!element) return undefined;
+
+    const updateSize = () => {
+      const nextWidth = element.clientWidth;
+      const nextHeight = element.clientHeight;
+      setBounds((previous) => (
+        previous.width === nextWidth && previous.height === nextHeight
+          ? previous
+          : { width: nextWidth, height: nextHeight }
+      ));
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(() => updateSize());
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="h-full min-h-[240px] w-full min-w-0">
+      {bounds.width > 0 && bounds.height > 0 ? (
+        <RechartsResponsiveContainer minWidth={0} width="100%" height="100%" {...props} />
+      ) : null}
+    </div>
+  );
 }

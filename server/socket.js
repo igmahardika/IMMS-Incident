@@ -26,3 +26,12 @@ export const getIO = () => {
   }
   return io;
 };
+
+export const emitSocketEvent = (eventName, payload) => {
+  if (!io) {
+    return false;
+  }
+
+  io.emit(eventName, payload);
+  return true;
+};
