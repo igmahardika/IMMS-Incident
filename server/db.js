@@ -21,7 +21,7 @@ export const drizzleDb = drizzle(sqlite, { schema });
 const db = sqlite;
 
 // CREATE TABLE statements have been migrated to Drizzle ORM schema definitions in ./config/schema.js
-// Use 'npx drizzle-kit push' to apply schema changes to the database natively
+// Use `npx drizzle-kit@latest push` when you explicitly need to apply schema changes from the config file
 
 function ensureColumn(table, definition) {
   const columns = db.prepare(`PRAGMA table_info(${table})`).all();
