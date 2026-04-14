@@ -20,6 +20,54 @@ function normalizeIds(ids) {
   return [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
 }
 
+function normalizeInfraLabel(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ');
+}
+
+function looksLikeInternalTopologyLabel(value) {
+  const text = normalizeInfraLabel(value);
+  if (!text) return false;
+  return /^(POP|OSC|ODC|ODP|BTS|RADIO|OLT)\b/.test(text);
+}
+
+function deriveDistributionCoordinates(item) {
+  const candidates = [item.level_4, item.level_3, item.level_2, item.level_1]
+    .map(normalizeInfraLabel)
+    .filter(Boolean);
+
+  const statement = db.prepare(`
+    SELECT
+      AVG(c.latitude) AS latitude,
+      AVG(c.longitude) AS longitude,
+      COUNT(*) AS anchors
+    FROM incidents i
+    JOIN master_customer c ON c.id = i.customer_id
+    WHERE c.latitude IS NOT NULL
+      AND c.longitude IS NOT NULL
+      AND UPPER(TRIM(i.odp_bts)) = ?
+  `);
+
+  for (const label of candidates) {
+    const row = statement.get(label);
+    if (row?.anchors) {
+      return {
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        display_name: `Derived from ${row.anchors} anchored customer incident${row.anchors === 1 ? '' : 's'}`,
+        source: 'incident-anchor',
+        anchors: Number(row.anchors),
+        matched_label: label,
+      };
+    }
+  }
+
+  return null;
+}
+
 // ── MASTER CUSTOMER ─────────────────────────────────────────────────────────────
 router.get('/customers', authenticate, (req, res) => {
   res.json(db.prepare('SELECT * FROM master_customer ORDER BY company_name').all());
@@ -335,7 +383,9 @@ router.get('/customers/missing-coords', authenticate, (req, res) => {
   const missing = db.prepare(`
     SELECT id, company_name, brand_site, address, city, province
     FROM master_customer
-    WHERE latitude IS NULL OR longitude IS NULL
+    WHERE (latitude IS NULL OR longitude IS NULL)
+      AND address IS NOT NULL
+      AND TRIM(address) <> ''
   `).all();
   res.json(missing);
 });
@@ -348,6 +398,7 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
     const placeholders = normalizedIds.map(() => '?').join(', ');
     const items = db.prepare(`SELECT * FROM master_customer WHERE id IN (${placeholders})`).all(...normalizedIds);
     const updateStmt = db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?');
+    const memo = new Map();
 
     const results = [];
 
@@ -359,10 +410,19 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
         continue;
       }
 
-      const found = await geocode(baseAddress, {
-        city: customer.city,
-        province: customer.province,
+      const queryKey = JSON.stringify({
+        address: baseAddress,
+        city: String(customer.city || '').trim(),
+        province: String(customer.province || '').trim(),
       });
+      let found = memo.get(queryKey);
+      if (found === undefined) {
+        found = await geocode(baseAddress, {
+          city: customer.city,
+          province: customer.province,
+        });
+        memo.set(queryKey, found || null);
+      }
 
       if (found) {
         updateStmt.run(found.latitude, found.longitude, customer.id);
@@ -375,9 +435,19 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
     const updated = results.filter((result) => result.success).length;
     const skipped = results.filter((result) => result.reason === 'missing_address').length;
     const failed = results.length - updated - skipped;
+    const cached = results.filter((result) => result.source === 'cache').length;
+    const geocoded = updated - cached;
+    const remaining = db.prepare(`
+      SELECT COUNT(*) AS c
+      FROM master_customer
+      WHERE latitude IS NULL OR longitude IS NULL
+    `).get().c;
 
-    logger.info(`[Geocode][Customers] requested=${normalizedIds.length} updated=${updated} failed=${failed} skipped=${skipped}`);
-    res.json({ success: true, total: results.length, updated, failed, skipped, results });
+    logger.info(
+      `[Geocode][Customers] requested=${normalizedIds.length} updated=${updated} geocoded=${geocoded} `
+      + `cached=${cached} failed=${failed} skipped=${skipped} remaining=${remaining}`
+    );
+    res.json({ success: true, total: results.length, updated, geocoded, cached, failed, skipped, remaining, results });
   } catch (error) {
     logger.error(`[Geocode][Customers] ${error.message}`);
     res.status(500).json({ error: 'Customer geocoding failed.' });
@@ -406,6 +476,13 @@ router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manage
     const results = [];
 
     for (const item of items) {
+      const derived = deriveDistributionCoordinates(item);
+      if (derived) {
+        updateStmt.run(derived.latitude, derived.longitude, item.id);
+        results.push({ id: item.id, success: true, ...derived });
+        continue;
+      }
+
       const locationTerms = item.type === 'Fiber Optic'
         ? [item.level_4, item.level_3, item.level_2, item.level_1]
         : [item.level_1, item.level_2];
@@ -413,6 +490,12 @@ router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manage
       const query = locationTerms.filter((term) => term && term.length >= 3).join(', ');
       if (!query) {
         results.push({ id: item.id, success: false, reason: 'missing_location' });
+        continue;
+      }
+
+      const hasRealAddressContext = locationTerms.some((term) => term && !looksLikeInternalTopologyLabel(term));
+      if (!hasRealAddressContext) {
+        results.push({ id: item.id, success: false, reason: 'no_coordinate_anchor' });
         continue;
       }
 
@@ -430,11 +513,23 @@ router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manage
     }
 
     const updated = results.filter((result) => result.success).length;
-    const skipped = results.filter((result) => result.reason === 'missing_location').length;
+    const skipped = results.filter((result) => ['missing_location', 'no_coordinate_anchor'].includes(result.reason)).length;
     const failed = results.length - updated - skipped;
+    const derived = results.filter((result) => result.source === 'incident-anchor').length;
+    const cached = results.filter((result) => result.source === 'cache').length;
+    const geocoded = updated - derived - cached;
+    const remaining = db.prepare(`
+      SELECT COUNT(*) AS c
+      FROM master_distribusi
+      WHERE is_active = 1
+        AND (latitude IS NULL OR longitude IS NULL)
+    `).get().c;
 
-    logger.info(`[Geocode][Distribusi] requested=${normalizedIds.length} updated=${updated} failed=${failed} skipped=${skipped}`);
-    res.json({ success: true, total: results.length, updated, failed, skipped, results });
+    logger.info(
+      `[Geocode][Distribusi] requested=${normalizedIds.length} updated=${updated} derived=${derived} `
+      + `geocoded=${geocoded} cached=${cached} failed=${failed} skipped=${skipped} remaining=${remaining}`
+    );
+    res.json({ success: true, total: results.length, updated, derived, geocoded, cached, failed, skipped, remaining, results });
   } catch (error) {
     logger.error(`[Geocode][Distribusi] ${error.message}`);
     res.status(500).json({ error: 'Distribution geocoding failed.' });

@@ -1,5 +1,6 @@
 import db from '../db.js';
 import dotenv from 'dotenv';
+import { createHash } from 'node:crypto';
 dotenv.config();
 
 /**
@@ -48,6 +49,7 @@ function smartCleanAddress(addr) {
 }
 
 const MIN_INTERVAL = Math.max(Number.isFinite(CONFIG.minInterval) ? CONFIG.minInterval : 1000, 750);
+const REQUEST_TIMEOUT_MS = Math.max(parseInt(process.env.GEOCODER_TIMEOUT || '12000', 10), 3000);
 
 function normalizeLocationPart(value) {
   return String(value || '')
@@ -73,6 +75,45 @@ function buildQueryCandidates(address, { city, province, country = 'Indonesia' }
     .filter(Boolean);
 
   return [...new Set(candidates)];
+}
+
+function createCacheKey(query) {
+  const digest = createHash('sha1').update(`${CONFIG.provider}:${query}`).digest('hex');
+  return `geocode:${digest}`;
+}
+
+function readCache(query) {
+  const row = db.prepare('SELECT value FROM metadata WHERE key = ?').get(createCacheKey(query));
+  if (!row?.value) return null;
+
+  try {
+    return JSON.parse(row.value);
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(query, payload) {
+  db.prepare(`
+    INSERT INTO metadata (key, value)
+    VALUES (?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(createCacheKey(query), JSON.stringify(payload));
+}
+
+async function fetchJsonWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function waitIfNeeded() {
@@ -109,7 +150,8 @@ async function geocode(address, options = {}) {
       return { 
         latitude: coords.lat, 
         longitude: coords.lon, 
-        display_name: `Automated Building Match: ${key.toUpperCase()}` 
+        display_name: `Automated Building Match: ${key.toUpperCase()}`,
+        source: 'building-dictionary',
       };
     }
   }
@@ -119,13 +161,41 @@ async function geocode(address, options = {}) {
     const queryCandidates = buildQueryCandidates(address, options);
 
     for (const query of queryCandidates) {
+      const cached = readCache(query);
+      if (cached?.status === 'hit') {
+        return {
+          latitude: cached.latitude,
+          longitude: cached.longitude,
+          display_name: cached.display_name,
+          source: 'cache',
+        };
+      }
+      if (cached?.status === 'miss') {
+        continue;
+      }
+
       let found = null;
 
       if (CONFIG.provider === 'google' && CONFIG.googleKey) found = await geocodeGoogle(query);
       else if (CONFIG.provider === 'mapbox' && CONFIG.mapboxKey) found = await geocodeMapbox(query);
       else found = await geocodeNominatim(query);
 
-      if (found) return found;
+      if (found) {
+        writeCache(query, {
+          status: 'hit',
+          latitude: found.latitude,
+          longitude: found.longitude,
+          display_name: found.display_name,
+          source: found.source || CONFIG.provider,
+        });
+        return found;
+      }
+
+      writeCache(query, {
+        status: 'miss',
+        display_name: null,
+        source: CONFIG.provider,
+      });
     }
 
     return null;
@@ -137,22 +207,22 @@ async function geocode(address, options = {}) {
 
 async function geocodeGoogle(address) {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${CONFIG.googleKey}`;
-  const res = await fetch(url);
+  const res = await fetchJsonWithTimeout(url);
   const data = await res.json();
   if (data.status === 'OK' && data.results.length > 0) {
     const loc = data.results[0].geometry.location;
-    return { latitude: loc.lat, longitude: loc.lng, display_name: data.results[0].formatted_address };
+    return { latitude: loc.lat, longitude: loc.lng, display_name: data.results[0].formatted_address, source: 'google' };
   }
   return null;
 }
 
 async function geocodeMapbox(address) {
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${CONFIG.mapboxKey}&limit=1`;
-  const res = await fetch(url);
+  const res = await fetchJsonWithTimeout(url);
   const data = await res.json();
   if (data.features && data.features.length > 0) {
     const [lon, lat] = data.features[0].center;
-    return { latitude: lat, longitude: lon, display_name: data.features[0].place_name };
+    return { latitude: lat, longitude: lon, display_name: data.features[0].place_name, source: 'mapbox' };
   }
   return null;
 }
@@ -162,7 +232,7 @@ async function geocodeNominatim(query, retryCount = 0) {
   const encodedQuery = encodeURIComponent(query);
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1`;
   
-  const response = await fetch(url, {
+  const response = await fetchJsonWithTimeout(url, {
     headers: { 'User-Agent': 'IMMS-Internal-Geocoding-Service/1.0' }
   });
 
@@ -177,7 +247,14 @@ async function geocodeNominatim(query, retryCount = 0) {
 
   if (!response.ok) return null;
   const data = await response.json();
-  return data?.[0] ? { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon), display_name: data[0].display_name } : null;
+  return data?.[0]
+    ? {
+      latitude: parseFloat(data[0].lat),
+      longitude: parseFloat(data[0].lon),
+      display_name: data[0].display_name,
+      source: 'nominatim',
+    }
+    : null;
 }
 
 export { geocode };

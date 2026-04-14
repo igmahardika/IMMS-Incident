@@ -164,6 +164,8 @@ export default function DistributionMap({ data, onRefresh }) {
   const [troubleData, setTroubleData] = useState([]);
   const [startDate, setStartDate] = useState('2026-01-01');
   const [endDate, setEndDate] = useState('2026-02-28');
+  const [highlightedId, setHighlightedId] = useState(null);
+  const [locatedLabel, setLocatedLabel] = useState('');
 
   const points = useMemo(
     () => (data || []).filter((item) => item.latitude && item.longitude),
@@ -174,6 +176,7 @@ export default function DistributionMap({ data, onRefresh }) {
     [troubleData]
   );
   const activePoints = viewMode === 'normal' ? points : troublePoints;
+  const missingPointCount = Math.max((viewMode === 'normal' ? (data || []).length : troubleData.length) - activePoints.length, 0);
 
   const startAutoGeocode = async () => {
     if (geocodingStatus.active) return;
@@ -186,10 +189,14 @@ export default function DistributionMap({ data, onRefresh }) {
       }
 
       setGeocodingStatus({ active: true, current: 0, total: missing.length });
-      const batchSize = 20;
+      const batchSize = 100;
       let updated = 0;
       let failed = 0;
       let skipped = 0;
+      let derived = 0;
+      let cached = 0;
+      let geocoded = 0;
+      let remaining = 0;
 
       for (let index = 0; index < missing.length; index += batchSize) {
         const batch = missing.slice(index, index + batchSize);
@@ -197,14 +204,30 @@ export default function DistributionMap({ data, onRefresh }) {
         updated += response.updated || 0;
         failed += response.failed || 0;
         skipped += response.skipped || 0;
+        derived += response.derived || 0;
+        cached += response.cached || 0;
+        geocoded += response.geocoded || 0;
+        remaining = response.remaining || remaining;
         setGeocodingStatus((previous) => ({
           ...previous,
           current: Math.min(previous.total, index + batch.length),
         }));
       }
 
-      if (onRefresh) onRefresh();
-      addToast(`Topology sync complete: ${updated} updated, ${failed} failed, ${skipped} skipped`, failed > 0 ? 'warning' : 'success', 6000);
+      await onRefresh?.();
+      addToast(
+        [
+          `Topology sync complete: ${updated} updated.`,
+          derived ? `${derived} derived from incident/customer anchors.` : null,
+          geocoded ? `${geocoded} geocoded.` : null,
+          cached ? `${cached} reused from cache.` : null,
+          skipped ? `${skipped} skipped (no location anchor).` : null,
+          failed ? `${failed} failed.` : null,
+          Number.isFinite(remaining) ? `${remaining} still missing.` : null,
+        ].filter(Boolean).join(' '),
+        failed > 0 ? 'warning' : 'success',
+        7000
+      );
     } catch (error) {
       console.error('Auto-geocoding distribution error:', error);
       addToast(error.message || 'Topology sync failed', 'error');
@@ -245,7 +268,8 @@ export default function DistributionMap({ data, onRefresh }) {
 
     const term = searchTerm.toLowerCase();
     if (!term.trim()) return;
-    const found = activePoints.find(
+    const searchCollection = viewMode === 'normal' ? (data || []) : troubleData;
+    const found = searchCollection.find(
       (point) =>
         (point.level_4 || '').toLowerCase().includes(term) ||
         (point.level_1 || '').toLowerCase().includes(term) ||
@@ -253,16 +277,28 @@ export default function DistributionMap({ data, onRefresh }) {
         (point.level_3 || '').toLowerCase().includes(term)
     );
 
-    if (found) {
-      setViewState({
-        center: [found.latitude, found.longitude],
-        zoom: 16,
-        id: Date.now(),
-      });
+    if (!found) {
+      addToast('No topology record matched that search', 'warning');
       return;
     }
 
-    addToast('No mapped topology node matched that search', 'warning');
+    if (found.latitude != null && found.longitude != null) {
+      setViewState({
+        center: [Number(found.latitude), Number(found.longitude)],
+        zoom: 16,
+        id: Date.now(),
+      });
+      setHighlightedId(found.id);
+      setLocatedLabel(found.level_4 || found.level_3 || found.level_2 || found.level_1 || 'Located node');
+      addToast(`Centered on ${found.level_4 || found.level_3 || found.level_2 || found.level_1}`, 'success', 2500);
+      return;
+    }
+
+    addToast(
+      `Topology node ${found.level_4 || found.level_3 || found.level_2 || found.level_1} exists, but it has no coordinates yet. Sync can only map nodes that have usable location anchors.`,
+      'warning',
+      6500
+    );
   };
 
   const getTroubleVisual = (incidentCount) => {
@@ -381,11 +417,11 @@ export default function DistributionMap({ data, onRefresh }) {
                   <CircleMarker
                     key={point.id}
                     center={[Number(point.latitude), Number(point.longitude)]}
-                    radius={8}
+                    radius={highlightedId === point.id ? 11 : 8}
                     pathOptions={{
                       fillColor: color,
-                      color: '#ffffff',
-                      weight: 2,
+                      color: highlightedId === point.id ? '#0f172a' : '#ffffff',
+                      weight: highlightedId === point.id ? 3 : 2,
                       fillOpacity: 0.9,
                     }}
                   >
@@ -403,11 +439,11 @@ export default function DistributionMap({ data, onRefresh }) {
                   <CircleMarker
                     key={`trouble-${point.id}`}
                     center={[Number(point.latitude), Number(point.longitude)]}
-                    radius={radius}
+                    radius={highlightedId === point.id ? radius + 3 : radius}
                     pathOptions={{
                       fillColor: visual.color,
-                      color: visual.color,
-                      weight: 2,
+                      color: highlightedId === point.id ? '#0f172a' : visual.color,
+                      weight: highlightedId === point.id ? 3 : 2,
                       fillOpacity: 0.4,
                     }}
                   >
@@ -434,10 +470,12 @@ export default function DistributionMap({ data, onRefresh }) {
 
         <div className="pointer-events-none absolute left-5 top-5 z-[1000] hidden gap-3 xl:flex">
           <StatChip label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'} value={activePoints.length} />
+          <StatChip label="Missing Coords" value={missingPointCount} />
           <StatChip
             label={viewMode === 'normal' ? 'Mapped Registry' : 'Window'}
             value={viewMode === 'normal' ? `${points.length} mapped` : `${startDate} to ${endDate}`}
           />
+          {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
         </div>
 
         <SectionCard

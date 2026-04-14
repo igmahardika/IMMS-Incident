@@ -12,7 +12,7 @@ import {
   ShieldAlert,
   UserRound,
 } from 'lucide-react';
-import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { api } from '../utils/api.js';
 import { cn } from '../lib/utils.js';
 import { NCAL_ORDER, MONTH_NAMES } from '../utils/constants.js';
@@ -25,7 +25,9 @@ import {
 import {
   Button,
   ChartContainer,
+  ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
   ChartTooltipContent,
   LevelBadge,
   LiveTimer,
@@ -40,11 +42,11 @@ import {
 const CURRENT_YEAR = new Date().getFullYear();
 
 const chartConfig = {
-  BLACK: { label: 'BLACK', color: 'var(--color-primary)' },
-  RED: { label: 'RED', color: 'var(--color-error)' },
-  ORANGE: { label: 'ORANGE', color: '#f59e0b' },
-  YELLOW: { label: 'YELLOW', color: '#eab308' },
-  BLUE: { label: 'BLUE', color: '#3b82f6' },
+  BLACK: { label: 'BLACK', color: 'var(--color-ncal-black)' },
+  RED: { label: 'RED', color: 'var(--color-ncal-red)' },
+  ORANGE: { label: 'ORANGE', color: 'var(--color-ncal-orange)' },
+  YELLOW: { label: 'YELLOW', color: 'var(--color-ncal-yellow)' },
+  BLUE: { label: 'BLUE', color: 'var(--color-ncal-blue)' },
 };
 
 const statusTone = {
@@ -296,7 +298,7 @@ export default function DashboardPage() {
           months[month] = { month: MONTH_NAMES[month - 1] };
         }
 
-        months[month][row.ncal] = Math.round((row.avg_nett_seconds || 0) / 60);
+        months[month][row.ncal] = Math.round(row.avg_nett_seconds || 0);
       });
 
       return {
@@ -616,17 +618,25 @@ export default function DashboardPage() {
           </SectionCard>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-12">
+        <div className="grid items-stretch gap-6 xl:grid-cols-12">
           <SectionCard
             title="Resolution Trend"
             subtitle={`Average net resolution duration per month in ${CURRENT_YEAR}`}
             padding={false}
-            className="xl:col-span-7"
+            className="h-full xl:col-span-7"
           >
-            <div className="h-[360px] p-4 md:p-6">
-              <ChartContainer config={chartConfig} className="h-full w-full">
+            <div className="flex min-h-[420px] flex-1 p-4 md:p-6">
+              <ChartContainer config={chartConfig} className="h-full w-full flex-1">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={duration} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+                  <AreaChart data={duration} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                    <defs>
+                      {NCAL_ORDER.map((ncal) => (
+                        <linearGradient key={`dashboard-fill-${ncal}`} id={`dashboard-fill-${ncal}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={chartConfig[ncal].color} stopOpacity={0.7} />
+                          <stop offset="95%" stopColor={chartConfig[ncal].color} stopOpacity={0.08} />
+                        </linearGradient>
+                      ))}
+                    </defs>
                     <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="month"
@@ -634,30 +644,39 @@ export default function DashboardPage() {
                       tickLine={false}
                       tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
                       tickMargin={12}
+                      minTickGap={24}
+                      tickFormatter={(value) => (value ? value.slice(0, 3) : '')}
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
                       tickMargin={12}
-                      width={48}
+                      width={74}
+                      tickFormatter={(value) => formatDuration(value)}
                     />
-                    <Tooltip content={<ChartTooltipContent config={chartConfig} />} />
-                    <Legend content={<ChartLegendContent config={chartConfig} />} />
+                    <ChartTooltip
+                      content={(
+                        <ChartTooltipContent
+                          config={chartConfig}
+                          labelFormatter={(value) => String(value || '').toUpperCase()}
+                          valueFormatter={(value) => formatDuration(Number(value || 0))}
+                        />
+                      )}
+                    />
+                    <ChartLegend content={<ChartLegendContent config={chartConfig} />} />
                     {NCAL_ORDER.map((ncal) => (
-                      <Line
+                      <Area
                         key={ncal}
-                        type="monotone"
+                        type="natural"
                         dataKey={ncal}
+                        fill={`url(#dashboard-fill-${ncal})`}
                         stroke={chartConfig[ncal].color}
-                        strokeWidth={2.5}
-                        dot={false}
-                        activeDot={{ r: 4, stroke: 'var(--color-background)', strokeWidth: 2 }}
-                        connectNulls
+                        strokeWidth={1.5}
                         animationDuration={700}
                       />
                     ))}
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
@@ -667,7 +686,7 @@ export default function DashboardPage() {
             title="Recent Resolutions"
             subtitle="The latest incidents closed by the operations team."
             padding={false}
-            className="xl:col-span-5"
+            className="h-full xl:col-span-5"
             footer={(
               <Button variant="outline" className="w-full" onClick={() => navigate('/history')}>
                 View Resolved Incidents

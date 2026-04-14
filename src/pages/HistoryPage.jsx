@@ -1,14 +1,15 @@
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileSpreadsheet,
+  FileUp,
   LayoutList,
   Map as MapIcon,
   Search,
   Trash2,
 } from 'lucide-react';
 import { api } from '../utils/api.js';
-import { formatDateTime } from '../utils/incidentUtils.js';
+import { formatDateTime, normalizeInfrastructureLabel } from '../utils/incidentUtils.js';
 import { MONTH_NAMES } from '../utils/constants.js';
 import {
   Button,
@@ -23,11 +24,40 @@ import {
 } from '../components/ui/index.jsx';
 import { DataTable } from '../components/tables/DataTable.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, index) => currentYear - index);
 const CustomerMap = lazy(() => import('../components/ui/CustomerMap.jsx'));
+const REQUIRED_HISTORY_HEADERS = [
+  'Priority',
+  'Site',
+  'No Case',
+  'NCAL',
+  'Status',
+  'Level',
+  'TS',
+  'ODP/BTS',
+  'Start',
+  'Start Escalation Vendor',
+  'End',
+  'Duration',
+  'Duration Vendor',
+  'Problem',
+  'Penyebab',
+  'Action Terakhir',
+  'Note',
+  'Klasifikasi Gangguan',
+  'Power Before',
+  'Power After',
+  'Start Pause',
+  'End Pause',
+  'Start Pause 2',
+  'End Pause 2',
+  'Total Duration Pause',
+  'Total Duration Vendor',
+];
 
 function formatDuration(seconds) {
   if (seconds == null || seconds === '') return '';
@@ -50,10 +80,13 @@ export default function HistoryPage() {
   const [selectedRowMap, setSelectedRowMap] = useState({});
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [customers, setCustomers] = useState([]);
   const { addToast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const setFilter = (key, value) => setFilters((previous) => ({ ...previous, [key]: value }));
 
@@ -94,7 +127,7 @@ export default function HistoryPage() {
       item.brand_site,
       item.company_name,
       item.technician_name,
-      item.odp_bts,
+      normalizeInfrastructureLabel(item.odp_bts, item.ncal),
       item.root_cause,
     ]
       .filter(Boolean)
@@ -116,8 +149,15 @@ export default function HistoryPage() {
 
     setDeleting(true);
     try {
-      await api.deleteIncidents({ ids: selectedIds });
-      addToast(`${selectedIds.length} incidents deleted`, 'success');
+      const result = await api.deleteIncidents({ ids: selectedIds });
+      addToast(
+        [
+          `${result.deleted || selectedIds.length} incidents deleted.`,
+          result.deletedLegacyCustomers ? `${result.deletedLegacyCustomers} legacy sites cleaned.` : null,
+          result.deletedLegacyUsers ? `${result.deletedLegacyUsers} legacy users cleaned.` : null,
+        ].filter(Boolean).join(' '),
+        'success'
+      );
       load();
     } catch (error) {
       addToast(error.message, 'error');
@@ -141,8 +181,74 @@ export default function HistoryPage() {
     }
   }, [addToast, filteredData]);
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!/\.xlsx$/i.test(file.name)) {
+      addToast('Only .xlsx files with the manual history format are supported.', 'error');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Import resolved incidents from "${file.name}"? Existing duplicate case numbers will be skipped or suffixed automatically.`
+    );
+    if (!confirmed) return;
+
+    setImporting(true);
+    addToast('Uploading resolved history workbook...', 'info', 2500);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Failed to read workbook.'));
+        reader.readAsDataURL(file);
+      });
+
+      const contentBase64 = dataUrl.split(',')[1];
+      const response = await api.importResolvedHistory({ filename: file.name, contentBase64 });
+      const report = response.report || {};
+      const imported = Number(report.inserted_incidents || 0);
+      const skipped = Number(report.skipped_existing_case_count || 0);
+      const createdSites = Number(report.created_legacy_customers || 0);
+      const createdUsers = Number(report.created_legacy_users || 0);
+      const adjustedPauseSegments = Number(report.invalid_pause_segment_count || 0);
+      const successMessage = imported > 0
+        ? [
+          `${imported} resolved incidents imported.`,
+          skipped ? `${skipped} duplicates skipped.` : null,
+          createdSites ? `${createdSites} legacy sites added.` : null,
+          createdUsers ? `${createdUsers} legacy users added.` : null,
+          adjustedPauseSegments ? `${adjustedPauseSegments} invalid pause segments normalized.` : null,
+        ].filter(Boolean).join(' ')
+        : [
+          'No new resolved incidents were imported.',
+          skipped ? `${skipped} rows already existed.` : null,
+        ].filter(Boolean).join(' ');
+      addToast(successMessage, 'success', 6000);
+      await load();
+    } catch (error) {
+      const message = String(error.message || 'Failed to import resolved history workbook.');
+      const headerHint = `Required header order: ${REQUIRED_HISTORY_HEADERS.join(' | ')}`;
+      addToast(
+        message.includes('Unexpected workbook header order')
+          ? `Invalid workbook header order. ${headerHint}`
+          : message,
+        'error',
+        9000
+      );
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const columns = useMemo(() => [
-    {
+    ...(user?.role === 'admin' ? [{
       id: 'selection',
       header: ({ table }) => (
         <input
@@ -164,7 +270,7 @@ export default function HistoryPage() {
       ),
       size: 52,
       meta: { className: 'text-center' },
-    },
+    }] : []),
     {
       accessorKey: 'case_no',
       header: 'Case No',
@@ -184,14 +290,15 @@ export default function HistoryPage() {
       accessorKey: 'brand_site',
       header: 'Site / Customer',
       cell: ({ row }) => {
-        const value = row.original.brand_site || row.original.company_name || '—';
+        const infrastructure = normalizeInfrastructureLabel(row.original.odp_bts, row.original.ncal);
+        const value = row.original.brand_site || row.original.company_name || infrastructure || '—';
         return (
           <div className="min-w-0 space-y-1">
             <span title={value} className="block truncate text-sm font-medium text-foreground">
               {value}
             </span>
             <span className="block truncate text-xs text-muted-foreground">
-              {row.original.company_name || row.original.odp_bts || '—'}
+              {row.original.company_name || infrastructure || '—'}
             </span>
           </div>
         );
@@ -246,7 +353,7 @@ export default function HistoryPage() {
       size: 120,
       meta: { className: 'whitespace-nowrap px-2' },
     },
-  ], [navigate]);
+  ], [navigate, user?.role]);
 
   const startDate = filters.month
     ? `${filters.year}-${filters.month}-01 00:00:00`
@@ -257,12 +364,19 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx"
+        className="hidden"
+        onChange={handleImportFile}
+      />
       <PageHeader
         title="Incident Archive"
         subtitle={`${filteredData.length} archived incident${filteredData.length === 1 ? '' : 's'} ready for review, export, or spatial analysis.`}
         action={(
           <div className="flex flex-wrap items-center gap-2">
-            {viewMode === 'list' && selectedIds.length > 0 ? (
+            {user?.role === 'admin' && viewMode === 'list' && selectedIds.length > 0 ? (
               <>
                 <Button
                   variant="outline"
@@ -325,6 +439,18 @@ export default function HistoryPage() {
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               Export CSV
             </Button>
+
+            {user?.role === 'admin' ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleImportClick}
+                isLoading={importing}
+              >
+                <FileUp className="mr-2 h-4 w-4" />
+                Bulk Upload
+              </Button>
+            ) : null}
           </div>
         )}
       />
@@ -434,7 +560,7 @@ export default function HistoryPage() {
                 className="flex-1"
                 rowSelection={selectedRowMap}
                 onRowSelectionChange={setSelectedRowMap}
-                enableRowSelection
+                enableRowSelection={user?.role === 'admin'}
                 getRowId={(row) => String(row.id)}
               />
             )}

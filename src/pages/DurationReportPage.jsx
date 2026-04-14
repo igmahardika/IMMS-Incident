@@ -27,11 +27,11 @@ import {
 import { cn } from '../lib/utils.js';
 
 const chartConfig = {
-  BLACK: { label: 'Black', color: 'var(--color-chart-1)' },
-  RED: { label: 'Red', color: 'var(--color-destructive)' },
-  ORANGE: { label: 'Orange', color: 'var(--color-warning)' },
-  YELLOW: { label: 'Yellow', color: 'var(--color-chart-4)' },
-  BLUE: { label: 'Blue', color: 'var(--color-info)' },
+  BLACK: { label: 'BLACK', color: 'var(--color-ncal-black)' },
+  RED: { label: 'RED', color: 'var(--color-ncal-red)' },
+  ORANGE: { label: 'ORANGE', color: 'var(--color-ncal-orange)' },
+  YELLOW: { label: 'YELLOW', color: 'var(--color-ncal-yellow)' },
+  BLUE: { label: 'BLUE', color: 'var(--color-ncal-blue)' },
 };
 
 const currentYear = new Date().getFullYear();
@@ -93,7 +93,7 @@ export default function DurationReportPage() {
               total: 0,
             };
           }
-          months[month][row.ncal] = Math.max(0, Math.round((row.avg_nett_seconds || 0) / 60));
+          months[month][row.ncal] = Math.max(0, Math.round(row.avg_nett_seconds || 0));
           months[month].total = (months[month].total || 0) + row.total_cases;
         });
 
@@ -222,10 +222,19 @@ export default function DurationReportPage() {
                         tickLine={false}
                         tickMargin={12}
                         tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
-                        unit="m"
+                        width={74}
+                        tickFormatter={(value) => formatDuration(value)}
                       />
 
-                      <ChartTooltip content={<ChartTooltipContent config={chartConfig} />} />
+                      <ChartTooltip
+                        content={(
+                          <ChartTooltipContent
+                            config={chartConfig}
+                            labelFormatter={(value) => String(value || '').toUpperCase()}
+                            valueFormatter={(value) => formatDuration(Number(value || 0))}
+                          />
+                        )}
+                      />
 
                       {NCAL_ORDER.map((ncal) => (
                         <Area
@@ -235,7 +244,6 @@ export default function DurationReportPage() {
                           fill={`url(#fill-${ncal})`}
                           stroke={chartConfig[ncal].color}
                           strokeWidth={1.5}
-                          stackId="duration"
                           animationDuration={700}
                         />
                       ))}

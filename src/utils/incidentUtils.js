@@ -34,9 +34,54 @@ export function elapsedSeconds(startIso) {
 export function getIncidentDisplayName(incident) {
   if (!incident) return '—';
   if (['ORANGE', 'RED', 'BLACK'].includes(incident.ncal)) {
-    return incident.odp_bts || '—';
+    return normalizeInfrastructureLabel(incident.odp_bts, incident.ncal) || '—';
   }
   return incident.brand_site || incident.company_name || '—';
+}
+
+export function normalizeInfrastructureLabel(value, ncal = '') {
+  if (!value) return '';
+
+  const raw = String(value).trim().toUpperCase();
+  if (!raw || raw === '#N/A') return '';
+
+  const detectedPrefix = raw.match(/^(ODP|ODC|POP|OSC|BTS|RADIO|OLT)\b/)?.[1] || null;
+  const body = raw.replace(/^(ODP|ODC|POP|OSC|BTS|RADIO|OLT)\s+/, '').trim();
+
+  const formatBody = (text, prefix = null) => {
+    const clean = text.replace(/\s+/g, ' ').replace(/_/g, '-');
+    if (['BTS', 'POP', 'OSC', 'RADIO', 'OLT'].includes(prefix)) {
+      return clean.replace(/\s*-\s*/g, '-');
+    }
+    const patterns = [
+      [/^([A-Z]+[0-9]?)\s+([A-Z])\s*-\s*(\d{1,2})$/, (_, a, b, c) => `${a}-${b}${String(Number(c)).padStart(2, '0')}`],
+      [/^([A-Z]+[0-9]?)\s+([A-Z])\s*(\d{1,2})$/, (_, a, b, c) => `${a}-${b}${String(Number(c)).padStart(2, '0')}`],
+      [/^([A-Z]+[0-9]?)\s*-\s*([A-Z])\s*(\d{1,2})$/, (_, a, b, c) => `${a}-${b}${String(Number(c)).padStart(2, '0')}`],
+      [/^([A-Z]+[0-9]?)\s*-\s*(\d{1,2})$/, (_, a, b) => `${a}-${String(Number(b)).padStart(2, '0')}`],
+      [/^([A-Z]+[0-9]?)\s+(\d{1,2})$/, (_, a, b) => `${a}-${String(Number(b)).padStart(2, '0')}`],
+    ];
+
+    for (const [pattern, formatter] of patterns) {
+      if (pattern.test(clean)) {
+        return clean.replace(pattern, formatter);
+      }
+    }
+
+    return clean.replace(/\s*-\s*/g, '-');
+  };
+
+  const formattedBody = formatBody(body, detectedPrefix);
+  const inferredPrefix = detectedPrefix || (
+    ['YELLOW', 'BLUE', 'ORANGE'].includes(ncal) && /^[A-Z0-9]+-[A-Z]?\d{1,2}$/.test(formattedBody)
+      ? 'ODP'
+      : null
+  );
+
+  if (inferredPrefix && formattedBody) {
+    return `${inferredPrefix} ${formattedBody}`;
+  }
+
+  return raw;
 }
 
 export function isIncidentOpenStatus(status) {

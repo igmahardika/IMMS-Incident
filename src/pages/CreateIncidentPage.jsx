@@ -40,7 +40,7 @@ function DropdownSurface({ children, className = '' }) {
   return (
     <div
       className={cn(
-        'absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 rounded-lg border border-border bg-popover p-2 shadow-lg',
+        'absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[80] rounded-lg border border-border bg-popover p-2 shadow-lg',
         className
       )}
     >
@@ -430,6 +430,7 @@ export default function CreateIncidentPage() {
             <SectionCard
               title="Target & Topology"
               subtitle="Choose the affected customer or topology node based on the selected NCAL."
+              className="overflow-visible"
             >
               {!isDistribusi ? (
                 <div className="grid gap-4 md:grid-cols-2">

@@ -4,8 +4,83 @@ import { authenticate } from '../middleware/auth.js';
 import { incidentCreateSchema, incidentUpdateSchema, validateRequest } from '../utils/validators.js';
 import { emitSocketEvent } from '../socket.js';
 import logger from '../utils/logger.js';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const router = express.Router();
+const execFileAsync = promisify(execFile);
+
+function parseOptionalInt(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function normalizeIncidentIds(ids) {
+  return [...new Set(
+    (ids || [])
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isInteger(value) && value > 0)
+  )];
+}
+
+function runIncidentSideEffects(task) {
+  try {
+    task();
+  } catch (error) {
+    logger.error(`Incident side effect failed: ${error.message}`);
+  }
+}
+
+function cleanupLegacyImportArtifacts() {
+  const deletedCustomers = db.prepare(`
+    DELETE FROM master_customer
+    WHERE customer_id LIKE 'LEGACY-CUST-%'
+      AND service_id LIKE 'LEGACY-SVC-%'
+      AND service_type = 'Legacy Manual Import'
+      AND id NOT IN (
+        SELECT DISTINCT customer_id
+        FROM incidents
+        WHERE customer_id IS NOT NULL
+      )
+  `).run().changes;
+
+  const deletedUsers = db.prepare(`
+    DELETE FROM users
+    WHERE username LIKE 'legacy-%'
+      AND employee_id LIKE 'LEGACY-%'
+      AND password_hash = '!legacy-import!'
+      AND is_active = 0
+      AND id NOT IN (
+        SELECT DISTINCT technician_id
+        FROM incidents
+        WHERE technician_id IS NOT NULL
+      )
+      AND id NOT IN (
+        SELECT DISTINCT created_by
+        FROM incidents
+        WHERE created_by IS NOT NULL
+      )
+      AND id NOT IN (
+        SELECT DISTINCT user_id
+        FROM audit_logs
+        WHERE user_id IS NOT NULL
+      )
+      AND id NOT IN (
+        SELECT DISTINCT user_id
+        FROM notifications
+        WHERE user_id IS NOT NULL
+      )
+  `).run().changes;
+
+  return {
+    deletedLegacyCustomers: deletedCustomers,
+    deletedLegacyUsers: deletedUsers,
+  };
+}
 
 // ─── Helper: send escalation webhook ────────────────────────────────────────
 async function sendEscalation(incident, type) {
@@ -414,10 +489,13 @@ router.post('/:id/start', authenticate, (req, res) => {
     const now = new Date().toISOString();
     db.prepare("UPDATE incidents SET start_action_time = ?, status = 'progress', updated_at = datetime('now') WHERE id = ?").run(now, req.params.id);
     db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'START_ACTION', ?)").run(req.params.id, req.user.id, `Action started at ${now}`);
+    const updated = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+    res.json(updated);
 
-    emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
-    logger.info(`Action started for Case ID: ${req.params.id} by User ID: ${req.user.id}`);
-    res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+    runIncidentSideEffects(() => {
+      emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
+      logger.info(`Action started for Case ID: ${req.params.id} by User ID: ${req.user.id}`);
+    });
   } catch (error) {
     logger.error(`Failed to start incident ${req.params.id}: ${error.message}`);
     res.status(500).json({ error: 'Failed to start incident action.' });
@@ -430,21 +508,37 @@ router.post('/:id/pause', authenticate, (req, res) => {
     const { reason } = req.body || {};
     const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
     if (!incident) return res.status(404).json({ error: 'Not found' });
+
+    const openPause = db.prepare('SELECT * FROM pause_logs WHERE incident_id = ? AND pause_end IS NULL').get(req.params.id);
+    if (incident.status === 'pending' && openPause) {
+      return res.json({
+        ...incident,
+        already_paused: true,
+      });
+    }
+
     if (incident.status !== 'progress') {
       return res.status(400).json({ error: 'Incident must be in progress to pause' });
     }
 
-    const openPause = db.prepare('SELECT * FROM pause_logs WHERE incident_id = ? AND pause_end IS NULL').get(req.params.id);
-    if (openPause) return res.status(400).json({ error: 'Incident already paused' });
+    if (openPause) {
+      return res.json({
+        ...incident,
+        already_paused: true,
+      });
+    }
 
     const now = new Date().toISOString();
     db.prepare("INSERT INTO pause_logs (incident_id, pause_start, reason) VALUES (?, ?, ?)").run(req.params.id, now, reason || null);
     db.prepare("UPDATE incidents SET status = 'pending', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
     db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'PAUSE', ?)").run(req.params.id, req.user.id, reason || 'No reason given');
+    const updated = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+    res.json(updated);
 
-    emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
-    logger.info(`Incident paused: Case ID: ${req.params.id} by User ID: ${req.user.id}. Reason: ${reason || 'N/A'}`);
-    res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+    runIncidentSideEffects(() => {
+      emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
+      logger.info(`Incident paused: Case ID: ${req.params.id} by User ID: ${req.user.id}. Reason: ${reason || 'N/A'}`);
+    });
   } catch (error) {
     logger.error(`Failed to pause incident ${req.params.id}: ${error.message}`);
     res.status(500).json({ error: 'Failed to pause incident.' });
@@ -470,10 +564,13 @@ router.post('/:id/resume', authenticate, (req, res) => {
     const totalPause = existingTotalPause + pauseSec;
     db.prepare("UPDATE incidents SET status = 'progress', total_pause_duration_seconds = ?, updated_at = datetime('now') WHERE id = ?").run(totalPause, req.params.id);
     db.prepare("INSERT INTO audit_logs (incident_id, user_id, action, details) VALUES (?, ?, 'RESUME', ?)").run(req.params.id, req.user.id, `Paused for ${pauseSec}s`);
+    const updated = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
+    res.json(updated);
 
-    emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
-    logger.info(`Incident resumed: Case ID: ${req.params.id} by User ID: ${req.user.id}`);
-    res.json(db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id));
+    runIncidentSideEffects(() => {
+      emitSocketEvent('incident-updated', { type: 'status_change', id: req.params.id });
+      logger.info(`Incident resumed: Case ID: ${req.params.id} by User ID: ${req.user.id}`);
+    });
   } catch (error) {
     logger.error(`Failed to resume incident ${req.params.id}: ${error.message}`);
     res.status(500).json({ error: 'Failed to resume incident.' });
@@ -485,10 +582,14 @@ router.post('/:id/close', authenticate, (req, res) => {
   const { waktu_online, root_cause, last_action, classification_id } = req.body || {};
   const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(req.params.id);
   if (!incident) return res.status(404).json({ error: 'Not found' });
+  const normalizedClassificationId = parseOptionalInt(classification_id);
 
   const now = new Date().toISOString();
   // Gunakan waktu_online jika diberikan, jika tidak gunakan waktu sekarang
   const endT = waktu_online ? new Date(waktu_online) : new Date(now);
+  if (Number.isNaN(endT.getTime())) {
+    return res.status(400).json({ error: 'Invalid online time.' });
+  }
   const startT = new Date(incident.start_time);
   const grossSec = Math.floor((endT - startT) / 1000);
   const nettSec = Math.max(0, grossSec - incident.total_pause_duration_seconds);
@@ -510,7 +611,7 @@ router.post('/:id/close', authenticate, (req, res) => {
     nettSec, 
     root_cause || null, 
     last_action || null, 
-    classification_id || null, 
+    normalizedClassificationId, 
     req.params.id
   );
 
@@ -527,10 +628,15 @@ router.post('/:id/close', authenticate, (req, res) => {
     `Closed. Gross: ${grossSec}s, Nett: ${nettSec}s`
   );
 
-  sendEscalation(updated, 'close');
-  emitSocketEvent('incident-updated', { type: 'close', id: req.params.id });
-  logger.info(`Incident closed: Case #${updated.case_no} by User ID: ${req.user.id}`);
   res.json(updated);
+
+  runIncidentSideEffects(() => {
+    sendEscalation(updated, 'close').catch((error) => {
+      logger.error(`Escalation webhook failed for closed incident ${updated.case_no}: ${error.message}`);
+    });
+    emitSocketEvent('incident-updated', { type: 'close', id: req.params.id });
+    logger.info(`Incident closed: Case #${updated.case_no} by User ID: ${req.user.id}`);
+  });
 });
 
 // ─── GET /api/incidents/:id/recurring ───────────────────────────────────────
@@ -566,27 +672,124 @@ router.get('/:id/recurring', authenticate, (req, res) => {
 
 // ─── DELETE /api/incidents/batch ──────────────────────────────────────────
 router.delete('/batch', authenticate, (req, res) => {
-  const { ids } = req.body;
-  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Only admin can delete incidents.' });
+  }
+
+  const incidentIds = normalizeIncidentIds(req.body?.ids);
+  if (!incidentIds.length) {
     return res.status(400).json({ error: 'No IDs provided' });
   }
 
   try {
-    const runBatch = db.transaction((incidentIds) => {
-      // Delete pause_logs and audit_logs first to avoid foreign key errors if ON DELETE CASCADE is not perfectly configured
-      const placeholders = incidentIds.map(() => '?').join(',');
-      db.prepare(`DELETE FROM pause_logs WHERE incident_id IN (${placeholders})`).run(...incidentIds);
-      db.prepare(`DELETE FROM audit_logs WHERE incident_id IN (${placeholders})`).run(...incidentIds);
-      // Delete incidents
-      const result = db.prepare(`DELETE FROM incidents WHERE id IN (${placeholders})`).run(...incidentIds);
-      return result;
+    const deleteChunk = (table, ids) => {
+      const placeholders = ids.map(() => '?').join(',');
+      return db.prepare(`DELETE FROM ${table} WHERE incident_id IN (${placeholders})`).run(...ids);
+    };
+
+    const deleteIncidentChunk = (ids) => {
+      const placeholders = ids.map(() => '?').join(',');
+      return db.prepare(`DELETE FROM incidents WHERE id IN (${placeholders})`).run(...ids);
+    };
+
+    const runBatch = db.transaction((ids) => {
+      const chunkSize = 200;
+      let deleted = 0;
+
+      for (let index = 0; index < ids.length; index += chunkSize) {
+        const chunk = ids.slice(index, index + chunkSize);
+        deleteChunk('notifications', chunk);
+        deleteChunk('pause_logs', chunk);
+        deleteChunk('audit_logs', chunk);
+        deleted += deleteIncidentChunk(chunk).changes;
+      }
+
+      const cleanup = cleanupLegacyImportArtifacts();
+      return { deleted, ...cleanup };
     });
     
-    const result = runBatch(ids);
-    res.json({ success: true, deleted: result.changes });
+    const result = runBatch(incidentIds);
+    logger.info(
+      `Batch delete incidents: requested=${incidentIds.length} deleted=${result.deleted} `
+      + `legacyCustomers=${result.deletedLegacyCustomers || 0} legacyUsers=${result.deletedLegacyUsers || 0} `
+      + `by user=${req.user.id}`
+    );
+    res.json({
+      success: true,
+      deleted: result.deleted,
+      deletedLegacyCustomers: result.deletedLegacyCustomers || 0,
+      deletedLegacyUsers: result.deletedLegacyUsers || 0,
+    });
   } catch (err) {
     logger.error(`Batch delete error: ${err.message}`);
-    res.status(500).json({ error: 'Failed to delete incidents' });
+    res.status(500).json({ error: err.message || 'Failed to delete incidents' });
+  }
+});
+
+// ─── POST /api/incidents/import-history ───────────────────────────────────
+router.post('/import-history', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Only admin can import resolved history.' });
+  }
+
+  const filename = String(req.body?.filename || '').trim();
+  const contentBase64 = String(req.body?.contentBase64 || '').trim();
+
+  if (!filename || !contentBase64) {
+    return res.status(400).json({ error: 'File payload is incomplete.' });
+  }
+
+  if (!/\.xlsx$/i.test(filename)) {
+    return res.status(400).json({ error: 'Only .xlsx files are supported.' });
+  }
+
+  let tempDir = '';
+  try {
+    const workbookBuffer = Buffer.from(contentBase64, 'base64');
+    if (!workbookBuffer.length) {
+      return res.status(400).json({ error: 'Uploaded file is empty.' });
+    }
+
+    tempDir = await mkdtemp(join(tmpdir(), 'imms-history-import-'));
+    const workbookPath = join(tempDir, filename.replace(/[^a-zA-Z0-9._-]+/g, '_'));
+    const reportPath = join(tempDir, 'import-report.json');
+    await writeFile(workbookPath, workbookBuffer);
+
+    const { stdout } = await execFileAsync(
+      'python3',
+      [
+        'server/scripts/import_manual_resolved_history.py',
+        '--apply',
+        '--workbook',
+        workbookPath,
+        '--report',
+        reportPath,
+      ],
+      { cwd: process.cwd(), maxBuffer: 10 * 1024 * 1024 }
+    );
+
+    const report = JSON.parse(stdout.trim());
+    logger.info(
+      `[History Import] file=${filename} inserted=${report.inserted_incidents} skipped_existing=${report.skipped_existing_case_count}`
+    );
+    res.json({ success: true, report });
+  } catch (error) {
+    const stderr = String(error.stderr || '').trim();
+    const stdout = String(error.stdout || '').trim();
+    const message = stderr || stdout || error.message || 'Failed to import resolved history workbook.';
+    logger.error(`History import failed: ${message}`);
+    const isValidationError = [
+      'Unexpected workbook header order',
+      'Workbook not found',
+      'Uploaded file is empty',
+      'Only .xlsx files are supported',
+      'File payload is incomplete',
+    ].some((pattern) => message.includes(pattern));
+    res.status(isValidationError ? 400 : 500).json({ error: message });
+  } finally {
+    if (tempDir) {
+      await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    }
   }
 });
 

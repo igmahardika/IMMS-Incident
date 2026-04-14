@@ -121,7 +121,17 @@ async function request(path, options = {}, retry = true) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status >= 500) throw new Error('System infrastructure error. Please contact NOC support.');
+    if (res.status === 400 && Array.isArray(data.errors) && data.errors.length > 0) {
+      const message = data.errors.map((item) => item.message).filter(Boolean).join(' ');
+      throw new Error(message || data.message || 'Validation failed.');
+    }
+    if (res.status >= 500) {
+      throw new Error(
+        data.error ||
+        data.message ||
+        'Server error. The action could not be completed.'
+      );
+    }
     if (res.status === 404) throw new Error('Requested resource not found.');
     if (res.status === 403) throw new Error('Access denied. Insufficient permissions.');
     throw new Error(data.error || `Error ${res.status}: Action could not be completed.`);
@@ -151,6 +161,7 @@ export const api = {
   closeIncident: (id, body) => request(`/incidents/${id}/close`, { method: 'POST', body: JSON.stringify(body || {}) }),
   getRecurringInfo: (id) => request(`/incidents/${id}/recurring`),
   deleteIncidents: (body) => request('/incidents/batch', { method: 'DELETE', body: JSON.stringify(body) }),
+  importResolvedHistory: (body) => request('/incidents/import-history', { method: 'POST', body: JSON.stringify(body) }),
   getNotifications: () => request('/incidents/notifications'),
   markNotificationRead: (id) => request(`/incidents/notifications/${id}/read`, { method: 'PUT' }),
 

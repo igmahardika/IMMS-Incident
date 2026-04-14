@@ -46,7 +46,15 @@ export const ChartTooltip = Tooltip;
 /**
  * ChartTooltipContent following the Shadcn UI reference style
  */
-export function ChartTooltipContent({ active, payload, label, config = {}, indicator = "dot", labelFormatter }) {
+export function ChartTooltipContent({
+  active,
+  payload,
+  label,
+  config = {},
+  indicator = "dot",
+  labelFormatter,
+  valueFormatter,
+}) {
   if (!active || !payload || !payload.length) return null;
 
   const formattedLabel = labelFormatter ? labelFormatter(label, payload) : label;
@@ -71,7 +79,11 @@ export function ChartTooltipContent({ active, payload, label, config = {}, indic
                 <span className="text-foreground/50 uppercase tracking-widest">{lbl}</span>
               </div>
               <span className="font-mono text-foreground tabular-nums">
-                {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
+                {valueFormatter
+                  ? valueFormatter(item.value, item.dataKey, item.payload, item)
+                  : typeof item.value === 'number'
+                    ? item.value.toLocaleString()
+                    : item.value}
               </span>
             </div>
           );
@@ -114,14 +126,16 @@ export function ChartLegendContent({ payload, config = {} }) {
 export function ResponsiveContainer(props) {
   const wrapperRef = React.useRef(null);
   const [bounds, setBounds] = React.useState({ width: 0, height: 0 });
+  const { width: _width, height: _height, ...restProps } = props;
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const element = wrapperRef.current;
     if (!element) return undefined;
 
     const updateSize = () => {
-      const nextWidth = element.clientWidth;
-      const nextHeight = element.clientHeight;
+      const rect = element.getBoundingClientRect();
+      const nextWidth = Math.round(rect.width || element.clientWidth || 0);
+      const nextHeight = Math.round(rect.height || element.clientHeight || 0);
       setBounds((previous) => (
         previous.width === nextWidth && previous.height === nextHeight
           ? previous
@@ -129,18 +143,21 @@ export function ResponsiveContainer(props) {
       ));
     };
 
-    updateSize();
+    const frame = window.requestAnimationFrame(updateSize);
 
     const observer = new ResizeObserver(() => updateSize());
     observer.observe(element);
 
-    return () => observer.disconnect();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, []);
 
   return (
     <div ref={wrapperRef} className="h-full min-h-[240px] w-full min-w-0">
       {bounds.width > 0 && bounds.height > 0 ? (
-        <RechartsResponsiveContainer minWidth={0} width="100%" height="100%" {...props} />
+        <RechartsResponsiveContainer minWidth={0} width={bounds.width} height={bounds.height} {...restProps} />
       ) : null}
     </div>
   );

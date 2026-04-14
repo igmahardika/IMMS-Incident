@@ -13,6 +13,7 @@ import {
   calculateIncidentLevel,
   formatDateTime,
   getIncidentDisplayName,
+  normalizeInfrastructureLabel,
   getSLATarget,
   processTimeline,
 } from '../utils/incidentUtils.js';
@@ -163,7 +164,7 @@ export default function IncidentDetailPage() {
                   />
                   <DetailItem
                     label={incident.ncal === 'BLUE' ? 'Device ID' : 'Infrastructure'}
-                    value={incident.odp_bts || '—'}
+                    value={normalizeInfrastructureLabel(incident.odp_bts, incident.ncal) || '—'}
                     icon={Shield}
                   />
                   <DetailItem
