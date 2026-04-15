@@ -1,6 +1,14 @@
-import React, { useEffect } from 'react';
-import { Loader2, PackageOpen, X } from 'lucide-react';
+import React from 'react';
+import { Loader2, PackageOpen } from 'lucide-react';
 import { cn } from '../../../lib/utils.js';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../dialog.jsx';
 
 export function Modal({
   open,
@@ -14,26 +22,6 @@ export function Modal({
   footerClassName = '',
   closeOnOverlay = true,
 }) {
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') onClose();
-    };
-
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   const sizeMap = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -44,49 +32,34 @@ export function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={closeOnOverlay ? onClose : undefined}
-        aria-label="Close dialog backdrop"
-      />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn(
-          'relative z-10 flex max-h-[88vh] w-full flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl',
-          'animate-in fade-in zoom-in-95 duration-200',
-          sizeMap[size] || 'max-w-lg'
-        )}
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
+      <DialogContent
+        className={cn('max-h-[88vh] w-[calc(100vw-32px)] p-0', sizeMap[size] || 'max-w-lg')}
+        onEscapeKeyDown={(event) => {
+          if (!closeOnOverlay) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (!closeOnOverlay) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (!closeOnOverlay) event.preventDefault();
+        }}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold tracking-tight text-foreground">{title}</h3>
-            {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
-          </div>
+        <DialogHeader className="border-b border-border pb-4">
+          <DialogTitle>{title}</DialogTitle>
+          {subtitle ? <DialogDescription>{subtitle}</DialogDescription> : null}
+        </DialogHeader>
 
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <div className={cn('flex-1 overflow-y-auto px-6 pb-6', bodyClassName)}>{children}</div>
 
-        <div className={cn('flex-1 overflow-y-auto p-6', bodyClassName)}>{children}</div>
-
-        {footer ? (
-          <div className={cn('flex justify-end gap-2 border-t border-border bg-muted/20 px-6 py-4', footerClassName)}>
-            {footer}
-          </div>
-        ) : null}
-      </div>
-    </div>
+        {footer ? <DialogFooter className={footerClassName}>{footer}</DialogFooter> : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
