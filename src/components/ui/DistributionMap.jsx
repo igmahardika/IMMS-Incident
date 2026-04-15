@@ -68,6 +68,57 @@ function StatChip({ label, value }) {
   );
 }
 
+function ReportReasonList({ title, items = [] }) {
+  if (!items.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{title}</p>
+      <div className="space-y-2">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+            <span className="truncate text-muted-foreground">{item.label}</span>
+            <span className="font-medium text-foreground">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DistributionGeocodeReportCard({ report }) {
+  if (!report) return null;
+
+  const typeItems = (report.typeBreakdown || []).map((item) => ({
+    label: item.type,
+    value: `${item.mapped}/${item.total}`,
+  }));
+  const sampleItems = (report.samples || []).slice(0, 3).map((item) => ({
+    label: item.level_4 || item.level_3 || item.level_2 || item.level_1 || `Node #${item.id}`,
+    value: item.reason.replaceAll('_', ' '),
+  }));
+
+  return (
+    <SectionCard
+      title="Sync Health"
+      subtitle="Readiness of topology nodes for coordinate sync."
+      className="min-w-[340px] shadow-lg"
+    >
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StatChip label="Mapped" value={report.mapped} />
+          <StatChip label="Anchorable" value={report.anchorable} />
+          <StatChip label="Geocode Candidate" value={report.geocodeCandidate} />
+          <StatChip label="No Anchor" value={report.noCoordinateAnchor} />
+        </div>
+
+        <ReportReasonList title="Coverage By Type" items={typeItems} />
+        <ReportReasonList title="Recent Unmapped Samples" items={sampleItems} />
+      </div>
+    </SectionCard>
+  );
+}
+
 function InfrastructurePopup({ point }) {
   const isFiber = point.type === 'Fiber Optic';
 
@@ -166,6 +217,7 @@ export default function DistributionMap({ data, onRefresh }) {
   const [endDate, setEndDate] = useState('2026-02-28');
   const [highlightedId, setHighlightedId] = useState(null);
   const [locatedLabel, setLocatedLabel] = useState('');
+  const [geocodeReport, setGeocodeReport] = useState(null);
 
   const points = useMemo(
     () => (data || []).filter((item) => item.latitude && item.longitude),
@@ -177,6 +229,15 @@ export default function DistributionMap({ data, onRefresh }) {
   );
   const activePoints = viewMode === 'normal' ? points : troublePoints;
   const missingPointCount = Math.max((viewMode === 'normal' ? (data || []).length : troubleData.length) - activePoints.length, 0);
+
+  const loadGeocodeReport = useCallback(async () => {
+    try {
+      const report = await api.getDistribusiGeocodeReport();
+      setGeocodeReport(report);
+    } catch (error) {
+      console.error('Failed to load topology geocode report:', error);
+    }
+  }, []);
 
   const startAutoGeocode = async () => {
     if (geocodingStatus.active) return;
@@ -215,6 +276,7 @@ export default function DistributionMap({ data, onRefresh }) {
       }
 
       await onRefresh?.();
+      await loadGeocodeReport();
       addToast(
         [
           `Topology sync complete: ${updated} updated.`,
@@ -262,6 +324,10 @@ export default function DistributionMap({ data, onRefresh }) {
     const timeoutId = window.setTimeout(() => setIsProcessing(false), 500);
     return () => window.clearTimeout(timeoutId);
   }, [loadTroubleData, points.length, viewMode]);
+
+  useEffect(() => {
+    loadGeocodeReport();
+  }, [loadGeocodeReport]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -468,14 +534,17 @@ export default function DistributionMap({ data, onRefresh }) {
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute left-5 top-5 z-[1000] hidden gap-3 xl:flex">
-          <StatChip label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'} value={activePoints.length} />
-          <StatChip label="Missing Coords" value={missingPointCount} />
-          <StatChip
-            label={viewMode === 'normal' ? 'Mapped Registry' : 'Window'}
-            value={viewMode === 'normal' ? `${points.length} mapped` : `${startDate} to ${endDate}`}
-          />
-          {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
+        <div className="pointer-events-none absolute left-5 top-5 z-[1000] hidden items-start gap-3 xl:flex">
+          <div className="grid gap-3">
+            <StatChip label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'} value={activePoints.length} />
+            <StatChip label="Missing Coords" value={missingPointCount} />
+            <StatChip
+              label={viewMode === 'normal' ? 'Mapped Registry' : 'Window'}
+              value={viewMode === 'normal' ? `${points.length} mapped` : `${startDate} to ${endDate}`}
+            />
+            {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
+          </div>
+          {viewMode === 'normal' ? <DistributionGeocodeReportCard report={geocodeReport} /> : null}
         </div>
 
         <SectionCard

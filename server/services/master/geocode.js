@@ -12,6 +12,52 @@ export function listCustomersMissingCoords() {
   `).all();
 }
 
+export function getCustomerGeocodeReport() {
+  const totals = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 ELSE 0 END) AS mapped,
+      SUM(CASE WHEN latitude IS NULL OR longitude IS NULL THEN 1 ELSE 0 END) AS missing,
+      SUM(CASE WHEN (latitude IS NULL OR longitude IS NULL) AND address IS NOT NULL AND TRIM(address) <> '' THEN 1 ELSE 0 END) AS address_ready,
+      SUM(CASE WHEN (latitude IS NULL OR longitude IS NULL) AND (address IS NULL OR TRIM(address) = '') THEN 1 ELSE 0 END) AS missing_address
+    FROM master_customer
+  `).get();
+
+  const provinceBreakdown = db.prepare(`
+    SELECT
+      COALESCE(NULLIF(TRIM(province), ''), 'Unknown') AS province,
+      COUNT(*) AS count
+    FROM master_customer
+    WHERE latitude IS NULL OR longitude IS NULL
+    GROUP BY province
+    ORDER BY count DESC, province ASC
+    LIMIT 6
+  `).all();
+
+  const samples = db.prepare(`
+    SELECT id, brand_site, company_name, city, province, address
+    FROM master_customer
+    WHERE latitude IS NULL OR longitude IS NULL
+    ORDER BY
+      CASE WHEN address IS NULL OR TRIM(address) = '' THEN 0 ELSE 1 END DESC,
+      COALESCE(updated_at, created_at, customer_id) DESC
+    LIMIT 8
+  `).all().map((item) => ({
+    ...item,
+    reason: item.address && String(item.address).trim() ? 'ready_to_sync' : 'missing_address',
+  }));
+
+  return {
+    total: Number(totals.total || 0),
+    mapped: Number(totals.mapped || 0),
+    missing: Number(totals.missing || 0),
+    addressReady: Number(totals.address_ready || 0),
+    missingAddress: Number(totals.missing_address || 0),
+    provinceBreakdown,
+    samples,
+  };
+}
+
 export async function autoGeocodeCustomers(ids) {
   const normalizedIds = normalizeIds(ids);
   if (!normalizedIds.length) {
@@ -101,12 +147,103 @@ function deriveDistributionCoordinates(item) {
   return null;
 }
 
+function classifyDistribusiGeocodeReadiness(item) {
+  const locationTerms = item.type === 'Fiber Optic'
+    ? [item.level_4, item.level_3, item.level_2, item.level_1]
+    : [item.level_1, item.level_2];
+
+  const query = locationTerms.filter((term) => term && term.length >= 3).join(', ');
+  if (!query) {
+    return { reason: 'missing_location', anchor: null };
+  }
+
+  const derived = deriveDistributionCoordinates(item);
+  if (derived) {
+    return { reason: 'anchorable', anchor: derived };
+  }
+
+  const hasRealAddressContext = locationTerms.some((term) => term && !looksLikeInternalTopologyLabel(term));
+  if (!hasRealAddressContext) {
+    return { reason: 'no_coordinate_anchor', anchor: null };
+  }
+
+  return { reason: 'geocode_candidate', anchor: null };
+}
+
 export function listDistribusiMissingCoords() {
   return db.prepare(`
     SELECT id, type, level_1, level_2, level_3, level_4
     FROM master_distribusi
     WHERE latitude IS NULL OR longitude IS NULL
   `).all();
+}
+
+export function getDistribusiGeocodeReport() {
+  const items = db.prepare(`
+    SELECT id, type, level_1, level_2, level_3, level_4, latitude, longitude, is_active
+    FROM master_distribusi
+    WHERE is_active = 1
+  `).all();
+
+  let mapped = 0;
+  let missing = 0;
+  let anchorable = 0;
+  let geocodeCandidate = 0;
+  let noCoordinateAnchor = 0;
+  let missingLocation = 0;
+
+  const samples = [];
+
+  for (const item of items) {
+    const hasCoords = item.latitude != null && item.longitude != null;
+    if (hasCoords) {
+      mapped += 1;
+      continue;
+    }
+
+    missing += 1;
+    const readiness = classifyDistribusiGeocodeReadiness(item);
+    if (readiness.reason === 'anchorable') anchorable += 1;
+    if (readiness.reason === 'geocode_candidate') geocodeCandidate += 1;
+    if (readiness.reason === 'no_coordinate_anchor') noCoordinateAnchor += 1;
+    if (readiness.reason === 'missing_location') missingLocation += 1;
+
+    if (samples.length < 8) {
+      samples.push({
+        id: item.id,
+        type: item.type,
+        level_1: item.level_1,
+        level_2: item.level_2,
+        level_3: item.level_3,
+        level_4: item.level_4,
+        reason: readiness.reason,
+      });
+    }
+  }
+
+  const typeBreakdown = db.prepare(`
+    SELECT
+      type,
+      COUNT(*) AS total,
+      SUM(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 ELSE 0 END) AS mapped,
+      SUM(CASE WHEN latitude IS NULL OR longitude IS NULL THEN 1 ELSE 0 END) AS missing
+    FROM master_distribusi
+    WHERE is_active = 1
+    GROUP BY type
+    ORDER BY type ASC
+  `).all();
+
+  return {
+    total: items.length,
+    mapped,
+    missing,
+    anchorable,
+    geocodeCandidate,
+    noCoordinateAnchor,
+    missingLocation,
+    typeBreakdown,
+    samples,
+  };
 }
 
 export async function autoGeocodeDistribusi(ids) {
@@ -130,21 +267,16 @@ export async function autoGeocodeDistribusi(ids) {
       continue;
     }
 
+    const readiness = classifyDistribusiGeocodeReadiness(item);
+    if (readiness.reason === 'missing_location' || readiness.reason === 'no_coordinate_anchor') {
+      results.push({ id: item.id, success: false, reason: readiness.reason });
+      continue;
+    }
+
     const locationTerms = item.type === 'Fiber Optic'
       ? [item.level_4, item.level_3, item.level_2, item.level_1]
       : [item.level_1, item.level_2];
-
     const query = locationTerms.filter((term) => term && term.length >= 3).join(', ');
-    if (!query) {
-      results.push({ id: item.id, success: false, reason: 'missing_location' });
-      continue;
-    }
-
-    const hasRealAddressContext = locationTerms.some((term) => term && !looksLikeInternalTopologyLabel(term));
-    if (!hasRealAddressContext) {
-      results.push({ id: item.id, success: false, reason: 'no_coordinate_anchor' });
-      continue;
-    }
 
     const found = await geocode(query, { city: 'Semarang', province: 'Jawa Tengah' });
     if (found) {

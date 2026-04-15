@@ -18,6 +18,8 @@ import {
 import {
   autoGeocodeCustomers,
   autoGeocodeDistribusi,
+  getCustomerGeocodeReport,
+  getDistribusiGeocodeReport,
   listCustomersMissingCoords,
   listDistribusiMissingCoords,
 } from '../services/master/geocode.js';
@@ -181,6 +183,10 @@ router.get('/customers/missing-coords', authenticate, (req, res) => {
   res.json(listCustomersMissingCoords());
 });
 
+router.get('/customers/geocode-report', authenticate, (req, res) => {
+  res.json(getCustomerGeocodeReport());
+});
+
 router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {
   return handleAsyncRoute(res, () => autoGeocodeCustomers(req.body?.ids), {
     fallbackMessage: 'Customer geocoding failed.',
@@ -196,6 +202,10 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
 // ── AUTO-GEOCODING DISTRIBUSI ──────────────────────────────────────────────────
 router.get('/distribusi/missing-coords', authenticate, (req, res) => {
   res.json(listDistribusiMissingCoords());
+});
+
+router.get('/distribusi/geocode-report', authenticate, (req, res) => {
+  res.json(getDistribusiGeocodeReport());
 });
 
 router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manager'), async (req, res) => {

@@ -1,332 +1,216 @@
 # IMMS Feature Map
 
-## Purpose
+Dokumen ini memetakan fitur aktif ke area source utama berdasarkan kondisi codebase saat ini.
 
-Dokumen ini memetakan fitur ke file-file utama agar onboarding, debugging, dan pengembangan lanjutan lebih cepat.
-
-## 1. App Shell and Bootstrapping
-
-### Files
+## 1. Frontend App Shell
 
 - [src/main.jsx](/Users/macbookair/Documents/IMMS/src/main.jsx)
 - [src/App.jsx](/Users/macbookair/Documents/IMMS/src/App.jsx)
-- [src/index.css](/Users/macbookair/Documents/IMMS/src/index.css)
-- [vite.config.js](/Users/macbookair/Documents/IMMS/vite.config.js)
-
-### Responsibility
-
-- Entry point frontend
-- Provider tree
-- Route registration
-- Theme setup
-- Global styles
-
-## 2. Authentication and Session
-
-### Frontend files
-
-- [src/context/AuthContext.jsx](/Users/macbookair/Documents/IMMS/src/context/AuthContext.jsx)
-- [src/pages/LoginPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/LoginPage.jsx)
-- [src/utils/api.js](/Users/macbookair/Documents/IMMS/src/utils/api.js)
-
-### Backend files
-
-- [server/routes/auth.js](/Users/macbookair/Documents/IMMS/server/routes/auth.js)
-- [server/middleware/auth.js](/Users/macbookair/Documents/IMMS/server/middleware/auth.js)
-
-### What lives here
-
-- Login
-- Logout
-- Access token validation
-- Role-based authorization middleware
-- Password change
-
-## 3. Layout, Navigation, and Realtime Shell
-
-### Files
-
 - [src/components/layout/AppLayout.jsx](/Users/macbookair/Documents/IMMS/src/components/layout/AppLayout.jsx)
 - [src/components/layout/Sidebar.jsx](/Users/macbookair/Documents/IMMS/src/components/layout/Sidebar.jsx)
 - [src/components/layout/Topbar.jsx](/Users/macbookair/Documents/IMMS/src/components/layout/Topbar.jsx)
-- [src/hooks/useSocket.js](/Users/macbookair/Documents/IMMS/src/hooks/useSocket.js)
-- [server/socket.js](/Users/macbookair/Documents/IMMS/server/socket.js)
 
-### What lives here
+Tanggung jawab:
 
-- Sidebar menu by role
-- Header/topbar
-- Theme toggle
-- Notification access
-- Socket connection and query invalidation
+- route registration
+- shell layout
+- theme state
+- role-based navigation
 
-## 4. Incident Creation and Editing
+## 2. Authentication
 
-### Frontend files
+- Frontend:
+  - [src/context/AuthContext.jsx](/Users/macbookair/Documents/IMMS/src/context/AuthContext.jsx)
+  - [src/pages/LoginPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/LoginPage.jsx)
+  - [src/utils/api.js](/Users/macbookair/Documents/IMMS/src/utils/api.js)
+- Backend:
+  - [server/routes/auth.js](/Users/macbookair/Documents/IMMS/server/routes/auth.js)
+  - [server/services/auth/auth.js](/Users/macbookair/Documents/IMMS/server/services/auth/auth.js)
+  - [server/services/auth/tokens.js](/Users/macbookair/Documents/IMMS/server/services/auth/tokens.js)
+  - [server/middleware/auth.js](/Users/macbookair/Documents/IMMS/server/middleware/auth.js)
 
-- [src/pages/CreateIncidentPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/CreateIncidentPage.jsx)
-- [src/services/incidentService.js](/Users/macbookair/Documents/IMMS/src/services/incidentService.js)
-- [src/hooks/useMasterData.js](/Users/macbookair/Documents/IMMS/src/hooks/useMasterData.js)
+Tanggung jawab:
 
-### Backend files
+- login/logout
+- refresh token flow
+- password change
+- role authorization
 
-- [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
-- [server/utils/validators.js](/Users/macbookair/Documents/IMMS/server/utils/validators.js)
+## 3. Incident Lifecycle
 
-### What lives here
+- Frontend:
+  - [src/pages/CreateIncidentPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/CreateIncidentPage.jsx)
+  - [src/pages/CurrentTroublePage.jsx](/Users/macbookair/Documents/IMMS/src/pages/CurrentTroublePage.jsx)
+  - [src/pages/IncidentDetailPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/IncidentDetailPage.jsx)
+  - [src/pages/current-trouble](/Users/macbookair/Documents/IMMS/src/pages/current-trouble)
+  - [src/services/incidentService.js](/Users/macbookair/Documents/IMMS/src/services/incidentService.js)
+- Backend:
+  - [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
+  - [server/services/incidents](/Users/macbookair/Documents/IMMS/server/services/incidents)
 
-- Create incident
-- Edit incident
-- Customer/distribusi selection
-- Draft localStorage
-- Validation of incident payload
+Tanggung jawab:
 
-## 5. Active Incident Operations
+- create/edit incident
+- start, pause, resume, close
+- recurring info
+- notification persistence
+- escalation dispatch
 
-### Frontend files
+## 4. Archive and Manual History Import
 
-- [src/pages/CurrentTroublePage.jsx](/Users/macbookair/Documents/IMMS/src/pages/CurrentTroublePage.jsx)
-- [src/hooks/useIncidents.js](/Users/macbookair/Documents/IMMS/src/hooks/useIncidents.js)
-- [src/utils/incidentUtils.js](/Users/macbookair/Documents/IMMS/src/utils/incidentUtils.js)
-- [src/components/ui/UnifiedTimeline.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/UnifiedTimeline.jsx)
-
-### Backend files
-
-- [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
-
-### What lives here
-
-- Active incident queue
-- Start action
-- Pause/resume
-- Update root cause/action detail
-- Close incident
-- Live timer and SLA progress
-- Timeline processing
-
-## 6. Incident Detail and History
-
-### Files
-
-- [src/pages/IncidentDetailPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/IncidentDetailPage.jsx)
 - [src/pages/HistoryPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/HistoryPage.jsx)
-- [src/pages/MonthlyViewPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/MonthlyViewPage.jsx)
+- [src/pages/history](/Users/macbookair/Documents/IMMS/src/pages/history)
 - [src/utils/exportStats.js](/Users/macbookair/Documents/IMMS/src/utils/exportStats.js)
-- [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
+- [server/services/incidents/importResolvedHistory.js](/Users/macbookair/Documents/IMMS/server/services/incidents/importResolvedHistory.js)
+- [server/scripts/import_manual_resolved_history.py](/Users/macbookair/Documents/IMMS/server/scripts/import_manual_resolved_history.py)
 
-### What lives here
+Tanggung jawab:
 
-- Detail incident
-- History list
-- Recurring incident check
-- Batch delete history
-- Excel export
-- Historical filtering
+- resolved incident listing
+- archive delete batch
+- CSV export
+- workbook import `.xlsx`
+- cleanup legacy import artifacts
 
-## 7. Dashboard and Analytics
+## 5. Dashboard and Analytics
 
-### Frontend files
+- Frontend:
+  - [src/pages/DashboardPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/DashboardPage.jsx)
+  - [src/pages/DurationReportPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/DurationReportPage.jsx)
+  - [src/pages/RootCausePage.jsx](/Users/macbookair/Documents/IMMS/src/pages/RootCausePage.jsx)
+  - [src/pages/MonthlyViewPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/MonthlyViewPage.jsx)
+  - [src/components/ui/chart.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/chart.jsx)
+- Backend:
+  - [server/routes/analytics.js](/Users/macbookair/Documents/IMMS/server/routes/analytics.js)
+  - [server/services/analytics](/Users/macbookair/Documents/IMMS/server/services/analytics)
 
-- [src/pages/DashboardPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/DashboardPage.jsx)
-- [src/pages/DurationReportPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/DurationReportPage.jsx)
-- [src/pages/RootCausePage.jsx](/Users/macbookair/Documents/IMMS/src/pages/RootCausePage.jsx)
-- [src/components/ui/chart.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/chart.jsx)
+Tanggung jawab:
 
-### Backend files
+- realtime overview
+- duration trend
+- resolution trend
+- SLA report
+- root cause breakdown
+- technician throughput
+- map analytics
 
-- [server/routes/analytics.js](/Users/macbookair/Documents/IMMS/server/routes/analytics.js)
+## 6. Notifications and Realtime
 
-### What lives here
-
-- Dashboard KPI
-- SLA summary
-- Duration trends
-- Root cause breakdown
-- Technician performance
-- Trouble map analytics
-
-## 8. Notifications
-
-### Files
-
+- [src/hooks/useSocket.js](/Users/macbookair/Documents/IMMS/src/hooks/useSocket.js)
 - [src/components/ui/NotificationBell.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/NotificationBell.jsx)
-- [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
-- [server/config/schema.js](/Users/macbookair/Documents/IMMS/server/config/schema.js)
+- [server/socket.js](/Users/macbookair/Documents/IMMS/server/socket.js)
+- [server/services/incidents/notifications.js](/Users/macbookair/Documents/IMMS/server/services/incidents/notifications.js)
 
-### What lives here
+Tanggung jawab:
 
-- Notification polling
-- Mark read
-- Assignment/update notifications
-- Notification persistence
+- incident update broadcast
+- targeted query invalidation
+- notification read state
+- socket-aware notification refresh
 
-## 9. Master Data: Customers
-
-### Files
+## 7. Master Data: Customers
 
 - [src/pages/master/CustomersPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/CustomersPage.jsx)
 - [src/components/ui/CustomerMap.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/CustomerMap.jsx)
 - [src/components/ui/GeoSummary.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/GeoSummary.jsx)
-- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
+- [server/services/master/customers.js](/Users/macbookair/Documents/IMMS/server/services/master/customers.js)
+- [server/services/master/geocode.js](/Users/macbookair/Documents/IMMS/server/services/master/geocode.js)
 
-### What lives here
+Tanggung jawab:
 
 - CRUD customer
-- Excel import customer
-- Customer map
-- Auto-geocode customer
-- Geo summary
+- CSV import customer
+- customer map
+- customer geocode sync
+- geocode readiness reporting
 
-## 10. Master Data: Classifications
-
-### Files
+## 8. Master Data: Classifications
 
 - [src/pages/master/ClassificationsPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/ClassificationsPage.jsx)
-- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
+- [server/services/master/classifications.js](/Users/macbookair/Documents/IMMS/server/services/master/classifications.js)
 
-### What lives here
+Tanggung jawab:
 
-- CRUD klasifikasi dan sub-klasifikasi
+- classification registry
+- root cause classification options
 
-## 11. Master Data: Actions
-
-### Files
-
-- [src/pages/master/ActionsPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/ActionsPage.jsx)
-- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
-
-### What lives here
-
-- CRUD master tindakan penanganan
-
-## 12. Master Data: Users
-
-### Files
-
-- [src/pages/master/UsersPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/UsersPage.jsx)
-- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
-
-### What lives here
-
-- CRUD account user
-- Role assignment
-- Aktivasi/deaktivasi user
-
-## 13. Master Data: Technical Support
-
-### Files
-
-- [src/pages/master/TechnicalSupportPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/TechnicalSupportPage.jsx)
-- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
-
-### What lives here
-
-- CRUD personel technical support
-- Batch import technical support
-
-## 14. Master Data: Distribution Topology
-
-### Files
+## 9. Master Data: Distribution Topology
 
 - [src/pages/master/DistribusiPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/DistribusiPage.jsx)
 - [src/components/ui/DistributionMap.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/DistributionMap.jsx)
-- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
-- [server/routes/analytics.js](/Users/macbookair/Documents/IMMS/server/routes/analytics.js)
+- [server/services/master/distribusi.js](/Users/macbookair/Documents/IMMS/server/services/master/distribusi.js)
+- [server/services/master/geocode.js](/Users/macbookair/Documents/IMMS/server/services/master/geocode.js)
 
-### What lives here
+Tanggung jawab:
 
-- CRUD distribusi
-- Import distribusi
-- Auto-geocode distribusi
-- Distribution map
-- Distribution trouble heat points
+- CRUD topology nodes
+- topology import
+- topology map mode
+- topology geocode sync
+- trouble concentration view
+- geocode readiness reporting
 
-## 15. Escalation Settings
+## 10. Personnel and Accounts
 
-### Files
+- [src/pages/master/UsersPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/master/UsersPage.jsx)
+- [server/services/master/users.js](/Users/macbookair/Documents/IMMS/server/services/master/users.js)
+
+Tanggung jawab:
+
+- personnel directory
+- login account management
+- role activation/deactivation
+- compatibility source for technician lookup
+
+## 11. Escalation Settings
 
 - [src/pages/EscalationSettingsPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/EscalationSettingsPage.jsx)
 - [src/hooks/useSettings.js](/Users/macbookair/Documents/IMMS/src/hooks/useSettings.js)
 - [server/routes/settings.js](/Users/macbookair/Documents/IMMS/server/routes/settings.js)
-- [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
+- [server/services/settings/escalation.js](/Users/macbookair/Documents/IMMS/server/services/settings/escalation.js)
 
-### What lives here
+Tanggung jawab:
 
-- Config webhook internal/vendor
-- Config template per NCAL
-- Test escalation
-- Open/close escalation dispatch
+- webhook configuration
+- escalation templates
+- test dispatch
 
-## 16. Shared UI and Utility Layer
+## 12. Shared UI Layer
 
-### Files
-
-- [src/components/ui/index.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/index.jsx)
-- [src/components/ui/data/index.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/data/index.jsx)
-- [src/components/ui/forms/index.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/forms/index.jsx)
-- [src/components/ui/feedback/index.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/feedback/index.jsx)
-- [src/components/ui/layout/index.jsx](/Users/macbookair/Documents/IMMS/src/components/ui/layout/index.jsx)
+- [src/components/ui](/Users/macbookair/Documents/IMMS/src/components/ui)
 - [src/components/tables/DataTable.jsx](/Users/macbookair/Documents/IMMS/src/components/tables/DataTable.jsx)
 - [src/lib/utils.js](/Users/macbookair/Documents/IMMS/src/lib/utils.js)
-- [src/utils/themeMap.js](/Users/macbookair/Documents/IMMS/src/utils/themeMap.js)
-- [src/utils/constants.js](/Users/macbookair/Documents/IMMS/src/utils/constants.js)
 
-### What lives here
+Tanggung jawab:
 
-- Shared atoms/components
-- Table abstraction
-- Theme mapping
-- Constants dan utility presentation
+- shared form controls
+- cards, dialog, popover, badge, scroll area
+- table abstraction
+- chart wrapper
+- map overlays
 
-## 17. Database and Persistence Layer
-
-### Files
+## 13. Database and Verification
 
 - [server/db.js](/Users/macbookair/Documents/IMMS/server/db.js)
+- [server/database/runtimeCompatibility.js](/Users/macbookair/Documents/IMMS/server/database/runtimeCompatibility.js)
 - [server/config/schema.js](/Users/macbookair/Documents/IMMS/server/config/schema.js)
-- [server/migrations/0000_famous_firelord.sql](/Users/macbookair/Documents/IMMS/server/migrations/0000_famous_firelord.sql)
-- [server/drizzle.config.js](/Users/macbookair/Documents/IMMS/server/drizzle.config.js)
+- [server/scripts/verify_backend_services.js](/Users/macbookair/Documents/IMMS/server/scripts/verify_backend_services.js)
+- [server/scripts/verify_db_governance.js](/Users/macbookair/Documents/IMMS/server/scripts/verify_db_governance.js)
 
-### What lives here
+Tanggung jawab:
 
-- SQLite bootstrap
-- Seed awal
-- Drizzle schema
-- Migration artifacts
+- sqlite bootstrap
+- runtime compatibility inventory
+- schema source of truth
+- service verification
+- db governance verification
 
-## 18. Support Scripts
+## Recommended Reading Order
 
-### Files
-
-- [server/scripts/sync_all.js](/Users/macbookair/Documents/IMMS/server/scripts/sync_all.js)
-- [server/scripts/bulk_update_coords.js](/Users/macbookair/Documents/IMMS/server/scripts/bulk_update_coords.js)
-- [server/scripts/inspect_xlsx.js](/Users/macbookair/Documents/IMMS/server/scripts/inspect_xlsx.js)
-- [analyze_odp_v2.js](/Users/macbookair/Documents/IMMS/analyze_odp_v2.js)
-- [sync_odp_coords.js](/Users/macbookair/Documents/IMMS/sync_odp_coords.js)
-- [split_master_data.mjs](/Users/macbookair/Documents/IMMS/split_master_data.mjs)
-
-### What lives here
-
-- Sinkronisasi koordinat
-- Utility import/analisis data
-- Script migrasi operasional
-
-## Recommended Reading Order for New Contributors
-
-1. [docs/ARCHITECTURE.md](/Users/macbookair/Documents/IMMS/docs/ARCHITECTURE.md)
-2. [src/App.jsx](/Users/macbookair/Documents/IMMS/src/App.jsx)
-3. [server/index.js](/Users/macbookair/Documents/IMMS/server/index.js)
-4. [server/config/schema.js](/Users/macbookair/Documents/IMMS/server/config/schema.js)
-5. [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js)
-6. [src/pages/CreateIncidentPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/CreateIncidentPage.jsx)
-7. [src/pages/CurrentTroublePage.jsx](/Users/macbookair/Documents/IMMS/src/pages/CurrentTroublePage.jsx)
-8. [src/pages/IncidentDetailPage.jsx](/Users/macbookair/Documents/IMMS/src/pages/IncidentDetailPage.jsx)
-9. [docs/TECH_AUDIT.md](/Users/macbookair/Documents/IMMS/docs/TECH_AUDIT.md)
-
-## Fast Navigation by Use Case
-
-- Mau ubah auth: lihat `AuthContext`, `api.js`, `auth.js`, `middleware/auth.js`
-- Mau ubah lifecycle incident: lihat `CreateIncidentPage`, `CurrentTroublePage`, `IncidentDetailPage`, `incidents.js`
-- Mau ubah dashboard/report: lihat `DashboardPage`, `HistoryPage`, `analytics.js`
-- Mau ubah master data: lihat `pages/master/*` dan `server/routes/master.js`
-- Mau ubah eskalasi: lihat `EscalationSettingsPage`, `useSettings.js`, `settings.js`, `incidents.js`
+1. [README.md](/Users/macbookair/Documents/IMMS/README.md)
+2. [docs/ARCHITECTURE.md](/Users/macbookair/Documents/IMMS/docs/ARCHITECTURE.md)
+3. [docs/CURRENT_STATE_AUDIT.md](/Users/macbookair/Documents/IMMS/docs/CURRENT_STATE_AUDIT.md)
+4. [src/App.jsx](/Users/macbookair/Documents/IMMS/src/App.jsx)
+5. [server/index.js](/Users/macbookair/Documents/IMMS/server/index.js)
+6. [server/routes](/Users/macbookair/Documents/IMMS/server/routes)
+7. [server/services](/Users/macbookair/Documents/IMMS/server/services)

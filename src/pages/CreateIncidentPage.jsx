@@ -3,15 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Check,
-  ChevronDown,
   Loader2,
-  MapPin,
   Network,
-  Plus,
   Save,
-  Search,
   Send,
-  X,
 } from 'lucide-react';
 import { api } from '../utils/api.js';
 import { formatDateTime, getIncidentDisplayName } from '../utils/incidentUtils.js';
@@ -20,13 +15,15 @@ import { useToast } from '../context/ToastContext.jsx';
 import {
   Button,
   Input,
-  NcalBadge,
   PageHeader,
   SectionCard,
   Select,
   Textarea,
 } from '../components/ui/index.jsx';
-import { cn } from '../lib/utils.js';
+import { CustomerSelector } from './create-incident/CustomerSelector.jsx';
+import { DistributionNodeSelector } from './create-incident/DistributionNodeSelector.jsx';
+import { IncidentPreviewCard } from './create-incident/IncidentPreviewCard.jsx';
+import { OdpSelector } from './create-incident/OdpSelector.jsx';
 
 const NCAL_OPTIONS = ['BLUE', 'YELLOW', 'ORANGE', 'RED', 'BLACK'];
 const LEVEL_OPTIONS = [
@@ -35,37 +32,6 @@ const LEVEL_OPTIONS = [
   { value: '3', label: 'Level 3' },
   { value: '4', label: 'Level 4' },
 ];
-
-function DropdownSurface({ children, className = '' }) {
-  return (
-    <div
-      className={cn(
-        'absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[80] rounded-lg border border-border bg-popover p-2 shadow-lg',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function PreviewItem({ label, value, icon: Icon }) {
-  return (
-    <div className="rounded-lg border border-border bg-muted/20 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="text-sm font-medium text-foreground">
-            {value || '—'}
-          </p>
-        </div>
-        {Icon ? <Icon className="h-4 w-4 text-muted-foreground" /> : null}
-      </div>
-    </div>
-  );
-}
 
 export default function CreateIncidentPage() {
   const { id } = useParams();
@@ -434,226 +400,41 @@ export default function CreateIncidentPage() {
             >
               {!isDistribusi ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="custom-dropdown-container relative space-y-2">
-                    <label
-                      htmlFor="customer-search"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      {form.ncal === 'BLUE' ? 'Installation Site' : 'Target Entity'}
-                    </label>
-
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        id="customer-search"
-                        type="text"
-                        className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-10 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        placeholder="Search customer or site..."
-                        value={search}
-                        onChange={(event) => {
-                          setSearch(event.target.value);
-                          setShowDropdown(true);
-                        }}
-                        onFocus={() => setShowDropdown(true)}
-                      />
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    </div>
-
-                    {showDropdown ? (
-                      <DropdownSurface className="max-h-80 overflow-y-auto">
-                        {filteredCustomers.length === 0 ? (
-                          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
-                            No customer matched your search.
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                            {filteredCustomers.map((customer) => (
-                              <button
-                                key={customer.id}
-                                type="button"
-                                className="flex w-full flex-col rounded-md px-3 py-3 text-left transition-colors hover:bg-accent"
-                                onClick={() => handleCustomerSelect(customer)}
-                              >
-                                <span className="text-sm font-medium text-foreground">
-                                  {customer.brand_site}
-                                </span>
-                                <span className="mt-1 text-xs text-muted-foreground">
-                                  {customer.company_name} • Grade {customer.grade || '—'}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </DropdownSurface>
-                    ) : null}
-                  </div>
+                  <CustomerSelector
+                    ncal={form.ncal}
+                    search={search}
+                    onSearchChange={setSearch}
+                    showDropdown={showDropdown}
+                    setShowDropdown={setShowDropdown}
+                    filteredCustomers={filteredCustomers}
+                    onCustomerSelect={handleCustomerSelect}
+                  />
 
                   {form.ncal !== 'BLUE' ? (
-                    <div className="custom-dropdown-container relative space-y-2">
-                      <label className="text-sm font-medium text-foreground">
-                        {form.ncal === 'YELLOW' ? 'Distribution Node (ODP/BTS)' : 'Node Sequence'}
-                      </label>
-
-                      <button
-                        type="button"
-                        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors hover:bg-accent"
-                        onClick={() => setShowOdpDropdown((previous) => !previous)}
-                      >
-                        <span className={cn(!form.odp_bts && 'text-muted-foreground')}>
-                          {form.odp_bts && form.odp_bts !== 'MANUAL_INPUT'
-                            ? form.odp_bts
-                            : form.odp_bts === 'MANUAL_INPUT'
-                              ? 'Manual entry selected'
-                              : 'Select topology node'}
-                        </span>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </button>
-
-                      {showOdpDropdown ? (
-                        <DropdownSurface className="max-h-80 overflow-y-auto">
-                          <div className="sticky top-0 bg-popover pb-2">
-                            <div className="relative">
-                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                              <input
-                                type="text"
-                                className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder="Filter nodes..."
-                                value={odpSearch}
-                                onChange={(event) => setOdpSearch(event.target.value)}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            {filteredOdpOptions.map((option) => (
-                              <button
-                                key={option}
-                                type="button"
-                                className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent"
-                                onClick={() => {
-                                  setField('odp_bts', option);
-                                  setShowOdpDropdown(false);
-                                }}
-                              >
-                                <span>{option}</span>
-                              </button>
-                            ))}
-
-                            <button
-                              type="button"
-                              className="mt-2 flex w-full items-center justify-between rounded-md border border-dashed border-primary/30 bg-primary/5 px-3 py-2.5 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-                              onClick={() => {
-                                setField('odp_bts', 'MANUAL_INPUT');
-                                setShowOdpDropdown(false);
-                              }}
-                            >
-                              <span>Manual override</span>
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </DropdownSurface>
-                      ) : null}
-
-                      {form.odp_bts === 'MANUAL_INPUT' ? (
-                        <Input
-                          id="manual-distribusi"
-                          label="Manual Node Value"
-                          value={form.distribusi_manual}
-                          onChange={(event) => setField('distribusi_manual', event.target.value.toUpperCase())}
-                          placeholder="Enter custom topology node"
-                          className="font-mono"
-                        />
-                      ) : null}
-                    </div>
+                    <OdpSelector
+                      ncal={form.ncal}
+                      value={form.odp_bts}
+                      manualValue={form.distribusi_manual}
+                      onChange={(value) => setField('odp_bts', value)}
+                      onManualChange={(value) => setField('distribusi_manual', value)}
+                      showDropdown={showOdpDropdown}
+                      setShowDropdown={setShowOdpDropdown}
+                      search={odpSearch}
+                      onSearchChange={setOdpSearch}
+                      filteredOptions={filteredOdpOptions}
+                    />
                   ) : null}
                 </div>
               ) : (
-                <div className="custom-dropdown-container relative space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Distribution Nodes
-                  </label>
-
-                  <button
-                    type="button"
-                    className={cn(
-                      'flex min-h-11 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-left shadow-sm transition-colors hover:bg-accent',
-                      showDistDropdown && 'ring-1 ring-ring'
-                    )}
-                    onClick={() => setShowDistDropdown((previous) => !previous)}
-                  >
-                    {distForm.selectedItems.length === 0 ? (
-                      <span className="text-sm text-muted-foreground">
-                        Select one or more affected topology nodes
-                      </span>
-                    ) : (
-                      distForm.selectedItems.map((item) => (
-                        <span
-                          key={item}
-                          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
-                        >
-                          {item}
-                          <button
-                            type="button"
-                            className="rounded-sm p-0.5 transition-colors hover:bg-primary/10"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleDistributionItem(item);
-                            }}
-                            aria-label={`Remove ${item}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))
-                    )}
-
-                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
-                  </button>
-
-                  {showDistDropdown ? (
-                    <DropdownSurface className="max-h-80 overflow-y-auto">
-                      <div className="sticky top-0 bg-popover pb-2">
-                        <div className="relative">
-                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <input
-                            type="text"
-                            className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            placeholder="Search topology nodes..."
-                            value={distSearch}
-                            onChange={(event) => setDistSearch(event.target.value)}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        {filteredDistributionOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            className="flex w-full items-center justify-between rounded-md px-3 py-3 text-left transition-colors hover:bg-accent"
-                            onClick={() => toggleDistributionItem(option.value)}
-                          >
-                            <div className="space-y-1">
-                              <p className="text-sm font-medium text-foreground">
-                                {option.label}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {option.value.split(':')[0]}
-                              </p>
-                            </div>
-                            <Plus className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                        ))}
-
-                        {filteredDistributionOptions.length === 0 ? (
-                          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
-                            No topology node matched your search.
-                          </div>
-                        ) : null}
-                      </div>
-                    </DropdownSurface>
-                  ) : null}
-                </div>
+                <DistributionNodeSelector
+                  selectedItems={distForm.selectedItems}
+                  toggleItem={toggleDistributionItem}
+                  showDropdown={showDistDropdown}
+                  setShowDropdown={setShowDistDropdown}
+                  search={distSearch}
+                  onSearchChange={setDistSearch}
+                  filteredOptions={filteredDistributionOptions}
+                />
               )}
             </SectionCard>
 
@@ -795,71 +576,16 @@ export default function CreateIncidentPage() {
           </div>
 
           <div className="xl:sticky xl:top-6">
-            <SectionCard
-              title="Incident Preview"
-              subtitle="Live summary of the record you are about to submit."
-              className="bg-card"
-            >
-              <div className="space-y-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                      Impact Segment
-                    </p>
-                    <NcalBadge value={form.ncal} />
-                  </div>
-
-                  <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-                    {isEdit ? 'Edit Mode' : 'Draft Mode'}
-                  </div>
-                </div>
-
-                <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    Affected Node
-                  </p>
-                  <p className="text-sm font-medium leading-6 text-foreground">
-                    {previewNode || 'No node selected yet.'}
-                  </p>
-                  {!isDistribusi && form.sla ? (
-                    <div className="inline-flex rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs text-primary">
-                      Priority grade {form.sla}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    Problem Summary
-                  </p>
-                  <p className="text-sm leading-6 text-foreground">
-                    {form.initial_problem || 'Problem description will appear here.'}
-                  </p>
-                </div>
-
-                <div className="grid gap-3">
-                  <PreviewItem label="Coordinates" value={form.koordinat || 'Not provided'} icon={MapPin} />
-                  <PreviewItem label="Incident Hash" value={previewHash} icon={Network} />
-                </div>
-
-                <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Submit State
-                      </p>
-                      <p className="text-sm font-medium text-foreground">
-                        {loading ? 'Submitting incident...' : 'Ready to submit'}
-                      </p>
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      Connected
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
+            <IncidentPreviewCard
+              isEdit={isEdit}
+              loading={loading}
+              ncal={form.ncal}
+              previewNode={previewNode}
+              sla={!isDistribusi ? form.sla : ''}
+              initialProblem={form.initial_problem}
+              coordinates={form.koordinat}
+              previewHash={previewHash}
+            />
           </div>
         </form>
       </div>

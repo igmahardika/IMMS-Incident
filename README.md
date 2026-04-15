@@ -1,16 +1,109 @@
-# React + Vite
+# IMMS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+IMMS adalah aplikasi incident management untuk operasi NOC. Project ini mencakup:
 
-Currently, two official plugins are available:
+- registrasi incident baru
+- monitoring incident aktif
+- pause, resume, update, dan close workflow
+- resolved incident archive
+- analytics dashboard dan report
+- master data customer, klasifikasi, topology, dan personnel
+- geocode customer/topology untuk mode map
+- escalation webhook dan notification
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- Frontend: React 19, Vite, React Router, React Query, Recharts, Leaflet, Socket.IO client
+- Backend: Express 5, better-sqlite3, Socket.IO, Zod
+- Database: SQLite (`imms.db`)
+- UI foundation: Tailwind CSS + shadcn-style component layer
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Menjalankan Project
 
-## Expanding the ESLint configuration
+### 1. Install dependency
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+```
+
+### 2. Jalankan backend
+
+```bash
+node server/index.js
+```
+
+Backend default berjalan di `http://localhost:3001`.
+
+### 3. Jalankan frontend
+
+```bash
+npm run dev
+```
+
+Frontend default berjalan di `http://localhost:5173`.
+
+## Script Penting
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run verify:backend
+npm run verify:db
+```
+
+Penjelasan:
+
+- `build`: memastikan bundle frontend valid
+- `lint`: memastikan source konsisten
+- `verify:backend`: smoke check service layer backend
+- `verify:db`: verifikasi governance runtime schema patch
+
+## Struktur Modul Utama
+
+- `src/App.jsx`: route tree frontend
+- `src/components/layout/*`: app shell
+- `src/pages/*`: halaman operasional, analytics, master, settings
+- `src/components/ui/*`: shared UI layer
+- `server/index.js`: bootstrap backend
+- `server/routes/*`: thin controller layer
+- `server/services/*`: service domain backend
+- `server/db.js`: bootstrap database
+- `server/database/runtimeCompatibility.js`: runtime compatibility patch inventory
+
+## Area Fitur
+
+- `Create Incident`: `/incidents/create`
+- `Active Troubles`: `/incidents`
+- `Incident Detail`: `/incidents/:id`
+- `Resolved Incidents`: `/history`
+- `Monthly Analysis`: `/monthly`
+- `Dashboard`: `/dashboard`
+- `Duration Intelligence`: `/duration-report`
+- `Root Cause`: `/root-cause`
+- `Customers`: `/master/customers`
+- `Classifications`: `/master/classifications`
+- `Distribution Topology`: `/master/distribusi`
+- `Personnel & Accounts`: `/master/users`
+- `Escalation Settings`: `/settings/escalation`
+
+## Data & Import
+
+- workbook manual resolved history disimpan di folder [MANUAL DATA](/Users/macbookair/Documents/IMMS/MANUAL%20DATA)
+- import history dilakukan dari halaman `Resolved Incidents`
+- delete batch archive sekarang juga membersihkan artefak legacy import agar upload ulang tidak tumpang tindih
+
+## Dokumentasi Lanjutan
+
+- [docs/ARCHITECTURE.md](/Users/macbookair/Documents/IMMS/docs/ARCHITECTURE.md)
+- [docs/CURRENT_STATE_AUDIT.md](/Users/macbookair/Documents/IMMS/docs/CURRENT_STATE_AUDIT.md)
+- [docs/PRIORITY_FINDINGS_2026-04-15.md](/Users/macbookair/Documents/IMMS/docs/PRIORITY_FINDINGS_2026-04-15.md)
+- [docs/REFACTOR_ROADMAP_2026-04-15.md](/Users/macbookair/Documents/IMMS/docs/REFACTOR_ROADMAP_2026-04-15.md)
+- [docs/FEATURE_MAP.md](/Users/macbookair/Documents/IMMS/docs/FEATURE_MAP.md)
+
+## Catatan Operasional
+
+- refresh token dipakai melalui `credentials: include`
+- notifikasi sekarang socket-aware, bukan polling murni
+- geocode customer dan topology punya report readiness di UI map
+- route backend utama sudah dimodularisasi ke service layer

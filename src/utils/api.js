@@ -185,9 +185,11 @@ export const api = {
   deleteCustomer: (id) => request(`/master/customers/${id}`, { method: 'DELETE' }),
   uploadCustomers: (customers) => request('/master/customers/batch', { method: 'POST', body: JSON.stringify({ customers }) }),
   getCustomersWithMissingCoords: () => request('/master/customers/missing-coords'),
+  getCustomerGeocodeReport: () => request('/master/customers/geocode-report'),
   autoGeocodeCustomers: (ids) => request('/master/customers/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
 
   getDistribusiWithMissingCoords: () => request('/master/distribusi/missing-coords'),
+  getDistribusiGeocodeReport: () => request('/master/distribusi/geocode-report'),
   autoGeocodeDistribusi: (ids) => request('/master/distribusi/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
   getDistributionTrouble: (start, end) => request(`/analytics/distribution-trouble?start_date=${start || ''}&end_date=${end || ''}`),
 

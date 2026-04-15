@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AlertCircle, RefreshCw, Search, Users } from 'lucide-react';
@@ -65,6 +65,57 @@ function StatChip({ label, value }) {
       <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
+  );
+}
+
+function ReportReasonList({ title, items = [] }) {
+  if (!items.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{title}</p>
+      <div className="space-y-2">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+            <span className="truncate text-muted-foreground">{item.label}</span>
+            <span className="font-medium text-foreground">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CustomerGeocodeReportCard({ report }) {
+  if (!report) return null;
+
+  const provinceItems = (report.provinceBreakdown || []).slice(0, 4).map((item) => ({
+    label: item.province,
+    value: item.count,
+  }));
+  const sampleItems = (report.samples || []).slice(0, 3).map((item) => ({
+    label: item.brand_site || item.company_name || item.city || `Customer #${item.id}`,
+    value: item.reason === 'ready_to_sync' ? 'Ready' : 'Needs address',
+  }));
+
+  return (
+    <SectionCard
+      title="Sync Health"
+      subtitle="Map readiness for customer coordinates."
+      className="min-w-[320px] shadow-lg"
+    >
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StatChip label="Mapped" value={report.mapped} />
+          <StatChip label="Ready To Sync" value={report.addressReady} />
+          <StatChip label="Missing Address" value={report.missingAddress} />
+          <StatChip label="Unmapped Total" value={report.missing} />
+        </div>
+
+        <ReportReasonList title="Highest Missing Provinces" items={provinceItems} />
+        <ReportReasonList title="Recent Unmapped Samples" items={sampleItems} />
+      </div>
+    </SectionCard>
   );
 }
 
@@ -156,6 +207,7 @@ export default function CustomerMap({
   const [viewState, setViewState] = useState({ center: SEMARANG_CENTER, zoom: 12, id: 0 });
   const [highlightedId, setHighlightedId] = useState(null);
   const [locatedLabel, setLocatedLabel] = useState('');
+  const [geocodeReport, setGeocodeReport] = useState(null);
 
   const filteredCustomers = useMemo(
     () => customers.filter((customer) => customer.latitude && customer.longitude),
@@ -170,6 +222,15 @@ export default function CustomerMap({
     [filteredCustomers]
   );
   const missingCustomerCoords = Math.max(customers.length - filteredCustomers.length, 0);
+
+  const loadGeocodeReport = useCallback(async () => {
+    try {
+      const report = await api.getCustomerGeocodeReport();
+      setGeocodeReport(report);
+    } catch (error) {
+      console.error('Failed to load customer geocode report:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (mapMode === 'trouble' && showTroubleMode) {
@@ -194,6 +255,10 @@ export default function CustomerMap({
     const timeoutId = window.setTimeout(() => setIsProcessing(false), 500);
     return () => window.clearTimeout(timeoutId);
   }, [filteredCustomers.length, mapMode, startDate, endDate, showTroubleMode]);
+
+  useEffect(() => {
+    loadGeocodeReport();
+  }, [loadGeocodeReport]);
 
   const startAutoGeocode = async () => {
     if (geocodingStatus.active) return;
@@ -230,6 +295,7 @@ export default function CustomerMap({
       }
 
       await onRefresh?.();
+      await loadGeocodeReport();
       addToast(
         [
           `Customer sync complete: ${updated} updated.`,
@@ -405,14 +471,17 @@ export default function CustomerMap({
           </form>
         </div>
 
-        <div className="pointer-events-none ml-auto hidden items-stretch gap-3 xl:flex">
-          <StatChip
-            label={mapMode === 'trouble' ? 'Incident Nodes' : 'Mapped Customers'}
-            value={mapMode === 'trouble' ? troublePoints.length : filteredCustomers.length}
-          />
-          <StatChip label={mapMode === 'trouble' ? 'Unmapped' : 'Missing Coords'} value={mapMode === 'trouble' ? Math.max(troubleData.length - troublePoints.length, 0) : missingCustomerCoords} />
-          <StatChip label="Coverage" value={`${provinceCount} provinces`} />
-          {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
+        <div className="pointer-events-none ml-auto hidden items-start gap-3 xl:flex">
+          <div className="grid gap-3">
+            <StatChip
+              label={mapMode === 'trouble' ? 'Incident Nodes' : 'Mapped Customers'}
+              value={mapMode === 'trouble' ? troublePoints.length : filteredCustomers.length}
+            />
+            <StatChip label={mapMode === 'trouble' ? 'Unmapped' : 'Missing Coords'} value={mapMode === 'trouble' ? Math.max(troubleData.length - troublePoints.length, 0) : missingCustomerCoords} />
+            <StatChip label="Coverage" value={`${provinceCount} provinces`} />
+            {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
+          </div>
+          {mapMode === 'customers' ? <CustomerGeocodeReportCard report={geocodeReport} /> : null}
         </div>
       </div>
 

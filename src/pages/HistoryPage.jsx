@@ -1,30 +1,19 @@
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FileSpreadsheet,
-  FileUp,
-  LayoutList,
-  Map as MapIcon,
-  Search,
-  Trash2,
-} from 'lucide-react';
 import { api } from '../utils/api.js';
 import { formatDateTime, normalizeInfrastructureLabel } from '../utils/incidentUtils.js';
 import { MONTH_NAMES } from '../utils/constants.js';
 import {
-  Button,
-  EmptyState,
-  Input,
   NcalBadge,
   PageHeader,
-  SectionCard,
-  Select,
   StatusPill,
-  TableSkeleton,
 } from '../components/ui/index.jsx';
-import { DataTable } from '../components/tables/DataTable.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { ArchiveToolbar } from './history/ArchiveToolbar.jsx';
+import { ArchiveFilters } from './history/ArchiveFilters.jsx';
+import { ArchiveListSection } from './history/ArchiveListSection.jsx';
+import { ArchiveMapSection } from './history/ArchiveMapSection.jsx';
 
 const NCAL_OPTIONS = ['', 'BLACK', 'RED', 'ORANGE', 'YELLOW', 'BLUE'];
 const currentYear = new Date().getFullYear();
@@ -375,197 +364,51 @@ export default function HistoryPage() {
         title="Incident Archive"
         subtitle={`${filteredData.length} archived incident${filteredData.length === 1 ? '' : 's'} ready for review, export, or spatial analysis.`}
         action={(
-          <div className="flex flex-wrap items-center gap-2">
-            {user?.role === 'admin' && viewMode === 'list' && selectedIds.length > 0 ? (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (allVisibleSelected) {
-                      setSelectedRowMap({});
-                    } else {
-                      setSelectedRowMap(
-                        filteredData.reduce((accumulator, item) => {
-                          accumulator[String(item.id)] = true;
-                          return accumulator;
-                        }, {})
-                      );
-                    }
-                  }}
-                >
-                  {allVisibleSelected ? 'Clear Selection' : 'Select Visible'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDeleteSelected}
-                  isLoading={deleting}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete ({selectedIds.length})
-                </Button>
-              </>
-            ) : null}
-
-            <div className="flex items-center rounded-md border border-border bg-muted/30 p-1">
-              <Button
-                type="button"
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <LayoutList className="mr-2 h-4 w-4" />
-                List
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === 'map' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('map')}
-              >
-                <MapIcon className="mr-2 h-4 w-4" />
-                Map
-              </Button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              isLoading={exporting}
-            >
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-
-            {user?.role === 'admin' ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleImportClick}
-                isLoading={importing}
-              >
-                <FileUp className="mr-2 h-4 w-4" />
-                Bulk Upload
-              </Button>
-            ) : null}
-          </div>
+          <ArchiveToolbar
+            userRole={user?.role}
+            viewMode={viewMode}
+            selectedIds={selectedIds}
+            allVisibleSelected={allVisibleSelected}
+            filteredData={filteredData}
+            setSelectedRowMap={setSelectedRowMap}
+            deleting={deleting}
+            handleDeleteSelected={handleDeleteSelected}
+            setViewMode={setViewMode}
+            exporting={exporting}
+            handleExport={handleExport}
+            importing={importing}
+            handleImportClick={handleImportClick}
+          />
         )}
       />
 
-      <SectionCard padding={false}>
-        <div className="grid gap-6 px-4 py-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_160px_180px_160px_auto]">
-          <Input
-            id="archive-search"
-            value={filters.search}
-            onChange={(event) => setFilter('search', event.target.value)}
-            placeholder="Search case no, site, customer, technician..."
-          />
-
-          <Select
-            id="archive-year"
-            value={filters.year}
-            onChange={(event) => setFilter('year', event.target.value)}
-          >
-            {YEAR_OPTIONS.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </Select>
-
-          <Select
-            id="archive-month"
-            value={filters.month}
-            onChange={(event) => setFilter('month', event.target.value)}
-          >
-            <option value="">Full Year</option>
-            {MONTH_NAMES.map((month, index) => (
-              <option key={month} value={String(index + 1).padStart(2, '0')}>
-                {month}
-              </option>
-            ))}
-          </Select>
-
-          <Select
-            id="archive-ncal"
-            value={filters.ncal}
-            onChange={(event) => setFilter('ncal', event.target.value)}
-          >
-            <option value="">All NCAL</option>
-            {NCAL_OPTIONS.filter(Boolean).map((ncal) => (
-              <option key={ncal} value={ncal}>
-                {ncal}
-              </option>
-            ))}
-          </Select>
-
-          {(filters.search || filters.month || filters.ncal) ? (
-            <div className="flex items-center xl:justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilters({ month: '', year: String(currentYear), ncal: '', search: '' })}
-              >
-                Reset
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      </SectionCard>
+      <ArchiveFilters
+        filters={filters}
+        setFilter={setFilter}
+        setFilters={setFilters}
+        currentYear={currentYear}
+        yearOptions={YEAR_OPTIONS}
+        monthNames={MONTH_NAMES}
+        ncalOptions={NCAL_OPTIONS}
+      />
 
       {viewMode === 'map' ? (
-        <SectionCard
-          title="Spatial Archive View"
-          subtitle="Visualize archived incident activity by customer location within the selected date range."
-          padding={false}
-          className="min-h-[640px] flex-1"
-        >
-          <Suspense fallback={<TableSkeleton rows={8} />}>
-            <CustomerMap
-              customers={customers}
-              onRefresh={() => api.getCustomers().then(setCustomers)}
-              initialMode="trouble"
-              showTroubleMode
-              hideCustomerPins
-              startDate={startDate}
-              endDate={endDate}
-            />
-          </Suspense>
-        </SectionCard>
+        <ArchiveMapSection
+          customerMapComponent={CustomerMap}
+          customers={customers}
+          refreshCustomers={() => api.getCustomers().then(setCustomers)}
+          startDate={startDate}
+          endDate={endDate}
+        />
       ) : (
-        <SectionCard
-          title="Archive Records"
-          subtitle="Browse closed incidents, inspect durations, and open the full detail record."
-          padding={false}
-          className="min-h-0 flex-1"
-        >
-          <div className="flex min-h-0 flex-1 flex-col">
-            {loading ? (
-              <TableSkeleton rows={12} />
-            ) : filteredData.length === 0 ? (
-              <EmptyState
-                icon={<Search className="h-8 w-8 text-muted-foreground" />}
-                title="No archive results"
-                desc="Try widening the date range or adjusting the search filters."
-              />
-            ) : (
-              <DataTable
-                columns={columns}
-                data={filteredData}
-                pageSize={25}
-                className="flex-1"
-                rowSelection={selectedRowMap}
-                onRowSelectionChange={setSelectedRowMap}
-                enableRowSelection={user?.role === 'admin'}
-                getRowId={(row) => String(row.id)}
-              />
-            )}
-          </div>
-        </SectionCard>
+        <ArchiveListSection
+          loading={loading}
+          filteredData={filteredData}
+          columns={columns}
+          selectedRowMap={selectedRowMap}
+          setSelectedRowMap={setSelectedRowMap}
+          enableRowSelection={user?.role === 'admin'}
+        />
       )}
     </div>
   );
