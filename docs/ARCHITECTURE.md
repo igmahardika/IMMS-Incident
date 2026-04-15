@@ -26,6 +26,7 @@ server/
   config/         Drizzle schema
   middleware/     Auth middleware
   routes/         Auth, incidents, analytics, master, settings
+  services/       Domain services per module
   scripts/        Utility sync dan geocoding
   utils/          Logger, validators, geocoder
   migrations/     SQL migration generated
@@ -89,7 +90,6 @@ Schema utama didefinisikan di [server/config/schema.js](/Users/macbookair/Docume
 - `master_customer`
 - `master_classifications`
 - `master_actions`
-- `master_technical_support`
 - `master_distribusi`
 
 ### Settings tables
@@ -104,7 +104,8 @@ Schema utama didefinisikan di [server/config/schema.js](/Users/macbookair/Docume
 - Frontend memanggil `POST /api/auth/login`
 - Backend memvalidasi password dengan bcrypt dan membuat JWT access token
 - Access token disimpan di `localStorage`
-- Refresh token dikirim via cookie `httpOnly`, walau frontend saat ini belum memanfaatkannya
+- Refresh token dikirim via cookie `httpOnly`
+- Frontend sekarang memakai refresh flow otomatis lewat [src/utils/api.js](/Users/macbookair/Documents/IMMS/src/utils/api.js)
 
 ### 2. Incident Creation
 
@@ -177,9 +178,29 @@ Schema utama didefinisikan di [server/config/schema.js](/Users/macbookair/Docume
 - Master data: [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js)
 - Settings: [server/routes/settings.js](/Users/macbookair/Documents/IMMS/server/routes/settings.js)
 
+### Service layer
+
+Backend sekarang memakai service layer per domain agar route tetap tipis dan logic lebih mudah dirawat:
+
+- Auth:
+  - [server/services/auth/auth.js](/Users/macbookair/Documents/IMMS/server/services/auth/auth.js)
+  - [server/services/auth/tokens.js](/Users/macbookair/Documents/IMMS/server/services/auth/tokens.js)
+- Incident:
+  - [server/services/incidents](/Users/macbookair/Documents/IMMS/server/services/incidents)
+- Analytics:
+  - [server/services/analytics/queries.js](/Users/macbookair/Documents/IMMS/server/services/analytics/queries.js)
+  - [server/services/analytics/utils.js](/Users/macbookair/Documents/IMMS/server/services/analytics/utils.js)
+- Master:
+  - [server/services/master](/Users/macbookair/Documents/IMMS/server/services/master)
+- Settings:
+  - [server/services/settings/escalation.js](/Users/macbookair/Documents/IMMS/server/services/settings/escalation.js)
+
+Helper response/error handling umum untuk route ada di [server/utils/http.js](/Users/macbookair/Documents/IMMS/server/utils/http.js).
+
 ### Infrastructure utilities
 
 - Auth middleware: [server/middleware/auth.js](/Users/macbookair/Documents/IMMS/server/middleware/auth.js)
+- HTTP route helpers: [server/utils/http.js](/Users/macbookair/Documents/IMMS/server/utils/http.js)
 - Validation: [server/utils/validators.js](/Users/macbookair/Documents/IMMS/server/utils/validators.js)
 - Geocoder: [server/utils/geocoder.js](/Users/macbookair/Documents/IMMS/server/utils/geocoder.js)
 - Logger: [server/utils/logger.js](/Users/macbookair/Documents/IMMS/server/utils/logger.js)
@@ -223,6 +244,24 @@ Variabel yang terlihat dipakai:
 
 ## Architectural Characteristics
 
+### Current backend shape
+
+Ukuran route layer saat ini setelah refactor:
+
+- [server/routes/analytics.js](/Users/macbookair/Documents/IMMS/server/routes/analytics.js): sekitar 56 baris
+- [server/routes/auth.js](/Users/macbookair/Documents/IMMS/server/routes/auth.js): sekitar 56 baris
+- [server/routes/incidents.js](/Users/macbookair/Documents/IMMS/server/routes/incidents.js): sekitar 233 baris
+- [server/routes/master.js](/Users/macbookair/Documents/IMMS/server/routes/master.js): sekitar 213 baris
+- [server/routes/settings.js](/Users/macbookair/Documents/IMMS/server/routes/settings.js): sekitar 28 baris
+
+Route backend sekarang terutama berfungsi sebagai:
+
+1. boundary untuk middleware/auth
+2. adapter request/response
+3. orchestration ringan
+
+Query dan business rules utama sekarang sudah lebih banyak berada di `server/services/*`.
+
 ### Strengths
 
 - Struktur folder cukup jelas antara frontend dan backend
@@ -230,18 +269,20 @@ Variabel yang terlihat dipakai:
 - React Query + Socket invalidation membuat UI cukup responsif
 - Audit log dan pause log memberi traceability yang bagus
 - Role-based navigation dan authorization sudah diterapkan
+- Route layer backend sekarang lebih modular dan lebih mudah di-maintain
 
 ### Tradeoffs and current constraints
 
 - Schema sudah memakai Drizzle, tetapi query bisnis masih dominan SQL mentah
-- Session architecture belum konsisten karena refresh token belum dipakai di frontend
-- Ada indikasi drift antara schema, route SQL, dan field yang dipakai UI
-- Dokumentasi project sebelumnya sangat minim
+- Database bootstrap masih mengandalkan compatibility patch di [server/db.js](/Users/macbookair/Documents/IMMS/server/db.js)
+- Notifikasi frontend masih polling-based dan belum sepenuhnya realtime via socket
+- Masih ada area drift antara schema formal, data legacy, dan query SQL mentah
+- Dokumentasi inti project masih perlu terus diselaraskan dengan codebase aktif
 
 ## Recommended Next Architecture Work
 
 1. Samakan schema, migration, dan seluruh field yang dipakai frontend/backend
-2. Rapikan session flow agar access token refresh benar-benar dipakai
-3. Pisahkan domain logic incident dari route handler yang saat ini sangat gemuk
+2. Kurangi patch compatibility di [server/db.js](/Users/macbookair/Documents/IMMS/server/db.js) dengan migrasi formal
+3. Tambahkan test/verifikasi untuk service layer backend
 4. Kurangi field legacy/tidak terpakai agar model data lebih jelas
 5. Tambahkan dokumentasi API dan seed data yang resmi
