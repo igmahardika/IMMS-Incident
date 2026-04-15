@@ -27,6 +27,33 @@ import { markNotificationRead } from '../services/incidents/notifications.js';
 import { getRecurringIncidentSummary } from '../services/incidents/recurring.js';
 
 const router = express.Router();
+const STAFF_NOTIFICATION_ROOMS = ['role:admin', 'role:manager', 'role:noc'];
+
+function resolveNotificationRooms(targets = []) {
+  const rooms = new Set();
+
+  for (const target of targets) {
+    const userId = Number(target?.userId);
+    const role = String(target?.role || '').trim().toLowerCase();
+
+    if (Number.isInteger(userId) && userId > 0) {
+      rooms.add(`user:${userId}`);
+    }
+
+    if (!role) continue;
+
+    if (role === 'staff') {
+      for (const room of STAFF_NOTIFICATION_ROOMS) {
+        rooms.add(room);
+      }
+      continue;
+    }
+
+    rooms.add(`role:${role}`);
+  }
+
+  return [...rooms];
+}
 
 // ─── GET /api/incidents — active ────────────────────────────────────────────
 router.get('/', authenticate, (req, res) => {
@@ -44,7 +71,13 @@ router.get('/notifications', authenticate, (req, res) => {
 });
 
 router.put('/notifications/:id/read', authenticate, (req, res) => {
-  res.json(markNotificationRead(req.params.id));
+  const result = markNotificationRead(req.params.id);
+  emitSocketEvent('notifications-changed', {
+    type: 'read',
+    notificationId: Number(req.params.id),
+    rooms: [`user:${req.user.id}`],
+  });
+  res.json(result);
 });
 
 // ─── GET /api/incidents/:id ─────────────────────────────────────────────────
@@ -57,9 +90,17 @@ router.get('/:id', authenticate, (req, res) => {
 // ─── POST /api/incidents — create ───────────────────────────────────────────
 router.post('/', authenticate, validateRequest(incidentCreateSchema), (req, res) => {
   try {
-    const incident = createIncident(req.body, req.user.id);
+    const { incident, notificationTargets } = createIncident(req.body, req.user.id);
 
     emitSocketEvent('incident-updated', { type: 'create', incident });
+    const notificationRooms = resolveNotificationRooms(notificationTargets);
+    if (notificationRooms.length) {
+      emitSocketEvent('notifications-changed', {
+        type: 'create',
+        incidentId: incident.id,
+        rooms: notificationRooms,
+      });
+    }
     logger.info(`Incident created: Case #${incident.case_no} by User ID: ${req.user.id}`);
 
     sendEscalation(incident, 'open').catch((error) => {
@@ -80,8 +121,16 @@ router.post('/', authenticate, validateRequest(incidentCreateSchema), (req, res)
 // ─── PUT /api/incidents/:id — update fields ─────────────────────────────────
 router.put('/:id', authenticate, validateRequest(incidentUpdateSchema), (req, res) => {
   try {
-    const { incident, old } = updateIncident(req.params.id, req.body, req.user);
+    const { incident, old, notificationTargets } = updateIncident(req.params.id, req.body, req.user);
     emitSocketEvent('incident-updated', { type: 'update', id: req.params.id });
+    const notificationRooms = resolveNotificationRooms(notificationTargets);
+    if (notificationRooms.length) {
+      emitSocketEvent('notifications-changed', {
+        type: 'update',
+        incidentId: Number(req.params.id),
+        rooms: notificationRooms,
+      });
+    }
     logger.info(`Incident updated: Case #${old.case_no} by User ID: ${req.user.id}`);
     res.json(incident);
   } catch (error) {

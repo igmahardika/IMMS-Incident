@@ -2,7 +2,18 @@ import React, { useEffect } from 'react';
 import { Loader2, PackageOpen, X } from 'lucide-react';
 import { cn } from '../../../lib/utils.js';
 
-export function Modal({ open, onClose, title, children, footer, size = '' }) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  size = '',
+  bodyClassName = '',
+  footerClassName = '',
+  closeOnOverlay = true,
+}) {
   useEffect(() => {
     if (!open) return undefined;
 
@@ -37,7 +48,7 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
       <button
         type="button"
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={closeOnOverlay ? onClose : undefined}
         aria-label="Close dialog backdrop"
       />
 
@@ -54,6 +65,7 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
         <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
           <div className="space-y-1">
             <h3 className="text-lg font-semibold tracking-tight text-foreground">{title}</h3>
+            {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
           </div>
 
           <button
@@ -66,10 +78,10 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className={cn('flex-1 overflow-y-auto p-6', bodyClassName)}>{children}</div>
 
         {footer ? (
-          <div className="flex justify-end gap-2 border-t border-border bg-muted/20 px-6 py-4">
+          <div className={cn('flex justify-end gap-2 border-t border-border bg-muted/20 px-6 py-4', footerClassName)}>
             {footer}
           </div>
         ) : null}
@@ -78,9 +90,9 @@ export function Modal({ open, onClose, title, children, footer, size = '' }) {
   );
 }
 
-export function EmptyState({ icon, title, desc, action }) {
+export function EmptyState({ icon, title, desc, action, compact = false, className = '' }) {
   return (
-    <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+    <div className={cn('flex flex-col items-center justify-center gap-4 px-6 py-12 text-center', compact ? 'min-h-[200px]' : 'min-h-[280px]', className)}>
       <div className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
         {icon || <PackageOpen className="h-6 w-6" />}
       </div>

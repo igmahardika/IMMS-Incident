@@ -65,14 +65,17 @@ export function createIncident(payload, userId) {
     VALUES (?, ?, 'CREATE', ?)
   `).run(incident.id, userId, 'Incident created with status OPEN');
 
+  const notificationTargets = [];
+
   if (technician_id) {
     db.prepare(`
       INSERT INTO notifications (user_id, incident_id, type, message)
       VALUES (?, ?, 'ASSIGNMENT', ?)
     `).run(technician_id, incident.id, `You have been assigned to Case #${incident.case_no}`);
+    notificationTargets.push({ userId: technician_id });
   }
 
-  return incident;
+  return { incident, notificationTargets };
 }
 
 export function updateIncident(id, payload, user) {
@@ -167,11 +170,14 @@ export function updateIncident(id, payload, user) {
     `).run(id, user.id, detailStr);
   }
 
+  const notificationTargets = [];
+
   if (technician_id && technician_id !== old.technician_id) {
     db.prepare(`
       INSERT INTO notifications (user_id, incident_id, type, message)
       VALUES (?, ?, 'ASSIGNMENT', ?)
     `).run(technician_id, id, `You have been assigned to Case #${old.case_no}`);
+    notificationTargets.push({ userId: technician_id });
   }
 
   if (user.role === 'technician' && changes.length > 0) {
@@ -179,11 +185,13 @@ export function updateIncident(id, payload, user) {
       INSERT INTO notifications (target_role, incident_id, type, message)
       VALUES ('staff', ?, 'TECH_UPDATE', ?)
     `).run(id, `Technician ${user.name} updated Case #${old.case_no}: ${detailStr}`);
+    notificationTargets.push({ role: 'staff' });
   }
 
   return {
     incident: getIncidentById(id),
     old,
     changes,
+    notificationTargets,
   };
 }

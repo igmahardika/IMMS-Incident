@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import logger from './utils/logger.js';
+import { applyRuntimeSchemaCompatibility } from './database/runtimeCompatibility.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, '..', 'imms.db');
@@ -21,34 +22,8 @@ export const drizzleDb = drizzle(sqlite, { schema });
 const db = sqlite;
 
 // CREATE TABLE statements have been migrated to Drizzle ORM schema definitions in ./config/schema.js
-// Use `npx drizzle-kit@latest push` when you explicitly need to apply schema changes from the config file
-
-function ensureColumn(table, definition) {
-  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
-  const columnNames = new Set(columns.map((column) => column.name));
-  const [columnName] = definition.split(/\s+/);
-  if (!columnNames.has(columnName)) {
-    db.prepare(`ALTER TABLE ${table} ADD COLUMN ${definition}`).run();
-  }
-}
-
-function ensureSchemaCompatibility() {
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS metadata (
-      key TEXT PRIMARY KEY,
-      value TEXT,
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )
-  `).run();
-
-  ensureColumn('master_customer', 'sla TEXT');
-  ensureColumn('master_customer', 'latitude REAL');
-  ensureColumn('master_customer', 'longitude REAL');
-  ensureColumn('master_customer', 'city TEXT');
-  ensureColumn('master_customer', 'province TEXT');
-}
-
-ensureSchemaCompatibility();
+// Runtime compatibility patches below are transitional support for older local DB files.
+applyRuntimeSchemaCompatibility(db, logger);
 
 // ─── Seed Data ─────────────────────────────────────────────────────────────
 

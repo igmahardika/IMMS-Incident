@@ -24,8 +24,8 @@ const buttonVariants = cva(
       size: {
         xs: 'h-8 rounded-md px-2.5 text-xs',
         sm: 'h-9 px-3 text-sm',
-        md: 'h-9 px-4 py-2',
-        lg: 'h-10 px-6',
+        md: 'h-10 px-4 text-sm',
+        lg: 'h-11 px-6 text-sm',
         icon: 'h-9 w-9',
       },
     },
@@ -36,24 +36,49 @@ const buttonVariants = cva(
   }
 );
 
-const inputBaseClassName = cn(
-  'flex w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow,border-color]',
-  'placeholder:text-muted-foreground',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0',
-  'disabled:cursor-not-allowed disabled:opacity-50'
+const controlVariants = cva(
+  cn(
+    'flex w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow,border-color]',
+    'placeholder:text-muted-foreground',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0',
+    'disabled:cursor-not-allowed disabled:opacity-50'
+  ),
+  {
+    variants: {
+      size: {
+        sm: 'h-8 text-xs',
+        md: 'h-9 text-sm',
+        lg: 'h-10 text-sm',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
 );
 
-export function FormField({ label, error, children, className, htmlFor, description }) {
+export function FormField({
+  label,
+  error,
+  children,
+  className,
+  htmlFor,
+  description,
+  labelClassName,
+  contentClassName,
+  descriptionClassName,
+  errorClassName,
+}) {
   return (
     <div className={cn('grid w-full gap-2', className)}>
       {label ? (
-        <label htmlFor={htmlFor} className="text-sm font-medium leading-none text-foreground">
+        <label htmlFor={htmlFor} className={cn('text-sm font-medium leading-none text-foreground', labelClassName)}>
           {label}
         </label>
       ) : null}
-      {children}
-      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-      {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+      <div className={cn('min-w-0', contentClassName)}>{children}</div>
+      {description ? <p className={cn('text-sm text-muted-foreground', descriptionClassName)}>{description}</p> : null}
+      {error ? <p className={cn('text-sm font-medium text-destructive', errorClassName)}>{error}</p> : null}
     </div>
   );
 }
@@ -98,6 +123,7 @@ export const Input = React.forwardRef(function Input(
     wrapperClassName,
     description,
     id,
+    size = 'md',
     ...props
   },
   ref
@@ -115,11 +141,12 @@ export const Input = React.forwardRef(function Input(
         id={id}
         type={type}
         className={cn(
-          inputBaseClassName,
-          'h-9 py-1',
+          controlVariants({ size }),
+          'py-1',
           error && 'border-destructive focus-visible:ring-destructive/30',
           className
         )}
+        aria-invalid={Boolean(error)}
         {...props}
       />
     </FormField>
@@ -134,10 +161,17 @@ export const Textarea = React.forwardRef(function Textarea(
     wrapperClassName,
     description,
     id,
+    size = 'md',
     ...props
   },
   ref
 ) {
+    const textareaSizeClass = {
+      sm: 'min-h-[96px]',
+      md: 'min-h-[120px]',
+      lg: 'min-h-[156px]',
+    };
+
     return (
       <FormField
         label={label}
@@ -150,11 +184,13 @@ export const Textarea = React.forwardRef(function Textarea(
           ref={ref}
           id={id}
           className={cn(
-            inputBaseClassName,
-            'min-h-[120px] py-2 resize-none',
+            controlVariants({ size }),
+            'h-auto resize-none py-2',
+            textareaSizeClass[size] || textareaSizeClass.md,
             error && 'border-destructive focus-visible:ring-destructive/30',
             className
           )}
+          aria-invalid={Boolean(error)}
           {...props}
         />
       </FormField>
@@ -170,6 +206,7 @@ export const Select = React.forwardRef(function Select(
     wrapperClassName,
     description,
     id,
+    size = 'md',
     ...props
   },
   ref
@@ -186,11 +223,12 @@ export const Select = React.forwardRef(function Select(
         ref={ref}
         id={id}
         className={cn(
-          inputBaseClassName,
-          'h-9 py-1',
+          controlVariants({ size }),
+          'py-1',
           error && 'border-destructive focus-visible:ring-destructive/30',
           className
         )}
+        aria-invalid={Boolean(error)}
         {...props}
       >
         {children}

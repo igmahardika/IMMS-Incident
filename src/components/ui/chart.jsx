@@ -60,25 +60,25 @@ export function ChartTooltipContent({
   const formattedLabel = labelFormatter ? labelFormatter(label, payload) : label;
 
   return (
-    <div className="bg-background border border-foreground/8 shadow-2xl rounded-xl p-3 min-w-[150px] backdrop-blur-md">
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 mb-3 border-b border-foreground/[0.04] pb-2">
+    <div className="min-w-[180px] rounded-xl border border-border bg-popover px-3 py-2.5 text-popover-foreground shadow-lg">
+      <div className="mb-2 border-b border-border/60 pb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {formattedLabel}
       </div>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         {payload.map((item, idx) => {
           const cfg = config[item.dataKey] || config[item.name] || {};
           const lbl = cfg.label || item.name || item.dataKey;
           const color = cfg.color || item.color || item.fill;
 
           return (
-            <div key={idx} className="flex items-center justify-between gap-6 text-[10px] font-black">
-              <div className="flex items-center gap-2">
+            <div key={idx} className="flex items-center justify-between gap-5 text-xs">
+              <div className="flex min-w-0 items-center gap-2">
                 {indicator === "dot" && (
-                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
+                  <div className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
                 )}
-                <span className="text-foreground/50 uppercase tracking-widest">{lbl}</span>
+                <span className="truncate font-medium text-muted-foreground">{lbl}</span>
               </div>
-              <span className="font-mono text-foreground tabular-nums">
+              <span className="font-mono text-xs font-semibold tabular-nums text-foreground">
                 {valueFormatter
                   ? valueFormatter(item.value, item.dataKey, item.payload, item)
                   : typeof item.value === 'number'
@@ -105,7 +105,7 @@ export function ChartLegendContent({ payload, config = {} }) {
   if (!payload || !payload.length) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.25em] text-foreground/30 mt-6 pt-5 border-t border-foreground/[0.04] w-full">
+    <div className="mt-4 flex w-full flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
       {payload.map((entry, idx) => {
         const key = entry.dataKey || entry.value;
         const cfg = config[key] || {};
@@ -113,9 +113,9 @@ export function ChartLegendContent({ payload, config = {} }) {
         const color = cfg.color || entry.color;
 
         return (
-          <div key={idx} className="flex items-center gap-2.5 transition-all hover:text-foreground/60 cursor-default">
-            <div className="w-2 h-2 rounded-full shrink-0 shadow-sm" style={{ background: color }} />
-            <span>{lbl}</span>
+          <div key={idx} className="flex cursor-default items-center gap-2 transition-colors hover:text-foreground">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color }} />
+            <span className="font-medium">{lbl}</span>
           </div>
         );
       })}

@@ -5,8 +5,9 @@ import { api } from '../../utils/api.js';
 import { formatDateTime } from '../../utils/incidentUtils.js';
 import { cn } from '../../lib/utils.js';
 import { Button } from './index.jsx';
+import { socket } from '../../hooks/useSocket.js';
 
-const POLL_INTERVAL = 10000;
+const POLL_INTERVAL = 60000;
 
 function playNotificationSound() {
   try {
@@ -150,6 +151,17 @@ export default function NotificationBell() {
     fetchNotifications();
     const intervalId = window.setInterval(fetchNotifications, POLL_INTERVAL);
     return () => window.clearInterval(intervalId);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const handleNotificationsChanged = () => {
+      fetchNotifications();
+    };
+
+    socket.on('notifications-changed', handleNotificationsChanged);
+    return () => {
+      socket.off('notifications-changed', handleNotificationsChanged);
+    };
   }, [fetchNotifications]);
 
   useEffect(() => {

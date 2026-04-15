@@ -10,6 +10,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "verify:backend": "node server/scripts/verify_backend_services.js",
+    "verify:db": "node server/scripts/verify_db_governance.js",
     "preview": "vite preview"
   },
   "dependencies": {
