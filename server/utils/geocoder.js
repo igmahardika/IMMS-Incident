@@ -58,11 +58,48 @@ function normalizeLocationPart(value) {
     .trim();
 }
 
+function inferLocationContext(address, provided = {}) {
+  const text = String(address || '').toLowerCase();
+  let city = normalizeLocationPart(provided.city);
+  let province = normalizeLocationPart(provided.province);
+
+  if (!province) {
+    if (/jepara/.test(text)) province = 'Jawa Tengah';
+    else if (/demak/.test(text)) province = 'Jawa Tengah';
+    else if (/grobogan/.test(text)) province = 'Jawa Tengah';
+    else if (/salatiga|bergas|suruh/.test(text)) province = 'Jawa Tengah';
+    else if (/semarang|gajah mungkur|semarang tengah|semarang timur|pedurungan|ngaliyan|tugu|randugarut|medoho|jangli|pemuda|mt\.?\s*haryono|wijayakusuma|bsb/.test(text)) {
+      province = 'Jawa Tengah';
+    }
+  }
+
+  if (!city) {
+    if (/kabupaten jepara|kec\.?\s*kembang|tanjung jati/.test(text)) city = 'Jepara';
+    else if (/demak|mranggen/.test(text)) city = 'Demak';
+    else if (/grobogan|klambu/.test(text)) city = 'Grobogan';
+    else if (/salatiga|bergas|suruh/.test(text)) city = 'Salatiga';
+    else if (/semarang|gajah mungkur|semarang tengah|semarang timur|pedurungan|ngaliyan|tugu|randugarut|medoho|jangli|pemuda|mt\.?\s*haryono|wijayakusuma|bsb/.test(text)) {
+      city = 'Semarang';
+    }
+  }
+
+  if (!province && city && ['Semarang', 'Demak', 'Jepara', 'Grobogan', 'Salatiga'].includes(city)) {
+    province = 'Jawa Tengah';
+  }
+
+  return {
+    city,
+    province,
+    country: normalizeLocationPart(provided.country) || 'Indonesia',
+  };
+}
+
 function buildQueryCandidates(address, { city, province, country = 'Indonesia' } = {}) {
   const cleanedAddress = smartCleanAddress(address);
-  const normalizedCity = normalizeLocationPart(city);
-  const normalizedProvince = normalizeLocationPart(province);
-  const normalizedCountry = normalizeLocationPart(country);
+  const inferred = inferLocationContext(cleanedAddress, { city, province, country });
+  const normalizedCity = normalizeLocationPart(inferred.city);
+  const normalizedProvince = normalizeLocationPart(inferred.province);
+  const normalizedCountry = normalizeLocationPart(inferred.country);
 
   const candidates = [
     [cleanedAddress, normalizedCity, normalizedProvince, normalizedCountry].filter(Boolean).join(', '),
@@ -93,12 +130,21 @@ function readCache(query) {
   }
 }
 
+function inspectCache(query) {
+  const cached = readCache(query);
+  if (!cached) return { status: 'none', payload: null };
+  return { status: cached.status || 'none', payload: cached };
+}
+
 function writeCache(query, payload) {
   db.prepare(`
     INSERT INTO metadata (key, value)
     VALUES (?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(createCacheKey(query), JSON.stringify(payload));
+  `).run(createCacheKey(query), JSON.stringify({
+    ...payload,
+    timestamp: Date.now(),
+  }));
 }
 
 async function fetchJsonWithTimeout(url, options = {}) {
@@ -258,3 +304,4 @@ async function geocodeNominatim(query, retryCount = 0) {
 }
 
 export { geocode };
+export { buildQueryCandidates, inspectCache };

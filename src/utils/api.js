@@ -187,6 +187,7 @@ export const api = {
   getCustomersWithMissingCoords: () => request('/master/customers/missing-coords'),
   getCustomerGeocodeReport: () => request('/master/customers/geocode-report'),
   autoGeocodeCustomers: (ids) => request('/master/customers/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
+  getUpdateSyncReport: () => request('/master/update-sync-report'),
 
   getDistribusiWithMissingCoords: () => request('/master/distribusi/missing-coords'),
   getDistribusiGeocodeReport: () => request('/master/distribusi/geocode-report'),

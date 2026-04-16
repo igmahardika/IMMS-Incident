@@ -49,6 +49,34 @@ export const RUNTIME_SCHEMA_PATCHES = [
       'province TEXT',
     ]),
   },
+  {
+    id: 'master-customer-survey-columns',
+    description: 'Ensure survey/reference fields exist on master_customer.',
+    apply: (db) => ensureColumns(db, 'master_customer', [
+      'osc_reference TEXT',
+      'odc_reference TEXT',
+      'odp_reference TEXT',
+      'survey_name_raw TEXT',
+      'survey_latitude REAL',
+      'survey_longitude REAL',
+      'survey_source TEXT',
+      'survey_updated_at TEXT',
+      'coord_source TEXT',
+      'coord_updated_at TEXT',
+    ]),
+  },
+  {
+    id: 'master-distribusi-survey-columns',
+    description: 'Ensure survey/reference fields exist on master_distribusi.',
+    apply: (db) => ensureColumns(db, 'master_distribusi', [
+      'survey_latitude REAL',
+      'survey_longitude REAL',
+      'survey_source TEXT',
+      'survey_updated_at TEXT',
+      'coord_source TEXT',
+      'coord_updated_at TEXT',
+    ]),
+  },
 ];
 
 export function applyRuntimeSchemaCompatibility(db, logger) {
@@ -90,6 +118,48 @@ export function getRuntimeSchemaPatchStatus(db) {
     if (patch.id === 'master-customer-geocode-columns') {
       const existing = getColumnNames(db, 'master_customer');
       const expected = ['sla', 'latitude', 'longitude', 'city', 'province'];
+      const missing = expected.filter((column) => !existing.has(column));
+      return {
+        id: patch.id,
+        description: patch.description,
+        ok: missing.length === 0,
+        missing,
+      };
+    }
+
+    if (patch.id === 'master-customer-survey-columns') {
+      const existing = getColumnNames(db, 'master_customer');
+      const expected = [
+        'osc_reference',
+        'odc_reference',
+        'odp_reference',
+        'survey_name_raw',
+        'survey_latitude',
+        'survey_longitude',
+        'survey_source',
+        'survey_updated_at',
+        'coord_source',
+        'coord_updated_at',
+      ];
+      const missing = expected.filter((column) => !existing.has(column));
+      return {
+        id: patch.id,
+        description: patch.description,
+        ok: missing.length === 0,
+        missing,
+      };
+    }
+
+    if (patch.id === 'master-distribusi-survey-columns') {
+      const existing = getColumnNames(db, 'master_distribusi');
+      const expected = [
+        'survey_latitude',
+        'survey_longitude',
+        'survey_source',
+        'survey_updated_at',
+        'coord_source',
+        'coord_updated_at',
+      ];
       const missing = expected.filter((column) => !existing.has(column));
       return {
         id: patch.id,

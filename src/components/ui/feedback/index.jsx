@@ -39,7 +39,7 @@ export function Modal({
       }}
     >
       <DialogContent
-        className={cn('max-h-[88vh] w-[calc(100vw-32px)] p-0', sizeMap[size] || 'max-w-lg')}
+        className={cn('max-h-[92vh] w-[calc(100vw-32px)] p-0', sizeMap[size] || 'max-w-lg')}
         onEscapeKeyDown={(event) => {
           if (!closeOnOverlay) event.preventDefault();
         }}
@@ -50,12 +50,12 @@ export function Modal({
           if (!closeOnOverlay) event.preventDefault();
         }}
       >
-        <DialogHeader className="border-b border-border pb-4">
+        <DialogHeader className="shrink-0 border-b border-border pb-4">
           <DialogTitle>{title}</DialogTitle>
           {subtitle ? <DialogDescription>{subtitle}</DialogDescription> : null}
         </DialogHeader>
 
-        <div className={cn('flex-1 overflow-y-auto px-6 pb-6', bodyClassName)}>{children}</div>
+        <div className={cn('min-h-0 flex-1 overflow-y-auto px-6 pb-6', bodyClassName)}>{children}</div>
 
         {footer ? <DialogFooter className={footerClassName}>{footer}</DialogFooter> : null}
       </DialogContent>

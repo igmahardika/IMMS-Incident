@@ -40,15 +40,25 @@ const EMPTY_FORM = {
   company_name: '',
   brand_site: '',
   address: '',
+  city: '',
+  province: '',
   service_type: 'Internet Dedicated',
   grade: 'Bronze',
   support_level: 'L1',
   link_coverage: '',
+  osc_reference: '',
+  odc_reference: '',
+  odp_reference: '',
   latitude: '',
   longitude: '',
+  coord_source: '',
+  survey_name_raw: '',
+  survey_latitude: '',
+  survey_longitude: '',
+  survey_source: '',
 };
 
-const SERVICE_TYPES = [
+const DEFAULT_SERVICE_TYPES = [
   'Internet Dedicated',
   'Broadband',
   'VPN IP',
@@ -58,8 +68,16 @@ const SERVICE_TYPES = [
   'Clear Channel',
 ];
 
-const GRADE_OPTIONS = ['VIP', 'Gold', 'Silver', 'Bronze'];
-const SUPPORT_OPTIONS = ['L1', 'L2', 'L3'];
+const DEFAULT_GRADE_OPTIONS = ['VIP', 'Gold', 'Silver', 'Bronze', 'A', 'B', 'C', 'High', 'Medium', 'Low'];
+const DEFAULT_SUPPORT_OPTIONS = ['L1', 'L2', 'L3', '1', '2', '3'];
+const COORD_SOURCE_OPTIONS = [
+  '',
+  'manual',
+  'geocoder',
+  'anchor',
+  'update-workbook-customer',
+  'update-workbook-odp',
+];
 
 function StatCard({ label, value, meta, icon, tone = 'default' }) {
   const Icon = icon;
@@ -98,10 +116,13 @@ function StatCard({ label, value, meta, icon, tone = 'default' }) {
 
 export default function MasterCustomerPage() {
   const [customers, setCustomers] = useState([]);
+  const [syncReport, setSyncReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list');
   const [modal, setModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('all');
+  const [gradeFilter, setGradeFilter] = useState('all');
   const [form, setForm] = useState(EMPTY_FORM);
   const fileInputRef = useRef(null);
   const { addToast } = useToast();
@@ -109,8 +130,12 @@ export default function MasterCustomerPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.getCustomers();
-      setCustomers(response);
+      const [customerResponse, reportResponse] = await Promise.all([
+        api.getCustomers(),
+        api.getUpdateSyncReport(),
+      ]);
+      setCustomers(customerResponse);
+      setSyncReport(reportResponse);
     } catch (error) {
       addToast(error.message, 'error');
     } finally {
@@ -137,6 +162,8 @@ export default function MasterCustomerPage() {
       ...customer,
       latitude: customer.latitude ?? '',
       longitude: customer.longitude ?? '',
+      survey_latitude: customer.survey_latitude ?? '',
+      survey_longitude: customer.survey_longitude ?? '',
     });
     setModal(customer);
   };
@@ -183,6 +210,8 @@ export default function MasterCustomerPage() {
         company_name: row['Company Name']?.toString() || '',
         brand_site: row['Brand / Site']?.toString() || '',
         address: row.Address?.toString() || '',
+        city: row.City?.toString() || '',
+        province: row.Province?.toString() || '',
         service_type: row.Service?.toString() || '',
         grade: row.Grade?.toString() || '',
         support_level: row['Support Level']?.toString() || '',
@@ -208,6 +237,8 @@ export default function MasterCustomerPage() {
         'Company Name': 'GLOBAL TECH',
         'Brand / Site': 'HQ',
         Address: 'STREET 01',
+        City: 'Semarang',
+        Province: 'Jawa Tengah',
         Service: 'Internet Dedicated',
         Grade: 'Gold',
         'Support Level': 'L2',
@@ -219,30 +250,81 @@ export default function MasterCustomerPage() {
 
   const filteredCustomers = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
-    if (!term) return customers;
+    return customers.filter((customer) => {
+      const matchesSearch = !term || (
+        customer.customer_id?.toLowerCase().includes(term)
+        || customer.service_id?.toLowerCase().includes(term)
+        || customer.company_name?.toLowerCase().includes(term)
+        || customer.brand_site?.toLowerCase().includes(term)
+        || customer.address?.toLowerCase().includes(term)
+        || customer.city?.toLowerCase().includes(term)
+        || customer.province?.toLowerCase().includes(term)
+        || customer.osc_reference?.toLowerCase().includes(term)
+        || customer.odc_reference?.toLowerCase().includes(term)
+        || customer.odp_reference?.toLowerCase().includes(term)
+        || customer.survey_name_raw?.toLowerCase().includes(term)
+        || customer.survey_source?.toLowerCase().includes(term)
+      );
 
-    return customers.filter((customer) => (
-      customer.customer_id?.toLowerCase().includes(term)
-      || customer.service_id?.toLowerCase().includes(term)
-      || customer.company_name?.toLowerCase().includes(term)
-      || customer.brand_site?.toLowerCase().includes(term)
-      || customer.address?.toLowerCase().includes(term)
-    ));
-  }, [customers, searchQuery]);
+      const matchesService = serviceFilter === 'all' || customer.service_type === serviceFilter;
+      const matchesGrade = gradeFilter === 'all' || customer.grade === gradeFilter;
+
+      return matchesSearch && matchesService && matchesGrade;
+    });
+  }, [customers, gradeFilter, searchQuery, serviceFilter]);
 
   const stats = useMemo(() => {
     const total = customers.length;
     const priority = customers.filter((customer) => ['VIP', 'Gold'].includes(customer.grade)).length;
     const mapped = customers.filter((customer) => customer.latitude && customer.longitude).length;
     const withLinks = customers.filter((customer) => customer.link_coverage).length;
+    const withSurvey = customers.filter((customer) => customer.survey_latitude && customer.survey_longitude).length;
+    const withTopologyRefs = customers.filter((customer) => customer.odp_reference || customer.odc_reference || customer.osc_reference).length;
 
     return {
       total,
       priority,
       mapped,
       withLinks,
+      withSurvey,
+      withTopologyRefs,
     };
   }, [customers]);
+
+  const reviewMetrics = syncReport?.customer || null;
+
+  const serviceTypeOptions = useMemo(() => {
+    const values = new Set(DEFAULT_SERVICE_TYPES);
+    customers.forEach((customer) => {
+      if (customer.service_type) values.add(customer.service_type);
+    });
+    return Array.from(values).sort((left, right) => left.localeCompare(right));
+  }, [customers]);
+
+  const gradeOptions = useMemo(() => {
+    const values = new Set(DEFAULT_GRADE_OPTIONS);
+    customers.forEach((customer) => {
+      if (customer.grade) values.add(customer.grade);
+    });
+    return Array.from(values).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+  }, [customers]);
+
+  const supportOptions = useMemo(() => {
+    const values = new Set(DEFAULT_SUPPORT_OPTIONS);
+    customers.forEach((customer) => {
+      if (customer.support_level) values.add(String(customer.support_level));
+    });
+    return Array.from(values).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+  }, [customers]);
+
+  const handleOpenConflict = (customerId) => {
+    const target = customers.find((customer) => customer.customer_id === customerId);
+    if (!target) {
+      addToast(`Customer ${customerId} is not in the active registry anymore.`, 'warning');
+      return;
+    }
+    openEdit(target);
+  };
 
   const columns = useMemo(() => [
     {
@@ -265,6 +347,7 @@ export default function MasterCustomerPage() {
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span>Customer ID: {row.original.customer_id}</span>
             <span>Service ID: {row.original.service_id}</span>
+            {row.original.odp_reference ? <span>ODP: {row.original.odp_reference}</span> : null}
           </div>
         </div>
       ),
@@ -281,11 +364,21 @@ export default function MasterCustomerPage() {
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
-              {row.original.city || row.original.brand_site || 'Location pending'}
+              {[row.original.city, row.original.province].filter(Boolean).join(', ') || row.original.brand_site || 'Location pending'}
             </p>
             <p className="line-clamp-2 text-xs text-muted-foreground">
               {row.original.address || 'No address registered'}
             </p>
+            {(row.original.osc_reference || row.original.odc_reference || row.original.odp_reference) ? (
+            <p className="text-[11px] text-muted-foreground">
+                {[row.original.osc_reference, row.original.odc_reference, row.original.odp_reference].filter(Boolean).join(' / ')}
+              </p>
+            ) : null}
+            {row.original.coord_source ? (
+              <p className="text-[11px] text-muted-foreground">
+                Source: {row.original.coord_source}
+              </p>
+            ) : null}
           </div>
         </div>
       ),
@@ -371,6 +464,14 @@ export default function MasterCustomerPage() {
               >
                 Map
               </Button>
+              <Button
+                variant={viewMode === 'review' ? 'secondary' : 'ghost'}
+                size="sm"
+                icon={<Database className="h-4 w-4" />}
+                onClick={() => setViewMode('review')}
+              >
+                Sync Review
+              </Button>
             </div>
 
             <Button
@@ -429,19 +530,57 @@ export default function MasterCustomerPage() {
         />
       </div>
 
-      <SectionCard
-        padding={false}
-      >
-        <div className="p-4">
-          <Input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search by customer ID, service ID, company, site, or address"
-            wrapperClassName="gap-1"
-            label="Search"
-          />
-        </div>
-      </SectionCard>
+      {viewMode !== 'review' ? (
+        <SectionCard
+          padding={false}
+        >
+          <div className="p-4">
+            {viewMode === 'list' ? (
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.7fr)_minmax(140px,0.5fr)]">
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search by customer, address, city, province, OSC, ODC, or ODP"
+                  wrapperClassName="gap-1"
+                  label="Search"
+                />
+                <Select
+                  label="Service"
+                  value={serviceFilter}
+                  onChange={(event) => setServiceFilter(event.target.value)}
+                >
+                  <option value="all">All Services</option>
+                  {serviceTypeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Grade"
+                  value={gradeFilter}
+                  onChange={(event) => setGradeFilter(event.target.value)}
+                >
+                  <option value="all">All Grades</option>
+                  {gradeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            ) : (
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search by customer, address, city, province, OSC, ODC, or ODP"
+                wrapperClassName="gap-1"
+                label="Search"
+              />
+            )}
+          </div>
+        </SectionCard>
+      ) : null}
 
       <input
         ref={fileInputRef}
@@ -452,10 +591,20 @@ export default function MasterCustomerPage() {
       />
 
       <SectionCard
-        title={viewMode === 'map' ? 'Customer Map' : 'Customer Registry'}
-        subtitle={viewMode === 'map'
-          ? 'Inspect mapped customer nodes and their geographic concentration.'
-          : 'Browse, sort, and maintain customer metadata in a single table view.'}
+        title={
+          viewMode === 'map'
+            ? 'Customer Map'
+            : viewMode === 'review'
+              ? 'Workbook Sync Review'
+              : 'Customer Registry'
+        }
+        subtitle={
+          viewMode === 'map'
+            ? 'Inspect mapped customer nodes and their geographic concentration.'
+            : viewMode === 'review'
+              ? 'Review one-time UPDATE.xlsx enrichment results, resolve coordinate conflicts, and continue maintenance directly from Customer Records.'
+              : 'Browse, sort, and maintain customer metadata in a single table view.'
+        }
         padding={false}
         className="flex-1 min-h-0"
       >
@@ -468,6 +617,87 @@ export default function MasterCustomerPage() {
             </div>
             <GeoSummary customers={filteredCustomers} />
           </div>
+        ) : viewMode === 'review' ? (
+          reviewMetrics ? (
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="border-b border-border p-4 md:p-6">
+                <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <StatCard
+                    label="Survey Linked"
+                    value={stats.withSurvey}
+                    meta="Customer rows carrying imported survey coordinates"
+                    icon={Database}
+                    tone="info"
+                  />
+                  <StatCard
+                    label="Topology Linked"
+                    value={stats.withTopologyRefs}
+                    meta="Customers already linked to OSC / ODC / ODP"
+                    icon={ShieldCheck}
+                    tone="success"
+                  />
+                  <StatCard
+                    label="Coord Conflicts"
+                    value={reviewMetrics.coord_conflicts || 0}
+                    meta="Workbook rows that need manual coordinate decision"
+                    icon={MapPin}
+                    tone="warning"
+                  />
+                  <StatCard
+                    label="Unmatched Rows"
+                    value={reviewMetrics.unmatched || 0}
+                    meta="Workbook rows that could not be safely matched"
+                    icon={Search}
+                    tone="default"
+                  />
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+                <div className="space-y-6">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-foreground">Coordinate conflicts</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Keep the correct live coordinate in the main fields, and preserve workbook evidence in the survey snapshot for comparison.
+                    </p>
+                  </div>
+
+                  {(reviewMetrics.coord_conflict_examples?.length || 0) > 0 ? (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      {reviewMetrics.coord_conflict_examples.map((item) => (
+                        <div key={item.customer_id} className="rounded-xl border border-border bg-card p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-foreground">{item.brand_site}</p>
+                              <p className="text-xs text-muted-foreground">{item.customer_id}</p>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => handleOpenConflict(item.customer_id)}>
+                              Open
+                            </Button>
+                          </div>
+                          <div className="mt-4 space-y-2">
+                            {item.coords.slice(0, 5).map((coord, index) => (
+                              <div key={`${item.customer_id}-${index}`} className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                                {coord[0]}, {coord[1]}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border bg-muted/10 p-6 text-sm text-muted-foreground">
+                      No customer coordinate conflict remains from the workbook enrichment.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+              Workbook sync report is not available yet.
+            </div>
+          )
         ) : (
           <DataTable
             data={filteredCustomers}
@@ -483,7 +713,11 @@ export default function MasterCustomerPage() {
         open={!!modal}
         onClose={() => setModal(null)}
         title={modal === 'create' ? 'Add Customer Record' : 'Edit Customer Record'}
-        size="lg"
+        subtitle={modal === 'create'
+          ? 'Create a new customer endpoint with topology and coordinate context.'
+          : 'Maintain customer identity, topology references, and survey evidence from a single workspace.'}
+        size="2xl"
+        bodyClassName="pt-6"
         footer={(
           <>
             <Button variant="ghost" onClick={() => setModal(null)}>
@@ -495,109 +729,241 @@ export default function MasterCustomerPage() {
           </>
         )}
       >
-        <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Customer ID"
-              value={form.customer_id}
-              onChange={(event) => setField('customer_id', event.target.value)}
-              placeholder="CUST-0001"
-              required
-            />
-            <Input
-              label="Service ID"
-              value={form.service_id}
-              onChange={(event) => setField('service_id', event.target.value)}
-              placeholder="SID-0001"
-              required
-            />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+          <div className="space-y-6">
+            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Identity</h3>
+                <p className="text-xs text-muted-foreground">Primary registry details used throughout incidents, maps, and history views.</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Customer ID"
+                  value={form.customer_id}
+                  onChange={(event) => setField('customer_id', event.target.value)}
+                  placeholder="CUST-0001"
+                  required
+                />
+                <Input
+                  label="Service ID"
+                  value={form.service_id}
+                  onChange={(event) => setField('service_id', event.target.value)}
+                  placeholder="SID-0001"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Company Name"
+                  value={form.company_name}
+                  onChange={(event) => setField('company_name', event.target.value)}
+                  placeholder="PT Global Technology"
+                  required
+                />
+                <Input
+                  label="Brand / Site"
+                  value={form.brand_site}
+                  onChange={(event) => setField('brand_site', event.target.value)}
+                  placeholder="HQ Semarang"
+                  required
+                />
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Location</h3>
+                <p className="text-xs text-muted-foreground">Editable operational address and regional context for map and incident routing.</p>
+              </div>
+
+              <Textarea
+                label="Address"
+                value={form.address}
+                onChange={(event) => setField('address', event.target.value)}
+                placeholder="Province, city, district, and street details"
+              />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="City"
+                  value={form.city}
+                  onChange={(event) => setField('city', event.target.value)}
+                  placeholder="Semarang"
+                />
+                <Input
+                  label="Province"
+                  value={form.province}
+                  onChange={(event) => setField('province', event.target.value)}
+                  placeholder="Jawa Tengah"
+                />
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Service Profile</h3>
+                <p className="text-xs text-muted-foreground">Customer tiering and monitoring linkage used for support priority.</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <Select
+                  label="Service Type"
+                  value={form.service_type}
+                  onChange={(event) => setField('service_type', event.target.value)}
+                >
+                  {serviceTypeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Grade"
+                  value={form.grade}
+                  onChange={(event) => setField('grade', event.target.value)}
+                >
+                  {gradeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Support Level"
+                  value={form.support_level}
+                  onChange={(event) => setField('support_level', event.target.value)}
+                >
+                  {supportOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <Input
+                label="Monitoring Link"
+                type="url"
+                value={form.link_coverage}
+                onChange={(event) => setField('link_coverage', event.target.value)}
+                placeholder="https://nms.internal/customer-id"
+              />
+            </section>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Company Name"
-              value={form.company_name}
-              onChange={(event) => setField('company_name', event.target.value)}
-              placeholder="PT Global Technology"
-              required
-            />
-            <Input
-              label="Brand / Site"
-              value={form.brand_site}
-              onChange={(event) => setField('brand_site', event.target.value)}
-              placeholder="HQ Semarang"
-              required
-            />
-          </div>
+          <div className="space-y-6">
+            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Topology References</h3>
+                <p className="text-xs text-muted-foreground">
+                  Canonical OSC, ODC, and ODP references used to connect this customer to the active topology tree.
+                </p>
+              </div>
 
-          <Textarea
-            label="Address"
-            value={form.address}
-            onChange={(event) => setField('address', event.target.value)}
-            placeholder="Province, city, district, and street details"
-          />
+              <div className="grid gap-4">
+                <Input
+                  label="OSC Reference"
+                  value={form.osc_reference}
+                  onChange={(event) => setField('osc_reference', event.target.value.toUpperCase())}
+                  placeholder="OSC KIC"
+                />
+                <Input
+                  label="ODC Reference"
+                  value={form.odc_reference}
+                  onChange={(event) => setField('odc_reference', event.target.value.toUpperCase())}
+                  placeholder="ODC KIC"
+                />
+                <Input
+                  label="ODP Reference"
+                  value={form.odp_reference}
+                  onChange={(event) => setField('odp_reference', event.target.value.toUpperCase())}
+                  placeholder="ODP KIC-B27"
+                />
+              </div>
+            </section>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <Select
-              label="Service Type"
-              value={form.service_type}
-              onChange={(event) => setField('service_type', event.target.value)}
-            >
-              {SERVICE_TYPES.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </Select>
-            <Select
-              label="Grade"
-              value={form.grade}
-              onChange={(event) => setField('grade', event.target.value)}
-            >
-              {GRADE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </Select>
-            <Select
-              label="Support Level"
-              value={form.support_level}
-              onChange={(event) => setField('support_level', event.target.value)}
-            >
-              {SUPPORT_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </Select>
-          </div>
+            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Live Coordinates</h3>
+                <p className="text-xs text-muted-foreground">These are the coordinates actively used by maps and operational views.</p>
+              </div>
 
-          <Input
-            label="Monitoring Link"
-            type="url"
-            value={form.link_coverage}
-            onChange={(event) => setField('link_coverage', event.target.value)}
-            placeholder="https://nms.internal/customer-id"
-          />
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+                <Input
+                  label="Latitude"
+                  type="number"
+                  step="any"
+                  value={form.latitude}
+                  onChange={(event) => setField('latitude', event.target.value)}
+                  placeholder="-6.123456"
+                />
+                <Input
+                  label="Longitude"
+                  type="number"
+                  step="any"
+                  value={form.longitude}
+                  onChange={(event) => setField('longitude', event.target.value)}
+                  placeholder="110.123456"
+                />
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Latitude"
-              type="number"
-              step="any"
-              value={form.latitude}
-              onChange={(event) => setField('latitude', event.target.value)}
-              placeholder="-6.123456"
-            />
-            <Input
-              label="Longitude"
-              type="number"
-              step="any"
-              value={form.longitude}
-              onChange={(event) => setField('longitude', event.target.value)}
-              placeholder="110.123456"
-            />
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+                <Select
+                  label="Coordinate Source"
+                  value={form.coord_source || ''}
+                  onChange={(event) => setField('coord_source', event.target.value)}
+                >
+                  {COORD_SOURCE_OPTIONS.map((option) => (
+                    <option key={option || 'blank'} value={option}>
+                      {option || 'Unspecified'}
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label="Survey Source"
+                  value={form.survey_source}
+                  onChange={(event) => setField('survey_source', event.target.value)}
+                  placeholder="UPDATE.xlsx:CUSTOMER"
+                />
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-xl border border-border bg-muted/20 p-5">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Survey Snapshot</h3>
+                <p className="text-xs text-muted-foreground">
+                  Preserve imported workbook evidence here while keeping the live coordinates above editable and authoritative.
+                </p>
+              </div>
+
+              <Input
+                label="Survey Name Raw"
+                value={form.survey_name_raw}
+                onChange={(event) => setField('survey_name_raw', event.target.value)}
+                placeholder="Raw NAME from external workbook"
+              />
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+                <Input
+                  label="Survey Latitude"
+                  type="number"
+                  step="any"
+                  value={form.survey_latitude}
+                  onChange={(event) => setField('survey_latitude', event.target.value)}
+                  placeholder="-6.123456"
+                />
+                <Input
+                  label="Survey Longitude"
+                  type="number"
+                  step="any"
+                  value={form.survey_longitude}
+                  onChange={(event) => setField('survey_longitude', event.target.value)}
+                  placeholder="110.123456"
+                />
+              </div>
+            </section>
           </div>
         </div>
       </Modal>

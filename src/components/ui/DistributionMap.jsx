@@ -205,7 +205,7 @@ function TroublePopup({ point, toneClassName, color }) {
   );
 }
 
-export default function DistributionMap({ data, onRefresh }) {
+export default function DistributionMap({ data, onRefresh, showHeader = true }) {
   const { addToast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -392,18 +392,83 @@ export default function DistributionMap({ data, onRefresh }) {
   };
 
   return (
-    <div className="flex h-full min-h-[680px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-4 py-4 md:px-5">
-        <div className="space-y-1">
-          <h3 className="text-base font-semibold tracking-tight text-foreground">
-            Distribution Topology Map
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Explore active infrastructure nodes and recent trouble concentration.
-          </p>
-        </div>
+    <div className="flex h-full min-h-[680px] flex-col overflow-hidden rounded-xl bg-card">
+      {showHeader ? (
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-4 py-4 md:px-5">
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold tracking-tight text-foreground">
+              Distribution Topology Map
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Explore active infrastructure nodes and recent trouble concentration.
+            </p>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
+              <SegmentedButton active={viewMode === 'normal'} onClick={() => setViewMode('normal')}>
+                <Network className="mr-2 h-4 w-4" />
+                Normal
+              </SegmentedButton>
+              <SegmentedButton
+                active={viewMode === 'trouble'}
+                onClick={() => setViewMode('trouble')}
+                tone="destructive"
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Trouble
+              </SegmentedButton>
+            </div>
+
+            <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
+              {viewMode === 'trouble' ? (
+                <>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                    className="w-[156px]"
+                  />
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(event) => setEndDate(event.target.value)}
+                    className="w-[156px]"
+                  />
+                </>
+              ) : null}
+
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder={viewMode === 'normal' ? 'Search ODP, POP, or BTS' : 'Search trouble node'}
+                  className="w-64 pl-9"
+                />
+              </div>
+
+              <Button type="submit" variant="outline">
+                Locate
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={startAutoGeocode}
+                disabled={geocodingStatus.active}
+                className="gap-2"
+              >
+                <RefreshCw className={cn('h-4 w-4', geocodingStatus.active && 'animate-spin')} />
+                {geocodingStatus.active ? 'Syncing' : 'Sync'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {!showHeader ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 md:px-5">
           <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
             <SegmentedButton active={viewMode === 'normal'} onClick={() => setViewMode('normal')}>
               <Network className="mr-2 h-4 w-4" />
@@ -426,13 +491,13 @@ export default function DistributionMap({ data, onRefresh }) {
                   type="date"
                   value={startDate}
                   onChange={(event) => setStartDate(event.target.value)}
-                className="w-[156px]"
+                  className="w-[156px]"
                 />
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(event) => setEndDate(event.target.value)}
-                className="w-[156px]"
+                  className="w-[156px]"
                 />
               </>
             ) : null}
@@ -463,7 +528,7 @@ export default function DistributionMap({ data, onRefresh }) {
             </Button>
           </form>
         </div>
-      </div>
+      ) : null}
 
       <div className="map-surface relative min-h-0 flex-1 bg-muted/20">
         <MapContainer center={SEMARANG_CENTER} zoom={12} className="h-full w-full" zoomControl={false}>
@@ -534,17 +599,25 @@ export default function DistributionMap({ data, onRefresh }) {
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute left-5 top-5 z-[1000] hidden items-start gap-3 xl:flex">
-          <div className="grid gap-3">
-            <StatChip label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'} value={activePoints.length} />
-            <StatChip label="Missing Coords" value={missingPointCount} />
-            <StatChip
-              label={viewMode === 'normal' ? 'Mapped Registry' : 'Window'}
-              value={viewMode === 'normal' ? `${points.length} mapped` : `${startDate} to ${endDate}`}
-            />
-            {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
+        <div className="pointer-events-none absolute left-5 top-5 z-[1000] hidden xl:block">
+          <div className="w-[320px] space-y-3">
+            <SectionCard
+              title="Map Snapshot"
+              subtitle={viewMode === 'normal' ? 'Realtime topology visibility for the current registry.' : 'Trouble concentration for the selected date window.'}
+              className="shadow-lg"
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <StatChip label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'} value={activePoints.length} />
+                <StatChip label="Missing Coords" value={missingPointCount} />
+                <StatChip
+                  label={viewMode === 'normal' ? 'Mapped Registry' : 'Window'}
+                  value={viewMode === 'normal' ? `${points.length} mapped` : `${startDate} to ${endDate}`}
+                />
+                {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : <StatChip label="Located" value="—" />}
+              </div>
+            </SectionCard>
+            {viewMode === 'normal' ? <DistributionGeocodeReportCard report={geocodeReport} /> : null}
           </div>
-          {viewMode === 'normal' ? <DistributionGeocodeReportCard report={geocodeReport} /> : null}
         </div>
 
         <SectionCard

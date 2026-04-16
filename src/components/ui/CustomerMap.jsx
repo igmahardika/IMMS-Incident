@@ -95,7 +95,11 @@ function CustomerGeocodeReportCard({ report }) {
   }));
   const sampleItems = (report.samples || []).slice(0, 3).map((item) => ({
     label: item.brand_site || item.company_name || item.city || `Customer #${item.id}`,
-    value: item.reason === 'ready_to_sync' ? 'Ready' : 'Needs address',
+    value: item.reason === 'ready_to_sync'
+      ? 'Ready'
+      : item.reason === 'cached_miss'
+        ? 'Previously failed'
+        : 'Needs address',
   }));
 
   return (
@@ -107,7 +111,8 @@ function CustomerGeocodeReportCard({ report }) {
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <StatChip label="Mapped" value={report.mapped} />
-          <StatChip label="Ready To Sync" value={report.addressReady} />
+          <StatChip label="Ready To Sync" value={report.readyToSync ?? report.addressReady} />
+          <StatChip label="Previous Misses" value={report.cachedMiss || 0} />
           <StatChip label="Missing Address" value={report.missingAddress} />
           <StatChip label="Unmapped Total" value={report.missing} />
         </div>
@@ -276,6 +281,7 @@ export default function CustomerMap({
       let failed = 0;
       let skipped = 0;
       let cached = 0;
+      let cachedMiss = 0;
       let geocoded = 0;
       let remaining = 0;
 
@@ -286,6 +292,7 @@ export default function CustomerMap({
         failed += response.failed || 0;
         skipped += response.skipped || 0;
         cached += response.cached || 0;
+        cachedMiss += response.cachedMiss || 0;
         geocoded += response.geocoded || 0;
         remaining = response.remaining || remaining;
         setGeocodingStatus((previous) => ({
@@ -301,6 +308,7 @@ export default function CustomerMap({
           `Customer sync complete: ${updated} updated.`,
           geocoded ? `${geocoded} geocoded.` : null,
           cached ? `${cached} reused from cache.` : null,
+          cachedMiss ? `${cachedMiss} skipped because they already failed with the same address.` : null,
           skipped ? `${skipped} skipped (missing address).` : null,
           failed ? `${failed} failed.` : null,
           Number.isFinite(remaining) ? `${remaining} still missing.` : null,
@@ -335,6 +343,9 @@ export default function CustomerMap({
         (item.province || '').toLowerCase().includes(term) ||
         (item.customer_id || '').toLowerCase().includes(term) ||
         (item.service_id || '').toLowerCase().includes(term) ||
+        (item.osc_reference || '').toLowerCase().includes(term) ||
+        (item.odc_reference || '').toLowerCase().includes(term) ||
+        (item.odp_reference || '').toLowerCase().includes(term) ||
         (item.brand_site || '').toLowerCase().includes(term) ||
         (item.company_name || '').toLowerCase().includes(term)
     );

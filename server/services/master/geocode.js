@@ -1,5 +1,5 @@
 import db from '../../db.js';
-import { geocode } from '../../utils/geocoder.js';
+import { buildQueryCandidates, geocode, inspectCache } from '../../utils/geocoder.js';
 import { looksLikeInternalTopologyLabel, normalizeIds, normalizeInfraLabel } from './utils.js';
 
 export function listCustomersMissingCoords() {
@@ -34,27 +34,43 @@ export function getCustomerGeocodeReport() {
     LIMIT 6
   `).all();
 
-  const samples = db.prepare(`
+  const rawSamples = db.prepare(`
     SELECT id, brand_site, company_name, city, province, address
     FROM master_customer
     WHERE latitude IS NULL OR longitude IS NULL
     ORDER BY
       CASE WHEN address IS NULL OR TRIM(address) = '' THEN 0 ELSE 1 END DESC,
-      COALESCE(updated_at, created_at, customer_id) DESC
+      COALESCE(created_at, customer_id) DESC
     LIMIT 8
-  `).all().map((item) => ({
-    ...item,
-    reason: item.address && String(item.address).trim() ? 'ready_to_sync' : 'missing_address',
-  }));
+  `).all();
+
+  let cachedMiss = 0;
+  const samples = rawSamples.map((item) => {
+    if (!(item.address && String(item.address).trim())) {
+      return { ...item, reason: 'missing_address' };
+    }
+
+    const candidates = buildQueryCandidates(item.address, { city: item.city, province: item.province });
+    const cacheStates = candidates.map((query) => inspectCache(query).status);
+    const isCachedMiss = cacheStates.length > 0 && cacheStates.every((status) => status === 'miss');
+    if (isCachedMiss) cachedMiss += 1;
+
+    return {
+      ...item,
+      reason: isCachedMiss ? 'cached_miss' : 'ready_to_sync',
+    };
+  });
 
   return {
     total: Number(totals.total || 0),
     mapped: Number(totals.mapped || 0),
     missing: Number(totals.missing || 0),
     addressReady: Number(totals.address_ready || 0),
+    readyToSync: Math.max(Number(totals.address_ready || 0) - cachedMiss, 0),
     missingAddress: Number(totals.missing_address || 0),
+    cachedMiss,
     provinceBreakdown,
-    samples,
+    samples: samples.slice(0, 8),
   };
 }
 
@@ -79,11 +95,17 @@ export async function autoGeocodeCustomers(ids) {
       continue;
     }
 
-    const queryKey = JSON.stringify({
-      address: baseAddress,
-      city: String(customer.city || '').trim(),
-      province: String(customer.province || '').trim(),
+    const queryCandidates = buildQueryCandidates(baseAddress, {
+      city: customer.city,
+      province: customer.province,
     });
+    const allCachedMiss = queryCandidates.length > 0 && queryCandidates.every((query) => inspectCache(query).status === 'miss');
+    if (allCachedMiss) {
+      results.push({ id: customer.id, success: false, reason: 'cached_miss' });
+      continue;
+    }
+
+    const queryKey = JSON.stringify(queryCandidates);
 
     let found = memo.get(queryKey);
     if (found === undefined) {
@@ -101,7 +123,8 @@ export async function autoGeocodeCustomers(ids) {
 
   const updated = results.filter((result) => result.success).length;
   const skipped = results.filter((result) => result.reason === 'missing_address').length;
-  const failed = results.length - updated - skipped;
+  const cachedMiss = results.filter((result) => result.reason === 'cached_miss').length;
+  const failed = results.length - updated - skipped - cachedMiss;
   const cached = results.filter((result) => result.source === 'cache').length;
   const geocoded = updated - cached;
   const remaining = db.prepare(`
@@ -110,7 +133,19 @@ export async function autoGeocodeCustomers(ids) {
     WHERE latitude IS NULL OR longitude IS NULL
   `).get().c;
 
-  return { success: true, total: results.length, updated, geocoded, cached, failed, skipped, remaining, results, requested: normalizedIds.length };
+  return {
+    success: true,
+    total: results.length,
+    updated,
+    geocoded,
+    cached,
+    failed,
+    skipped,
+    cachedMiss,
+    remaining,
+    results,
+    requested: normalizedIds.length,
+  };
 }
 
 function deriveDistributionCoordinates(item) {

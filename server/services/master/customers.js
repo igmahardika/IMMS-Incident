@@ -7,16 +7,22 @@ export function listCustomers() {
 export function createCustomer(payload) {
   const {
     customer_id, service_id, company_name, brand_site, address,
-    service_type, grade, support_level, link_coverage, sla,
-    latitude, longitude, city, province,
+    service_type, grade, support_level, link_coverage,
+    osc_reference, odc_reference, odp_reference,
+    survey_name_raw, survey_latitude, survey_longitude, survey_source, survey_updated_at,
+    coord_source, coord_updated_at,
+    sla, latitude, longitude, city, province,
   } = payload;
 
   const result = db.prepare(`
     INSERT INTO master_customer (
       customer_id, service_id, company_name, brand_site, address,
-      service_type, grade, support_level, link_coverage, sla,
-      latitude, longitude, city, province
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      service_type, grade, support_level, link_coverage,
+      osc_reference, odc_reference, odp_reference,
+      survey_name_raw, survey_latitude, survey_longitude, survey_source, survey_updated_at,
+      coord_source, coord_updated_at,
+      sla, latitude, longitude, city, province
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     customer_id,
     service_id,
@@ -27,6 +33,16 @@ export function createCustomer(payload) {
     grade || null,
     support_level || null,
     link_coverage || null,
+    osc_reference || null,
+    odc_reference || null,
+    odp_reference || null,
+    survey_name_raw || null,
+    survey_latitude || null,
+    survey_longitude || null,
+    survey_source || null,
+    survey_updated_at || null,
+    coord_source || null,
+    coord_updated_at || null,
     sla || null,
     latitude || null,
     longitude || null,
@@ -41,10 +57,13 @@ export function batchUpsertCustomers(customers) {
   const insert = db.prepare(`
     INSERT INTO master_customer (
       customer_id, service_id, company_name, brand_site, address,
-      service_type, grade, support_level, link_coverage, sla,
-      latitude, longitude, city, province
+      service_type, grade, support_level, link_coverage,
+      osc_reference, odc_reference, odp_reference,
+      survey_name_raw, survey_latitude, survey_longitude, survey_source, survey_updated_at,
+      coord_source, coord_updated_at,
+      sla, latitude, longitude, city, province
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(customer_id) DO UPDATE SET
       service_id=excluded.service_id,
       company_name=excluded.company_name,
@@ -54,6 +73,16 @@ export function batchUpsertCustomers(customers) {
       grade=excluded.grade,
       support_level=excluded.support_level,
       link_coverage=excluded.link_coverage,
+      osc_reference=excluded.osc_reference,
+      odc_reference=excluded.odc_reference,
+      odp_reference=excluded.odp_reference,
+      survey_name_raw=excluded.survey_name_raw,
+      survey_latitude=excluded.survey_latitude,
+      survey_longitude=excluded.survey_longitude,
+      survey_source=excluded.survey_source,
+      survey_updated_at=excluded.survey_updated_at,
+      coord_source=excluded.coord_source,
+      coord_updated_at=excluded.coord_updated_at,
       sla=excluded.sla,
       latitude=excluded.latitude,
       longitude=excluded.longitude,
@@ -75,6 +104,16 @@ export function batchUpsertCustomers(customers) {
         row.grade || null,
         row.support_level || null,
         row.link_coverage || null,
+        row.osc_reference || null,
+        row.odc_reference || null,
+        row.odp_reference || null,
+        row.survey_name_raw || null,
+        row.survey_latitude || null,
+        row.survey_longitude || null,
+        row.survey_source || null,
+        row.survey_updated_at || null,
+        row.coord_source || null,
+        row.coord_updated_at || null,
         row.sla || null,
         row.latitude || null,
         row.longitude || null,
@@ -92,7 +131,11 @@ export function batchUpsertCustomers(customers) {
 export function updateCustomer(id, payload) {
   const {
     customer_id, service_id, company_name, brand_site, address, service_type,
-    grade, support_level, link_coverage, is_active, sla, latitude, longitude,
+    grade, support_level, link_coverage,
+    osc_reference, odc_reference, odp_reference,
+    survey_name_raw, survey_latitude, survey_longitude, survey_source, survey_updated_at,
+    coord_source, coord_updated_at,
+    is_active, sla, latitude, longitude,
     city, province,
   } = payload;
 
@@ -107,6 +150,16 @@ export function updateCustomer(id, payload) {
       grade = COALESCE(?, grade),
       support_level = COALESCE(?, support_level),
       link_coverage = COALESCE(?, link_coverage),
+      osc_reference = COALESCE(?, osc_reference),
+      odc_reference = COALESCE(?, odc_reference),
+      odp_reference = COALESCE(?, odp_reference),
+      survey_name_raw = COALESCE(?, survey_name_raw),
+      survey_latitude = COALESCE(?, survey_latitude),
+      survey_longitude = COALESCE(?, survey_longitude),
+      survey_source = COALESCE(?, survey_source),
+      survey_updated_at = COALESCE(?, survey_updated_at),
+      coord_source = COALESCE(?, coord_source),
+      coord_updated_at = COALESCE(?, coord_updated_at),
       sla = COALESCE(?, sla),
       latitude = COALESCE(?, latitude),
       longitude = COALESCE(?, longitude),
@@ -124,6 +177,16 @@ export function updateCustomer(id, payload) {
     grade ?? null,
     support_level ?? null,
     link_coverage ?? null,
+    osc_reference ?? null,
+    odc_reference ?? null,
+    odp_reference ?? null,
+    survey_name_raw ?? null,
+    survey_latitude ?? null,
+    survey_longitude ?? null,
+    survey_source ?? null,
+    survey_updated_at ?? null,
+    coord_source ?? null,
+    coord_updated_at ?? null,
     sla ?? null,
     latitude ?? null,
     longitude ?? null,

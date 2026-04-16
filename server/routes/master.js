@@ -38,6 +38,7 @@ import {
   listUsers,
   updateUser,
 } from '../services/master/users.js';
+import { getUpdateWorkbookSyncReport } from '../services/master/updateWorkbookReport.js';
 
 const router = express.Router();
 
@@ -193,7 +194,7 @@ router.post('/customers/auto-geocode', authenticate, authorize('admin', 'manager
     onSuccess: (result) => {
       logger.info(
         `[Geocode][Customers] requested=${result.requested} updated=${result.updated} geocoded=${result.geocoded} `
-        + `cached=${result.cached} failed=${result.failed} skipped=${result.skipped} remaining=${result.remaining}`
+        + `cached=${result.cached} cachedMiss=${result.cachedMiss || 0} failed=${result.failed} skipped=${result.skipped} remaining=${result.remaining}`
       );
     },
   });
@@ -218,6 +219,10 @@ router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manage
       );
     },
   });
+});
+
+router.get('/update-sync-report', authenticate, authorize('admin', 'manager', 'noc'), (req, res) => {
+  res.json(getUpdateWorkbookSyncReport());
 });
 
 export default router;

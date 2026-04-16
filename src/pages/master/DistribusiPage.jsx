@@ -37,9 +37,21 @@ const EMPTY_FORM = {
   level_2: '',
   level_3: '',
   level_4: '',
+  survey_latitude: '',
+  survey_longitude: '',
+  survey_source: '',
+  coord_source: '',
   latitude: '',
   longitude: '',
 };
+
+const COORD_SOURCE_OPTIONS = [
+  '',
+  'manual',
+  'geocoder',
+  'anchor',
+  'update-workbook-odp',
+];
 
 function buildTopologyTree(data) {
   const tree = { fo: {}, wireless: {} };
@@ -197,6 +209,8 @@ function TreeNode({ node, level = 0, onSelect, selectedId, forceOpen = false }) 
 
 export default function MasterDistribusiPage() {
   const [data, setData] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [syncReport, setSyncReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('explorer');
   const [selectedNode, setSelectedNode] = useState(null);
@@ -208,8 +222,14 @@ export default function MasterDistribusiPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.getDistribusi();
-      setData(response);
+      const [topologyResponse, customerResponse, reportResponse] = await Promise.all([
+        api.getDistribusi(),
+        api.getCustomers(),
+        api.getUpdateSyncReport(),
+      ]);
+      setData(topologyResponse);
+      setCustomers(customerResponse);
+      setSyncReport(reportResponse);
     } catch (error) {
       addToast(error.message, 'error');
     } finally {
@@ -261,6 +281,24 @@ export default function MasterDistribusiPage() {
     ].filter((item) => item.value);
   }, [selectedNode]);
 
+  const linkedCustomers = useMemo(() => {
+    if (!selectedNode) return [];
+
+    if (selectedNode.level_4) {
+      return customers.filter((customer) => customer.odp_reference === selectedNode.level_4);
+    }
+    if (selectedNode.level_3) {
+      return customers.filter((customer) => customer.odc_reference === selectedNode.level_3);
+    }
+    if (selectedNode.level_2) {
+      return customers.filter((customer) => customer.osc_reference === selectedNode.level_2);
+    }
+
+    return [];
+  }, [customers, selectedNode]);
+
+  const topologyReview = syncReport?.topology || null;
+
   const setField = (key, value) => {
     setForm((previous) => ({ ...previous, [key]: value }));
   };
@@ -279,6 +317,10 @@ export default function MasterDistribusiPage() {
       level_2: selectedNode.level_2 || '',
       level_3: selectedNode.level_3 || '',
       level_4: selectedNode.level_4 || '',
+      survey_latitude: selectedNode.survey_latitude || '',
+      survey_longitude: selectedNode.survey_longitude || '',
+      survey_source: selectedNode.survey_source || '',
+      coord_source: selectedNode.coord_source || '',
       latitude: selectedNode.latitude || '',
       longitude: selectedNode.longitude || '',
     });
@@ -342,6 +384,15 @@ export default function MasterDistribusiPage() {
               >
                 Map
               </Button>
+              <Button
+                variant={viewMode === 'review' ? 'default' : 'ghost'}
+                size="sm"
+                className="shadow-none"
+                icon={<Activity className="h-4 w-4" />}
+                onClick={() => setViewMode('review')}
+              >
+                Review
+              </Button>
             </div>
 
             <Button
@@ -355,18 +406,112 @@ export default function MasterDistribusiPage() {
         )}
       />
 
+      {viewMode === 'review' && topologyReview ? (
+        <SectionCard
+          title="Workbook Coordinate Review"
+          subtitle="UPDATE.xlsx has already been applied. Use this queue to review remaining ODP conflicts or labels that still do not exist in the active topology registry."
+        >
+          <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-xs font-medium text-muted-foreground">Survey Linked</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.matched || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Topology nodes with workbook coordinate evidence.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-xs font-medium text-muted-foreground">Live Coordinates Filled</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.actual_filled || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Nodes that were previously blank and now have usable map coordinates.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-xs font-medium text-muted-foreground">ODP Conflicts</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.conflicts || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Workbook rows with more than one coordinate candidate.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-xs font-medium text-muted-foreground">Unmatched Labels</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.unmatched || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Workbook ODP labels that do not exist in the active registry.</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="text-sm font-medium text-foreground">Conflict examples</h3>
+              <div className="mt-3 space-y-3">
+                {(topologyReview.conflict_examples || []).length ? (
+                  topologyReview.conflict_examples.slice(0, 6).map((item) => (
+                    <div key={item.odp} className="rounded-lg border border-border bg-muted/20 p-3">
+                      <p className="text-sm font-medium text-foreground">{item.odp}</p>
+                      <div className="mt-2 space-y-1">
+                        {item.coords.slice(0, 3).map((coord, index) => (
+                          <p key={`${item.odp}-${index}`} className="text-xs text-muted-foreground">
+                            {coord[0]}, {coord[1]}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No unresolved workbook coordinate conflict remains.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="text-sm font-medium text-foreground">Unmatched ODP labels</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(topologyReview.unmatched_examples || []).length ? (
+                  topologyReview.unmatched_examples.slice(0, 20).map((item) => (
+                    <span key={item} className="rounded-md border border-border bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
+                      {item}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">All workbook labels were matched to active topology nodes.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+      ) : null}
+
       {viewMode === 'map' ? (
         <SectionCard
-          title="Topology Map"
-          subtitle="Locate mapped nodes, run sync, and review which topology records still lack coordinate anchors."
           padding={false}
           className="min-h-[720px] flex-1"
         >
           {loading ? (
             <TableSkeleton rows={12} />
           ) : (
-            <DistributionMap data={data} onRefresh={load} />
+            <DistributionMap data={data} onRefresh={load} showHeader={true} />
           )}
+        </SectionCard>
+      ) : viewMode === 'review' ? (
+        <SectionCard
+          title="Review Guidance"
+          subtitle="Resolve workbook exceptions here first, then continue editing the live topology registry from Explorer or Map."
+          className="flex-1"
+        >
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-sm font-medium text-foreground">1. Review conflicts</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Keep project node names as the source of truth, then decide which coordinate should become the live point.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-sm font-medium text-foreground">2. Fix unmatched labels</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                If a workbook ODP label is valid, add or rename the active topology node in Explorer so future syncs can attach cleanly.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-sm font-medium text-foreground">3. Maintain in-app only</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                After this enrichment, keep live coordinates, survey evidence, and linked customers updated directly from IMMS.
+              </p>
+            </div>
+          </div>
         </SectionCard>
       ) : (
         <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.05fr)]">
@@ -375,6 +520,16 @@ export default function MasterDistribusiPage() {
             subtitle="Browse fiber and wireless branches, then select a node to inspect or edit."
             className="min-h-0"
             padding={false}
+            headerAction={(
+              <div className="flex items-center gap-2">
+                <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                  {stats.fiberRoots} fiber roots
+                </span>
+                <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                  {stats.wirelessRoots} wireless roots
+                </span>
+              </div>
+            )}
           >
             {loading ? (
               <TableSkeleton rows={14} />
@@ -392,6 +547,15 @@ export default function MasterDistribusiPage() {
 
                 <div className="flex-1 overflow-y-auto p-4">
                   <div className="space-y-6">
+                    <div className="rounded-xl border border-border bg-muted/20 p-3">
+                      <p className="text-sm font-medium text-foreground">
+                        {normalizedSearch ? 'Filtered explorer results' : 'Topology navigator'}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Select a branch to inspect its coordinates, hierarchy, and linked customers on the right.
+                      </p>
+                    </div>
+
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                         <Cable className="h-3.5 w-3.5 text-primary" />
@@ -459,7 +623,8 @@ export default function MasterDistribusiPage() {
             ) : null}
           >
             {selectedNode ? (
-              <div className="space-y-6">
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="space-y-6">
                 <div className="rounded-xl border border-border bg-muted/20 p-5">
                   <div className="flex items-start gap-4">
                     <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border', getNodeTone(selectedNode.type === 'Wireless' ? 'bts' : 'pop'))}>
@@ -477,66 +642,120 @@ export default function MasterDistribusiPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-3">
                   <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      Coordinates
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Latitude</span>
-                        <span className="font-medium text-foreground">{selectedNode.latitude || 'Not set'}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Longitude</span>
-                        <span className="font-medium text-foreground">{selectedNode.longitude || 'Not set'}</span>
-                      </div>
-                    </div>
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Type</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">{selectedNode.type}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Active topology node</p>
                   </div>
 
                   <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                      <Activity className="h-4 w-4 text-primary" />
-                      Metadata
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Coordinates</p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
+                      {selectedNode.latitude && selectedNode.longitude
+                        ? `${selectedNode.latitude}, ${selectedNode.longitude}`
+                        : 'Not set'}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">{selectedNode.coord_source || 'No source recorded'}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Linked Customers</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">{linkedCustomers.length}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Derived from OSC / ODC / ODP references</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                  <div className="rounded-xl border border-border bg-card p-5">
+                    <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Network className="h-4 w-4 text-primary" />
+                      Hierarchy Path
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Type</span>
-                        <span className="font-medium text-foreground">{selectedNode.type}</span>
+                    <div className="space-y-4">
+                      {hierarchy.map((item, index) => (
+                        <div key={`${item.label}-${item.value}`} className="flex gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className="h-3 w-3 rounded-full border-2 border-primary bg-background" />
+                            {index < hierarchy.length - 1 ? <div className="mt-1 h-full w-px bg-border" /> : null}
+                          </div>
+                          <div className="space-y-1 pb-2">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                              {item.label}
+                            </p>
+                            <p className="text-sm font-medium text-foreground">
+                              {item.value}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-card p-5">
+                    <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      Survey Snapshot
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Survey Latitude</p>
+                        <p className="text-sm font-medium text-foreground">{selectedNode.survey_latitude || 'Not set'}</p>
                       </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Status</span>
-                        <span className="font-medium text-success">Active</span>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Survey Longitude</p>
+                        <p className="text-sm font-medium text-foreground">{selectedNode.survey_longitude || 'Not set'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Survey Source</p>
+                        <p className="text-sm font-medium text-foreground">{selectedNode.survey_source || 'Not set'}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="rounded-xl border border-border bg-card p-5">
-                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Network className="h-4 w-4 text-primary" />
-                    Hierarchy Path
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Linked Customers</p>
+                      <p className="text-xs text-muted-foreground">
+                        Customers are derived from canonical OSC, ODC, and ODP references stored in Customer Records.
+                      </p>
+                    </div>
+                    <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                      {linkedCustomers.length} records
+                    </span>
                   </div>
-                  <div className="space-y-4">
-                    {hierarchy.map((item, index) => (
-                      <div key={`${item.label}-${item.value}`} className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="h-3 w-3 rounded-full border-2 border-primary bg-background" />
-                          {index < hierarchy.length - 1 ? <div className="mt-1 h-full w-px bg-border" /> : null}
-                        </div>
-                        <div className="space-y-1 pb-2">
-                          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                            {item.label}
-                          </p>
+
+                  {linkedCustomers.length ? (
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      {linkedCustomers.slice(0, 8).map((customer) => (
+                        <div key={customer.id} className="rounded-lg border border-border bg-muted/20 p-3">
                           <p className="text-sm font-medium text-foreground">
-                            {item.value}
+                            {customer.brand_site || customer.company_name}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {[customer.customer_id, customer.service_id].filter(Boolean).join(' • ')}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {[customer.osc_reference, customer.odc_reference, customer.odp_reference].filter(Boolean).join(' / ')}
                           </p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No customer currently references this node. Populate OSC, ODC, or ODP references in Customer Records to build the relation.
+                    </p>
+                  )}
+
+                  {linkedCustomers.length > 8 ? (
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Showing first 8 linked customers. Use Customer Records to review the full list.
+                    </p>
+                  ) : null}
                 </div>
+              </div>
               </div>
             ) : (
               <EmptyState
@@ -624,6 +843,45 @@ export default function MasterDistribusiPage() {
               step="any"
               value={form.longitude}
               onChange={(event) => setField('longitude', event.target.value)}
+              placeholder="110.123456"
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Select
+              label="Coordinate Source"
+              value={form.coord_source || ''}
+              onChange={(event) => setField('coord_source', event.target.value)}
+            >
+              {COORD_SOURCE_OPTIONS.map((option) => (
+                <option key={option || 'blank'} value={option}>
+                  {option || 'Unspecified'}
+                </option>
+              ))}
+            </Select>
+            <Input
+              label="Survey Source"
+              value={form.survey_source}
+              onChange={(event) => setField('survey_source', event.target.value)}
+              placeholder="UPDATE.xlsx:ODP"
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Survey Latitude"
+              type="number"
+              step="any"
+              value={form.survey_latitude}
+              onChange={(event) => setField('survey_latitude', event.target.value)}
+              placeholder="-6.123456"
+            />
+            <Input
+              label="Survey Longitude"
+              type="number"
+              step="any"
+              value={form.survey_longitude}
+              onChange={(event) => setField('survey_longitude', event.target.value)}
               placeholder="110.123456"
             />
           </div>

@@ -9,11 +9,35 @@ export function listDistribusi() {
 }
 
 export function createDistribusi(payload) {
-  const { type, level_1, level_2, level_3, level_4, latitude, longitude } = payload;
+  const {
+    type, level_1, level_2, level_3, level_4,
+    survey_latitude, survey_longitude, survey_source, survey_updated_at,
+    coord_source, coord_updated_at,
+    latitude, longitude,
+  } = payload;
   const result = db.prepare(`
-    INSERT INTO master_distribusi (type, level_1, level_2, level_3, level_4, latitude, longitude)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(type, level_1, level_2 || null, level_3 || null, level_4 || null, latitude || null, longitude || null);
+    INSERT INTO master_distribusi (
+      type, level_1, level_2, level_3, level_4,
+      survey_latitude, survey_longitude, survey_source, survey_updated_at,
+      coord_source, coord_updated_at,
+      latitude, longitude
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    type,
+    level_1,
+    level_2 || null,
+    level_3 || null,
+    level_4 || null,
+    survey_latitude || null,
+    survey_longitude || null,
+    survey_source || null,
+    survey_updated_at || null,
+    coord_source || null,
+    coord_updated_at || null,
+    latitude || null,
+    longitude || null
+  );
 
   return db.prepare('SELECT * FROM master_distribusi WHERE id = ?').get(result.lastInsertRowid);
 }
@@ -45,7 +69,12 @@ export function batchCreateDistribusi(type, data) {
 }
 
 export function updateDistribusi(id, payload) {
-  const { type, level_1, level_2, level_3, level_4, latitude, longitude, is_active } = payload;
+  const {
+    type, level_1, level_2, level_3, level_4,
+    survey_latitude, survey_longitude, survey_source, survey_updated_at,
+    coord_source, coord_updated_at,
+    latitude, longitude, is_active,
+  } = payload;
   db.prepare(`
     UPDATE master_distribusi SET
       type = COALESCE(?, type),
@@ -53,6 +82,12 @@ export function updateDistribusi(id, payload) {
       level_2 = COALESCE(?, level_2),
       level_3 = COALESCE(?, level_3),
       level_4 = COALESCE(?, level_4),
+      survey_latitude = COALESCE(?, survey_latitude),
+      survey_longitude = COALESCE(?, survey_longitude),
+      survey_source = COALESCE(?, survey_source),
+      survey_updated_at = COALESCE(?, survey_updated_at),
+      coord_source = COALESCE(?, coord_source),
+      coord_updated_at = COALESCE(?, coord_updated_at),
       latitude = COALESCE(?, latitude),
       longitude = COALESCE(?, longitude),
       is_active = COALESCE(?, is_active)
@@ -63,6 +98,12 @@ export function updateDistribusi(id, payload) {
     level_2 ?? null,
     level_3 ?? null,
     level_4 ?? null,
+    survey_latitude ?? null,
+    survey_longitude ?? null,
+    survey_source ?? null,
+    survey_updated_at ?? null,
+    coord_source ?? null,
+    coord_updated_at ?? null,
     latitude ?? null,
     longitude ?? null,
     is_active ?? null,

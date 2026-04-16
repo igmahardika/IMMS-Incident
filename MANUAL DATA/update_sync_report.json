@@ -1,0 +1,230 @@
+{
+  "workbook": "MANUAL DATA/UPDATE.xlsx",
+  "generated_at": "2026-04-16 09:07:20",
+  "backup_path": "/tmp/imms-backups/imms-before-update-sync-20260416-090720.db",
+  "topology": {
+    "rows": 1770,
+    "unique_odp": 589,
+    "matched": 548,
+    "actual_filled": 416,
+    "survey_only": 132,
+    "conflicts": 1,
+    "unmatched": 40,
+    "conflict_examples": [
+      {
+        "odp": "ODP LPR-A04",
+        "coords": [
+          [
+            -7.00826389,
+            110.43229722
+          ],
+          [
+            -7.00550833,
+            110.43698889
+          ]
+        ]
+      }
+    ],
+    "unmatched_examples": [
+      "pndb15",
+      "pndb16",
+      "pndb25",
+      "pnddpm",
+      "pndcpm",
+      "pndprg",
+      "pndsft",
+      "dpm04",
+      "dpm05",
+      "dpm06",
+      "pndps05",
+      "pndscf",
+      "pndbpd",
+      "trbc10",
+      "sia03",
+      "jbtm01",
+      "jbtm02",
+      "krjtc09",
+      "ungc06",
+      "ngrc14"
+    ]
+  },
+  "customers": {
+    "rows": 2167,
+    "matched": 1372,
+    "actual_filled": 172,
+    "survey_only": 1134,
+    "address_filled": 137,
+    "osc_linked": 1315,
+    "odc_linked": 1344,
+    "odp_linked": 1345,
+    "coord_conflicts": 47,
+    "unmatched": 725,
+    "match_modes": {
+      "brand_address": 1120,
+      "address": 145,
+      "brand": 177
+    },
+    "coord_conflict_examples": [
+      {
+        "customer_id": "01.1103.0923",
+        "brand_site": "Hotel Horison Kota Lama Semarang",
+        "coords": [
+          [
+            -6.968949,
+            110.431254
+          ],
+          [
+            -6.9688573,
+            110.4311974
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.0349.1022",
+        "brand_site": "Bank Mandiri KC Semarang Pemuda - Lantai 2",
+        "coords": [
+          [
+            -6.976427,
+            110.417531
+          ],
+          [
+            -6.975537,
+            110.417611
+          ],
+          [
+            -6.975348,
+            110.417597
+          ],
+          [
+            -6.97533295,
+            110.4177801
+          ],
+          [
+            -6.97513241,
+            110.4178218
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.1763.1224",
+        "brand_site": "Nine Typical Cafe",
+        "coords": [
+          [
+            -7.00468176,
+            110.4002974
+          ],
+          [
+            -6.952762,
+            110.429537
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.2021.0925",
+        "brand_site": "Hotel Semarang",
+        "coords": [
+          [
+            -7.027902,
+            110.41793
+          ],
+          [
+            -6.96839701,
+            110.4023276
+          ],
+          [
+            -6.968056,
+            110.428139
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.1795.0125",
+        "brand_site": "Moaci Gemini",
+        "coords": [
+          [
+            -6.9854115,
+            110.4340164
+          ],
+          [
+            -6.96206624,
+            110.4014484
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.2040.0925",
+        "brand_site": "PT. Parkirindo Solusi Gemilang - Parkir KIC Site 1",
+        "coords": [
+          [
+            -7.013853,
+            110.361364
+          ],
+          [
+            -7.002867,
+            110.34935
+          ],
+          [
+            -6.993024,
+            110.367502
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.1864.0325",
+        "brand_site": "PT. Caturaga Tiara Persada",
+        "coords": [
+          [
+            -7.0228889,
+            110.3438611
+          ],
+          [
+            -7.01046003,
+            110.345601
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.1908.0525",
+        "brand_site": "CV. Vayama Jaya Loka",
+        "coords": [
+          [
+            -7.006177,
+            110.342506
+          ],
+          [
+            -7.00286562,
+            110.3493446
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.0432.1122",
+        "brand_site": "PT. Seidensticker Indonesia",
+        "coords": [
+          [
+            -7.183552,
+            110.47222
+          ],
+          [
+            -7.17954,
+            110.426394
+          ]
+        ]
+      },
+      {
+        "customer_id": "01.1488.0524",
+        "brand_site": "Royalpool Billiard & Cafe",
+        "coords": [
+          [
+            -6.9834,
+            110.453422
+          ],
+          [
+            -6.9833848,
+            110.4535479
+          ]
+        ]
+      }
+    ]
+  }
+}
