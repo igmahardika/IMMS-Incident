@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronDown, Plus, Search, X } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
+import { Input } from '../../components/ui/index.jsx';
 import { DropdownSurface } from './DropdownSurface.jsx';
 
 export function DistributionNodeSelector({
@@ -21,7 +22,7 @@ export function DistributionNodeSelector({
       <button
         type="button"
         className={cn(
-          'flex min-h-11 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-left shadow-sm transition-colors hover:bg-accent',
+          'flex min-h-9 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-left shadow-sm transition-colors hover:bg-accent',
           showDropdown && 'ring-1 ring-ring'
         )}
         onClick={() => setShowDropdown((previous) => !previous)}
@@ -60,9 +61,10 @@ export function DistributionNodeSelector({
           <div className="sticky top-0 bg-popover pb-2">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              <Input
+                aria-label="Search topology nodes"
+                wrapperClassName="gap-0"
+                className="h-9 pl-9 pr-3"
                 placeholder="Search topology nodes..."
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}

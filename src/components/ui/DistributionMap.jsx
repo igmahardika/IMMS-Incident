@@ -404,7 +404,7 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
               <SegmentedButton active={viewMode === 'normal'} onClick={() => setViewMode('normal')}>
                 <Network className="mr-2 h-4 w-4" />
@@ -420,20 +420,32 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
               </SegmentedButton>
             </div>
 
-            <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
+            <form
+              onSubmit={handleSearch}
+              className={cn(
+                'grid w-full items-center gap-2 xl:w-auto',
+                viewMode === 'trouble'
+                  ? 'sm:grid-cols-[156px_156px_minmax(240px,1fr)_auto_auto]'
+                  : 'sm:grid-cols-[minmax(260px,1fr)_auto_auto]'
+              )}
+            >
               {viewMode === 'trouble' ? (
                 <>
                   <Input
                     type="date"
                     value={startDate}
                     onChange={(event) => setStartDate(event.target.value)}
-                    className="w-[156px]"
+                    aria-label="Start date"
+                    wrapperClassName="gap-0"
+                    className="h-9 w-full"
                   />
                   <Input
                     type="date"
                     value={endDate}
                     onChange={(event) => setEndDate(event.target.value)}
-                    className="w-[156px]"
+                    aria-label="End date"
+                    wrapperClassName="gap-0"
+                    className="h-9 w-full"
                   />
                 </>
               ) : null}
@@ -444,17 +456,20 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder={viewMode === 'normal' ? 'Search ODP, POP, or BTS' : 'Search trouble node'}
-                  className="w-64 pl-9"
+                  aria-label="Search topology nodes"
+                  wrapperClassName="gap-0"
+                  className="h-9 w-full pl-9"
                 />
               </div>
 
-              <Button type="submit" variant="outline">
+              <Button type="submit" variant="outline" size="sm">
                 Locate
               </Button>
 
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 onClick={startAutoGeocode}
                 disabled={geocodingStatus.active}
                 className="gap-2"
@@ -468,7 +483,7 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
       ) : null}
 
       {!showHeader ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 md:px-5">
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-4 md:px-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
             <SegmentedButton active={viewMode === 'normal'} onClick={() => setViewMode('normal')}>
               <Network className="mr-2 h-4 w-4" />
@@ -484,20 +499,32 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
             </SegmentedButton>
           </div>
 
-          <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
+          <form
+            onSubmit={handleSearch}
+            className={cn(
+              'grid w-full items-center gap-2 xl:w-auto',
+              viewMode === 'trouble'
+                ? 'sm:grid-cols-[156px_156px_minmax(240px,1fr)_auto_auto]'
+                : 'sm:grid-cols-[minmax(260px,1fr)_auto_auto]'
+            )}
+          >
             {viewMode === 'trouble' ? (
               <>
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(event) => setStartDate(event.target.value)}
-                  className="w-[156px]"
+                  aria-label="Start date"
+                  wrapperClassName="gap-0"
+                  className="h-9 w-full"
                 />
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(event) => setEndDate(event.target.value)}
-                  className="w-[156px]"
+                  aria-label="End date"
+                  wrapperClassName="gap-0"
+                  className="h-9 w-full"
                 />
               </>
             ) : null}
@@ -508,17 +535,20 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={viewMode === 'normal' ? 'Search ODP, POP, or BTS' : 'Search trouble node'}
-                className="w-64 pl-9"
+                aria-label="Search topology nodes"
+                wrapperClassName="gap-0"
+                className="h-9 w-full pl-9"
               />
             </div>
 
-            <Button type="submit" variant="outline">
+            <Button type="submit" variant="outline" size="sm">
               Locate
             </Button>
 
             <Button
               type="button"
               variant="ghost"
+              size="sm"
               onClick={startAutoGeocode}
               disabled={geocodingStatus.active}
               className="gap-2"

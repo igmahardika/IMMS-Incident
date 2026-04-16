@@ -397,6 +397,7 @@ export default function MasterDistribusiPage() {
 
             <Button
               variant="primary"
+              size="sm"
               icon={<Plus className="h-4 w-4" />}
               onClick={openCreate}
             >
@@ -409,9 +410,9 @@ export default function MasterDistribusiPage() {
       {viewMode === 'review' && topologyReview ? (
         <SectionCard
           title="Workbook Coordinate Review"
-          subtitle="UPDATE.xlsx has already been applied. Use this queue to review remaining ODP conflicts or labels that still do not exist in the active topology registry."
+          subtitle="UPDATE.xlsx has already been applied. Conflicting workbook coordinates are discarded automatically, so this queue focuses on sync coverage and unmatched active labels."
         >
-          <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="text-xs font-medium text-muted-foreground">Survey Linked</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.matched || 0}</p>
@@ -423,40 +424,13 @@ export default function MasterDistribusiPage() {
               <p className="mt-1 text-xs text-muted-foreground">Nodes that were previously blank and now have usable map coordinates.</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-xs font-medium text-muted-foreground">ODP Conflicts</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.conflicts || 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Workbook rows with more than one coordinate candidate.</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4">
               <p className="text-xs font-medium text-muted-foreground">Unmatched Labels</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.unmatched || 0}</p>
               <p className="mt-1 text-xs text-muted-foreground">Workbook ODP labels that do not exist in the active registry.</p>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 xl:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="text-sm font-medium text-foreground">Conflict examples</h3>
-              <div className="mt-3 space-y-3">
-                {(topologyReview.conflict_examples || []).length ? (
-                  topologyReview.conflict_examples.slice(0, 6).map((item) => (
-                    <div key={item.odp} className="rounded-lg border border-border bg-muted/20 p-3">
-                      <p className="text-sm font-medium text-foreground">{item.odp}</p>
-                      <div className="mt-2 space-y-1">
-                        {item.coords.slice(0, 3).map((coord, index) => (
-                          <p key={`${item.odp}-${index}`} className="text-xs text-muted-foreground">
-                            {coord[0]}, {coord[1]}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No unresolved workbook coordinate conflict remains.</p>
-                )}
-              </div>
-            </div>
-
+          <div className="mt-6 grid gap-4">
             <div className="rounded-xl border border-border bg-card p-4">
               <h3 className="text-sm font-medium text-foreground">Unmatched ODP labels</h3>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -489,20 +463,20 @@ export default function MasterDistribusiPage() {
       ) : viewMode === 'review' ? (
         <SectionCard
           title="Review Guidance"
-          subtitle="Resolve workbook exceptions here first, then continue editing the live topology registry from Explorer or Map."
+          subtitle="Use unmatched workbook labels as a cleanup queue, then continue editing the live topology registry from Explorer or Map."
           className="flex-1"
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-sm font-medium text-foreground">1. Review conflicts</p>
+              <p className="text-sm font-medium text-foreground">1. Fix unmatched labels</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Keep project node names as the source of truth, then decide which coordinate should become the live point.
+                If a workbook ODP label is valid, add or rename the active topology node in Explorer so future syncs can attach cleanly.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-sm font-medium text-foreground">2. Fix unmatched labels</p>
+              <p className="text-sm font-medium text-foreground">2. Keep project names authoritative</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                If a workbook ODP label is valid, add or rename the active topology node in Explorer so future syncs can attach cleanly.
+                The active topology registry stays as the source of truth for node names. Workbook coordinates only enrich nodes that already match.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">

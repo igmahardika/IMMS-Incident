@@ -317,15 +317,6 @@ export default function MasterCustomerPage() {
     return Array.from(values).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
   }, [customers]);
 
-  const handleOpenConflict = (customerId) => {
-    const target = customers.find((customer) => customer.customer_id === customerId);
-    if (!target) {
-      addToast(`Customer ${customerId} is not in the active registry anymore.`, 'warning');
-      return;
-    }
-    openEdit(target);
-  };
-
   const columns = useMemo(() => [
     {
       accessorKey: 'identity',
@@ -476,6 +467,7 @@ export default function MasterCustomerPage() {
 
             <Button
               variant="outline"
+              size="sm"
               icon={<Download className="h-4 w-4" />}
               onClick={downloadTemplate}
             >
@@ -483,6 +475,7 @@ export default function MasterCustomerPage() {
             </Button>
             <Button
               variant="outline"
+              size="sm"
               icon={<Database className="h-4 w-4" />}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -490,6 +483,7 @@ export default function MasterCustomerPage() {
             </Button>
             <Button
               variant="primary"
+              size="sm"
               icon={<Plus className="h-4 w-4" />}
               onClick={openCreate}
             >
@@ -536,18 +530,21 @@ export default function MasterCustomerPage() {
         >
           <div className="p-4">
             {viewMode === 'list' ? (
-              <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.7fr)_minmax(140px,0.5fr)]">
+              <div className="grid items-center gap-3 xl:grid-cols-[minmax(0,1fr)_220px_180px]">
                 <Input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Search by customer, address, city, province, OSC, ODC, or ODP"
-                  wrapperClassName="gap-1"
-                  label="Search"
+                  aria-label="Search customers"
+                  wrapperClassName="gap-0"
+                  className="h-9"
                 />
                 <Select
-                  label="Service"
                   value={serviceFilter}
                   onChange={(event) => setServiceFilter(event.target.value)}
+                  aria-label="Filter by service"
+                  wrapperClassName="gap-0"
+                  className="h-9"
                 >
                   <option value="all">All Services</option>
                   {serviceTypeOptions.map((option) => (
@@ -557,9 +554,11 @@ export default function MasterCustomerPage() {
                   ))}
                 </Select>
                 <Select
-                  label="Grade"
                   value={gradeFilter}
                   onChange={(event) => setGradeFilter(event.target.value)}
+                  aria-label="Filter by grade"
+                  wrapperClassName="gap-0"
+                  className="h-9"
                 >
                   <option value="all">All Grades</option>
                   {gradeOptions.map((option) => (
@@ -574,8 +573,9 @@ export default function MasterCustomerPage() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search by customer, address, city, province, OSC, ODC, or ODP"
-                wrapperClassName="gap-1"
-                label="Search"
+                aria-label="Search customers"
+                wrapperClassName="gap-0"
+                className="h-9"
               />
             )}
           </div>
@@ -602,7 +602,7 @@ export default function MasterCustomerPage() {
           viewMode === 'map'
             ? 'Inspect mapped customer nodes and their geographic concentration.'
             : viewMode === 'review'
-              ? 'Review one-time UPDATE.xlsx enrichment results, resolve coordinate conflicts, and continue maintenance directly from Customer Records.'
+              ? 'Review one-time UPDATE.xlsx enrichment results and continue maintenance directly from Customer Records.'
               : 'Browse, sort, and maintain customer metadata in a single table view.'
         }
         padding={false}
@@ -621,7 +621,7 @@ export default function MasterCustomerPage() {
           reviewMetrics ? (
             <div className="flex h-full min-h-0 flex-col">
               <div className="border-b border-border p-4 md:p-6">
-                <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
                   <StatCard
                     label="Survey Linked"
                     value={stats.withSurvey}
@@ -637,13 +637,6 @@ export default function MasterCustomerPage() {
                     tone="success"
                   />
                   <StatCard
-                    label="Coord Conflicts"
-                    value={reviewMetrics.coord_conflicts || 0}
-                    meta="Workbook rows that need manual coordinate decision"
-                    icon={MapPin}
-                    tone="warning"
-                  />
-                  <StatCard
                     label="Unmatched Rows"
                     value={reviewMetrics.unmatched || 0}
                     meta="Workbook rows that could not be safely matched"
@@ -655,41 +648,9 @@ export default function MasterCustomerPage() {
 
               <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
                 <div className="space-y-6">
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-foreground">Coordinate conflicts</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Keep the correct live coordinate in the main fields, and preserve workbook evidence in the survey snapshot for comparison.
-                    </p>
+                  <div className="rounded-xl border border-dashed border-border bg-muted/10 p-6 text-sm text-muted-foreground">
+                    Conflicting workbook coordinates are discarded automatically. Continue cleanup from unmatched rows or maintain customer coordinates directly from the registry.
                   </div>
-
-                  {(reviewMetrics.coord_conflict_examples?.length || 0) > 0 ? (
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      {reviewMetrics.coord_conflict_examples.map((item) => (
-                        <div key={item.customer_id} className="rounded-xl border border-border bg-card p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <p className="text-sm font-medium text-foreground">{item.brand_site}</p>
-                              <p className="text-xs text-muted-foreground">{item.customer_id}</p>
-                            </div>
-                            <Button variant="outline" size="sm" onClick={() => handleOpenConflict(item.customer_id)}>
-                              Open
-                            </Button>
-                          </div>
-                          <div className="mt-4 space-y-2">
-                            {item.coords.slice(0, 5).map((coord, index) => (
-                              <div key={`${item.customer_id}-${index}`} className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-                                {coord[0]}, {coord[1]}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border bg-muted/10 p-6 text-sm text-muted-foreground">
-                      No customer coordinate conflict remains from the workbook enrichment.
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

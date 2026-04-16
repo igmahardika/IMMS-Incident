@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, Search } from 'lucide-react';
+import { Input } from '../../components/ui/index.jsx';
 import { DropdownSurface } from './DropdownSurface.jsx';
 
 export function CustomerSelector({
@@ -22,10 +23,11 @@ export function CustomerSelector({
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
+        <Input
           id="customer-search"
-          type="text"
-          className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-10 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          aria-label="Search customers"
+          wrapperClassName="gap-0"
+          className="h-9 pl-9 pr-10"
           placeholder="Search customer or site..."
           value={search}
           onChange={(event) => {

@@ -12,18 +12,24 @@ export function ArchiveFilters({
 }) {
   return (
     <SectionCard padding={false}>
-      <div className="grid gap-6 px-4 py-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_160px_180px_160px_auto]">
+      <div className="grid items-center gap-3 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_140px_180px_160px_auto]">
         <Input
           id="archive-search"
           value={filters.search}
           onChange={(event) => setFilter('search', event.target.value)}
           placeholder="Search case no, site, customer, technician..."
+          aria-label="Search archive"
+          wrapperClassName="gap-0"
+          className="h-9"
         />
 
         <Select
           id="archive-year"
           value={filters.year}
           onChange={(event) => setFilter('year', event.target.value)}
+          aria-label="Filter by year"
+          wrapperClassName="gap-0"
+          className="h-9"
         >
           {yearOptions.map((year) => (
             <option key={year} value={year}>
@@ -36,6 +42,9 @@ export function ArchiveFilters({
           id="archive-month"
           value={filters.month}
           onChange={(event) => setFilter('month', event.target.value)}
+          aria-label="Filter by month"
+          wrapperClassName="gap-0"
+          className="h-9"
         >
           <option value="">Full Year</option>
           {monthNames.map((month, index) => (
@@ -49,6 +58,9 @@ export function ArchiveFilters({
           id="archive-ncal"
           value={filters.ncal}
           onChange={(event) => setFilter('ncal', event.target.value)}
+          aria-label="Filter by NCAL"
+          wrapperClassName="gap-0"
+          className="h-9"
         >
           <option value="">All NCAL</option>
           {ncalOptions.filter(Boolean).map((ncal) => (
@@ -64,6 +76,7 @@ export function ArchiveFilters({
               type="button"
               variant="ghost"
               size="sm"
+              className="h-9"
               onClick={() => setFilters({ month: '', year: String(currentYear), ncal: '', search: '' })}
             >
               Reset

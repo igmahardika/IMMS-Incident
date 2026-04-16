@@ -396,6 +396,7 @@ export default function CurrentTroublePage() {
         action={user?.role !== 'technician' ? (
           <Button
             variant="default"
+            size="sm"
             icon={<Plus className="h-4 w-4" />}
             onClick={() => navigate('/incidents/create')}
           >
@@ -413,6 +414,7 @@ export default function CurrentTroublePage() {
             action={['admin', 'noc'].includes(user?.role) ? (
               <Button
                 variant="outline"
+                size="sm"
                 icon={<Plus className="h-4 w-4" />}
                 onClick={() => navigate('/incidents/create')}
               >

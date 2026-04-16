@@ -314,7 +314,6 @@ def main():
             odp_coord_sets[key].add((round(latitude, 8), round(longitude, 8)))
 
     topology_summary = Counter()
-    topology_conflicts = []
     topology_unmatched = []
 
     update_topology = connection.execute
@@ -328,11 +327,18 @@ def main():
                 continue
 
             if len(coord_set) > 1:
-                topology_conflicts.append({
-                    "odp": node["level_4"],
-                    "coords": sorted(list(coord_set)),
-                })
-                topology_summary["conflicts"] += 1
+                connection.execute(
+                    """
+                    UPDATE master_distribusi
+                    SET survey_latitude = NULL,
+                        survey_longitude = NULL,
+                        survey_source = NULL,
+                        survey_updated_at = NULL
+                    WHERE id = ?
+                    """,
+                    [node["id"]],
+                )
+                topology_summary["discarded_conflicts"] += 1
                 continue
 
             survey_latitude, survey_longitude = next(iter(coord_set))
@@ -364,7 +370,6 @@ def main():
 
         customer_updates = {}
         customer_match_modes = Counter()
-        customer_coord_conflicts = []
         customer_unmatched = 0
 
         for row in customer_rows:
@@ -471,12 +476,13 @@ def main():
                 else:
                     customer_summary["survey_only"] += 1
             elif len(unique_coords) > 1:
-                customer_coord_conflicts.append({
-                    "customer_id": db_row["customer_id"],
-                    "brand_site": db_row["brand_site"],
-                    "coords": unique_coords[:5],
-                })
-                customer_summary["coord_conflicts"] += 1
+                set_clauses.extend([
+                    "survey_latitude = NULL",
+                    "survey_longitude = NULL",
+                    "survey_source = NULL",
+                    "survey_updated_at = NULL",
+                ])
+                customer_summary["discarded_coord_conflicts"] += 1
 
             if not normalize_text(db_row["address"]) and entry["addresses"]:
                 set_clauses.append("address = ?")
@@ -519,9 +525,8 @@ def main():
             "matched": topology_summary["matched"],
             "actual_filled": topology_summary["actual_filled"],
             "survey_only": topology_summary["survey_only"],
-            "conflicts": topology_summary["conflicts"],
+            "discarded_conflicts": topology_summary["discarded_conflicts"],
             "unmatched": topology_summary["unmatched"],
-            "conflict_examples": topology_conflicts[:10],
             "unmatched_examples": topology_unmatched[:20],
         },
         "customers": {
@@ -533,10 +538,9 @@ def main():
             "osc_linked": customer_summary["osc_linked"],
             "odc_linked": customer_summary["odc_linked"],
             "odp_linked": customer_summary["odp_linked"],
-            "coord_conflicts": customer_summary["coord_conflicts"],
+            "discarded_coord_conflicts": customer_summary["discarded_coord_conflicts"],
             "unmatched": customer_unmatched,
             "match_modes": dict(customer_match_modes),
-            "coord_conflict_examples": customer_coord_conflicts[:10],
         },
     }
 

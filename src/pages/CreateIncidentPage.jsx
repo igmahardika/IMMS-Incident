@@ -310,6 +310,7 @@ export default function CreateIncidentPage() {
             <Button
               type="button"
               variant="outline"
+              size="sm"
               icon={<ArrowLeft className="h-4 w-4" />}
               onClick={() => navigate(-1)}
             >
@@ -318,6 +319,7 @@ export default function CreateIncidentPage() {
             <Button
               type="submit"
               form="incident-form"
+              size="sm"
               isLoading={loading}
               icon={isEdit ? <Save className="h-4 w-4" /> : <Send className="h-4 w-4" />}
             >
