@@ -25,6 +25,7 @@ import {
 import { createIncident, updateIncident } from '../services/incidents/write.js';
 import { markNotificationRead } from '../services/incidents/notifications.js';
 import { getRecurringIncidentSummary } from '../services/incidents/recurring.js';
+import { getIncidentIntegritySummary } from '../services/incidents/integrity.js';
 
 const router = express.Router();
 const STAFF_NOTIFICATION_ROOMS = ['role:admin', 'role:manager', 'role:noc'];
@@ -68,6 +69,13 @@ router.get('/history', authenticate, (req, res) => {
 // ─── Notifications API ──────────────────────────────────────────────────────
 router.get('/notifications', authenticate, (req, res) => {
   res.json(getIncidentNotifications({ role: req.user.role, userId: req.user.id }));
+});
+
+router.get('/integrity', authenticate, (req, res) => {
+  if (!['admin', 'manager', 'noc'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Insufficient permissions' });
+  }
+  res.json(getIncidentIntegritySummary());
 });
 
 router.put('/notifications/:id/read', authenticate, (req, res) => {

@@ -47,7 +47,23 @@ export const incidentCreateSchema = z.object({
   panjang_kabel: z.string().optional()
 });
 
-export const incidentUpdateSchema = incidentCreateSchema.partial().extend({
+export const incidentUpdateSchema = z.object({
+  case_no: z.string().min(1, "Nomor Case wajib diisi!").optional(),
+  customer_id: optionalIntFromForm,
+  ncal: z.enum(['BLUE', 'YELLOW', 'ORANGE', 'RED', 'BLACK']).optional(),
+  odp_bts: z.string().optional(),
+  level_support: z.string().optional(),
+  initial_problem: z.string().optional(),
+  technician_id: optionalIntFromForm,
+  classification_id: optionalIntFromForm,
+  start_time: z.string().optional(),
+  customer_terdampak: z.string().optional(),
+  koordinat: z.string().optional(),
+  sla: z.string().optional(),
+  indikasi: z.string().optional(),
+  pic: z.string().optional(),
+  kabel: z.string().optional(),
+  panjang_kabel: z.string().optional(),
   root_cause: z.string().optional(),
   last_action: z.string().optional(),
   power_before: z.string().optional(),
@@ -62,7 +78,7 @@ export const validateRequest = (schema) => {
   return (req, res, next) => {
     try {
       // Validate incoming request body against the defined Zod schema
-      schema.parse(req.body);
+      req.body = schema.parse(req.body);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

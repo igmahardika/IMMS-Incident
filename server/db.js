@@ -6,6 +6,7 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import logger from './utils/logger.js';
 import { applyRuntimeSchemaCompatibility } from './database/runtimeCompatibility.js';
+import { runtimeConfig } from './config/runtime.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, '..', 'imms.db');
@@ -14,6 +15,10 @@ const sqlite = new Database(DB_PATH);
 
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
+sqlite.pragma(`busy_timeout = ${runtimeConfig.SQLITE_BUSY_TIMEOUT_MS}`);
+sqlite.pragma(`synchronous = ${runtimeConfig.SQLITE_SYNCHRONOUS}`);
+sqlite.pragma(`wal_autocheckpoint = ${runtimeConfig.SQLITE_WAL_AUTOCHECKPOINT}`);
+sqlite.pragma('temp_store = MEMORY');
 
 // Wrap the better-sqlite3 instance with Drizzle ORM
 export const drizzleDb = drizzle(sqlite, { schema });
@@ -24,6 +29,11 @@ const db = sqlite;
 // CREATE TABLE statements have been migrated to Drizzle ORM schema definitions in ./config/schema.js
 // Runtime compatibility patches below are transitional support for older local DB files.
 applyRuntimeSchemaCompatibility(db, logger);
+
+db.prepare('SELECT 1').get();
+logger.info(
+  `[DB] SQLite ready path=${DB_PATH} journal=WAL foreign_keys=ON busy_timeout=${runtimeConfig.SQLITE_BUSY_TIMEOUT_MS} synchronous=${runtimeConfig.SQLITE_SYNCHRONOUS}`
+);
 
 // ─── Seed Data ─────────────────────────────────────────────────────────────
 

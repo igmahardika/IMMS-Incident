@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "verify:backend": "node server/scripts/verify_backend_services.js",
     "verify:db": "node server/scripts/verify_db_governance.js",
+    "verify:production": "node server/scripts/verify_production_flows.js",
     "preview": "vite preview"
   },
   "dependencies": {

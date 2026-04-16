@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
+import { runtimeConfig } from '../../config/runtime.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'imms-super-secret-key-2026';
-const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || 'imms-refresh-token-secret-2026';
+const JWT_SECRET = runtimeConfig.JWT_SECRET;
+const REFRESH_SECRET = runtimeConfig.REFRESH_TOKEN_SECRET;
 
 export function buildAuthPayload(user) {
   return {

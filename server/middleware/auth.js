@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
+import { runtimeConfig } from '../config/runtime.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'imms-super-secret-key-2026';
+const JWT_SECRET = runtimeConfig.JWT_SECRET;
 
 export function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;

@@ -50,6 +50,7 @@ npm run build
 npm run lint
 npm run verify:backend
 npm run verify:db
+npm run verify:production
 ```
 
 Penjelasan:
@@ -58,6 +59,42 @@ Penjelasan:
 - `lint`: memastikan source konsisten
 - `verify:backend`: smoke check service layer backend
 - `verify:db`: verifikasi governance runtime schema patch
+- `verify:production`: verifikasi auth/session, permission guard, incident lifecycle, update guard, dan import validation
+
+## Runtime Configuration
+
+Runtime sekarang memvalidasi konfigurasi startup. Variabel berikut didukung:
+
+- `NODE_ENV`
+- `PORT`
+- `JWT_SECRET`
+- `REFRESH_TOKEN_SECRET`
+- `ALLOWED_ORIGINS`
+- `TRUST_PROXY`
+- `SQLITE_BUSY_TIMEOUT_MS`
+- `SQLITE_SYNCHRONOUS`
+- `SQLITE_WAL_AUTOCHECKPOINT`
+- `BODY_LIMIT_MB`
+- `REQUEST_TIMEOUT_MS`
+- `KEEP_ALIVE_TIMEOUT_MS`
+
+Catatan penting:
+
+- di `production`, `JWT_SECRET` dan `REFRESH_TOKEN_SECRET` wajib diisi dan tidak boleh memakai fallback development
+- `ALLOWED_ORIGINS` sebaiknya diisi daftar origin frontend yang dipisah koma
+- jika `ALLOWED_ORIGINS` tidak diisi di local dev, backend memakai default localhost origin
+
+## Health Endpoints
+
+- `GET /api/health/live`
+  Untuk liveness sederhana
+- `GET /api/health/ready`
+  Untuk readiness yang memeriksa:
+  - koneksi database
+  - runtime schema compatibility
+  - integritas pending incident terhadap pause log terbuka
+- `GET /api/health`
+  Alias readiness
 
 ## Struktur Modul Utama
 
@@ -100,6 +137,7 @@ Penjelasan:
 - [docs/PRIORITY_FINDINGS_2026-04-15.md](/Users/macbookair/Documents/IMMS/docs/PRIORITY_FINDINGS_2026-04-15.md)
 - [docs/REFACTOR_ROADMAP_2026-04-15.md](/Users/macbookair/Documents/IMMS/docs/REFACTOR_ROADMAP_2026-04-15.md)
 - [docs/FEATURE_MAP.md](/Users/macbookair/Documents/IMMS/docs/FEATURE_MAP.md)
+- [docs/PRODUCTION_READINESS_2026-04-16.md](/Users/macbookair/Documents/IMMS/docs/PRODUCTION_READINESS_2026-04-16.md)
 
 ## Catatan Operasional
 
