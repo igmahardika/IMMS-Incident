@@ -96,6 +96,9 @@ Makna command:
 - `lint`: guard source quality
 - `build`: memastikan bundle frontend valid
 - `backup:db`: membuat backup SQLite konsisten dan manifest metadata
+- `backup:db` juga menerapkan retention guard:
+  - `BACKUP_KEEP_COUNT` default `14`
+  - `BACKUP_RETENTION_DAYS` default `30`
 - `verify:backup`: memastikan backup terbaru bisa dibuka, lolos integrity check, dan cocok secara row count dengan live DB saat backup dibuat
 - `verify:backend`: smoke verification service layer
 - `verify:db`: memastikan runtime schema governance tetap sesuai
@@ -134,6 +137,7 @@ Untuk SQLite internal ini, prosedur aman yang direkomendasikan:
 1. jalankan `npm run backup:db`
 2. simpan artefak `.db` dan file manifest `.json` hasil backup
 3. jika menjelang release penting, jalankan juga `npm run verify:backup`
+4. jika ingin scheduling di host, gunakan contoh [ops/imms-backup.cron.example](/Users/macbookair/Documents/IMMS/ops/imms-backup.cron.example)
 
 Catatan:
 - backup sekarang memakai SQLite backup API melalui `better-sqlite3`, sehingga lebih aman daripada copy file raw biasa

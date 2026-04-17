@@ -7,8 +7,43 @@ function stamp() {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
+function pruneBackups(backupDir, keepCount, retentionDays) {
+  const files = fs.readdirSync(backupDir)
+    .filter((file) => file.startsWith('imms-backup-') && file.endsWith('.db'))
+    .map((file) => {
+      const fullPath = path.join(backupDir, file);
+      return {
+        file,
+        fullPath,
+        stat: fs.statSync(fullPath),
+      };
+    })
+    .sort((left, right) => right.stat.mtimeMs - left.stat.mtimeMs);
+
+  const cutoff = retentionDays > 0
+    ? Date.now() - (retentionDays * 24 * 60 * 60 * 1000)
+    : null;
+
+  const deleted = [];
+  files.forEach((entry, index) => {
+    const beyondKeepCount = keepCount > 0 && index >= keepCount;
+    const beyondRetention = cutoff !== null && entry.stat.mtimeMs < cutoff;
+
+    if (!beyondKeepCount && !beyondRetention) return;
+
+    const manifestPath = `${entry.fullPath}.json`;
+    fs.rmSync(entry.fullPath, { force: true });
+    fs.rmSync(manifestPath, { force: true });
+    deleted.push(path.basename(entry.fullPath));
+  });
+
+  return deleted;
+}
+
 async function main() {
   const backupDir = process.env.BACKUP_DIR || path.join('/tmp', 'imms-backups');
+  const keepCount = Number.parseInt(process.env.BACKUP_KEEP_COUNT || '14', 10);
+  const retentionDays = Number.parseInt(process.env.BACKUP_RETENTION_DAYS || '30', 10);
   fs.mkdirSync(backupDir, { recursive: true });
 
   const backupPath = path.join(backupDir, `imms-backup-${stamp()}.db`);
@@ -37,6 +72,7 @@ async function main() {
   };
 
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  const prunedBackups = pruneBackups(backupDir, Number.isNaN(keepCount) ? 14 : keepCount, Number.isNaN(retentionDays) ? 30 : retentionDays);
 
   console.log(JSON.stringify({
     success: true,
@@ -44,6 +80,11 @@ async function main() {
     manifestPath,
     integrity,
     tables,
+    backupRetention: {
+      keepCount: Number.isNaN(keepCount) ? 14 : keepCount,
+      retentionDays: Number.isNaN(retentionDays) ? 30 : retentionDays,
+      prunedBackups,
+    },
   }, null, 2));
 }
 

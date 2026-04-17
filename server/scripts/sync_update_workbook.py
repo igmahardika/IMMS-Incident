@@ -189,6 +189,41 @@ def normalize_odp_name(value):
     return text
 
 
+def topology_candidate_keys(raw_value):
+    normalized = normalize_odp_name(raw_value)
+    if not normalized:
+        return []
+
+    candidates = [normalized]
+    if normalized.startswith("JB-"):
+        candidates.append(normalized[3:])
+    if normalized.startswith("JB") and len(normalized) > 2 and normalized[2] != "-":
+        candidates.append(normalized[2:])
+    if normalized.startswith("PND-"):
+        candidates.append(normalized[4:])
+    if normalized.startswith("PND") and len(normalized) > 3 and normalized[3] != "-":
+        candidates.append(normalized[3:])
+
+    deduped = []
+    seen = set()
+    for item in candidates:
+        key = normalize_key(item)
+        if not key or key in seen:
+            continue
+        deduped.append(key)
+        seen.add(key)
+    return deduped
+
+
+def resolve_topology_node(lookup, raw_value):
+    candidate_keys = topology_candidate_keys(raw_value)
+    for index, candidate_key in enumerate(candidate_keys):
+        node = lookup.get(candidate_key)
+        if node:
+            return node, index > 0
+    return None, False
+
+
 def choose_brand_from_name(raw_name, brand_keys_sorted, brand_lookup):
     normalized_name = normalize_key(raw_name)
     if not normalized_name:
@@ -320,11 +355,13 @@ def main():
     connection.execute("BEGIN")
     try:
         for odp_key, coord_set in odp_coord_sets.items():
-            node = topology_by_odp.get(odp_key)
+            node, resolved_via_alias = resolve_topology_node(topology_by_odp, odp_key)
             if not node:
                 topology_unmatched.append(odp_key)
                 topology_summary["unmatched"] += 1
                 continue
+            if resolved_via_alias:
+                topology_summary["alias_matched"] += 1
 
             if len(coord_set) > 1:
                 connection.execute(
@@ -423,7 +460,7 @@ def main():
                 entry["coord_examples"].append(coord_pair)
 
             workbook_odp = normalize_odp_name(row["ODP"])
-            topology_match = topology_by_odp.get(normalize_key(workbook_odp))
+            topology_match, _ = resolve_topology_node(topology_by_odp, workbook_odp)
             if topology_match:
                 if topology_match["level_2"]:
                     entry["osc_values"].add(topology_match["level_2"])
@@ -525,6 +562,7 @@ def main():
             "matched": topology_summary["matched"],
             "actual_filled": topology_summary["actual_filled"],
             "survey_only": topology_summary["survey_only"],
+            "alias_matched": topology_summary["alias_matched"],
             "discarded_conflicts": topology_summary["discarded_conflicts"],
             "unmatched": topology_summary["unmatched"],
             "unmatched_examples": topology_unmatched[:20],

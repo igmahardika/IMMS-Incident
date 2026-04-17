@@ -21,6 +21,11 @@ export function TopologyReviewPanel({ topologyReview }) {
           <p className="mt-1 text-xs text-muted-foreground">Nodes that were previously blank and now have usable map coordinates.</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-medium text-muted-foreground">Alias Matched</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.alias_matched || 0}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Workbook labels resolved safely through canonical ODP aliases.</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs font-medium text-muted-foreground">Unmatched Labels</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.unmatched || 0}</p>
           <p className="mt-1 text-xs text-muted-foreground">Workbook ODP labels that do not exist in the active registry.</p>
