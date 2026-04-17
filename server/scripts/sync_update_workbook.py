@@ -464,6 +464,8 @@ def main():
                     "odp": row["ODP"],
                     "olt": row["OLT"],
                     "has_coordinates": coord_pair is not None,
+                    "latitude": coord_pair[0] if coord_pair else None,
+                    "longitude": coord_pair[1] if coord_pair else None,
                     "reasons": stewardship_reasons,
                 }
 

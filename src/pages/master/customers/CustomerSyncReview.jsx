@@ -1,8 +1,9 @@
 import React from 'react';
 import { Database, Search, ShieldCheck, Route, ExternalLink } from 'lucide-react';
+import { Button } from '../../../components/ui/index.jsx';
 import { CustomerStatCard } from './CustomerStatCard.jsx';
 
-export function CustomerSyncReview({ reviewMetrics, stats }) {
+export function CustomerSyncReview({ reviewMetrics, stats, onUseCandidate }) {
   if (!reviewMetrics) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
@@ -77,8 +78,15 @@ export function CustomerSyncReview({ reviewMetrics, stats }) {
                 {(reviewMetrics.unmatched_actionable_examples || []).length ? (
                   reviewMetrics.unmatched_actionable_examples.slice(0, 12).map((item) => (
                     <div key={`${item.name}-${item.address}`} className="rounded-lg border border-border bg-muted/10 p-3">
-                      <p className="text-sm font-medium text-foreground">{item.simplified_name || item.name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{item.address || 'Address not available'}</p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{item.simplified_name || item.name}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{item.address || 'Address not available'}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => onUseCandidate?.(item)}>
+                          Use Candidate
+                        </Button>
+                      </div>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {(item.reasons || []).map((reason) => (
                           <span key={reason} className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">
@@ -88,6 +96,11 @@ export function CustomerSyncReview({ reviewMetrics, stats }) {
                         {item.odp ? (
                           <span className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">
                             {item.odp}
+                          </span>
+                        ) : null}
+                        {item.latitude != null && item.longitude != null ? (
+                          <span className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">
+                            {item.latitude}, {item.longitude}
                           </span>
                         ) : null}
                       </div>

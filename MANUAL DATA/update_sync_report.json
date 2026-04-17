@@ -1,7 +1,7 @@
 {
   "workbook": "MANUAL DATA/UPDATE.xlsx",
-  "generated_at": "2026-04-17 09:20:10",
-  "backup_path": "/tmp/imms-backups/imms-before-update-sync-20260417-092010.db",
+  "generated_at": "2026-04-17 13:52:26",
+  "backup_path": "/tmp/imms-backups/imms-before-update-sync-20260417-135225.db",
   "topology": {
     "rows": 1770,
     "unique_odp": 589,
@@ -56,6 +56,8 @@
         "odp": "ODP AVN-01",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.008993,
+        "longitude": 110.484792,
         "reasons": [
           "odp"
         ]
@@ -68,6 +70,8 @@
         "odp": "ODP AVN-01",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": [
           "odp"
         ]
@@ -80,6 +84,8 @@
         "odp": "ODP AVN-01",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.006901,
+        "longitude": 110.485649,
         "reasons": [
           "odp"
         ]
@@ -92,6 +98,8 @@
         "odp": "ODP AVN-01",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.008993,
+        "longitude": 110.484792,
         "reasons": [
           "odp"
         ]
@@ -104,6 +112,8 @@
         "odp": "ODP AVN-01",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.00713891,
+        "longitude": 110.485084,
         "reasons": [
           "odp"
         ]
@@ -116,6 +126,8 @@
         "odp": "ODP AVN-01",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007569,
+        "longitude": 110.485334,
         "reasons": [
           "odp"
         ]
@@ -128,6 +140,8 @@
         "odp": "ODP AVN-02",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007599,
+        "longitude": 110.485764,
         "reasons": [
           "odp"
         ]
@@ -140,6 +154,8 @@
         "odp": "ODP AVN-02",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007728,
+        "longitude": 110.485756,
         "reasons": [
           "odp"
         ]
@@ -152,6 +168,8 @@
         "odp": "ODP AVN-02",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.00809801,
+        "longitude": 110.4851537,
         "reasons": [
           "odp"
         ]
@@ -164,6 +182,8 @@
         "odp": "ODP AVN-03",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007306,
+        "longitude": 110.485806,
         "reasons": [
           "odp"
         ]
@@ -176,6 +196,8 @@
         "odp": "ODP AVN-04",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007176,
+        "longitude": 110.485943,
         "reasons": [
           "odp"
         ]
@@ -188,6 +210,8 @@
         "odp": "ODP AVN-05",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.006873,
+        "longitude": 110.485853,
         "reasons": [
           "odp"
         ]
@@ -200,6 +224,8 @@
         "odp": "ODP AVN-06",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007369,
+        "longitude": 110.485847,
         "reasons": [
           "odp"
         ]
@@ -212,6 +238,8 @@
         "odp": "ODP AVN-06",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007497,
+        "longitude": 110.485983,
         "reasons": [
           "odp"
         ]
@@ -224,6 +252,8 @@
         "odp": "ODP AVN-06",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.008993,
+        "longitude": 110.484792,
         "reasons": [
           "odp"
         ]
@@ -236,6 +266,8 @@
         "odp": "ODP AVN-06",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.00651212,
+        "longitude": 110.4856212,
         "reasons": [
           "odp"
         ]
@@ -248,6 +280,8 @@
         "odp": "ODP AVN-07",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.00659731,
+        "longitude": 110.4854924,
         "reasons": [
           "odp"
         ]
@@ -260,6 +294,8 @@
         "odp": "ODP AVN-07",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.00718151,
+        "longitude": 110.4850411,
         "reasons": [
           "odp"
         ]
@@ -272,6 +308,8 @@
         "odp": "ODP AVN-07",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.007761,
+        "longitude": 110.485861,
         "reasons": [
           "odp"
         ]
@@ -284,6 +322,8 @@
         "odp": "ODP AVN-08",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": true,
+        "latitude": -7.00713891,
+        "longitude": 110.485084,
         "reasons": [
           "odp"
         ]
@@ -298,6 +338,8 @@
         "odp": "default",
         "olt": "OLT TUNAS BAMBU",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       },
       {
@@ -308,6 +350,8 @@
         "odp": "ODP TENTREM APT LT 10",
         "olt": "OLT TENTREM APT",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       },
       {
@@ -318,6 +362,8 @@
         "odp": "",
         "olt": "OLT SEMARANG TIMUR",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       },
       {
@@ -328,6 +374,8 @@
         "odp": "",
         "olt": "OLT TRITUNGGAL",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       },
       {
@@ -338,6 +386,8 @@
         "odp": "",
         "olt": "OLT TUNAS BAMBU",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       },
       {
@@ -348,6 +398,8 @@
         "odp": "",
         "olt": "OLT TRITUNGGAL",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       },
       {
@@ -358,6 +410,8 @@
         "odp": "",
         "olt": "OLT TENTREM APT",
         "has_coordinates": false,
+        "latitude": null,
+        "longitude": null,
         "reasons": []
       }
     ],

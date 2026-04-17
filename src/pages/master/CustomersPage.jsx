@@ -72,6 +72,38 @@ export default function MasterCustomerPage() {
     setModal('create');
   };
 
+  const openCandidateCreate = (candidate) => {
+    const canonicalOdp = candidate?.odp
+      ? (candidate.odp.toUpperCase().startsWith('ODP ') ? candidate.odp.toUpperCase() : `ODP ${candidate.odp.toUpperCase()}`)
+      : '';
+
+    const customerIdSeed = (candidate?.simplified_name || candidate?.name || 'candidate')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 24) || 'CANDIDATE';
+
+    setForm({
+      ...EMPTY_FORM,
+      customer_id: `CAND-${customerIdSeed}`,
+      service_id: '',
+      company_name: candidate?.simplified_name || candidate?.name || '',
+      brand_site: candidate?.simplified_name || candidate?.name || '',
+      address: candidate?.address || '',
+      osc_reference: candidate?.olt || '',
+      odc_reference: candidate?.odc || '',
+      odp_reference: canonicalOdp,
+      latitude: candidate?.latitude ?? '',
+      longitude: candidate?.longitude ?? '',
+      coord_source: candidate?.latitude != null && candidate?.longitude != null ? 'update-workbook-customer' : '',
+      survey_name_raw: candidate?.name || '',
+      survey_latitude: candidate?.latitude ?? '',
+      survey_longitude: candidate?.longitude ?? '',
+      survey_source: 'UPDATE.xlsx:CUSTOMER',
+    });
+    setModal('create');
+  };
+
   const openEdit = (customer) => {
     setForm({
       ...EMPTY_FORM,
@@ -333,7 +365,11 @@ export default function MasterCustomerPage() {
             <GeoSummary customers={filteredCustomers} />
           </div>
         ) : viewMode === 'review' ? (
-          <CustomerSyncReview reviewMetrics={reviewMetrics} stats={stats} />
+          <CustomerSyncReview
+            reviewMetrics={reviewMetrics}
+            stats={stats}
+            onUseCandidate={openCandidateCreate}
+          />
         ) : (
           <DataTable
             data={filteredCustomers}
