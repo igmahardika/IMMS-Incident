@@ -249,6 +249,12 @@ def choose_brand_from_name(raw_name, brand_keys_sorted, brand_lookup):
     return suffix_candidates[0][1]
 
 
+def simplify_customer_name(raw_name):
+    text = normalize_text(raw_name)
+    text = re.sub(r"^((?:\d{2}\.){2}\d+(?:\.\d+)?|\d{4}-\d+)\s+", "", text)
+    return re.sub(r"\s+", " ", text).strip(" -")
+
+
 def prepare_backup():
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     backup_path = BACKUP_DIR / f"imms-before-update-sync-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db"
@@ -408,6 +414,10 @@ def main():
         customer_updates = {}
         customer_match_modes = Counter()
         customer_unmatched = 0
+        customer_unmatched_actionable = 0
+        customer_unmatched_external = 0
+        customer_actionable_examples = []
+        customer_external_examples = []
 
         for row in customer_rows:
             raw_name = row["NAME"]
@@ -435,6 +445,36 @@ def main():
 
             if matched_customer is None:
                 customer_unmatched += 1
+                stewardship_reasons = []
+                topology_match, _ = resolve_topology_node(topology_by_odp, row["ODP"])
+                if topology_match:
+                    stewardship_reasons.append("odp")
+                elif row["ODC"] and odc_lookup.get(normalize_key(row["ODC"])):
+                    stewardship_reasons.append("odc")
+                elif row["OLT"] and osc_lookup.get(normalize_key(row["OLT"])):
+                    stewardship_reasons.append("osc")
+                if address_key and address_lookup.get(address_key):
+                    stewardship_reasons.append("address")
+
+                example_payload = {
+                    "name": raw_name,
+                    "simplified_name": simplify_customer_name(raw_name),
+                    "address": address,
+                    "odc": row["ODC"],
+                    "odp": row["ODP"],
+                    "olt": row["OLT"],
+                    "has_coordinates": coord_pair is not None,
+                    "reasons": stewardship_reasons,
+                }
+
+                if stewardship_reasons:
+                    customer_unmatched_actionable += 1
+                    if len(customer_actionable_examples) < 20:
+                        customer_actionable_examples.append(example_payload)
+                else:
+                    customer_unmatched_external += 1
+                    if len(customer_external_examples) < 20:
+                        customer_external_examples.append(example_payload)
                 continue
 
             customer_match_modes[match_mode] += 1
@@ -578,6 +618,10 @@ def main():
             "odp_linked": customer_summary["odp_linked"],
             "discarded_coord_conflicts": customer_summary["discarded_coord_conflicts"],
             "unmatched": customer_unmatched,
+            "unmatched_actionable": customer_unmatched_actionable,
+            "unmatched_external_only": customer_unmatched_external,
+            "unmatched_actionable_examples": customer_actionable_examples,
+            "unmatched_external_examples": customer_external_examples,
             "match_modes": dict(customer_match_modes),
         },
     }

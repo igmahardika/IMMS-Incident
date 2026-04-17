@@ -37,6 +37,8 @@ export function getStewardshipReport() {
   `).get().count;
 
   const customerUnmatched = workbookReport.customer?.unmatched || 0;
+  const customerActionable = workbookReport.customer?.unmatched_actionable || 0;
+  const customerExternalOnly = workbookReport.customer?.unmatched_external_only || 0;
   const topologyUnmatched = workbookReport.topology?.unmatched || 0;
 
   return {
@@ -50,6 +52,8 @@ export function getStewardshipReport() {
       missingCoords: customerMissingCoords,
       surveyLinked: customerSurveyLinked,
       unmatchedWorkbookRows: customerUnmatched,
+      actionableWorkbookRows: customerActionable,
+      externalWorkbookRows: customerExternalOnly,
     },
     topology: {
       missingCoords: topologyMissingCoords,

@@ -1,13 +1,13 @@
 {
   "workbook": "MANUAL DATA/UPDATE.xlsx",
-  "generated_at": "2026-04-17 09:07:39",
-  "backup_path": "/tmp/imms-backups/imms-before-update-sync-20260417-090739.db",
+  "generated_at": "2026-04-17 09:20:10",
+  "backup_path": "/tmp/imms-backups/imms-before-update-sync-20260417-092010.db",
   "topology": {
     "rows": 1770,
     "unique_odp": 589,
     "matched": 568,
-    "actual_filled": 19,
-    "survey_only": 549,
+    "actual_filled": 0,
+    "survey_only": 568,
     "alias_matched": 20,
     "discarded_conflicts": 1,
     "unmatched": 20,
@@ -45,6 +45,322 @@
     "odp_linked": 1325,
     "discarded_coord_conflicts": 55,
     "unmatched": 715,
+    "unmatched_actionable": 708,
+    "unmatched_external_only": 7,
+    "unmatched_actionable_examples": [
+      {
+        "name": "1557-27 Juliana Unit A12",
+        "simplified_name": "Juliana Unit A12",
+        "address": "Avani Ecopark Unit A12, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-01",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "03.1557-72 Avani Ecopark - Site WIdya Selviana Apriliani A14",
+        "simplified_name": "03.1557-72 Avani Ecopark - Site WIdya Selviana Apriliani A14",
+        "address": "Avani Ecopark Unit A14, Jl. Ketapang Raya , Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-01",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": false,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-9 Pantja Mukti Wibowo Unit A17",
+        "simplified_name": "Pantja Mukti Wibowo Unit A17",
+        "address": "Avani Ecopark Unit A17, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-01",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-1 Marketing Gallery",
+        "simplified_name": "Marketing Gallery",
+        "address": "Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-01",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-45 Viki Dwi Randa Unit A06",
+        "simplified_name": "Viki Dwi Randa Unit A06",
+        "address": "Avani Ecopark Unit A06, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-01",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-6 Adi Prassidha Unit A08",
+        "simplified_name": "Adi Prassidha Unit A08",
+        "address": "Avani Ecopark Unit A08, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-01",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "03.1557-76 - Tjia, David Kurniawan Unit C05",
+        "simplified_name": "03.1557-76 - Tjia, David Kurniawan Unit C05",
+        "address": "Avani Ecopark Unit C05, Jl. Ketapang Raya, Pedurungan Lor, Pedurungan, Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-02",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-35 Arby Hermawan Hartanto Unit C03",
+        "simplified_name": "Arby Hermawan Hartanto Unit C03",
+        "address": "Avani Ecopark Unit C03, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-02",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "03.1557-77 - Thomas Wijaya Unit C09",
+        "simplified_name": "03.1557-77 - Thomas Wijaya Unit C09",
+        "address": "Avani Ecopark Unit C09, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan, Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-02",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-68 Sonny Kurniawan Aji Unit D05",
+        "simplified_name": "Sonny Kurniawan Aji Unit D05",
+        "address": "Avani Ecopark Unit D05, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-03",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-21 Cornelius Topan Endi Prasetya Unit D08",
+        "simplified_name": "Cornelius Topan Endi Prasetya Unit D08",
+        "address": "Avani Ecopark Unit D08, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-04",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-4 Ferry Sumartanto Unit E02",
+        "simplified_name": "Ferry Sumartanto Unit E02",
+        "address": "Avani Ecopark Unit E02, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-05",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "03.1557-74 - Linda Afriastika Unit D07",
+        "simplified_name": "03.1557-74 - Linda Afriastika Unit D07",
+        "address": "Avani Ecopark Unit D07, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-06",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-71 - Tubagus Hermawan Unit C16",
+        "simplified_name": "Tubagus Hermawan Unit C16",
+        "address": "Avani Ecopark Unit C16, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-06",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-28 Adhie Saputra Unit C22",
+        "simplified_name": "Adhie Saputra Unit C22",
+        "address": "Avani Ecopark Unit C22, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-06",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-57 Aries Prasetyo Unit D09",
+        "simplified_name": "Aries Prasetyo Unit D09",
+        "address": "Avani Ecopark unit D-09, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-06",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-62 Hamka Unit B18",
+        "simplified_name": "Hamka Unit B18",
+        "address": "Avani Ecopark unit B-18, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-07",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-47 Dzulfikar Try Eryanto Unit B22",
+        "simplified_name": "Dzulfikar Try Eryanto Unit B22",
+        "address": "Avani Ecopark unit B22, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-07",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-19 Tan Davin Hartoyo Paramabhakti Unit B16",
+        "simplified_name": "Tan Davin Hartoyo Paramabhakti Unit B16",
+        "address": "Avani Ecopark Unit B16, Jl. Ketapang Raya, Pedurungan Lor, Kec. Pedurungan Semarang",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-07",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      },
+      {
+        "name": "1557-55 Lucia Eka Pravitasari Unit B03",
+        "simplified_name": "Lucia Eka Pravitasari Unit B03",
+        "address": "Avani Ecopark unit B-03, Jl. Ketapang Raya",
+        "odc": "ODC AVANI",
+        "odp": "ODP AVN-08",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": true,
+        "reasons": [
+          "odp"
+        ]
+      }
+    ],
+    "unmatched_external_examples": [
+      {
+        "name": "Test Tunas Bambu PON 13",
+        "simplified_name": "Test Tunas Bambu PON 13",
+        "address": "Jalan Siliwangi, Kota Semarang",
+        "odc": "Default",
+        "odp": "default",
+        "olt": "OLT TUNAS BAMBU",
+        "has_coordinates": false,
+        "reasons": []
+      },
+      {
+        "name": "Tentrem APT - Unit 9D",
+        "simplified_name": "Tentrem APT - Unit 9D",
+        "address": "",
+        "odc": "ODC TENTREM APARTEMEN",
+        "odp": "ODP TENTREM APT LT 10",
+        "olt": "OLT TENTREM APT",
+        "has_coordinates": false,
+        "reasons": []
+      },
+      {
+        "name": "ZTE TEST",
+        "simplified_name": "ZTE TEST",
+        "address": "",
+        "odc": "Default",
+        "odp": "",
+        "olt": "OLT SEMARANG TIMUR",
+        "has_coordinates": false,
+        "reasons": []
+      },
+      {
+        "name": "Roof BTS Tritunggal-F609",
+        "simplified_name": "Roof BTS Tritunggal-F609",
+        "address": "",
+        "odc": "Default",
+        "odp": "",
+        "olt": "OLT TRITUNGGAL",
+        "has_coordinates": false,
+        "reasons": []
+      },
+      {
+        "name": "TESTING TUNAS BAMBU PON 9",
+        "simplified_name": "TESTING TUNAS BAMBU PON 9",
+        "address": "",
+        "odc": "Default",
+        "odp": "",
+        "olt": "OLT TUNAS BAMBU",
+        "has_coordinates": false,
+        "reasons": []
+      },
+      {
+        "name": "Alarm Listrik Tritunggal OLT",
+        "simplified_name": "Alarm Listrik Tritunggal OLT",
+        "address": "",
+        "odc": "Default",
+        "odp": "",
+        "olt": "OLT TRITUNGGAL",
+        "has_coordinates": false,
+        "reasons": []
+      },
+      {
+        "name": "Andre Soedibjo",
+        "simplified_name": "Andre Soedibjo",
+        "address": "",
+        "odc": "Default",
+        "odp": "",
+        "olt": "OLT TENTREM APT",
+        "has_coordinates": false,
+        "reasons": []
+      }
+    ],
     "match_modes": {
       "brand_address": 1257,
       "address": 155,
