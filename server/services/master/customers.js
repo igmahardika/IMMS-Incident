@@ -1,7 +1,12 @@
 import db from '../../db.js';
 
 export function listCustomers() {
-  return db.prepare('SELECT * FROM master_customer ORDER BY company_name').all();
+  return db.prepare(`
+    SELECT *
+    FROM master_customer
+    WHERE COALESCE(is_active, 1) = 1
+    ORDER BY company_name
+  `).all();
 }
 
 export function createCustomer(payload) {

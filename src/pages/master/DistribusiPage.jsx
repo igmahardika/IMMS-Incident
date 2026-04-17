@@ -190,7 +190,7 @@ export default function MasterDistribusiPage() {
           {loading ? (
             <TableSkeleton rows={12} />
           ) : (
-            <DistributionMap data={data} onRefresh={load} showHeader={true} />
+            <DistributionMap data={data} onRefresh={load} />
           )}
         </SectionCard>
       ) : viewMode === 'review' ? (

@@ -6,7 +6,8 @@ export function listCustomersMissingCoords() {
   return db.prepare(`
     SELECT id, company_name, brand_site, address, city, province
     FROM master_customer
-    WHERE (latitude IS NULL OR longitude IS NULL)
+    WHERE COALESCE(is_active, 1) = 1
+      AND (latitude IS NULL OR longitude IS NULL)
       AND address IS NOT NULL
       AND TRIM(address) <> ''
   `).all();
@@ -21,6 +22,7 @@ export function getCustomerGeocodeReport() {
       SUM(CASE WHEN (latitude IS NULL OR longitude IS NULL) AND address IS NOT NULL AND TRIM(address) <> '' THEN 1 ELSE 0 END) AS address_ready,
       SUM(CASE WHEN (latitude IS NULL OR longitude IS NULL) AND (address IS NULL OR TRIM(address) = '') THEN 1 ELSE 0 END) AS missing_address
     FROM master_customer
+    WHERE COALESCE(is_active, 1) = 1
   `).get();
 
   const provinceBreakdown = db.prepare(`
@@ -28,7 +30,8 @@ export function getCustomerGeocodeReport() {
       COALESCE(NULLIF(TRIM(province), ''), 'Unknown') AS province,
       COUNT(*) AS count
     FROM master_customer
-    WHERE latitude IS NULL OR longitude IS NULL
+    WHERE COALESCE(is_active, 1) = 1
+      AND (latitude IS NULL OR longitude IS NULL)
     GROUP BY province
     ORDER BY count DESC, province ASC
     LIMIT 6
@@ -37,7 +40,8 @@ export function getCustomerGeocodeReport() {
   const rawSamples = db.prepare(`
     SELECT id, brand_site, company_name, city, province, address
     FROM master_customer
-    WHERE latitude IS NULL OR longitude IS NULL
+    WHERE COALESCE(is_active, 1) = 1
+      AND (latitude IS NULL OR longitude IS NULL)
     ORDER BY
       CASE WHEN address IS NULL OR TRIM(address) = '' THEN 0 ELSE 1 END DESC,
       COALESCE(created_at, customer_id) DESC
@@ -83,7 +87,7 @@ export async function autoGeocodeCustomers(ids) {
   }
 
   const placeholders = normalizedIds.map(() => '?').join(', ');
-  const items = db.prepare(`SELECT * FROM master_customer WHERE id IN (${placeholders})`).all(...normalizedIds);
+  const items = db.prepare(`SELECT * FROM master_customer WHERE COALESCE(is_active, 1) = 1 AND id IN (${placeholders})`).all(...normalizedIds);
   const updateStmt = db.prepare('UPDATE master_customer SET latitude = ?, longitude = ? WHERE id = ?');
   const memo = new Map();
   const results = [];
@@ -130,7 +134,8 @@ export async function autoGeocodeCustomers(ids) {
   const remaining = db.prepare(`
     SELECT COUNT(*) AS c
     FROM master_customer
-    WHERE latitude IS NULL OR longitude IS NULL
+    WHERE COALESCE(is_active, 1) = 1
+      AND (latitude IS NULL OR longitude IS NULL)
   `).get().c;
 
   return {

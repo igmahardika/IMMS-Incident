@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, MapPin, Radar, TrendingUp } from 'lucide-react';
 import { formatDateTime } from '../../../utils/incidentUtils.js';
 import { SectionCard } from '../index.jsx';
 import { ReportReasonList, StatChip } from './MapShared.jsx';
@@ -34,7 +34,7 @@ export function CustomerGeocodeReportCard({ report }) {
     <SectionCard
       title="Sync Health"
       subtitle="Map readiness for customer coordinates."
-      className="min-w-[320px] shadow-lg"
+      className="shadow-none"
     >
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -119,6 +119,90 @@ export function CustomerTroublePopup({ trouble }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function CustomerTroubleSummaryCard({ troublePoints = [] }) {
+  const cityCounts = troublePoints.reduce((accumulator, item) => {
+    const city = item.city || 'Unknown';
+    accumulator[city] = (accumulator[city] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  const sortedCities = Object.entries(cityCounts).sort((left, right) => right[1] - left[1]);
+  const totalIncidents = troublePoints.reduce((sum, item) => sum + Number(item.incident_count || 0), 0);
+
+  return (
+    <SectionCard
+      title="Incident Geography"
+      subtitle="Archive trouble clusters based on customer locations in the selected date range."
+      className="shadow-none"
+    >
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StatChip label="Incident Nodes" value={troublePoints.length} />
+          <StatChip label="Incident Volume" value={totalIncidents} />
+          <StatChip label="Cities" value={sortedCities.length} />
+          <StatChip
+            label="Top City"
+            value={sortedCities.length ? sortedCities[0][0] : '—'}
+          />
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-medium text-foreground">Top city concentration</p>
+          </div>
+
+          <div className="space-y-2">
+            {sortedCities.length ? (
+              sortedCities.slice(0, 5).map(([city, count]) => {
+                const percentage = troublePoints.length ? (count / troublePoints.length) * 100 : 0;
+                return (
+                  <div key={city} className="rounded-lg border border-border bg-background p-3 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{city}</p>
+                        <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}% of incident nodes</p>
+                      </div>
+                      <p className="shrink-0 text-sm font-semibold text-foreground">{count}</p>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground">No mapped incident nodes for the selected date range.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-muted-foreground">Highest Frequency</p>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+              {troublePoints.length ? `${Math.max(...troublePoints.map((item) => Number(item.incident_count || 0)))}x` : '0x'}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-muted-foreground">Mapped Coverage</p>
+              <Radar className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+              {troublePoints.length ? 'Ready' : 'Empty'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </SectionCard>
   );
 }
 

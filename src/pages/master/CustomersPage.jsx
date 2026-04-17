@@ -15,7 +15,6 @@ import {
 } from '../../components/ui/index.jsx';
 import { DataTable } from '../../components/tables/DataTable.jsx';
 import CustomerMap from '../../components/ui/CustomerMap.jsx';
-import GeoSummary from '../../components/ui/GeoSummary.jsx';
 import { parseCsvFile, downloadCsv } from '../../utils/csv.js';
 import { CustomerEditModal } from './customers/CustomerEditModal.jsx';
 import { CustomerHeaderActions } from './customers/CustomerHeaderActions.jsx';
@@ -286,48 +285,52 @@ export default function MasterCustomerPage() {
         )}
       />
 
-      <div className="grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <CustomerStatCard
-          label="Total Records"
-          value={stats.total}
-          meta="Customer endpoints registered"
-          icon={Globe}
-          tone="default"
-        />
-        <CustomerStatCard
-          label="Priority Accounts"
-          value={stats.priority}
-          meta="VIP and Gold service grades"
-          icon={ShieldCheck}
-          tone="warning"
-        />
-        <CustomerStatCard
-          label="Mapped Nodes"
-          value={stats.mapped}
-          meta="Records with latitude and longitude"
-          icon={MapPin}
-          tone="info"
-        />
-        <CustomerStatCard
-          label="Linked Monitoring"
-          value={stats.withLinks}
-          meta="NMS links available for quick access"
-          icon={Activity}
-          tone="success"
-        />
-      </div>
+      {viewMode === 'list' ? (
+        <>
+          <div className="grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <CustomerStatCard
+              label="Total Records"
+              value={stats.total}
+              meta="Customer endpoints registered"
+              icon={Globe}
+              tone="default"
+            />
+            <CustomerStatCard
+              label="Priority Accounts"
+              value={stats.priority}
+              meta="VIP and Gold service grades"
+              icon={ShieldCheck}
+              tone="warning"
+            />
+            <CustomerStatCard
+              label="Mapped Nodes"
+              value={stats.mapped}
+              meta="Records with latitude and longitude"
+              icon={MapPin}
+              tone="info"
+            />
+            <CustomerStatCard
+              label="Linked Monitoring"
+              value={stats.withLinks}
+              meta="NMS links available for quick access"
+              icon={Activity}
+              tone="success"
+            />
+          </div>
 
-      <CustomerToolbar
-        viewMode={viewMode}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        serviceFilter={serviceFilter}
-        setServiceFilter={setServiceFilter}
-        serviceTypeOptions={serviceTypeOptions}
-        gradeFilter={gradeFilter}
-        setGradeFilter={setGradeFilter}
-        gradeOptions={gradeOptions}
-      />
+          <CustomerToolbar
+            viewMode={viewMode}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            serviceFilter={serviceFilter}
+            setServiceFilter={setServiceFilter}
+            serviceTypeOptions={serviceTypeOptions}
+            gradeFilter={gradeFilter}
+            setGradeFilter={setGradeFilter}
+            gradeOptions={gradeOptions}
+          />
+        </>
+      ) : null}
 
       <input
         ref={fileInputRef}
@@ -359,15 +362,11 @@ export default function MasterCustomerPage() {
           <TableSkeleton rows={14} />
         ) : viewMode === 'map' ? (
           <div className="flex h-full min-h-0 overflow-hidden">
-            <div className="min-w-0 flex-1">
-              <CustomerMap customers={filteredCustomers} onRefresh={load} />
-            </div>
-            <GeoSummary customers={filteredCustomers} />
+            <CustomerMap customers={filteredCustomers} onRefresh={load} />
           </div>
         ) : viewMode === 'review' ? (
           <CustomerSyncReview
             reviewMetrics={reviewMetrics}
-            stats={stats}
             onUseCandidate={openCandidateCreate}
           />
         ) : (

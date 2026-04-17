@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Activity, Globe, MapPin, TrendingUp, Users } from 'lucide-react';
+import { cn } from '../../lib/utils.js';
 
 function SummaryStat({ label, value, icon }) {
   return (
@@ -13,7 +14,7 @@ function SummaryStat({ label, value, icon }) {
   );
 }
 
-export default function GeoSummary({ customers = [] }) {
+export default function GeoSummary({ customers = [], embedded = false, className = '' }) {
   const stats = useMemo(() => {
     const cityCounts = customers.reduce((accumulator, customer) => {
       if (!customer.city) return accumulator;
@@ -30,7 +31,12 @@ export default function GeoSummary({ customers = [] }) {
 
   if (stats.sorted.length === 0) {
     return (
-      <aside className="flex w-[19rem] shrink-0 items-center justify-center border-l border-border bg-card p-6">
+      <aside className={cn(
+        embedded
+          ? 'flex min-h-[240px] items-center justify-center rounded-xl border border-border bg-card p-6'
+          : 'flex w-[19rem] shrink-0 items-center justify-center border-l border-border bg-card p-6',
+        className,
+      )}>
         <div className="space-y-3 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-border bg-muted/40">
             <Globe className="h-5 w-5 text-muted-foreground" />
@@ -45,7 +51,12 @@ export default function GeoSummary({ customers = [] }) {
   }
 
   return (
-    <aside className="flex w-[19rem] shrink-0 flex-col border-l border-border bg-card">
+    <aside className={cn(
+      embedded
+        ? 'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card'
+        : 'flex w-[19rem] shrink-0 flex-col border-l border-border bg-card',
+      className,
+    )}>
       <div className="border-b border-border px-5 py-4">
         <h3 className="text-base font-semibold tracking-tight text-foreground">Geographic Summary</h3>
         <p className="mt-1 text-sm text-muted-foreground">Customer density by city and mapped coverage.</p>

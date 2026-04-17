@@ -2,6 +2,7 @@ import fs from 'fs';
 import db from '../../db.js';
 import logger from '../../utils/logger.js';
 import { buildCompletedIncidentFilter, resolveAnalyticsDateRange } from './utils.js';
+import { normalizeInfraLabel, topologyCandidateKeys } from '../master/utils.js';
 
 export function getDurationAnalytics(year) {
   const targetYear = year || new Date().getFullYear();
@@ -148,6 +149,8 @@ export function getTroubleMapAnalytics({ startDate, endDate }) {
       c.id,
       c.company_name,
       c.brand_site,
+      c.city,
+      c.province,
       c.latitude,
       c.longitude,
       COUNT(i.id) as incident_count,
@@ -174,33 +177,114 @@ export function getTroubleMapAnalytics({ startDate, endDate }) {
   return rows;
 }
 
+function buildTopologyLabelLookups(nodes) {
+  const byLevel4 = new Map();
+  const byLevel2 = new Map();
+  const byLevel1 = new Map();
+
+  const append = (map, key, node) => {
+    if (!key) return;
+    const items = map.get(key) || [];
+    items.push(node);
+    map.set(key, items);
+  };
+
+  for (const node of nodes) {
+    append(byLevel4, normalizeInfraLabel(node.level_4), node);
+    append(byLevel2, normalizeInfraLabel(node.level_2), node);
+    append(byLevel1, normalizeInfraLabel(node.level_1), node);
+
+    for (const candidate of topologyCandidateKeys(node.level_4)) append(byLevel4, candidate, node);
+    for (const candidate of topologyCandidateKeys(node.level_2)) append(byLevel2, candidate, node);
+    for (const candidate of topologyCandidateKeys(node.level_1)) append(byLevel1, candidate, node);
+  }
+
+  return { byLevel4, byLevel2, byLevel1 };
+}
+
+function pickUniqueNode(candidates = []) {
+  if (!candidates.length) return null;
+  const unique = new Map(candidates.map((item) => [item.id, item]));
+  return unique.size === 1 ? [...unique.values()][0] : null;
+}
+
+function resolveTopologyIncidentNode(label, lookups) {
+  const normalized = normalizeInfraLabel(label);
+  const candidateKeys = [...new Set([normalized, ...topologyCandidateKeys(label)])].filter(Boolean);
+
+  for (const key of candidateKeys) {
+    const level4 = pickUniqueNode(lookups.byLevel4.get(key));
+    if (level4) return level4;
+  }
+
+  for (const key of candidateKeys) {
+    const level2 = pickUniqueNode(lookups.byLevel2.get(key));
+    if (level2) return level2;
+  }
+
+  for (const key of candidateKeys) {
+    const level1 = pickUniqueNode(lookups.byLevel1.get(key));
+    if (level1) return level1;
+  }
+
+  return null;
+}
+
 export function getDistributionTroubleAnalytics({ startDate, endDate }) {
   const range = resolveAnalyticsDateRange(startDate, endDate);
   logger.info(`[API] /distribution-trouble date range: ${JSON.stringify(range)}`);
 
-  const rows = db.prepare(`
-    SELECT 
-      d.id,
-      d.level_1,
-      d.level_2,
-      d.level_3,
-      d.level_4,
-      d.type,
-      d.latitude,
-      d.longitude,
-      COUNT(i.id) as incident_count,
-      MAX(i.created_at) as last_incident_at
-    FROM incidents i
-    JOIN master_distribusi d ON i.odp_bts = d.level_4 OR i.odp_bts = d.level_2
-    WHERE i.ncal IN ('YELLOW', 'ORANGE', 'RED', 'BLACK')
+  const nodes = db.prepare(`
+    SELECT id, level_1, level_2, level_3, level_4, type, latitude, longitude
+    FROM master_distribusi
+    WHERE is_active = 1
+      AND latitude IS NOT NULL
+      AND longitude IS NOT NULL
+  `).all();
+
+  const incidents = db.prepare(`
+    SELECT id, odp_bts, created_at, end_time
+    FROM incidents
+    WHERE ncal IN ('YELLOW', 'ORANGE', 'RED', 'BLACK')
+      AND odp_bts IS NOT NULL
+      AND TRIM(odp_bts) <> ''
       AND (
-        (strftime('%Y-%m-%d %H:%M:%S', i.created_at) BETWEEN ? AND ?)
-        OR (strftime('%Y-%m-%d %H:%M:%S', i.end_time) BETWEEN ? AND ?)
+        (strftime('%Y-%m-%d %H:%M:%S', created_at) BETWEEN ? AND ?)
+        OR (strftime('%Y-%m-%d %H:%M:%S', end_time) BETWEEN ? AND ?)
       )
-      AND d.latitude IS NOT NULL AND d.longitude IS NOT NULL
-    GROUP BY d.id
-    ORDER BY incident_count DESC
   `).all(range.startDate, range.endDate, range.startDate, range.endDate);
+
+  const lookups = buildTopologyLabelLookups(nodes);
+  const aggregated = new Map();
+
+  for (const incident of incidents) {
+    const matchedNode = resolveTopologyIncidentNode(incident.odp_bts, lookups);
+    if (!matchedNode) continue;
+
+    const current = aggregated.get(matchedNode.id) || {
+      id: matchedNode.id,
+      level_1: matchedNode.level_1,
+      level_2: matchedNode.level_2,
+      level_3: matchedNode.level_3,
+      level_4: matchedNode.level_4,
+      type: matchedNode.type,
+      latitude: matchedNode.latitude,
+      longitude: matchedNode.longitude,
+      incident_count: 0,
+      last_incident_at: null,
+    };
+
+    current.incident_count += 1;
+    if (!current.last_incident_at || String(incident.created_at || '') > String(current.last_incident_at || '')) {
+      current.last_incident_at = incident.created_at;
+    }
+    aggregated.set(matchedNode.id, current);
+  }
+
+  const rows = [...aggregated.values()].sort((left, right) => {
+    if (right.incident_count !== left.incident_count) return right.incident_count - left.incident_count;
+    return String(left.level_4 || left.level_2 || left.level_1).localeCompare(String(right.level_4 || right.level_2 || right.level_1));
+  });
 
   logger.info(`[API] /distribution-trouble result rows: ${rows.length}`);
   return rows;

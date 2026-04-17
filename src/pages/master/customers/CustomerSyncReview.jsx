@@ -1,9 +1,7 @@
 import React from 'react';
-import { Database, Search, ShieldCheck, Route, ExternalLink } from 'lucide-react';
 import { Button } from '../../../components/ui/index.jsx';
-import { CustomerStatCard } from './CustomerStatCard.jsx';
 
-export function CustomerSyncReview({ reviewMetrics, stats, onUseCandidate }) {
+export function CustomerSyncReview({ reviewMetrics, onUseCandidate }) {
   if (!reviewMetrics) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
@@ -14,46 +12,6 @@ export function CustomerSyncReview({ reviewMetrics, stats, onUseCandidate }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-border p-4 md:p-6">
-        <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <CustomerStatCard
-            label="Survey Linked"
-            value={stats.withSurvey}
-            meta="Customer rows carrying imported survey coordinates"
-            icon={Database}
-            tone="info"
-          />
-          <CustomerStatCard
-            label="Topology Linked"
-            value={stats.withTopologyRefs}
-            meta="Customers already linked to OSC / ODC / ODP"
-            icon={ShieldCheck}
-            tone="success"
-          />
-          <CustomerStatCard
-            label="Unmatched Rows"
-            value={reviewMetrics.unmatched || 0}
-            meta="Workbook rows that could not be safely matched"
-            icon={Search}
-            tone="default"
-          />
-          <CustomerStatCard
-            label="Actionable Queue"
-            value={reviewMetrics.unmatched_actionable || 0}
-            meta="Rows that already align to active address or topology anchors"
-            icon={Route}
-            tone="warning"
-          />
-          <CustomerStatCard
-            label="External Only"
-            value={reviewMetrics.unmatched_external_only || 0}
-            meta="Rows that still have no safe anchor inside the active registry"
-            icon={ExternalLink}
-            tone="default"
-          />
-        </div>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="space-y-6">
           <div className="rounded-xl border border-dashed border-border bg-muted/10 p-6 text-sm text-muted-foreground">

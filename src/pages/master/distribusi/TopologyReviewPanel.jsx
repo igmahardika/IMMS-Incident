@@ -9,32 +9,18 @@ export function TopologyReviewPanel({ topologyReview }) {
       title="Workbook Coordinate Review"
       subtitle="UPDATE.xlsx has already been applied. Conflicting workbook coordinates are discarded automatically, so this queue focuses on sync coverage and unmatched active labels."
     >
-      <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground">Survey Linked</p>
-          <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.matched || 0}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Topology nodes with workbook coordinate evidence.</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground">Live Coordinates Filled</p>
-          <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.actual_filled || 0}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Nodes that were previously blank and now have usable map coordinates.</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground">Alias Matched</p>
-          <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.alias_matched || 0}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Workbook labels resolved safely through canonical ODP aliases.</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs font-medium text-muted-foreground">Unmatched Labels</p>
-          <p className="mt-2 text-2xl font-semibold text-foreground">{topologyReview.unmatched || 0}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Workbook ODP labels that do not exist in the active registry.</p>
-        </div>
+      <div className="rounded-xl border border-dashed border-border bg-muted/10 p-6 text-sm text-muted-foreground">
+        Workbook sync is already applied. Keep the active topology registry authoritative, use alias matching where possible, and resolve remaining unmatched labels directly from Explorer.
       </div>
 
       <div className="mt-6 grid gap-4">
         <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-medium text-foreground">Unmatched ODP labels</h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-medium text-foreground">Unmatched ODP labels</h3>
+            <span className="rounded-md border border-border bg-muted/30 px-2 py-1 text-xs font-medium text-muted-foreground">
+              {topologyReview.unmatched || 0}
+            </span>
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {(topologyReview.unmatched_examples || []).length ? (
               topologyReview.unmatched_examples.slice(0, 20).map((item) => (

@@ -27,7 +27,7 @@ export function DistributionGeocodeReportCard({ report }) {
     <SectionCard
       title="Sync Health"
       subtitle="Readiness of topology nodes for coordinate sync."
-      className="min-w-[340px] shadow-lg"
+      className="shadow-none"
     >
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">

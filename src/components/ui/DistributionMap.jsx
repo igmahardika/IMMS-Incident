@@ -16,7 +16,7 @@ import {
 } from './maps/distributionMapParts.jsx';
 import { ChangeView, LegendItem, SegmentedButton, StatChip } from './maps/MapShared.jsx';
 
-export default function DistributionMap({ data, onRefresh, showHeader = true }) {
+export default function DistributionMap({ data, onRefresh }) {
   const { addToast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -180,18 +180,9 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
 
   return (
     <div className="flex h-full min-h-[680px] flex-col overflow-hidden rounded-xl bg-card">
-      {showHeader ? (
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-4 py-4 md:px-5">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold tracking-tight text-foreground">
-              Distribution Topology Map
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Explore active infrastructure nodes and recent trouble concentration.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <div className="border-b border-border bg-background/90 px-4 py-4 backdrop-blur md:px-5">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
               <SegmentedButton active={viewMode === 'normal'} onClick={() => setViewMode('normal')}>
                 <Network className="mr-2 h-4 w-4" />
@@ -207,92 +198,25 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
               </SegmentedButton>
             </div>
 
-            <form
-              onSubmit={handleSearch}
-              className={cn(
-                'grid w-full items-center gap-2 xl:w-auto',
-                viewMode === 'trouble'
-                  ? 'sm:grid-cols-[156px_156px_minmax(240px,1fr)_auto_auto]'
-                  : 'sm:grid-cols-[minmax(260px,1fr)_auto_auto]'
-              )}
-            >
-              {viewMode === 'trouble' ? (
-                <>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
-                    aria-label="Start date"
-                    wrapperClassName="gap-0"
-                    className="h-9 w-full"
-                  />
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(event) => setEndDate(event.target.value)}
-                    aria-label="End date"
-                    wrapperClassName="gap-0"
-                    className="h-9 w-full"
-                  />
-                </>
-              ) : null}
-
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder={viewMode === 'normal' ? 'Search ODP, POP, or BTS' : 'Search trouble node'}
-                  aria-label="Search topology nodes"
-                  wrapperClassName="gap-0"
-                  className="h-9 w-full pl-9"
-                />
-              </div>
-
-              <Button type="submit" variant="outline" size="sm">
-                Locate
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={startAutoGeocode}
-                disabled={geocodingStatus.active}
-                className="gap-2"
-              >
-                <RefreshCw className={cn('h-4 w-4', geocodingStatus.active && 'animate-spin')} />
-                {geocodingStatus.active ? 'Syncing' : 'Sync'}
-              </Button>
-            </form>
-          </div>
-        </div>
-      ) : null}
-
-      {!showHeader ? (
-        <div className="flex flex-col gap-3 border-b border-border px-4 py-4 md:px-5 xl:flex-row xl:items-center xl:justify-between">
-          <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1">
-            <SegmentedButton active={viewMode === 'normal'} onClick={() => setViewMode('normal')}>
-              <Network className="mr-2 h-4 w-4" />
-              Normal
-            </SegmentedButton>
-            <SegmentedButton
-              active={viewMode === 'trouble'}
-              onClick={() => setViewMode('trouble')}
-              tone="destructive"
-            >
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Trouble
-            </SegmentedButton>
+            <div className="grid gap-3 sm:grid-cols-2 xl:flex xl:flex-wrap xl:justify-end">
+              <StatChip
+                label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'}
+                value={activePoints.length}
+              />
+              <StatChip label="Missing Coords" value={missingPointCount} />
+              <StatChip
+                label={viewMode === 'normal' ? 'Mapped Registry' : 'Window'}
+                value={viewMode === 'normal' ? `${points.length} mapped` : `${startDate} to ${endDate}`}
+              />
+              {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : null}
+            </div>
           </div>
 
           <form
             onSubmit={handleSearch}
             className={cn(
-              'grid w-full items-center gap-2 xl:w-auto',
-              viewMode === 'trouble'
-                ? 'sm:grid-cols-[156px_156px_minmax(240px,1fr)_auto_auto]'
-                : 'sm:grid-cols-[minmax(260px,1fr)_auto_auto]'
+              'grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]',
+              viewMode === 'trouble' && 'xl:grid-cols-[156px_156px_minmax(0,1fr)_auto_auto]'
             )}
           >
             {viewMode === 'trouble' ? (
@@ -328,7 +252,7 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
               />
             </div>
 
-            <Button type="submit" variant="outline" size="sm">
+            <Button type="submit" variant="outline" size="sm" className="w-full lg:w-auto">
               Locate
             </Button>
 
@@ -338,17 +262,18 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
               size="sm"
               onClick={startAutoGeocode}
               disabled={geocodingStatus.active}
-              className="gap-2"
+              className="w-full gap-2 lg:w-auto"
             >
               <RefreshCw className={cn('h-4 w-4', geocodingStatus.active && 'animate-spin')} />
               {geocodingStatus.active ? 'Syncing' : 'Sync'}
             </Button>
           </form>
         </div>
-      ) : null}
+      </div>
 
-      <div className="map-surface relative min-h-0 flex-1 bg-muted/20">
-        <MapContainer center={SEMARANG_CENTER} zoom={12} className="h-full w-full" zoomControl={false}>
+      <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="map-surface relative min-h-[460px] bg-muted/20 xl:min-h-0">
+          <MapContainer center={SEMARANG_CENTER} zoom={12} className="h-full w-full" zoomControl={false}>
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -416,12 +341,13 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute left-5 top-5 z-[1000] hidden xl:block">
-          <div className="w-[320px] space-y-3">
+        </div>
+
+        <div className="min-h-0 overflow-y-auto border-t border-border bg-background/95 p-4 backdrop-blur xl:border-l xl:border-t-0 xl:p-5">
+          <div className="space-y-4">
             <SectionCard
               title="Map Snapshot"
               subtitle={viewMode === 'normal' ? 'Realtime topology visibility for the current registry.' : 'Trouble concentration for the selected date window.'}
-              className="shadow-lg"
             >
               <div className="grid gap-3 sm:grid-cols-2">
                 <StatChip label={viewMode === 'normal' ? 'Visible Nodes' : 'Trouble Nodes'} value={activePoints.length} />
@@ -433,32 +359,32 @@ export default function DistributionMap({ data, onRefresh, showHeader = true }) 
                 {locatedLabel ? <StatChip label="Located" value={locatedLabel} /> : <StatChip label="Located" value="—" />}
               </div>
             </SectionCard>
+
             {viewMode === 'normal' ? <DistributionGeocodeReportCard report={geocodeReport} /> : null}
+
+            <SectionCard
+              title={viewMode === 'normal' ? 'Infrastructure' : 'Trouble Intensity'}
+            >
+              <div className="space-y-3">
+                {viewMode === 'normal' ? (
+                  <>
+                    <LegendItem colorClassName="bg-primary ring-primary/10" label="Fiber optic node" />
+                    <LegendItem colorClassName="bg-amber-500 ring-amber-500/10" label="Wireless node" />
+                    <div className="border-t border-border pt-3 text-sm text-muted-foreground">
+                      {points.length} active nodes
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <LegendItem colorClassName="bg-destructive ring-destructive/10" label="High (>5 events)" />
+                    <LegendItem colorClassName="bg-amber-500 ring-amber-500/10" label="Medium (3-5)" />
+                    <LegendItem colorClassName="bg-yellow-500 ring-yellow-500/10" label="Low (1-2)" />
+                  </>
+                )}
+              </div>
+            </SectionCard>
           </div>
         </div>
-
-        <SectionCard
-          className="pointer-events-none absolute bottom-5 left-5 z-[1000] min-w-[220px] shadow-lg"
-          title={viewMode === 'normal' ? 'Infrastructure' : 'Trouble Intensity'}
-        >
-          <div className="pointer-events-auto space-y-3">
-            {viewMode === 'normal' ? (
-              <>
-                <LegendItem colorClassName="bg-primary ring-primary/10" label="Fiber optic node" />
-                <LegendItem colorClassName="bg-amber-500 ring-amber-500/10" label="Wireless node" />
-                <div className="border-t border-border pt-3 text-sm text-muted-foreground">
-                  {points.length} active nodes
-                </div>
-              </>
-            ) : (
-              <>
-                <LegendItem colorClassName="bg-destructive ring-destructive/10" label="High (>5 events)" />
-                <LegendItem colorClassName="bg-amber-500 ring-amber-500/10" label="Medium (3-5)" />
-                <LegendItem colorClassName="bg-yellow-500 ring-yellow-500/10" label="Low (1-2)" />
-              </>
-            )}
-          </div>
-        </SectionCard>
       </div>
     </div>
   );
