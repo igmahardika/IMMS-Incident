@@ -48,7 +48,9 @@ Frontend default berjalan di `http://localhost:5173`.
 npm run dev
 npm run build
 npm run lint
+npm run backup:db
 npm run verify:backend
+npm run verify:backup
 npm run verify:db
 npm run verify:production
 ```
@@ -57,7 +59,9 @@ Penjelasan:
 
 - `build`: memastikan bundle frontend valid
 - `lint`: memastikan source konsisten
+- `backup:db`: membuat backup SQLite konsisten beserta manifest metadata
 - `verify:backend`: smoke check service layer backend
+- `verify:backup`: memverifikasi backup terbaru bisa dibuka, lolos integrity check, dan cocok secara row-count dengan live DB
 - `verify:db`: verifikasi governance runtime schema patch
 - `verify:production`: verifikasi auth/session, permission guard, incident lifecycle, update guard, dan import validation
 
@@ -95,6 +99,8 @@ Catatan penting:
   - integritas pending incident terhadap pause log terbuka
 - `GET /api/health`
   Alias readiness
+- `GET /api/master/stewardship-report`
+  Ringkasan backlog data customer/topology workbook dan integritas queue incident
 
 ## Struktur Modul Utama
 
@@ -145,3 +151,5 @@ Catatan penting:
 - notifikasi sekarang socket-aware, bukan polling murni
 - geocode customer dan topology punya report readiness di UI map
 - route backend utama sudah dimodularisasi ke service layer
+- backup SQLite dan verifikasi restore dasar sekarang tersedia via npm scripts
+- stewardship backlog customer/topology sekarang bisa dibaca lewat endpoint khusus

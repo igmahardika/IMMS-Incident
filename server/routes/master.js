@@ -38,6 +38,7 @@ import {
   listUsers,
   updateUser,
 } from '../services/master/users.js';
+import { getStewardshipReport } from '../services/master/stewardship.js';
 import { getUpdateWorkbookSyncReport } from '../services/master/updateWorkbookReport.js';
 
 const router = express.Router();
@@ -223,6 +224,10 @@ router.post('/distribusi/auto-geocode', authenticate, authorize('admin', 'manage
 
 router.get('/update-sync-report', authenticate, authorize('admin', 'manager', 'noc'), (req, res) => {
   res.json(getUpdateWorkbookSyncReport());
+});
+
+router.get('/stewardship-report', authenticate, authorize('admin', 'manager', 'noc'), (req, res) => {
+  res.json(getStewardshipReport());
 });
 
 export default router;

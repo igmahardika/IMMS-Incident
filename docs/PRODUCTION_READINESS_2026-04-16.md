@@ -85,6 +85,8 @@ Gunakan command berikut sebelum release:
 ```bash
 npm run lint
 npm run build
+npm run backup:db
+npm run verify:backup
 npm run verify:backend
 npm run verify:db
 npm run verify:production
@@ -93,6 +95,8 @@ npm run verify:production
 Makna command:
 - `lint`: guard source quality
 - `build`: memastikan bundle frontend valid
+- `backup:db`: membuat backup SQLite konsisten dan manifest metadata
+- `verify:backup`: memastikan backup terbaru bisa dibuka, lolos integrity check, dan cocok secara row count dengan live DB saat backup dibuat
 - `verify:backend`: smoke verification service layer
 - `verify:db`: memastikan runtime schema governance tetap sesuai
 - `verify:production`: memverifikasi auth/session, permission guard, lifecycle transition, update guard, dan import validation
@@ -104,14 +108,15 @@ Sebelum deploy:
 2. jalankan semua validation command di atas
 3. cek `GET /api/health/ready` di environment target
 4. verifikasi `ALLOWED_ORIGINS`, `JWT_SECRET`, dan `REFRESH_TOKEN_SECRET`
-5. ambil backup SQLite
-6. cek `GET /api/incidents/integrity` untuk memastikan tidak ada anomaly:
+5. jalankan `npm run backup:db`
+6. jalankan `npm run verify:backup`
+7. cek `GET /api/incidents/integrity` untuk memastikan tidak ada anomaly:
    - `pendingWithoutOpenPause`
    - `openPauseWithoutPending`
    - `doneWithOpenPause`
-7. pastikan pending queue yang tersisa memang valid secara operasional
-8. verifikasi login admin dan satu role non-admin di environment target
-9. verifikasi create -> start -> pause -> resume -> close pada incident test jika environment mengizinkan
+8. pastikan pending queue yang tersisa memang valid secara operasional
+9. verifikasi login admin dan satu role non-admin di environment target
+10. verifikasi create -> start -> pause -> resume -> close pada incident test jika environment mengizinkan
 
 Sesudah deploy:
 1. hit `GET /api/health/live`
@@ -126,25 +131,23 @@ Sesudah deploy:
 
 Untuk SQLite internal ini, prosedur aman yang direkomendasikan:
 
-1. hentikan backend atau keluarkan instance dari write traffic
-2. copy file berikut jika ada:
-   - `imms.db`
-   - `imms.db-wal`
-   - `imms.db-shm`
-3. simpan dengan timestamp terpisah per release/deploy window
+1. jalankan `npm run backup:db`
+2. simpan artefak `.db` dan file manifest `.json` hasil backup
+3. jika menjelang release penting, jalankan juga `npm run verify:backup`
 
 Catatan:
-- jika backend tetap berjalan, backup file raw lebih berisiko pada database yang aktif ditulis
-- prosedur paling aman saat ini adalah backup dalam kondisi backend berhenti atau frozen dari write traffic
+- backup sekarang memakai SQLite backup API melalui `better-sqlite3`, sehingga lebih aman daripada copy file raw biasa
+- backup tetap harus dijalankan pada host yang memegang file DB aktif
 
 ### Restore
 
 1. hentikan backend
 2. simpan salinan file DB bermasalah sebagai bukti forensik
-3. restore `imms.db` dan file WAL/SHM pasangan backup jika tersedia
+3. restore file backup `.db` ke `imms.db`
 4. start backend
 5. cek:
    - `GET /api/health/ready`
+   - `npm run verify:backup -- /path/to/restored-backup.db`
    - `npm run verify:db`
    - `GET /api/incidents/integrity`
 
@@ -153,7 +156,7 @@ Catatan:
 Karena sistem masih memakai SQLite:
 - recovery cepat untuk single-instance cukup baik
 - tetapi HA/write concurrency lintas host belum menjadi target arsitektur saat ini
-- sebelum traffic/criticality naik jauh, keputusan 30 hari berikutnya harus mencakup evaluasi backup automation dan recovery drill formal
+- recovery automation dasar sekarang sudah ada, tetapi recovery drill formal tetap wajib dilakukan berkala
 
 ## Rollback Guidance
 
@@ -185,6 +188,8 @@ Perubahan material yang sekarang aktif:
 - SQLite pragmas + startup heartbeat di `server/db.js`
 - readiness/liveness endpoint
 - formal production verification script
+- script backup SQLite konsisten + restore verification
+- stewardship report endpoint untuk backlog customer/topology dan pending queue integrity
 - incident integrity summary + route
 - update schema sekarang benar-benar menormalisasi payload dan memblokir status mutation generik
 - `Customer Records` dipecah ke modul-modul terfokus untuk menurunkan maintainability risk
@@ -198,17 +203,17 @@ High-priority blockers yang masih tersisa sebelum menyebut sistem ini fully hard
 - topology unmatched labels masih ada
 - ini bukan bug runtime, tapi beban operasional data quality
 
-2. Map-heavy modules masih kompleks
-- `CustomerMap`
-- `DistributionMap`
-- masih aman dipakai, tetapi future change risk tetap lebih tinggi dibanding modul lain
+2. Map-heavy modules masih kompleks walaupun sudah dimodularisasi
+- state/orchestration utama sudah lebih kecil
+- tetapi logic spasial dan UX map tetap area yang butuh kehati-hatian
 
-3. Master workspace lain masih besar
-- `DistribusiPage` masih relatif berat dan layak dipecah lagi bila churn perubahan tinggi
-
-4. SQLite tetap single-node assumption
+3. SQLite tetap single-node assumption
 - aman untuk internal controlled deployment
 - belum ideal untuk scale-out / HA requirement
+
+4. Stewardship visibility baru ada di backend/report layer
+- route `GET /api/master/stewardship-report` sekarang tersedia
+- dashboard admin khusus backlog stewardship belum dibuat
 
 ## Current Go-Live Recommendation
 
@@ -229,7 +234,7 @@ Belum layak untuk:
 ## Recommended Next 30-Day Roadmap
 
 ### Week 1
-- buat backup automation terjadwal untuk SQLite
+- hubungkan `npm run backup:db` ke scheduler/cron host
 - lakukan recovery drill formal minimal sekali
 - tambahkan checklist release menjadi prosedur tim
 

@@ -193,6 +193,7 @@ export const api = {
   getDistribusiGeocodeReport: () => request('/master/distribusi/geocode-report'),
   autoGeocodeDistribusi: (ids) => request('/master/distribusi/auto-geocode', { method: 'POST', body: JSON.stringify({ ids }) }),
   getDistributionTrouble: (start, end) => request(`/analytics/distribution-trouble?start_date=${start || ''}&end_date=${end || ''}`),
+  getStewardshipReport: () => request('/master/stewardship-report'),
 
   getClassifications: () => request('/master/classifications'),
   createClassification: (body) => request('/master/classifications', { method: 'POST', body: JSON.stringify(body) }),

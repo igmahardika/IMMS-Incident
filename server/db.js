@@ -105,3 +105,4 @@ if (escCount === 0) {
 }
 
 export default db;
+export { DB_PATH };
