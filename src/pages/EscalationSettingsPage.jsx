@@ -196,7 +196,7 @@ export default function EscalationSettingsPage() {
         )}
       />
 
-      <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+      <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)] xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
         <div className="min-h-0 space-y-6 overflow-y-auto pb-6">
           <SectionCard
             title="Core Integration"
@@ -307,7 +307,7 @@ export default function EscalationSettingsPage() {
           </SectionCard>
         </div>
 
-        <div className="min-h-0 xl:sticky xl:top-6">
+        <div className="min-h-0 lg:sticky lg:top-6">
           <SectionCard
             title="Preview"
             subtitle="Live preview of the selected message using sample incident data."

@@ -413,7 +413,7 @@ export default function DashboardPage() {
           title="Realtime Overview"
           subtitle={`Live operational state across the active queue. Last refreshed ${snapshotTime ? new Date(snapshotTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—'}.`}
         >
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {NCAL_ORDER.map((ncal) => (
               <NcalPressureCard
                 key={ncal}
@@ -424,7 +424,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <MissionMetricCard
               label="Active Queue"
               value={dashboard.totalActive || 0}
@@ -506,7 +506,7 @@ export default function DashboardPage() {
           </div>
         </SectionCard>
 
-        <div className="grid gap-6 xl:grid-cols-12">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-12">
           <SectionCard title="New Queue Today" subtitle="Incidents created today that require active monitoring." className="xl:col-span-4">
             <div className="space-y-1">
               {derived.openedToday.length === 0 ? (
@@ -541,7 +541,7 @@ export default function DashboardPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Needs Immediate Assignment" subtitle="Open incidents with no technician or owner assigned yet." className="xl:col-span-4">
+          <SectionCard title="Needs Immediate Assignment" subtitle="Open incidents with no technician or owner assigned yet." className="lg:col-span-2 xl:col-span-4">
             <div className="space-y-1">
               {derived.unassigned.length === 0 ? (
                 <p className="text-sm text-muted-foreground">All active incidents already have an assigned owner.</p>
@@ -559,7 +559,7 @@ export default function DashboardPage() {
           </SectionCard>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2">
           <SectionCard title="Command Signals" subtitle="The most important live indicators for queue health and ownership.">
             <div className="space-y-5">
               <SignalRow
@@ -618,7 +618,7 @@ export default function DashboardPage() {
           </SectionCard>
         </div>
 
-        <div className="grid items-stretch gap-6 xl:grid-cols-12">
+        <div className="grid items-stretch gap-6 lg:grid-cols-2 xl:grid-cols-12">
           <SectionCard
             title="Resolution Trend"
             subtitle={`Average net resolution duration per month in ${CURRENT_YEAR}`}
@@ -709,7 +709,7 @@ export default function DashboardPage() {
           </SectionCard>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-12">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-12">
           <SectionCard title="Root Cause Snapshot" subtitle="Top classifications contributing to closed incidents this year." className="xl:col-span-4">
             <div className="space-y-3">
               {derived.rootCauseTop.length === 0 ? (
@@ -753,7 +753,7 @@ export default function DashboardPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="SLA Compliance" subtitle="Year-to-date adherence by NCAL segment." className="xl:col-span-4">
+          <SectionCard title="SLA Compliance" subtitle="Year-to-date adherence by NCAL segment." className="lg:col-span-2 xl:col-span-4">
             <div className="space-y-3">
               {sla.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No SLA data available for this period.</p>

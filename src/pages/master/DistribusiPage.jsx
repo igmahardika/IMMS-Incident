@@ -196,7 +196,7 @@ export default function MasterDistribusiPage() {
       ) : viewMode === 'review' ? (
         <TopologyReviewGuidance />
       ) : (
-        <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.05fr)]">
+        <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)] xl:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.05fr)]">
           <TopologyExplorerPanel
             loading={loading}
             stats={stats}

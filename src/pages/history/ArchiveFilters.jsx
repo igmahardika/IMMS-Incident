@@ -12,7 +12,7 @@ export function ArchiveFilters({
 }) {
   return (
     <SectionCard padding={false}>
-      <div className="grid items-center gap-3 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_140px_180px_160px_auto]">
+      <div className="grid items-center gap-3 px-4 py-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_132px_168px_152px_auto]">
         <Input
           id="archive-search"
           value={filters.search}
@@ -71,7 +71,7 @@ export function ArchiveFilters({
         </Select>
 
         {(filters.search || filters.month || filters.ncal) ? (
-          <div className="flex items-center xl:justify-end">
+          <div className="flex items-center lg:justify-end">
             <Button
               type="button"
               variant="ghost"

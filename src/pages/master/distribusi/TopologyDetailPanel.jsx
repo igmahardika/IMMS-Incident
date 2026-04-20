@@ -73,7 +73,7 @@ export function TopologyDetailPanel({
               </div>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
               <div className="rounded-xl border border-border bg-card p-5">
                 <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground">
                   <Network className="h-4 w-4 text-primary" />
@@ -104,7 +104,7 @@ export function TopologyDetailPanel({
                   <MapPin className="h-4 w-4 text-primary" />
                   Survey Snapshot
                 </div>
-                <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
+                <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-1">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Survey Latitude</p>
                     <p className="text-sm font-medium text-foreground">{selectedNode.survey_latitude || 'Not set'}</p>

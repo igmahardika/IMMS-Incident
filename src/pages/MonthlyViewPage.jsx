@@ -88,7 +88,7 @@ export default function MonthlyViewPage() {
         title="Monthly Analysis"
         subtitle={`Review incident closures by month and NCAL severity for ${year}.`}
         action={(
-          <div className="flex items-center gap-2">
+          <div className="grid w-full gap-2 sm:grid-cols-[auto_140px] lg:w-auto">
             <div className="hidden items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground sm:flex">
               <Calendar className="h-3.5 w-3.5" />
               Reporting Year

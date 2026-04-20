@@ -20,7 +20,7 @@ export function CustomerToolbar({
     <SectionCard padding={false}>
       <div className="p-4">
         {viewMode === 'list' ? (
-          <div className="grid items-center gap-3 xl:grid-cols-[minmax(0,1fr)_220px_180px]">
+          <div className="grid items-center gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_220px_180px]">
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
