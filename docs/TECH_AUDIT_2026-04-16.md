@@ -1,4 +1,4 @@
-# IMMS Technical Audit
+# Nexaris Technical Audit
 
 ## Snapshot
 
@@ -11,7 +11,7 @@ Dokumen ini adalah audit teknis terbaru setelah dua putaran audit dan dua putara
 
 ## Executive Summary
 
-IMMS saat ini berada pada kondisi yang **stabil, usable, dan jauh lebih maintainable** dibanding kondisi awal project. Fitur inti operasional NOC sudah lengkap dan saling terhubung dengan cukup baik:
+Nexaris saat ini berada pada kondisi yang **stabil, usable, dan jauh lebih maintainable** dibanding kondisi awal project. Fitur inti operasional NOC sudah lengkap dan saling terhubung dengan cukup baik:
 
 - authentication dengan refresh token flow
 - incident lifecycle lengkap
@@ -434,7 +434,7 @@ Urutan paling sehat setelah audit ini:
 
 ## Closing
 
-Project IMMS saat ini sudah melewati fase “perlu diselamatkan”. Status sekarang adalah:
+Project Nexaris saat ini sudah melewati fase “perlu diselamatkan”. Status sekarang adalah:
 
 - **fitur inti: matang**
 - **arsitektur backend: sehat**

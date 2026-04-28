@@ -1,6 +1,6 @@
 # Production Readiness 2026-04-16
 
-Dokumen ini adalah paket readiness operasional untuk IMMS setelah hardening runtime, integrity guardrails, dan regression verification pada 16 April 2026.
+Dokumen ini adalah paket readiness operasional untuk Nexaris setelah hardening runtime, integrity guardrails, dan regression verification pada 16 April 2026.
 
 ## Executive Summary
 
@@ -17,7 +17,7 @@ Verdict saat ini:
 
 ## Deployment Assumptions
 
-IMMS saat ini mengasumsikan:
+Nexaris saat ini mengasumsikan:
 - satu backend Node/Express yang mengakses satu file SQLite aktif
 - deployment internal jaringan terpercaya, bukan public internet exposure
 - frontend dan backend berjalan pada origin yang didaftarkan di `ALLOWED_ORIGINS`

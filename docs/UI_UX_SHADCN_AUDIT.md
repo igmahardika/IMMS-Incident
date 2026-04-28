@@ -294,7 +294,7 @@ import { Badge } from "@/components/ui/badge"
   <Breadcrumb>
     <BreadcrumbList>
       <BreadcrumbItem>
-        <BreadcrumbLink href="/">IMMS</BreadcrumbLink>
+        <BreadcrumbLink href="/">Nexaris</BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator />
       <BreadcrumbItem>

@@ -4,6 +4,7 @@ import { cn } from '../../lib/utils.js';
 import {
   calculateIncidentLevel,
   formatDateTime,
+  formatDuration,
   getIncidentDisplayName,
   getSLATarget,
 } from '../../utils/incidentUtils.js';
@@ -80,7 +81,7 @@ export default function IncidentSummaryCard({ incident }) {
         />
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{Math.round(targetSeconds / 3600)}h target</span>
+          <span>{formatDuration(targetSeconds)} target</span>
           <span>{formatDateTime(incident.start_time)}</span>
         </div>
       </div>
@@ -104,4 +105,3 @@ export default function IncidentSummaryCard({ incident }) {
     </div>
   );
 }
-

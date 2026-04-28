@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-const DEFAULT_JWT_SECRET = 'imms-dev-access-secret-change-me';
-const DEFAULT_REFRESH_SECRET = 'imms-dev-refresh-secret-change-me';
+const DEFAULT_JWT_SECRET = 'nexaris-dev-access-secret-change-me';
+const DEFAULT_REFRESH_SECRET = 'nexaris-dev-refresh-secret-change-me';
 const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',

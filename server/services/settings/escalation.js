@@ -53,7 +53,7 @@ export async function sendEscalationTest() {
     throw error;
   }
 
-  const text = `🧪 [TEST] IMMS Escalation Test Message - ${new Date().toLocaleString('id-ID')}`;
+  const text = `🧪 [TEST] Nexaris Escalation Test Message - ${new Date().toLocaleString('id-ID')}`;
   const response = await fetch(config.webhook_url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

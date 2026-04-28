@@ -37,7 +37,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
   componentDidCatch(error, info) {
-    console.error('[IMMS] Uncaught error:', error, info);
+    console.error('[Nexaris] Uncaught error:', error, info);
   }
   render() {
     if (this.state.hasError) {
@@ -49,7 +49,7 @@ class ErrorBoundary extends React.Component {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">System Exception Detected</h1>
             <p className="text-sm font-medium text-foreground/50 max-w-md leading-relaxed mx-auto">
-              {this.state.error?.message || 'An unexpected error occurred in the IMMS runtime environment.'}
+              {this.state.error?.message || 'An unexpected error occurred in the Nexaris runtime environment.'}
             </p>
           </div>
           <div className="flex gap-4">

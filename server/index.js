@@ -77,7 +77,7 @@ let shuttingDown = false;
 function shutdown(signal, exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
-  logger.warn(`[Runtime] Received ${signal}, shutting down IMMS API...`);
+  logger.warn(`[Runtime] Received ${signal}, shutting down Nexaris API...`);
   httpServer.close((error) => {
     if (error) {
       logger.error(`[Runtime] Graceful shutdown failed: ${error.message}`);
@@ -105,5 +105,5 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 httpServer.listen(PORT, '0.0.0.0', () => {
-  logger.info(`IMMS API running on http://localhost:${PORT} (env=${runtimeConfig.NODE_ENV})`);
+  logger.info(`Nexaris API running on http://localhost:${PORT} (env=${runtimeConfig.NODE_ENV})`);
 });

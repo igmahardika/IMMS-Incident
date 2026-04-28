@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This audit reviews the current responsive breakpoint discipline across IMMS pages and their page-critical supporting components. The goal is to determine whether the application already follows a professional breakpoint standard consistently and to identify pages that still rely on ad hoc or late-stage (`xl`) layout changes.
+This audit reviews the current responsive breakpoint discipline across Nexaris pages and their page-critical supporting components. The goal is to determine whether the application already follows a professional breakpoint standard consistently and to identify pages that still rely on ad hoc or late-stage (`xl`) layout changes.
 
 Current verdict:
 
@@ -55,7 +55,7 @@ Interpretation:
 
 ## Professional Standard For This Project
 
-To make IMMS feel more professional and internally consistent, the current codebase should treat breakpoints with the following intent:
+To make Nexaris feel more professional and internally consistent, the current codebase should treat breakpoints with the following intent:
 
 - Base:
   - one-column stack

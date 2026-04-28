@@ -1,6 +1,6 @@
-# IMMS UI/UX Design System Guidelines
+# Nexaris UI/UX Design System Guidelines
 
-This document serves as the single source of truth for UI standardization across the IMMS project, ensuring that the legacy inline CSS habits are not repeated and that all views follow the unified utility-first architecture (Tailwind CSS v4 + DaisyUI v5).
+This document serves as the single source of truth for UI standardization across the Nexaris product, ensuring that the legacy inline CSS habits are not repeated and that all views follow the unified utility-first architecture (Tailwind CSS v4 + DaisyUI v5).
 
 ## 1. Typography Hierarchy
 - **Primary Font (`font-sans`):** **Inter** (or system fallback). Used for all body text, headings, buttons, and navigation.

@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 dotenv.config();
 
 /**
- * Geocoder utility for IMMS
+ * Geocoder utility for Nexaris
  * Supports multiple providers: Google Maps, Mapbox, and OpenStreetMap (Nominatim)
  */
 
@@ -279,7 +279,7 @@ async function geocodeNominatim(query, retryCount = 0) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1`;
   
   const response = await fetchJsonWithTimeout(url, {
-    headers: { 'User-Agent': 'IMMS-Internal-Geocoding-Service/1.0' }
+    headers: { 'User-Agent': 'Nexaris-Internal-Geocoding-Service/1.0' }
   });
 
   // Lock the time immediately after request

@@ -395,7 +395,7 @@ export default function DashboardPage() {
     <div className="flex h-full flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Operations Command Center"
-        subtitle="Realtime incident monitoring, service risk awareness, and decision-support analytics across the full IMMS workspace."
+        subtitle="Realtime incident monitoring, service risk awareness, and decision-support analytics across the full Nexaris platform."
         action={(
           <>
             <Button variant="outline" onClick={() => navigate('/incidents')}>

@@ -25,7 +25,7 @@ export function isTokenValid(token) {
 
 /**
  * Retrieves the active JWT authentication token.
- * @returns {string|null} The stored IMMS token or null.
+ * @returns {string|null} The stored Nexaris token or null.
  */
 function getToken() {
   return localStorage.getItem('imms_token');

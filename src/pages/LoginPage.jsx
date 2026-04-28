@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionTemplate, useMotionValue, useSpring } from 'framer-motion';
-import { Eye, EyeOff, Sparkles, Zap } from 'lucide-react';
+import { Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Button, Input, SectionCard } from '../components/ui/index.jsx';
@@ -96,13 +96,17 @@ export default function LoginPage() {
                 transition={{ duration: 0.55, ease: 'easeOut' }}
                 className="inline-flex items-center gap-4 rounded-2xl border border-border/80 bg-background/60 px-4 py-3 shadow-lg backdrop-blur-xl"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-                  <Zap className="h-5 w-5" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-background/80 shadow-lg shadow-primary/20 ring-1 ring-border/80">
+                  <img
+                    src="/branding/nexaris-mark.png"
+                    alt="Nexaris logo"
+                    className="h-6 w-6 object-contain"
+                  />
                 </div>
                 <div>
-                  <p className="text-base font-semibold tracking-tight text-foreground">IMMS</p>
+                  <p className="text-base font-semibold tracking-tight text-foreground">Nexaris</p>
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Enterprise NOC Console
+                    Nexa Incident Operations
                   </p>
                 </div>
               </MotionDiv>
@@ -145,7 +149,7 @@ export default function LoginPage() {
                     Secure Sign In
                   </p>
                   <h2 className="text-3xl font-semibold tracking-tight text-foreground">
-                    Access IMMS workspace
+                    Access Nexaris workspace
                   </h2>
                   <p className="text-sm leading-6 text-muted-foreground">
                     Sign in with your account to continue into the operations console.

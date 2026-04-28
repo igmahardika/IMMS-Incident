@@ -1,6 +1,6 @@
 /**
  * Unified UI Mapping for NCAL Statuses and operational states.
- * Maps IMMS-specific variables to manual Tailwind utility classes instead of DaisyUI components.
+ * Maps Nexaris-specific variables to manual Tailwind utility classes instead of DaisyUI components.
  */
 
 export const NCAL_THEME_MAP = {

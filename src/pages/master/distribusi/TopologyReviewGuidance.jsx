@@ -24,7 +24,7 @@ export function TopologyReviewGuidance() {
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-sm font-medium text-foreground">3. Maintain in-app only</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            After this enrichment, keep live coordinates, survey evidence, and linked customers updated directly from IMMS.
+            After this enrichment, keep live coordinates, survey evidence, and linked customers updated directly from Nexaris.
           </p>
         </div>
       </div>

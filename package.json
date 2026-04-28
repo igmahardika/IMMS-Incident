@@ -1,5 +1,6 @@
 {
-  "name": "imms",
+  "name": "nexaris",
+  "description": "Nexaris is Nexa's incident operations platform for coordinating, escalating, and resolving operational incidents.",
   "private": true,
   "version": "0.0.0",
   "type": "module",

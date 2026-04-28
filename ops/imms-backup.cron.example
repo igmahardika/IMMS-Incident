@@ -1,4 +1,4 @@
-# Run IMMS backup + restore verification every day at 02:15 Asia/Jakarta host time.
+# Run Nexaris backup + restore verification every day at 02:15 Asia/Jakarta host time.
 # Adjust the workspace path and Node binary path for your server.
 
 15 2 * * * cd /Users/macbookair/Documents/IMMS && BACKUP_KEEP_COUNT=14 BACKUP_RETENTION_DAYS=30 npm run backup:db && npm run verify:backup >> /var/log/imms-backup.log 2>&1

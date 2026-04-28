@@ -1,8 +1,8 @@
-# IMMS Architecture Overview
+# Nexaris Architecture Overview
 
 ## Purpose
 
-IMMS adalah aplikasi operasional untuk pencatatan, monitoring, penanganan, dan analitik insiden jaringan. Aplikasi ini dipakai untuk alur kerja NOC dan field handling, mulai dari pembuatan ticket sampai close incident dan pelaporan.
+Nexaris adalah platform operasi insiden milik Nexa untuk pencatatan, monitoring, penanganan, dan analitik insiden jaringan. Aplikasi ini dipakai untuk alur kerja NOC dan field handling, mulai dari incident intake sampai close incident, history, dan reporting.
 
 ## High-Level Stack
 

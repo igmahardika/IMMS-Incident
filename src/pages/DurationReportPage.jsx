@@ -312,7 +312,7 @@ export default function DurationReportPage() {
                                     {pct}%
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {row.sla_target_hours}h SLA
+                                    {formatDuration((row.sla_target_hours || 0) * 3600)} SLA
                                   </p>
                                 </div>
                                 <progress

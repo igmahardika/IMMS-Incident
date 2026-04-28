@@ -1,14 +1,14 @@
-# IMMS Current State Audit
+# Nexaris Current State Audit
 
 ## Scope
 
-Dokumen ini merangkum kondisi project IMMS **saat ini** berdasarkan source code, struktur runtime, data aktual di database lokal, dan health check build/lint pada 15 April 2026.
+Dokumen ini merangkum kondisi project Nexaris **saat ini** berdasarkan source code, struktur runtime, data aktual di database lokal, dan health check build/lint pada 15 April 2026.
 
 Dokumen ini dimaksudkan sebagai snapshot engineering terkini, bukan sejarah perubahan.
 
 ## Executive Summary
 
-IMMS saat ini adalah aplikasi operasi NOC yang sudah mencakup:
+Nexaris saat ini adalah platform operasi insiden untuk NOC yang sudah mencakup:
 
 - authentication berbasis access token + refresh token
 - lifecycle incident lengkap: create, start, pause, resume, update, close
@@ -36,7 +36,7 @@ Hasil pengecekan saat audit ini:
 
 Catatan:
 
-- [README.md](/Users/macbookair/Documents/IMMS/README.md) masih template bawaan Vite dan belum merepresentasikan project IMMS.
+- [README.md](/Users/macbookair/Documents/IMMS/README.md) perlu terus dijaga agar tetap merepresentasikan positioning dan alur operasional Nexaris secara akurat.
 
 ## Runtime Stack
 
@@ -310,7 +310,7 @@ Masih ada batasan:
 
 ## Overall Assessment
 
-Secara keseluruhan, IMMS saat ini berada di posisi:
+Secara keseluruhan, Nexaris saat ini berada di posisi:
 
 - **produk**: kuat
 - **UI/UX**: baik

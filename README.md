@@ -1,15 +1,46 @@
-# IMMS
+# Nexaris
 
-IMMS adalah aplikasi incident management untuk operasi NOC. Project ini mencakup:
+Nexaris is Nexa’s incident operations platform for tracking, coordinating, escalating, and resolving operational incidents with speed, structure, and visibility.
 
-- registrasi incident baru
-- monitoring incident aktif
-- pause, resume, update, dan close workflow
-- resolved incident archive
-- analytics dashboard dan report
-- master data customer, klasifikasi, topology, dan personnel
-- geocode customer/topology untuk mode map
-- escalation webhook dan notification
+Nexaris is built for NOC and service operations workflows. It supports the full incident lifecycle, from incident intake and active handling to escalation, closure, history, reporting, analytics, and operational master-data support.
+
+## Brand & Product Identity
+
+### Product Positioning
+
+Nexaris is a centralized incident operations platform under the Nexa ecosystem. It is designed to become the operational control layer for incident visibility, coordinated response, escalation, and service recovery.
+
+### What The Name Means
+
+Nexaris reflects:
+
+- **Nexa DNA**: a product identity that clearly belongs to the Nexa ecosystem
+- **Incident response**: structured operational handling, not just issue logging
+- **Visibility and orchestration**: a platform for monitoring, coordination, and escalation
+- **Reliability mindset**: stronger control from signal to recovery
+
+Optional internal expansion:
+
+- **Nexaris** = **Nexa Incident Response Information System**
+
+### Core Philosophy
+
+- Nexaris is the operational nerve center for incident visibility, coordinated response, escalation, and recovery.
+- From signal to resolution, Nexaris helps teams act with speed, structure, and control.
+- Nexaris reflects Nexa’s commitment to reliability, responsiveness, and next-level operational experience.
+
+## Core Product Scope
+
+Nexaris currently covers:
+
+- incident creation and intake
+- active operational handling
+- structured pause, resume, update, and closure workflows
+- escalation via webhook / Telegram-style notification flow
+- resolved incident history and workbook import
+- dashboard, analytics, and reporting
+- customer, classification, topology, and personnel master data
+- customer and topology map workflows with geocode support
 
 ## Stack
 
@@ -120,10 +151,10 @@ Catatan penting:
 - `Active Troubles`: `/incidents`
 - `Incident Detail`: `/incidents/:id`
 - `Resolved Incidents`: `/history`
-- `Monthly Analysis`: `/monthly`
-- `Dashboard`: `/dashboard`
-- `Duration Intelligence`: `/duration-report`
-- `Root Cause`: `/root-cause`
+- `Monthly Analysis`: `/history/monthly`
+- `Dashboard`: `/`
+- `Duration Intelligence`: `/analytics/duration`
+- `Root Cause`: `/analytics/root-cause`
 - `Customers`: `/master/customers`
 - `Classifications`: `/master/classifications`
 - `Distribution Topology`: `/master/distribusi`
@@ -153,4 +184,4 @@ Catatan penting:
 - route backend utama sudah dimodularisasi ke service layer
 - backup SQLite dan verifikasi restore dasar sekarang tersedia via npm scripts
 - stewardship backlog customer/topology sekarang bisa dibaca lewat endpoint khusus
-- contoh scheduler host untuk backup harian tersedia di [ops/imms-backup.cron.example](/Users/macbookair/Documents/IMMS/ops/imms-backup.cron.example)
+- contoh scheduler host untuk backup harian tersedia di `ops/imms-backup.cron.example`

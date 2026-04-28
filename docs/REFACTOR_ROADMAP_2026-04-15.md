@@ -1,4 +1,4 @@
-# IMMS Refactor Roadmap
+# Nexaris Refactor Roadmap
 
 ## Goal
 
@@ -160,7 +160,7 @@ Primary files:
 
 Recommended tasks:
 
-- rewrite README sesuai project IMMS
+- rewrite README sesuai positioning dan workflow Nexaris
 - tandai audit lama sebagai historical bila tidak lagi aktual
 - sinkronkan feature map dengan menu dan route terbaru
 

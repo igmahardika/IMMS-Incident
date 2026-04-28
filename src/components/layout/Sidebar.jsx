@@ -15,7 +15,6 @@ import {
   Tag,
   UserCog,
   X,
-  Zap,
   TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -112,16 +111,20 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     <aside className="flex h-full w-64 max-w-64 shrink-0 flex-col border-r border-border bg-background">
       <div className="flex h-16 items-center justify-between border-b border-border px-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Zap className="h-4 w-4" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border">
+            <img
+              src="/branding/nexaris-mark.png"
+              alt="Nexaris logo"
+              className="h-5 w-5 object-contain"
+            />
           </div>
 
           <div className="min-w-0 space-y-1">
             <p className="truncate text-sm font-semibold tracking-tight text-foreground">
-              IMMS
+              Nexaris
             </p>
             <p className="truncate text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Enterprise NOC
+              Nexa Incident Ops
             </p>
           </div>
         </div>

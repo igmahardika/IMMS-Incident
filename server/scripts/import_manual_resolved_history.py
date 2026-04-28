@@ -604,7 +604,7 @@ def insert_audit_logs(
         (
             incident_id,
             importer_user_id,
-            "Historical incident imported from manual workbook before IMMS go-live.",
+            "Historical incident imported from manual workbook before Nexaris go-live.",
             start_time_sql,
         ),
     )
@@ -650,7 +650,7 @@ def insert_audit_logs(
         (
             incident_id,
             technician_id or importer_user_id,
-            "Resolved before IMMS go-live and imported from historical workbook.",
+            "Resolved before Nexaris go-live and imported from historical workbook.",
             end_time_sql,
         ),
     )
@@ -1086,7 +1086,7 @@ def normalize_existing_imported_infrastructure() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Import manual Excel resolved incidents into IMMS history."
+        description="Import manual Excel resolved incidents into Nexaris history."
     )
     parser.add_argument(
         "--apply",

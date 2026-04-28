@@ -1,6 +1,6 @@
-# IMMS Feature Map
+# Nexaris Feature Map
 
-Dokumen ini memetakan fitur aktif ke area source utama berdasarkan kondisi codebase saat ini.
+Dokumen ini memetakan fitur aktif Nexaris ke area source utama berdasarkan kondisi codebase saat ini.
 
 ## 1. Frontend App Shell
 

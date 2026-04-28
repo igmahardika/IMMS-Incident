@@ -1,4 +1,4 @@
-# IMMS Priority Findings
+# Nexaris Priority Findings
 
 ## Scope
 
@@ -142,7 +142,7 @@ Dampak:
 
 Rekomendasi:
 
-- ganti dengan README IMMS aktual: setup, env, roles, architecture ringkas, workflow data
+- ganti dengan README Nexaris aktual: setup, env, roles, architecture ringkas, workflow data
 
 ### P2. Dokumentasi audit lama sudah sebagian usang
 
